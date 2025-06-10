@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import apiClient from '../services/api'; // Use the created apiClient
+import { apiClient } from '../services/api'; // Use the created apiClient
 import { jwtDecode } from 'jwt-decode'; // Correct named import
 
 const AuthContext = createContext(null);
