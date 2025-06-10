@@ -182,10 +182,10 @@ Módulo 4: Gestão de Pessoas (Equipes e Funcionários)
 CRUD para Funcionários.
 CRUD para Equipes, com adição e remoção de membros.
 ✅ Interface para alocar e desalocar equipes em obras, definindo os períodos (Alocacao_Obras_Equipes).
-Registro de ocorrências para funcionários (atrasos, faltas).
+✅ Registro de ocorrências para funcionários (atrasos, faltas).
 Módulo 5: Gestão de Suprimentos
 CRUD para o catálogo de Materiais.
-CRUD para o registro de Compras, sempre associadas a uma obra.
+✅ CRUD para o registro de Compras, sempre associadas a uma obra.
 Módulo 6: Gestão Financeira
 ✅ CRUD para Despesas Extras, sempre associadas a uma obra.
 Módulo 7: Relatórios

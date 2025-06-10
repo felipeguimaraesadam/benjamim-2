@@ -179,3 +179,37 @@ export const deleteAlocacao = (id) => {
 export const getDashboardStats = () => {
   return apiClient.get('/dashboard/stats/');
 };
+
+// --- Compra Service Functions ---
+export const getCompras = () => {
+  return apiClient.get('/compras/');
+};
+
+export const createCompra = (compraData) => {
+  return apiClient.post('/compras/', compraData);
+};
+
+export const updateCompra = (id, compraData) => {
+  return apiClient.put(`/compras/${id}/`, compraData);
+};
+
+export const deleteCompra = (id) => {
+  return apiClient.delete(`/compras/${id}/`);
+};
+
+// --- Ocorrencia Service Functions ---
+export const getOcorrencias = () => {
+  return apiClient.get('/ocorrencias/');
+};
+
+export const createOcorrencia = (ocorrenciaData) => {
+  return apiClient.post('/ocorrencias/', ocorrenciaData);
+};
+
+export const updateOcorrencia = (id, ocorrenciaData) => {
+  return apiClient.put(`/ocorrencias/${id}/`, ocorrenciaData);
+};
+
+export const deleteOcorrencia = (id) => {
+  return apiClient.delete(`/ocorrencias/${id}/`);
+};
