@@ -14,11 +14,13 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ObrasPage from './pages/ObrasPage';
 import FuncionariosPage from './pages/FuncionariosPage';
+import OcorrenciasPage from './pages/OcorrenciasPage'; // Import OcorrenciasPage
 import EquipesPage from './pages/EquipesPage';
 import MateriaisPage from './pages/MateriaisPage';
 import RelatoriosPage from './pages/RelatoriosPage';
 import DespesasExtrasPage from './pages/DespesasExtrasPage';
 import AlocacoesPage from './pages/AlocacoesPage';
+import ComprasPage from './pages/ComprasPage'; // Import ComprasPage
 
 const router = createBrowserRouter([
   {
@@ -41,6 +43,10 @@ const router = createBrowserRouter([
             element: <FuncionariosPage />,
           },
           {
+            path: 'ocorrencias', // Add Ocorrencias route
+            element: <OcorrenciasPage />,
+          },
+          {
             path: 'equipes',
             element: <EquipesPage />,
           },
@@ -59,6 +65,10 @@ const router = createBrowserRouter([
           {
             path: 'alocacoes',
             element: <AlocacoesPage />,
+          },
+          {
+            path: 'compras', // Add Compras route
+            element: <ComprasPage />,
           },
           // Add other CRUD/report pages as children of Layout here
         ],
