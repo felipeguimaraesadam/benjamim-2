@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import Usuario
+from .models import Usuario, Obra, Funcionario, Equipe, Alocacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
@@ -32,3 +32,51 @@ class UsuarioSerializer(serializers.ModelSerializer):
         instance.nivel_acesso = validated_data.get('nivel_acesso', instance.nivel_acesso)
         instance.save()
         return instance
+
+
+class ObraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Obra
+        fields = '__all__'
+
+
+class FuncionarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Funcionario
+        fields = '__all__'
+
+
+class EquipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Equipe
+        fields = '__all__'
+
+
+class AlocacaoObrasEquipesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Alocacao_Obras_Equipes
+        fields = '__all__'
+
+
+class MaterialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Material
+        fields = '__all__'
+
+
+class CompraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Compra
+        fields = '__all__'
+
+
+class DespesaExtraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Despesa_Extra
+        fields = '__all__'
+
+
+class OcorrenciaFuncionarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ocorrencia_Funcionario
+        fields = '__all__'
