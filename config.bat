@@ -23,20 +23,32 @@ IF ERRORLEVEL 1 (
     pause
     exit /b %ERRORLEVEL%
 )
+echo Ambiente virtual 'venv' criado.
+pause
 
-echo    - Ativando ambiente e instalando dependencias (requirements.txt)...
+echo    - Ativando ambiente virtual...
 call venv\Scripts\activate.bat
 IF ERRORLEVEL 1 (
     echo Erro ao ativar ambiente virtual.
     pause
     exit /b %ERRORLEVEL%
 )
+echo Ambiente virtual ativado.
+echo VENV Python:
+where python
+echo VENV Pip:
+where pip
+pause
+
+echo    - Instalando dependencias Python (requirements.txt)...
 pip install -r requirements.txt
 IF ERRORLEVEL 1 (
     echo Erro ao instalar dependencias Python.
     pause
     exit /b %ERRORLEVEL%
 )
+echo Dependencias Python instaladas.
+pause
 
 echo    - Executando migracoes do banco de dados...
 python manage.py migrate
@@ -45,6 +57,8 @@ IF ERRORLEVEL 1 (
     pause
     exit /b %ERRORLEVEL%
 )
+echo Migracoes do banco de dados executadas.
+pause
 
 echo Backend configurado com sucesso!
 cd ..
@@ -65,6 +79,18 @@ IF ERRORLEVEL 1 (
     pause
     exit /b %ERRORLEVEL%
 )
+echo Dependencias do Frontend instaladas.
+pause
+
+echo    - Verificando instalacao do @tailwindcss/postcss...
+IF NOT EXIST "node_modules\@tailwindcss\postcss\package.json" (
+    echo ATENCAO: @tailwindcss/postcss nao foi encontrado em node_modules.
+    echo Verifique o log do 'npm install' acima para erros.
+    pause
+) ELSE (
+    echo @tailwindcss/postcss encontrado em node_modules.
+)
+pause
 
 echo Frontend configurado com sucesso!
 cd ..
