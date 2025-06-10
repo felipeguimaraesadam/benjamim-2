@@ -11,7 +11,9 @@ const Navegacao = () => {
           <li className="mb-2"><Link to="/obras" className="hover:text-gray-300">Obras</Link></li>
           <li className="mb-2"><Link to="/funcionarios" className="hover:text-gray-300">Funcionários</Link></li>
           <li className="mb-2"><Link to="/equipes" className="hover:text-gray-300">Equipes</Link></li>
+          <li className="mb-2"><Link to="/alocacoes" className="hover:text-gray-300">Alocações</Link></li>
           <li className="mb-2"><Link to="/materiais" className="hover:text-gray-300">Materiais</Link></li>
+          <li className="mb-2"><Link to="/despesas" className="hover:text-gray-300">Despesas</Link></li>
           <li className="mb-2"><Link to="/relatorios" className="hover:text-gray-300">Relatórios</Link></li>
           {/* Add more links as needed */}
         </ul>

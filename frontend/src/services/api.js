@@ -114,6 +114,16 @@ export const getRelatorioGeralCompras = (params) => {
   return apiClient.get('/relatorios/geral-compras/', { params });
 };
 
+export const getRelatorioDesempenhoEquipe = (params) => {
+  // params: { equipe_id, data_inicio, data_fim }
+  return apiClient.get('/relatorios/desempenho-equipe/', { params });
+};
+
+export const getRelatorioCustoGeral = (params) => {
+  // params: { data_inicio, data_fim }
+  return apiClient.get('/relatorios/custo-geral/', { params });
+};
+
 
 // Export the configured apiClient if direct use is needed elsewhere,
 // though typically service functions are preferred.
@@ -122,3 +132,50 @@ export { apiClient }; // Keep this if other parts of app use apiClient directly
 // Or make it the default export if it's the main thing used from this file
 // export default apiClient; // If you prefer this, then functions above would need to be imported like: import { getObras } from './api'; apiClient.getObras() - which is not standard.
 // The above named exports for functions are more typical for a service file.
+
+// --- Despesa Extra Service Functions ---
+export const getDespesasExtras = () => {
+  return apiClient.get('/despesas/');
+};
+
+export const getDespesaExtraById = (id) => {
+  return apiClient.get(`/despesas/${id}/`);
+};
+
+export const createDespesaExtra = (despesaData) => {
+  return apiClient.post('/despesas/', despesaData);
+};
+
+export const updateDespesaExtra = (id, despesaData) => {
+  return apiClient.put(`/despesas/${id}/`, despesaData);
+};
+
+export const deleteDespesaExtra = (id) => {
+  return apiClient.delete(`/despesas/${id}/`);
+};
+
+// --- Alocacao Service Functions ---
+export const getAlocacoes = () => {
+  return apiClient.get('/alocacoes/');
+};
+
+export const getAlocacaoById = (id) => {
+  return apiClient.get(`/alocacoes/${id}/`);
+};
+
+export const createAlocacao = (alocacaoData) => {
+  return apiClient.post('/alocacoes/', alocacaoData);
+};
+
+export const updateAlocacao = (id, alocacaoData) => {
+  return apiClient.put(`/alocacoes/${id}/`, alocacaoData);
+};
+
+export const deleteAlocacao = (id) => {
+  return apiClient.delete(`/alocacoes/${id}/`);
+};
+
+// --- Dashboard Service Functions ---
+export const getDashboardStats = () => {
+  return apiClient.get('/dashboard/stats/');
+};

@@ -4,7 +4,8 @@ from .views import (
     UsuarioViewSet, ObraViewSet, FuncionarioViewSet, EquipeViewSet,
     AlocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
     DespesaExtraViewSet, OcorrenciaFuncionarioViewSet,
-    RelatorioFinanceiroObraView, RelatorioGeralComprasView  # Added new views
+    RelatorioFinanceiroObraView, RelatorioGeralComprasView, DashboardStatsView,
+    RelatorioDesempenhoEquipeView, RelatorioCustoGeralView
 )
 
 router = DefaultRouter()
@@ -22,4 +23,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('relatorios/financeiro-obra/', RelatorioFinanceiroObraView.as_view(), name='relatorio-financeiro-obra'),
     path('relatorios/geral-compras/', RelatorioGeralComprasView.as_view(), name='relatorio-geral-compras'),
+    path('dashboard/stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
+    path('relatorios/desempenho-equipe/', RelatorioDesempenhoEquipeView.as_view(), name='relatorio-desempenho-equipe'),
+    path('relatorios/custo-geral/', RelatorioCustoGeralView.as_view(), name='relatorio-custo-geral'),
 ]
