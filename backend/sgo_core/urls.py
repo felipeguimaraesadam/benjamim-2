@@ -17,8 +17,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include # Added include
 
+from rest_framework_simplejwt.views import TokenRefreshView
+from core.serializers import MyTokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
+
+class MyTokenObtainPairView(BaseTokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('core.urls')), # Added core urls
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')), # Added DRF auth urls
+    # path('api-auth/', include('rest_framework.urls', namespace='rest_framework')), # Optional: DRF login/logout for browsable API
+
+    # JWT Token Endpoints
+    path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

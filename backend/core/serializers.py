@@ -13,18 +13,15 @@ class UsuarioSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        # Hash the password before creating the user
-        validated_data['senha_hash'] = make_password(validated_data.pop('password'))
-        # We need to map 'login' from serializer to 'username' if Usuario inherits from AbstractUser
-        # or ensure 'login' is the field used for authentication.
-        # For now, assuming 'login' is the username field on the custom Usuario model.
-        user = Usuario.objects.create(**validated_data)
+        # Use the custom manager's create_user method
+        # which handles password hashing and uses 'login' as USERNAME_FIELD
+        user = Usuario.objects.create_user(**validated_data)
         return user
 
     def update(self, instance, validated_data):
         # Hash the password if it's being updated
         if 'password' in validated_data:
-            instance.senha_hash = make_password(validated_data.pop('password'))
+            instance.set_password(validated_data.pop('password'))
 
         # Update other fields
         instance.login = validated_data.get('login', instance.login)
@@ -32,6 +29,32 @@ class UsuarioSerializer(serializers.ModelSerializer):
         instance.nivel_acesso = validated_data.get('nivel_acesso', instance.nivel_acesso)
         instance.save()
         return instance
+
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['login'] = user.login
+        token['nome_completo'] = user.nome_completo
+        token['nivel_acesso'] = user.nivel_acesso
+        # token['is_staff'] = user.is_staff # Example if you add more fields
+        # token['is_superuser'] = user.is_superuser # Example
+
+        return token
+
+    # No need to override __init__ to swap 'username' for 'login' if
+    # settings.AUTH_USER_MODEL.USERNAME_FIELD is 'login', as TokenObtainPairSerializer
+    # uses User.USERNAME_FIELD. Our Usuario model has USERNAME_FIELD = 'login'.
+
+    # No need to override validate if CustomAuthBackend is not used and ModelBackend
+    # correctly uses settings.AUTH_USER_MODEL.USERNAME_FIELD.
+    # The default validation will call django.contrib.auth.authenticate,
+    # which will use ModelBackend, which in turn respects Usuario.USERNAME_FIELD.
 
 
 class ObraSerializer(serializers.ModelSerializer):

@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'core.apps.CoreConfig',
+    'rest_framework_simplejwt',
+    'core.apps.CoreConfig', # or simply 'core' if CoreConfig is standard
 ]
 
 MIDDLEWARE = [
@@ -126,8 +127,55 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom User Model
 AUTH_USER_MODEL = 'core.Usuario'
 
-# Custom Authentication Backends
+# Django REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    # Add any other DRF settings here if needed
+    # For example, permission classes, pagination, etc.
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    # 'rest_framework.permissions.IsAuthenticated',
+    # ]
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True, # Requires simplejwt.token_blacklist app if True for persistent blacklist
+    'UPDATE_LAST_LOGIN': False,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id', # Corresponds to the primary key of the Usuario model
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+
+    'JTI_CLAIM': 'jti',
+
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+
+    # 'USER_MODEL': 'core.Usuario', # Not directly used by SIMPLE_JWT here, AUTH_USER_MODEL is primary
+}
+
+
+# Authentication Backends
+# Since Usuario model now inherits from AbstractBaseUser and USERNAME_FIELD is 'login',
+# Django's ModelBackend should work for authentication.
 AUTHENTICATION_BACKENDS = [
-    'core.auth_backends.CustomUsuarioAuthBackend',
-    'django.contrib.auth.backends.ModelBackend', # Keep default for admin, etc. if needed
+    'django.contrib.auth.backends.ModelBackend',
 ]
