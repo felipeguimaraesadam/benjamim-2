@@ -172,7 +172,7 @@ Tela de login com usuário e senha.
 Validação de credenciais e controle de sessão.
 Botão de Logout.
 Módulo 2: Dashboard Principal
-Painel com visão geral e indicadores chave (KPIs): obras ativas, custos do mês, etc.
+✅ Painel com visão geral e indicadores chave (KPIs): obras ativas, custos do mês, etc.
 Atalhos para as seções mais usadas.
 Módulo 3: Gestão de Obras
 CRUD (Criar, Ler, Atualizar, Deletar) completo para Obras.
@@ -181,13 +181,13 @@ Tela de detalhe da obra exibindo resumo financeiro, equipes e materiais.
 Módulo 4: Gestão de Pessoas (Equipes e Funcionários)
 CRUD para Funcionários.
 CRUD para Equipes, com adição e remoção de membros.
-Interface para alocar e desalocar equipes em obras, definindo os períodos (Alocacao_Obras_Equipes).
+✅ Interface para alocar e desalocar equipes em obras, definindo os períodos (Alocacao_Obras_Equipes).
 Registro de ocorrências para funcionários (atrasos, faltas).
 Módulo 5: Gestão de Suprimentos
 CRUD para o catálogo de Materiais.
 CRUD para o registro de Compras, sempre associadas a uma obra.
 Módulo 6: Gestão Financeira
-CRUD para Despesas Extras, sempre associadas a uma obra.
+✅ CRUD para Despesas Extras, sempre associadas a uma obra.
 Módulo 7: Relatórios
 Relatório de Compras:
 Filtros por período (data de início e fim).

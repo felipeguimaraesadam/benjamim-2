@@ -17,6 +17,8 @@ import FuncionariosPage from './pages/FuncionariosPage';
 import EquipesPage from './pages/EquipesPage';
 import MateriaisPage from './pages/MateriaisPage';
 import RelatoriosPage from './pages/RelatoriosPage';
+import DespesasExtrasPage from './pages/DespesasExtrasPage';
+import AlocacoesPage from './pages/AlocacoesPage';
 
 const router = createBrowserRouter([
   {
@@ -49,6 +51,14 @@ const router = createBrowserRouter([
           {
             path: 'relatorios',
             element: <RelatoriosPage />,
+          },
+          {
+            path: 'despesas',
+            element: <DespesasExtrasPage />,
+          },
+          {
+            path: 'alocacoes',
+            element: <AlocacoesPage />,
           },
           // Add other CRUD/report pages as children of Layout here
         ],
