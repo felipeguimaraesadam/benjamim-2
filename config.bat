@@ -1,128 +1,42 @@
-REM @ECHO OFF
-TITLE SGO Project Configuration - DEBUG MODE
-CLS
-ECHO =====================================
-ECHO  SGO Project Configuration Script (DEBUG MODE)
-ECHO =====================================
+@echo off
+echo ==========================================================
+echo [SGO] SCRIPT DE CONFIGURACAO DO AMBIENTE
+echo ==========================================================
+echo Este script ira instalar todas as dependencias.
+echo Certifique-se de que Python e Node.js estao instalados.
+echo.
+pause
+echo.
 
-PAUSE
+echo [PASSO 1 de 2] - Configurando o Backend (Python/Django)...
+cd backend
 
-ECHO Verificando dependencias necessarias...
+echo    - Criando ambiente virtual 'venv'...
+python -m venv venv
 
-PAUSE
-
-ECHO --- Checking Python ---
-python --version
-ECHO Python version command executed. ERRORLEVEL: %ERRORLEVEL%
-IF ERRORLEVEL 1 (
-    ECHO ERRO: Python nao encontrado.
-    ECHO Por favor, instale Python (versao 3.x recomendada) e adicione ao PATH.
-    GOTO EndScript
-)
-ECHO Python encontrado.
-
-PAUSE
-
-ECHO --- Checking Node.js ---
-node --version
-ECHO Node.js version command executed. ERRORLEVEL: %ERRORLEVEL%
-IF ERRORLEVEL 1 (
-    ECHO ERRO: Node.js nao encontrado.
-    ECHO Por favor, instale Node.js (que inclui npm) e adicione ao PATH.
-    GOTO EndScript
-)
-ECHO Node.js encontrado.
-
-PAUSE
-
-ECHO --- Checking npm ---
-npm --version
-ECHO npm version command executed. ERRORLEVEL: %ERRORLEVEL%
-IF ERRORLEVEL 1 (
-    ECHO ERRO: npm nao encontrado.
-    ECHO Por favor, verifique sua instalacao do Node.js.
-    GOTO EndScript
-)
-ECHO npm encontrado.
-
-ECHO Todas as dependencias basicas foram encontradas.
-ECHO =====================================
-
-PAUSE
-
-ECHO --- Configuring Backend ---
-ECHO Current directory: %CD%
-CD backend
-ECHO Changed to directory: %CD%
-IF NOT "%CD%"=="%~dp0backend\" (
-   ECHO ERRO: Nao foi possivel mudar para o diretorio backend.
-   GOTO EndScript
-)
-
-PAUSE
-
-ECHO --- Checking/Creating Python venv ---
-IF NOT EXIST .venv (
-    ECHO Criando ambiente virtual Python em backend\.venv...
-    python -m venv .venv
-    ECHO python -m venv .venv - ERRORLEVEL: %ERRORLEVEL%
-    IF ERRORLEVEL 1 ( ECHO ERRO ao criar ambiente virtual. & CD .. & GOTO EndScript )
-) ELSE (
-    ECHO Ambiente virtual backend\.venv ja existe.
-)
-
-PAUSE
-
-ECHO --- Activating venv and installing Python dependencies ---
-CALL .venv\Scripts\activate.bat
-ECHO CALL .venv\Scripts\activate.bat - ERRORLEVEL: %ERRORLEVEL% (Note: activate.bat itself doesn't set ERRORLEVEL typically)
+echo    - Ativando ambiente e instalando dependencias (requirements.txt)...
+call venv\Scriptsctivate.bat
 pip install -r requirements.txt
-ECHO pip install -r requirements.txt - ERRORLEVEL: %ERRORLEVEL%
-IF ERRORLEVEL 1 ( ECHO ERRO ao instalar dependencias Python. & CD .. & GOTO EndScript )
 
-PAUSE
-
-ECHO --- Running Django migrations ---
+echo    - Executando migracoes do banco de dados...
 python manage.py migrate
-ECHO python manage.py migrate - ERRORLEVEL: %ERRORLEVEL%
-IF ERRORLEVEL 1 ( ECHO ERRO ao executar migracoes. & CD .. & GOTO EndScript )
-ECHO Ambiente do Backend configurado com sucesso.
-CD ..
-ECHO Changed to directory: %CD%
-ECHO =====================================
 
-PAUSE
+echo Backend configurado com sucesso!
+cd ..
+echo.
 
-ECHO --- Configuring Frontend ---
-ECHO Current directory: %CD%
-CD frontend
-ECHO Changed to directory: %CD%
-IF NOT "%CD%"=="%~dp0frontend\" (
-   ECHO ERRO: Nao foi possivel mudar para o diretorio frontend.
-   GOTO EndScript
-)
+echo [PASSO 2 de 2] - Configurando o Frontend (React/Vite)...
+cd frontend
 
-PAUSE
+echo    - Instalando dependencias (npm install)...
+call npm install
 
-ECHO --- Installing Node.js dependencies ---
-IF NOT EXIST node_modules (
-    ECHO Instalando dependencias Node.js (npm install)... Isto pode levar alguns minutos.
-    npm install
-    ECHO npm install - ERRORLEVEL: %ERRORLEVEL%
-    IF ERRORLEVEL 1 ( ECHO ERRO ao instalar dependencias Node.js. & CD .. & GOTO EndScript )
-) ELSE (
-    ECHO Diretorio node_modules ja existe. Pulando npm install.
-)
-ECHO Ambiente do Frontend configurado com sucesso.
-CD ..
-ECHO Changed to directory: %CD%
-ECHO =====================================
+echo Frontend configurado com sucesso!
+cd ..
+echo.
 
-PAUSE
-
-ECHO Configuracao do projeto SGO concluida com sucesso!
-ECHO Voce pode agora usar o script start.bat para iniciar a aplicacao.
-
-:EndScript
-ECHO Script config.bat finalizado. Pressione qualquer tecla para sair...
-PAUSE > nul
+echo ==========================================================
+echo    CONFIGURACAO CONCLUIDA!
+echo    Execute 'start.bat' para iniciar a aplicacao.
+echo ==========================================================
+pause
