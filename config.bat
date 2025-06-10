@@ -41,7 +41,8 @@ where pip
 pause
 
 echo    - Instalando dependencias Python (requirements.txt)...
-pip install -r requirements.txt
+call venv\Scripts\pip.exe install -r requirements.txt
+echo Exit code from pip install: %ERRORLEVEL%
 IF ERRORLEVEL 1 (
     echo Erro ao instalar dependencias Python.
     pause
@@ -51,7 +52,8 @@ echo Dependencias Python instaladas.
 pause
 
 echo    - Executando migracoes do banco de dados...
-python manage.py migrate
+call venv\Scripts\python.exe manage.py migrate
+echo Exit code from migrate: %ERRORLEVEL%
 IF ERRORLEVEL 1 (
     echo Erro ao executar migracoes do banco de dados.
     pause
