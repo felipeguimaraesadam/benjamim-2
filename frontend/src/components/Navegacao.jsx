@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth
 
 const Navegacao = () => {
+  const { user } = useAuth(); // Get user from AuthContext
+
   return (
     <aside className="w-64 bg-gray-800 text-white p-4">
       <h2 className="text-xl font-bold mb-4">SGO</h2>
@@ -17,7 +20,16 @@ const Navegacao = () => {
           <li className="mb-2"><Link to="/compras" className="hover:text-gray-300">Compras</Link></li>
           <li className="mb-2"><Link to="/despesas" className="hover:text-gray-300">Despesas</Link></li>
           <li className="mb-2"><Link to="/relatorios" className="hover:text-gray-300">Relatórios</Link></li>
-          {/* Add more links as needed */}
+
+          {/* Admin-only links */}
+          {user && user.nivel_acesso === 'admin' && (
+            <>
+              <li className="mt-4 mb-2 border-t border-gray-700 pt-4">
+                <span className="text-sm font-semibold text-gray-400">Administração</span>
+              </li>
+              <li className="mb-2"><Link to="/usuarios" className="hover:text-gray-300">Usuários</Link></li>
+            </>
+          )}
         </ul>
       </nav>
     </aside>

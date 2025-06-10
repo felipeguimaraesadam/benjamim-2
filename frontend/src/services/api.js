@@ -213,3 +213,20 @@ export const updateOcorrencia = (id, ocorrenciaData) => {
 export const deleteOcorrencia = (id) => {
   return apiClient.delete(`/ocorrencias/${id}/`);
 };
+
+// --- Usuario Service Functions ---
+export const getUsuarios = () => {
+  return apiClient.get('/usuarios/');
+};
+
+export const createUsuario = (userData) => {
+  return apiClient.post('/usuarios/', userData);
+};
+
+export const updateUsuario = (id, userData) => {
+  return apiClient.put(`/usuarios/${id}/`, userData);
+};
+
+export const deleteUsuario = (id) => {
+  return apiClient.delete(`/usuarios/${id}/`);
+};
