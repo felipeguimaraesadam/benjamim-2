@@ -28,6 +28,7 @@
     "globals": "^16.0.0",
     "postcss": "^8.5.4",
     "tailwindcss": "^4.1.8",
+    "@tailwindcss/postcss": "^4.0.0",
     "vite": "^6.3.5"
   }
 }

@@ -5,10 +5,10 @@ echo ==========================================================
 echo.
 
 echo [1/3] Iniciando servidor do Backend (Django) em uma nova janela...
-start "Backend Server" cmd /k "cd backend && call venv\Scriptsctivate.bat && python manage.py runserver"
+start "Backend Server" cmd /k "cd backend && call venv\Scripts\activate.bat && python manage.py runserver || pause"
 
 echo [2/3] Iniciando servidor do Frontend (React) em uma nova janela...
-start "Frontend Server" cmd /k "cd frontend && npm run dev"
+start "Frontend Server" cmd /k "cd frontend && npm run dev || pause"
 
 echo.
 echo Aguardando 8 segundos para os servidores inicializarem...

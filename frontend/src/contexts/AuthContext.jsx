@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
     // or by ProtectedRoute redirecting.
   };
 
-  const refreshAuthToken = async ()_Internal() => {
+  const refreshAuthToken = async () => {
     if (!refreshToken) {
       setIsLoading(false); // Ensure loading stops if no refresh token
       return logout(); // or simply return if no refresh token
