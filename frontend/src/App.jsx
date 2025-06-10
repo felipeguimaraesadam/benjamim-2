@@ -1,35 +1,73 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Outlet // Outlet is mainly for Layout, not directly here if Layout handles it.
+} from 'react-router-dom';
+
+// Layout component
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
+
+// Page components
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import ObrasPage from './pages/ObrasPage';
+import FuncionariosPage from './pages/FuncionariosPage';
+import EquipesPage from './pages/EquipesPage';
+import MateriaisPage from './pages/MateriaisPage';
+import RelatoriosPage from './pages/RelatoriosPage';
+
+const router = createBrowserRouter([
+  {
+    element: <ProtectedRoute />, // Protect all routes within this element
+    children: [
+      {
+        path: '/',
+        element: <Layout />, // Layout is now a child of ProtectedRoute
+        children: [
+          {
+            index: true, // Corresponds to '/'
+            element: <DashboardPage />,
+          },
+          {
+            path: 'obras',
+            element: <ObrasPage />,
+          },
+          {
+            path: 'funcionarios',
+            element: <FuncionariosPage />,
+          },
+          {
+            path: 'equipes',
+            element: <EquipesPage />,
+          },
+          {
+            path: 'materiais',
+            element: <MateriaisPage />,
+          },
+          {
+            path: 'relatorios',
+            element: <RelatoriosPage />,
+          },
+          // Add other CRUD/report pages as children of Layout here
+        ],
+      }
+    ]
+  },
+  {
+    path: '/login',
+    element: <LoginPage />, // Login page does not use ProtectedRoute or main Layout
+  },
+  // TODO: Add a catch-all 404 route if desired
+  // {
+  //   path: '*',
+  //   element: <NotFoundPage /> // Example, if you create a NotFoundPage
+  // }
+]);
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  return <RouterProvider router={router} />;
 }
 
-export default App
+export default App;

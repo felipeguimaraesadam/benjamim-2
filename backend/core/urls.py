@@ -1,6 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import UsuarioViewSet, ObraViewSet, FuncionarioViewSet, EquipeViewSet, AlocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet, DespesaExtraViewSet, OcorrenciaFuncionarioViewSet
+from .views import (
+    UsuarioViewSet, ObraViewSet, FuncionarioViewSet, EquipeViewSet,
+    AlocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
+    DespesaExtraViewSet, OcorrenciaFuncionarioViewSet,
+    RelatorioFinanceiroObraView, RelatorioGeralComprasView  # Added new views
+)
 
 router = DefaultRouter()
 router.register(r'usuarios', UsuarioViewSet)
@@ -15,4 +20,6 @@ router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('relatorios/financeiro-obra/', RelatorioFinanceiroObraView.as_view(), name='relatorio-financeiro-obra'),
+    path('relatorios/geral-compras/', RelatorioGeralComprasView.as_view(), name='relatorio-geral-compras'),
 ]
