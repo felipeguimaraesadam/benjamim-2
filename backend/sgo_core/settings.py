@@ -39,10 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     'core.apps.CoreConfig', # or simply 'core' if CoreConfig is standard
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -178,4 +180,9 @@ SIMPLE_JWT = {
 # Django's ModelBackend should work for authentication.
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
+]
+
+# CORS Configuration
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
 ]
