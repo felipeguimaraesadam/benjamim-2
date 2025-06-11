@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../services/api'; // Assuming api object with getObraById
+import * as api from '../services/api.js'; // Corrected import
 
 const ObraDetailPage = () => {
   const { id } = useParams(); // Get obra ID from URL
