@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (loginUsername, password) => {
     try {
       const response = await apiClient.post('/token/', {
-        login: loginUsername, // Ensure this matches backend expectation (login vs username)
+        username: loginUsername, // Ensure this matches backend expectation (login vs username)
         password: password,
       });
       const { access, refresh } = response.data;
