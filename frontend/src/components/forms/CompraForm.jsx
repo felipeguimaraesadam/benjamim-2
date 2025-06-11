@@ -1,228 +1,432 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react'; // Added useRef
 import * as api from '../../services/api';
+import MaterialAutocomplete from './MaterialAutocomplete';
 
-// Warning Icon for validation errors
-const WarningIcon = ({ className = "w-4 h-4 inline mr-1" }) => ( // Added className prop with default
-  <svg className={className} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.216 3.031-1.742 3.031H4.42c-1.526 0-2.492-1.697-1.742-3.031l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1.75-4.5a1.75 1.75 0 00-3.5 0v.25h3.5v-.25z" clipRule="evenodd" />
-  </svg>
+const WarningIcon = ({ className = "w-4 h-4 inline mr-1" }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.216 3.031-1.742 3.031H4.42c-1.526 0-2.492-1.697-1.742-3.031l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1.75-4.5a1.75 1.75 0 00-3.5 0v.25h3.5v-.25z" clipRule="evenodd" /></svg>
 );
 
+let itemUniqueIdCounter = 0;
+const generateItemUniqueId = () => `temp-item-${itemUniqueIdCounter++}`;
+
+// ItemRow Sub-Component Definition
+const ItemRow = ({
+    item, index, onItemChange, onRemoveItem, totalItems, errors,
+    onMaterialSelectForItem, initialData,
+    onItemKeyDown, // New prop for handling keydown
+    materialInputRef, // New prop for ref
+    quantityInputRef, // New prop for ref
+    unitPriceInputRef   // New prop for ref
+}) => {
+    const getError = (fieldName) => errors && errors[`item_${index}_${fieldName}`];
+
+    const isLastAndEmptyNewRow = totalItems <= 1 && !initialData &&
+                                 !item.material && !item.quantidade && !item.valorUnitario;
+
+    return (
+        <tr className={`${index % 2 === 0 ? 'bg-slate-50' : 'bg-white'} transition-colors duration-150 ease-in-out hover:bg-slate-100`}>
+            <td className="px-3 py-2.5 border-b border-slate-200 text-sm min-w-[250px] align-top">
+                <MaterialAutocomplete
+                    ref={materialInputRef} // Assign ref
+                    value={item.material}
+                    onMaterialSelect={onMaterialSelectForItem}
+                    itemIndex={index}
+                    error={getError('material')}
+                    onKeyDown={(e) => onItemKeyDown(e, index, 'material')} // Pass keydown event
+                />
+            </td>
+            <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top">
+                <input
+                    ref={quantityInputRef} // Assign ref
+                    type="number"
+                    name="quantidade"
+                    value={item.quantidade}
+                    onChange={(e) => onItemChange(index, 'quantidade', e.target.value)}
+                    onKeyDown={(e) => onItemKeyDown(e, index, 'quantity')} // Pass keydown event
+                    className={`w-24 p-1.5 border ${getError('quantidade') ? 'border-red-500' : 'border-slate-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm`}
+                    placeholder="0.000" step="0.001" min="0"
+                />
+                {getError('quantidade') && <p className="text-xs text-red-600 mt-1 flex items-center"><WarningIcon className="w-3 h-3 mr-0.5"/>{getError('quantidade')}</p>}
+            </td>
+            <td className="px-3 py-2.5 border-b border-slate-200 text-sm text-slate-600 align-middle">
+                {item.unidadeMedida || 'N/A'}
+            </td>
+            <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top">
+                <input
+                    ref={unitPriceInputRef} // Assign ref
+                    type="number"
+                    name="valorUnitario"
+                    value={item.valorUnitario}
+                    onChange={(e) => onItemChange(index, 'valorUnitario', e.target.value)}
+                    onKeyDown={(e) => onItemKeyDown(e, index, 'unitPrice')} // Pass keydown event
+                    className={`w-28 p-1.5 border ${getError('valorUnitario') ? 'border-red-500' : 'border-slate-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm`}
+                    placeholder="0.00" step="0.01" min="0"
+                />
+                {getError('valorUnitario') && <p className="text-xs text-red-600 mt-1 flex items-center"><WarningIcon className="w-3 h-3 mr-0.5"/>{getError('valorUnitario')}</p>}
+            </td>
+            <td className="px-3 py-2.5 border-b border-slate-200 text-sm text-slate-800 font-medium align-middle">
+                R$ {parseFloat(item.valorTotalItem || 0).toFixed(2)}
+            </td>
+            <td className="px-3 py-2.5 border-b border-slate-200 text-center align-middle">
+                <button type="button" onClick={() => onRemoveItem(index)}
+                        className="text-red-500 hover:text-red-700 disabled:text-slate-300 disabled:cursor-not-allowed text-sm p-1 focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-opacity-50 rounded-md"
+                        disabled={isLastAndEmptyNewRow}
+                        title={isLastAndEmptyNewRow ? "Pelo menos um item é necessário" : "Remover Item"}>
+                    Excluir
+                </button>
+            </td>
+        </tr>
+    );
+};
+
+
 const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
-    const [formData, setFormData] = useState({
-        material_id: '',
-        obra_id: '',
-        quantidade: '',
-        custo_total: '',
-        fornecedor: '',
-        data_compra: '',
-        nota_fiscal: '',
-    });
-    const [materiais, setMateriais] = useState([]);
+    const [obraId, setObraId] = useState('');
+    const [dataCompra, setDataCompra] = useState('');
+    const [fornecedor, setFornecedor] = useState('');
+    const [notaFiscal, setNotaFiscal] = useState('');
+    const [observacoes, setObservacoes] = useState('');
+    const [desconto, setDesconto] = useState('0.00');
+    const [items, setItems] = useState([]);
     const [obras, setObras] = useState([]);
     const [errors, setErrors] = useState({});
 
+    // Refs for focus management
+    const itemRefs = useRef([]); // Will store { materialRef, quantityRef, unitPriceRef } for each row
+    const focusAfterAddRef = useRef(false); // Flag to trigger focus on new row
+
     useEffect(() => {
-        const fetchDropdownData = async () => {
+        // Initialize or resize refs array when items change
+        itemRefs.current = items.map(
+            (_, i) => itemRefs.current[i] || { material: React.createRef(), quantity: React.createRef(), unitPrice: React.createRef() }
+        );
+    }, [items.length]);
+
+    useEffect(() => {
+        if (focusAfterAddRef.current && itemRefs.current[items.length - 1]?.material?.current) {
+            itemRefs.current[items.length - 1].material.current.focus();
+            focusAfterAddRef.current = false;
+        }
+    }, [items]); // Rerun when items array itself changes (new row added)
+
+
+    useEffect(() => {
+        const fetchObras = async () => {
             try {
-                const materiaisResponse = await api.getMateriais();
-                setMateriais(materiaisResponse.data || materiaisResponse); // Adjust based on actual API response structure
-            } catch (error) {
-                console.error('Error fetching materiais:', error);
-                // Optionally set an error state to display to the user
-            }
-            try {
-                const obrasResponse = await api.getObras();
-                setObras(obrasResponse.data || obrasResponse); // Adjust based on actual API response structure
+                const response = await api.getObras();
+                setObras(response.data || response || []);
             } catch (error) {
                 console.error('Error fetching obras:', error);
-                // Optionally set an error state to display to the user
+                setObras([]);
             }
         };
-        fetchDropdownData();
+        fetchObras();
     }, []);
 
+    const createNewEmptyItem = () => ({
+        id: generateItemUniqueId(),
+        material: null, materialId: '', materialNome: '',
+        quantidade: '', unidadeMedida: '', valorUnitario: '', valorTotalItem: '0.00'
+    });
+
     useEffect(() => {
+        itemUniqueIdCounter = 0;
         if (initialData) {
-            setFormData({
-                material_id: initialData.material_id || '',
-                obra_id: initialData.obra_id || '',
-                quantidade: initialData.quantidade || '',
-                custo_total: initialData.custo_total || '',
-                fornecedor: initialData.fornecedor || '',
-                data_compra: initialData.data_compra ? new Date(initialData.data_compra).toISOString().split('T')[0] : '',
-                nota_fiscal: initialData.nota_fiscal || '',
-            });
+            setObraId(String(initialData.obra_id || initialData.obra || ''));
+            setDataCompra(initialData.data_compra ? new Date(initialData.data_compra).toISOString().split('T')[0] : '');
+            setFornecedor(initialData.fornecedor || '');
+            setNotaFiscal(initialData.nota_fiscal || '');
+            setObservacoes(initialData.observacoes || '');
+            setDesconto(String(initialData.desconto || '0.00'));
+
+            const initialItems = initialData.itens?.map(item => ({
+                id: item.id || generateItemUniqueId(),
+                material: item.material_obj || { id: item.material, nome: item.material_nome, unidade_medida: item.unidade_medida },
+                materialId: String(item.material) || '',
+                materialNome: item.material_nome || (item.material_obj ? item.material_obj.nome : ''),
+                quantidade: String(item.quantidade || ''),
+                unidadeMedida: item.unidade_medida || (item.material_obj ? item.material_obj.unidade_medida : ''),
+                valorUnitario: String(item.valor_unitario || ''),
+                valorTotalItem: String(item.valor_total_item || '0.00')
+            })) || [];
+
+            setItems(initialItems.length > 0 ? initialItems : [createNewEmptyItem()]);
         } else {
-            // Reset form for new entry
-            setFormData({
-                material_id: '',
-                obra_id: '',
-                quantidade: '',
-                custo_total: '',
-                fornecedor: '',
-                data_compra: '',
-                nota_fiscal: '',
-            });
+            setObraId('');
+            setDataCompra(new Date().toISOString().split('T')[0]);
+            setFornecedor('');
+            setNotaFiscal('');
+            setObservacoes('');
+            setDesconto('0.00');
+            setItems([createNewEmptyItem()]);
         }
-        setErrors({}); // Clear errors when initialData changes
+        setErrors({});
     }, [initialData]);
 
-    const handleChange = (e) => {
+    const handleHeaderChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'obraId') setObraId(value);
+        else if (name === 'dataCompra') setDataCompra(value);
+        // ... other header fields
+        else if (name === 'fornecedor') setFornecedor(value);
+        else if (name === 'notaFiscal') setNotaFiscal(value);
+        else if (name === 'observacoes') setObservacoes(value);
+        else if (name === 'desconto') setDesconto(value);
+
+
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
         }
     };
 
-    const validateForm = () => {
-        const newErrors = {};
-        if (!formData.material_id) newErrors.material_id = 'Material é obrigatório.';
-        if (!formData.obra_id) newErrors.obra_id = 'Obra é obrigatória.';
-        if (!formData.quantidade || parseFloat(formData.quantidade) <= 0) newErrors.quantidade = 'Quantidade deve ser um número positivo.';
-        if (!formData.custo_total || parseFloat(formData.custo_total) < 0) newErrors.custo_total = 'Custo total deve ser um número positivo ou zero.';
-        if (!formData.fornecedor.trim()) newErrors.fornecedor = 'Fornecedor é obrigatório.';
-        if (!formData.data_compra) newErrors.data_compra = 'Data da compra é obrigatória.';
+    const handleMaterialSelected = (index, selectedMaterialObj) => {
+        const updatedItems = items.map((item, i) => {
+            if (i === index) {
+                const errorKey = `item_${index}_material`;
+                setErrors(prev => ({...prev, [errorKey]: null}));
+                if (selectedMaterialObj) {
+                    return {
+                        ...item,
+                        material: selectedMaterialObj,
+                        materialId: String(selectedMaterialObj.id),
+                        materialNome: selectedMaterialObj.nome,
+                        unidadeMedida: selectedMaterialObj.unidade_medida,
+                    };
+                } else {
+                    return {
+                        ...item,
+                        material: null, materialId: '', materialNome: '', unidadeMedida: '',
+                    };
+                }
+            }
+            return item;
+        });
+        setItems(updatedItems);
+        // After material is selected, focus on quantity input of the same row
+        setTimeout(() => itemRefs.current[index]?.quantity?.current?.focus(), 0);
+    };
 
+    const handleItemChange = (index, fieldName, value) => {
+        const updatedItems = items.map((item, i) => {
+            if (i === index) {
+                const newItem = { ...item, [fieldName]: value };
+                if (fieldName === 'quantidade' || fieldName === 'valorUnitario') {
+                    const qty = parseFloat(newItem.quantidade) || 0;
+                    const price = parseFloat(newItem.valorUnitario) || 0;
+                    newItem.valorTotalItem = (qty * price).toFixed(2);
+                }
+                const errorKey = `item_${index}_${fieldName}`;
+                if(errors[errorKey]) {
+                    setErrors(prev => ({...prev, [errorKey]: null}));
+                }
+                return newItem;
+            }
+            return item;
+        });
+        setItems(updatedItems);
+    };
+
+    const addNewItemRow = () => {
+        setItems([...items, createNewEmptyItem()]);
+        focusAfterAddRef.current = true; // Set flag to focus after state update
+    };
+
+    const removeItemRow = (index) => {
+        const itemToRemove = items[index];
+        const isNewRowOnly = items.length <= 1 && !initialData &&
+                             !itemToRemove.material && !itemToRemove.quantidade && !itemToRemove.valorUnitario;
+        if (isNewRowOnly && itemToRemove.id?.toString().startsWith('temp-item-')) {
+            return;
+        }
+        setItems(items.filter((_, i) => i !== index));
+    };
+
+    const handleItemKeyDown = (event, itemIndex, currentFieldType) => {
+        if (event.key === 'Enter' || (event.key === 'Tab' && !event.shiftKey)) {
+            event.preventDefault();
+            if (currentFieldType === 'material') {
+                itemRefs.current[itemIndex]?.quantity?.current?.focus();
+            } else if (currentFieldType === 'quantity') {
+                itemRefs.current[itemIndex]?.unitPrice?.current?.focus();
+            } else if (currentFieldType === 'unitPrice') {
+                if (itemIndex === items.length - 1) { // If on the last item's unit price
+                    addNewItemRow();
+                    // Focus will be handled by useEffect watching items.length and focusAfterAddRef
+                } else { // Navigate to next item's material input
+                    itemRefs.current[itemIndex + 1]?.material?.current?.focus();
+                }
+            }
+        }
+    };
+
+    const validateForm = () => {
+        // ... (validation logic as before, ensuring item error keys match ItemRow's getError)
+        const newErrors = {};
+        if (!obraId) newErrors.obraId = 'Obra é obrigatória.';
+        if (!dataCompra) newErrors.dataCompra = 'Data da compra é obrigatória.';
+
+        const parsedDesconto = parseFloat(desconto);
+        if (isNaN(parsedDesconto) || parsedDesconto < 0) {
+            newErrors.desconto = 'Desconto deve ser um número positivo ou zero.';
+        }
+
+        items.forEach((item, index) => {
+            if (!item.material && !item.materialId) {
+                newErrors[`item_${index}_material`] = 'Material é obrigatório.';
+            }
+            if (item.quantidade === '' || parseFloat(item.quantidade) <= 0) {
+                newErrors[`item_${index}_quantidade`] = 'Quantidade deve ser positiva.';
+            }
+            if (item.valorUnitario === '' || parseFloat(item.valorUnitario) < 0) {
+                newErrors[`item_${index}_valorUnitario`] = 'Valor unitário deve ser positivo ou zero.';
+            }
+        });
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = (e) => {
+        // ... (submit logic as before)
         e.preventDefault();
         if (validateForm()) {
-            // Ensure numeric fields are numbers
-            const { material_id, obra_id, ...rest } = formData;
-            const dataToSubmit = {
-                ...rest,
-                material: material_id, // Renamed from material_id
-                obra: obra_id,         // Renamed from obra_id
-                quantidade: parseFloat(formData.quantidade),
-                custo_total: parseFloat(formData.custo_total),
-                // Backend might expect null for empty optional fields like nota_fiscal
-                nota_fiscal: formData.nota_fiscal || null,
+            const compraData = {
+                obra: parseInt(obraId, 10),
+                data_compra: dataCompra,
+                fornecedor: fornecedor,
+                nota_fiscal: notaFiscal || null,
+                desconto: parseFloat(desconto) || 0,
+                observacoes: observacoes || null,
+                itens: items.filter(item => item.materialId && item.quantidade && item.valorUnitario)
+                           .map(item => ({
+                    material: parseInt(item.materialId, 10),
+                    quantidade: parseFloat(item.quantidade),
+                    valor_unitario: parseFloat(item.valorUnitario)
+                }))
             };
-            onSubmit(dataToSubmit);
+            if (compraData.itens.length === 0 && items.length > 0 && items.some(i => i.materialId || i.quantidade || i.valorUnitario)) {
+                setErrors(prev => ({...prev, form: "Preencha os itens corretamente ou remova linhas desnecessárias."}));
+                return;
+            }
+            if (compraData.itens.length === 0 && items.length === 0 && !initialData) { // Only prevent submission if no items and it's a new form
+                setErrors(prev => ({...prev, form: "Uma compra deve ter pelo menos um item."}));
+                return;
+            }
+            onSubmit(compraData);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-            <div>
-                <label htmlFor="material_id" className="block mb-2 text-sm font-medium text-gray-900">Material <span className="text-red-500">*</span></label>
-                <select
-                    name="material_id"
-                    id="material_id"
-                    value={formData.material_id}
-                    onChange={handleChange}
-                    className={`bg-gray-50 border ${errors.material_id ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
-                >
-                    <option value="">Selecione o Material</option>
-                    {materiais.map((material) => (
-                        <option key={material.id} value={material.id}>
-                            {material.nome} ({material.unidade_medida})
-                        </option>
-                    ))}
-                </select>
-                {errors.material_id && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.material_id}</p>}
-            </div>
-
-            <div>
-                <label htmlFor="obra_id" className="block mb-2 text-sm font-medium text-gray-900">Obra <span className="text-red-500">*</span></label>
-                <select
-                    name="obra_id"
-                    id="obra_id"
-                    value={formData.obra_id}
-                    onChange={handleChange}
-                    className={`bg-gray-50 border ${errors.obra_id ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
-                >
-                    <option value="">Selecione a Obra</option>
-                    {obras.map((obra) => (
-                        <option key={obra.id} value={obra.id}>
-                            {obra.nome_obra}
-                        </option>
-                    ))}
-                </select>
-                {errors.obra_id && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.obra_id}</p>}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-6 p-4 bg-white rounded-lg shadow-md">
+            {/* Header Section (already implemented) ... */}
+            <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">Informações da Compra</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <div>
-                    <label htmlFor="quantidade" className="block mb-2 text-sm font-medium text-gray-900">Quantidade <span className="text-red-500">*</span></label>
-                    <input
-                        type="number"
-                        name="quantidade"
-                        id="quantidade"
-                        value={formData.quantidade}
-                        onChange={handleChange}
-                        min="0"
-                        className={`bg-gray-50 border ${errors.quantidade ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
-                    />
-                    {errors.quantidade && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.quantidade}</p>}
+                    <label htmlFor="dataCompra" className="block mb-1 text-sm font-medium text-gray-700">Data da Compra <span className="text-red-500">*</span></label>
+                    <input type="date" name="dataCompra" id="dataCompra" value={dataCompra} onChange={handleHeaderChange}
+                           className={`w-full px-3 py-2 border ${errors.dataCompra ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}/>
+                    {errors.dataCompra && <p className="mt-1 text-xs text-red-600 flex items-center"><WarningIcon className="w-3 h-3 mr-1"/> {errors.dataCompra}</p>}
                 </div>
                 <div>
-                    <label htmlFor="custo_total" className="block mb-2 text-sm font-medium text-gray-900">Custo Total (R$) <span className="text-red-500">*</span></label>
-                    <input
-                        type="number"
-                        name="custo_total"
-                        id="custo_total"
-                        value={formData.custo_total}
-                        onChange={handleChange}
-                        min="0"
-                        step="0.01"
-                        className={`bg-gray-50 border ${errors.custo_total ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
-                    />
-                    {errors.custo_total && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.custo_total}</p>}
+                    <label htmlFor="obraId" className="block mb-1 text-sm font-medium text-gray-700">Obra <span className="text-red-500">*</span></label>
+                    <select name="obraId" id="obraId" value={obraId} onChange={handleHeaderChange}
+                            className={`w-full px-3 py-2 border ${errors.obraId ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}>
+                        <option value="">Selecione a Obra</option>
+                        {Array.isArray(obras) && obras.map((obra) => (
+                            <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>
+                        ))}
+                    </select>
+                    {errors.obraId && <p className="mt-1 text-xs text-red-600 flex items-center"><WarningIcon className="w-3 h-3 mr-1"/> {errors.obraId}</p>}
+                </div>
+                <div>
+                    <label htmlFor="fornecedor" className="block mb-1 text-sm font-medium text-gray-700">Fornecedor</label>
+                    <input type="text" name="fornecedor" id="fornecedor" value={fornecedor} onChange={handleHeaderChange} placeholder="Nome do fornecedor"
+                           className={`w-full px-3 py-2 border ${errors.fornecedor ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}/>
+                    {errors.fornecedor && <p className="mt-1 text-xs text-red-600 flex items-center"><WarningIcon className="w-3 h-3 mr-1"/> {errors.fornecedor}</p>}
+                </div>
+                <div>
+                    <label htmlFor="notaFiscal" className="block mb-1 text-sm font-medium text-gray-700">Nota Fiscal</label>
+                    <input type="text" name="notaFiscal" id="notaFiscal" value={notaFiscal} onChange={handleHeaderChange} placeholder="Número da nota fiscal (opcional)"
+                           className={`w-full px-3 py-2 border ${errors.notaFiscal ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}/>
+                    {errors.notaFiscal && <p className="mt-1 text-xs text-red-600 flex items-center"><WarningIcon className="w-3 h-3 mr-1"/> {errors.notaFiscal}</p>}
                 </div>
             </div>
 
-            <div>
-                <label htmlFor="fornecedor" className="block mb-2 text-sm font-medium text-gray-900">Fornecedor <span className="text-red-500">*</span></label>
-                <input
-                    type="text"
-                    name="fornecedor"
-                    id="fornecedor"
-                    value={formData.fornecedor}
-                    onChange={handleChange}
-                    className={`bg-gray-50 border ${errors.fornecedor ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
-                />
-                {errors.fornecedor && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.fornecedor}</p>}
+            {/* Dynamic Item Table Section */}
+            <div className="mt-8 pt-6 border-t">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-semibold text-gray-700">Itens da Compra</h3>
+                    <button type="button" onClick={addNewItemRow}
+                            className="py-2 px-4 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                            disabled={isLoading}>
+                        Adicionar Novo Item
+                    </button>
+                </div>
+                <div className="overflow-x-auto rounded-md shadow-sm border border-slate-200">
+                    <table className="min-w-full divide-y divide-slate-200">
+                        <thead className="bg-slate-100">
+                            <tr>
+                                <th scope="col" className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider min-w-[250px]">Material</th>
+                                <th scope="col" className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Qtd.</th>
+                                <th scope="col" className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Un.</th>
+                                <th scope="col" className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Val. Unit. (R$)</th>
+                                <th scope="col" className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Val. Total (R$)</th>
+                                <th scope="col" className="px-3 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-slate-200">
+                            {items.map((item, index) => (
+                                <ItemRow
+                                    key={item.id}
+                                    item={item}
+                                    index={index}
+                                    onItemChange={handleItemChange}
+                                    onRemoveItem={removeItemRow}
+                                    onMaterialSelectForItem={handleMaterialSelected}
+                                    totalItems={items.length}
+                                    errors={errors}
+                                    initialData={initialData}
+                                    onItemKeyDown={handleItemKeyDown} // Pass the keydown handler
+                                    // Assign refs to each input field for programmatic focus
+                                    materialInputRef={el => itemRefs.current[index] = { ...itemRefs.current[index], material: el }}
+                                    quantityInputRef={el => itemRefs.current[index] = { ...itemRefs.current[index], quantity: el }}
+                                    unitPriceInputRef={el => itemRefs.current[index] = { ...itemRefs.current[index], unitPrice: el }}
+                                />
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                 {items.length === 0 && (
+                    <p className="text-sm text-center text-gray-500 py-4">Nenhum item adicionado. Clique em "Adicionar Novo Item".</p>
+                )}
             </div>
 
-            <div>
-                <label htmlFor="data_compra" className="block mb-2 text-sm font-medium text-gray-900">Data da Compra <span className="text-red-500">*</span></label>
-                <input
-                    type="date"
-                    name="data_compra"
-                    id="data_compra"
-                    value={formData.data_compra}
-                    onChange={handleChange}
-                    className={`bg-gray-50 border ${errors.data_compra ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
-                />
-                {errors.data_compra && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.data_compra}</p>}
+            {/* Summary Section (Placeholder) */}
+            <div className="mt-8 pt-6 border-t">
+                <h3 className="text-xl font-semibold text-gray-700 mb-4">Resumo da Compra</h3>
+                 {/* ... (Rest of summary and action buttons as before) ... */}
+                <div className="p-4 border border-dashed border-gray-300 rounded-md min-h-[50px]">
+                     <p className="text-sm text-gray-500">
+                        A seção de resumo (Subtotal, Desconto, Total Geral, Observações) será implementada aqui.
+                    </p>
+                    <div>Desconto Atual (state): {desconto}</div>
+                    <div>Observações Atuais (state): {observacoes}</div>
+                </div>
             </div>
 
-            <div>
-                <label htmlFor="nota_fiscal" className="block mb-2 text-sm font-medium text-gray-900">Nota Fiscal (Opcional)</label>
-                <input
-                    type="text"
-                    name="nota_fiscal"
-                    id="nota_fiscal"
-                    value={formData.nota_fiscal}
-                    onChange={handleChange}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2"
-                />
-            </div>
+            {errors.form && (
+                 <div className="mt-4 p-3 bg-red-50 border border-red-300 rounded-md text-sm text-red-700">
+                    <p>{errors.form}</p>
+                </div>
+            )}
 
-            <div className="flex items-center justify-end space-x-3 pt-2">
+            <div className="flex justify-end space-x-4 pt-6 mt-6 border-t">
                 <button type="button" onClick={onCancel} disabled={isLoading}
-                        className="py-2 px-4 text-sm font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50">
+                        className="py-2 px-5 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-70">
                     Cancelar
                 </button>
                 <button type="submit" disabled={isLoading}
-                        className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300">
-                    {isLoading ? 'Salvando...' : 'Salvar'}
+                        className="py-2 px-5 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:bg-primary-300">
+                    {isLoading ? 'Salvando...' : 'Salvar Compra'}
                 </button>
             </div>
         </form>
