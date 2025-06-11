@@ -3,8 +3,8 @@ import { Link, useLocation } from 'react-router-dom'; // Import useLocation
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth
 
 // Placeholder SVG Icon
-const PlaceholderIcon = () => (
-  <svg className="w-5 h-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+const PlaceholderIcon = ({ className = "w-5 h-5 mr-2" }) => ( // Added className prop with default
+  <svg className={className} viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
   </svg>
 );

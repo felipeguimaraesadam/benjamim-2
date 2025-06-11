@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import * as api from '../../services/api'; // Adjust path as needed
 
 // Warning Icon for validation errors
-const WarningIcon = () => (
-  <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+const WarningIcon = ({ className = "w-4 h-4 inline mr-1" }) => ( // Added className prop with default
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.216 3.031-1.742 3.031H4.42c-1.526 0-2.492-1.697-1.742-3.031l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1.75-4.5a1.75 1.75 0 00-3.5 0v.25h3.5v-.25z" clipRule="evenodd" />
   </svg>
 );
