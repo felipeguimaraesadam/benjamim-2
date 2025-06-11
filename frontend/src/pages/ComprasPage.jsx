@@ -90,13 +90,48 @@ const ComprasPage = () => {
             setCurrentCompra(null);
             await fetchCompras(); // Re-fetch
         } catch (err) {
-            // Attempt to get a more specific error message
-            const errorMessage = err.response?.data?.detail ||
-                               (Array.isArray(err.response?.data) && err.response?.data.map(e => e.msg).join(', ')) || // Handle FastAPI validation errors
-                               err.message ||
-                               (currentCompra ? 'Falha ao atualizar compra.' : 'Falha ao criar compra.');
-            setError(errorMessage);
-            console.error("Form Submit Compra Error:", err.response?.data || err.message || err);
+            let detailedError = currentCompra ? 'Falha ao atualizar compra.' : 'Falha ao criar compra.';
+            if (err.response && err.response.data) {
+                console.error("Compra Form Submission Error Details:", JSON.stringify(err.response.data, null, 2));
+                const errorData = err.response.data;
+                const messages = [];
+                // Standard DRF errors are often field-based, e.g., { field_name: ["error message"] }
+                // Or non_field_errors: ["global error"]
+                if (errorData.non_field_errors) {
+                    messages.push(errorData.non_field_errors.join(' '));
+                }
+                for (const key in errorData) {
+                    if (key !== 'non_field_errors' && Array.isArray(errorData[key])) {
+                        messages.push(`${key}: ${errorData[key].join(' ')}`);
+                    } else if (key !== 'non_field_errors' && typeof errorData[key] === 'string') {
+                         messages.push(`${key}: ${errorData[key]}`);
+                    }
+                }
+                // Handle cases where errorData is a list of errors (e.g. FastAPI)
+                if (Array.isArray(errorData)) {
+                    errorData.forEach(e => {
+                        if (e.msg && e.loc) {
+                            messages.push(`${e.loc.join('.')}: ${e.msg}`);
+                        } else if (typeof e === 'string') {
+                            messages.push(e);
+                        }
+                    });
+                }
+
+                if (messages.length > 0) {
+                    detailedError = messages.join('; ');
+                } else if (typeof errorData === 'string') { // Fallback for simple string error
+                    detailedError = errorData;
+                } else if (err.response.statusText && messages.length === 0) { // Use status text if no specific message
+                    detailedError = `${err.response.status}: ${err.response.statusText}`;
+                }
+            } else {
+                console.error("Compra Form Submission Error (No response data):", err.message || err);
+                if (err.message) {
+                    detailedError = err.message;
+                }
+            }
+            setError(detailedError);
             // Keep form open on error so user can see/correct
         } finally {
             setIsLoadingForm(false);

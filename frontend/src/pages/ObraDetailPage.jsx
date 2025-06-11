@@ -5,6 +5,10 @@ import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
+import DistribuicaoMaterialForm from '../components/forms/DistribuicaoMaterialForm';
+import HistoricoUsoTable from '../components/tables/HistoricoUsoTable';
+import ObraCompletaComprasTable from '../components/tables/ObraCompletaComprasTable';
+import ObraDespesasExtrasTable from '../components/tables/ObraDespesasExtrasTable';
 
 const ObraDetailPage = () => {
   const { id } = useParams(); // Get obra ID from URL
@@ -13,14 +17,22 @@ const ObraDetailPage = () => {
   // const [despesas, setDespesas] = useState([]); // Placeholder, not fully implemented in this task
   const [alocacoesEquipe, setAlocacoesEquipe] = useState([]);
   const [historicoCustos, setHistoricoCustos] = useState([]);
-  const [custosCategoria, setCustosCategoria] = useState([]); // State for category costs
-  const [custosMaterial, setCustosMaterial] = useState([]);   // State for material costs
+  const [custosCategoria, setCustosCategoria] = useState([]); // State for category costs (from obra.custos_por_categoria)
+  const [custosMaterial, setCustosMaterial] = useState([]);   // State for material costs (Top Materiais chart)
+  const [comprasEstoque, setComprasEstoque] = useState([]);
+  const [usosMaterial, setUsosMaterial] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null); // General page error
   const [alocacaoError, setAlocacaoError] = useState(null); // Error for alocacao operations
   const [custosError, setCustosError] = useState(null);       // Error for historicoCustos chart
   const [categoriaError, setCategoriaError] = useState(null); // Error for custosCategoria chart
   const [materialError, setMaterialError] = useState(null);   // Error for custosMaterial chart
+  const [showDistribuicaoModal, setShowDistribuicaoModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('equipes'); // Default tab
+  const [todasCompras, setTodasCompras] = useState([]);
+  const [despesasExtrasObra, setDespesasExtrasObra] = useState([]);
+  const [todasComprasError, setTodasComprasError] = useState(null);
+  const [despesasExtrasObraError, setDespesasExtrasObraError] = useState(null);
 
 
   const fetchObraData = async () => {
@@ -30,6 +42,8 @@ const ObraDetailPage = () => {
     setCustosError(null);
     setCategoriaError(null);
     setMaterialError(null);
+    setTodasComprasError(null);
+    setDespesasExtrasObraError(null);
     try {
       // Fetch obra details
       const obraRes = await api.getObraById(id);
@@ -57,21 +71,56 @@ const ObraDetailPage = () => {
         setCategoriaError("Falha ao carregar custos por categoria.");
       }
 
-      // Fetch custos por material
+      // Fetch custos por material (for Top Materiais chart)
       try {
         const materialRes = await api.getObraCustosPorMaterial(id);
         setCustosMaterial(materialRes.data || []);
       } catch (err) {
-        console.error("Erro ao buscar custos por material:", err);
-        setMaterialError("Falha ao carregar custos por material.");
+        console.error("Erro ao buscar custos por material (Top Materiais):", err);
+        setMaterialError("Falha ao carregar top materiais por custo.");
       }
 
-      // Placeholders - these would be fetched if their sections were fully implemented
-      // setCompras([]);
-      // setDespesas([]);
+      // Fetch Compras for the obra (for Estoque Atual)
+      try {
+        const comprasRes = await api.getCompras({ obra_id: id });
+        const comprasComEstoque = comprasRes.data.filter(compra =>
+          parseFloat(compra.quantidade_disponivel) > 0
+        );
+        setComprasEstoque(comprasComEstoque || []);
+      } catch (err) {
+        console.error("Erro ao buscar compras em estoque:", err);
+        // Consider setting a specific error state for compras if needed
+      }
+
+      // Fetch Usos de Material for the obra
+      try {
+        const usosRes = await api.getUsosMaterial(id);
+        setUsosMaterial(usosRes.data || []);
+      } catch (err) {
+        console.error("Erro ao buscar usos de material:", err);
+        // Consider setting a specific error state for usos if needed
+      }
+
+      // Fetch all compras for "Todas as Compras" tab
+      try {
+        const todasComprasRes = await api.getCompras({ obra_id: id });
+        setTodasCompras(todasComprasRes.data || []);
+      } catch (err) {
+        console.error("Erro ao buscar todas as compras:", err);
+        setTodasComprasError("Falha ao carregar todas as compras.");
+      }
+
+      // Fetch despesas extras for "Despesas Extras" tab
+      try {
+        const despesasRes = await api.getDespesasExtras({ obra_id: id });
+        setDespesasExtrasObra(despesasRes.data || []);
+      } catch (err) {
+        console.error("Erro ao buscar despesas extras:", err);
+        setDespesasExtrasObraError("Falha ao carregar despesas extras.");
+      }
 
     } catch (err) {
-      setError(err.message || `Falha ao buscar dados da obra ${id}`); // General error for primary data
+      setError(err.message || `Falha ao buscar dados da obra ${id}`);
       console.error("Fetch Obra Main Data Error:", err);
     } finally {
       setIsLoading(false);
@@ -108,8 +157,24 @@ const ObraDetailPage = () => {
     return new Date(dateString).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   };
 
+  const handleOpenDistribuicaoModal = () => setShowDistribuicaoModal(true);
+  const handleCloseDistribuicaoModal = () => setShowDistribuicaoModal(false);
+
+  const handleSubmitDistribuicaoSuccess = () => {
+    fetchObraData(); // Refresh all obra data, including estoque and usos
+    // alert('Uso de material registrado com sucesso!'); // Basic feedback
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
+      {showDistribuicaoModal && (
+        <DistribuicaoMaterialForm
+          obraId={id}
+          onClose={handleCloseDistribuicaoModal}
+          onSubmitSuccess={handleSubmitDistribuicaoSuccess}
+          showModal={showDistribuicaoModal}
+        />
+      )}
       {/* Breadcrumbs or Back Link */}
       <div className="mb-6">
         <Link to="/obras" className="text-primary-600 hover:text-primary-700 transition duration-150 ease-in-out inline-flex items-center">
@@ -167,70 +232,243 @@ const ObraDetailPage = () => {
         )}
       </div>
 
-      {/* Related Data Sections Grid */}
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    {/* Dashboard Financeiro */}
+    <div className="mb-8 p-6 bg-white shadow-lg rounded-lg">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Dashboard Financeiro</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="p-4 bg-blue-100 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-blue-800">Orçamento Previsto</h3>
+          <p className="text-2xl text-blue-900">R$ {parseFloat(obra.orcamento_previsto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        </div>
+        <div className="p-4 bg-red-100 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-red-800">Custo Total Realizado</h3>
+          <p className="text-2xl text-red-900">R$ {parseFloat(obra.custo_total_realizado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        </div>
+        <div className={`p-4 rounded-lg shadow ${parseFloat(obra.balanco_financeiro || 0) >= 0 ? 'bg-green-100' : 'bg-orange-100'}`}>
+          <h3 className={`text-lg font-semibold ${parseFloat(obra.balanco_financeiro || 0) >= 0 ? 'text-green-800' : 'text-orange-800'}`}>Balanço Financeiro</h3>
+          <p className={`text-2xl ${parseFloat(obra.balanco_financeiro || 0) >= 0 ? 'text-green-900' : 'text-orange-900'}`}>
+            R$ {parseFloat(obra.balanco_financeiro || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        </div>
+      </div>
+      <div>
+        <h3 className="text-xl font-semibold text-gray-700 mb-2">Composição dos Custos</h3>
+        {obra.custos_por_categoria && (
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={Object.entries(obra.custos_por_categoria)
+                  .map(([name, value]) => ({ name, value: parseFloat(value) }))
+                  .filter(entry => entry.value > 0) // Mostrar apenas categorias com valor
+                }
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent, value }) => `${name} (${(percent * 100).toFixed(0)}%) - R$ ${value.toLocaleString('pt-BR')}`}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {Object.entries(obra.custos_por_categoria).filter(([name, value]) => parseFloat(value) > 0).map((entry, index) => (
+                  <Cell key={`cell-comp-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'][index % 5]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
 
-        {/* Equipes Alocadas Section */}
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <div className="flex justify-between items-center mb-4 border-b pb-2">
-            <h2 className="text-xl font-semibold text-gray-700">Equipes Alocadas</h2>
-            <Link
-              to="/alocacoes"
-              state={{ obraIdParaNovaAlocacao: obra.id }}
-              className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-1 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
-            >
-              + Alocar Nova Equipe
-            </Link>
-          </div>
-          {alocacaoError && <p className="text-red-500 text-sm mb-2">Erro: {alocacaoError}</p>}
-          {alocacoesEquipe.length > 0 ? (
-            <ul className="space-y-3">
-              {alocacoesEquipe.map(aloc => (
-                <li key={aloc.id} className="p-3 bg-gray-50 rounded-md shadow-sm text-sm">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      {aloc.equipe_nome ? (
-                        <p className="font-semibold text-primary-700">Equipe: {aloc.equipe_nome}</p>
-                      ) : (
-                        <p className="font-semibold text-primary-700">Serviço Externo: {aloc.servico_externo || 'Não especificado'}</p>
-                      )}
-                      <p className="text-gray-600">De: {formatDate(aloc.data_alocacao_inicio)}</p>
-                      <p className="text-gray-600">Até: {aloc.data_alocacao_fim ? formatDate(aloc.data_alocacao_fim) : 'Presente'}</p>
-                    </div>
-                    <button
-                      onClick={() => handleRemoverAlocacao(aloc.id)}
-                      className="text-red-500 hover:text-red-700 font-semibold py-1 px-2 rounded-md text-xs hover:bg-red-100 transition-colors"
-                      title="Remover Alocação"
-                    >
-                      Remover
-                    </button>
-                  </div>
-                </li>
+    {/* Central de Ações Rápidas */}
+    <div className="mb-8 p-6 bg-white shadow-lg rounded-lg">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Ações Rápidas</h2>
+      <button
+        onClick={handleOpenDistribuicaoModal}
+        className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out"
+      >
+        Distribuir Materiais (Registrar Uso)
+      </button>
+      {/* Placeholder for other actions */}
+    </div>
+
+
+    {/* Estoque Atual */}
+    <div className="mb-8 p-6 bg-white shadow-lg rounded-lg">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Estoque Atual (Materiais Disponíveis)</h2>
+      {comprasEstoque.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Material</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Disponível</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Data Compra</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fornecedor</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {comprasEstoque.map(compra => (
+                <tr key={compra.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{compra.material_nome}</td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{parseFloat(compra.quantidade_disponivel).toLocaleString('pt-BR')} {compra.material_unidade_medida || ''}</td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatDate(compra.data_compra)}</td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{compra.fornecedor || 'N/A'}</td>
+                </tr>
               ))}
-            </ul>
-          ) : (<p className="text-gray-500 text-sm">Nenhuma equipe alocada para esta obra.</p>)}
+            </tbody>
+          </table>
         </div>
+      ) : (
+        <p className="text-gray-500">Nenhum material em estoque no momento.</p>
+      )}
+    </div>
 
-        {/* Compras Section Placeholder (can be expanded similarly) */}
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Compras de Materiais</h2>
-          {/* Link to add compra can be here too if preferred */}
-          {compras.length > 0 ? (
-            <ul className="space-y-2 text-sm text-gray-600">{compras.map(c => <li key={c.id}>{c.material_nome}: {c.quantidade} {c.unidade_medida} - R$ {parseFloat(c.custo_total).toFixed(2)}</li>)}</ul>
-          ) : (<p className="text-gray-500 text-sm">Nenhuma compra registrada para esta obra (dados de exemplo).</p>)}
-        </div>
+    {/* Histórico de Uso de Materiais */}
+    <div className="bg-white shadow-lg rounded-lg p-6 mt-6"> {/* Use a consistent container like others */}
+      <h2 className="text-2xl font-semibold mb-4 text-gray-800 border-b pb-2">
+        Histórico de Uso de Materiais
+      </h2>
+      <HistoricoUsoTable
+        usosMaterial={usosMaterial}
+        isLoading={isLoading}
+        error={error} // Can pass general page error or a specific one if created for usos
+      />
+    </div>
 
-        {/* Despesas Extras Section Placeholder - can be detailed like Compras if needed */}
-        {/* <div className="bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Despesas Extras</h2>
-          {despesas.length > 0 ? (
-            <ul className="space-y-2 text-sm text-gray-600">{despesas.map(d => <li key={d.id}>{d.descricao}: R$ {parseFloat(d.valor).toFixed(2)} ({d.categoria})</li>)}</ul>
-          ) : (<p className="text-gray-500 text-sm">Nenhuma despesa extra registrada (dados de exemplo).</p>)}
-        </div> */}
 
+    {/* Abas de Detalhamento */}
+    <div className="mb-8">
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+          <button
+            onClick={() => setActiveTab('equipes')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'equipes'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Equipes Alocadas
+          </button>
+          <button
+            onClick={() => setActiveTab('compras')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'compras'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Todas as Compras
+          </button>
+          <button
+            onClick={() => setActiveTab('despesas')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'despesas'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Despesas Extras
+          </button>
+          {/* Adicionar mais abas conforme necessário */}
+        </nav>
+      </div>
+
+      {/* Conteúdo das Abas */}
+      <div className="py-6">
+        {activeTab === 'equipes' && (
+          <div className="bg-white shadow-lg rounded-lg p-6">
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+              <h2 className="text-xl font-semibold text-gray-700">Equipes Alocadas</h2>
+              <Link
+                to="/alocacoes" // Assuming a page/modal to create new alocacoes
+                state={{ obraIdParaNovaAlocacao: obra.id }}
+                className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-1 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
+              >
+                + Alocar Nova Equipe/Serviço
+              </Link>
+            </div>
+            {alocacaoError && <p className="text-red-500 text-sm mb-2">Erro: {alocacaoError}</p>}
+            {alocacoesEquipe.length > 0 ? (
+              <ul className="space-y-3">
+                {alocacoesEquipe.map(aloc => (
+                  <li key={aloc.id} className="p-3 bg-gray-50 rounded-md shadow-sm text-sm">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        {aloc.equipe_nome ? (
+                          <p className="font-semibold text-primary-700">Equipe: {aloc.equipe_nome}</p>
+                        ) : (
+                          <p className="font-semibold text-primary-700">Serviço Externo: {aloc.servico_externo || 'Não especificado'}</p>
+                        )}
+                        <p className="text-gray-600">De: {formatDate(aloc.data_alocacao_inicio)}</p>
+                        <p className="text-gray-600">Até: {aloc.data_alocacao_fim ? formatDate(aloc.data_alocacao_fim) : 'Presente'}</p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoverAlocacao(aloc.id)}
+                        className="text-red-500 hover:text-red-700 font-semibold py-1 px-2 rounded-md text-xs hover:bg-red-100 transition-colors"
+                        title="Remover Alocação"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (<p className="text-gray-500 text-sm">Nenhuma equipe ou serviço externo alocado para esta obra.</p>)}
+          </div>
+        )}
+
+        {activeTab === 'compras' && (
+          <div className="bg-white shadow-lg rounded-lg p-6">
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 className="text-xl font-semibold text-gray-700">Todas as Compras da Obra</h2>
+                <Link
+                    to="/compras" // Link to general compras page or a modal for new compra
+                    state={{ obraIdParaNovaCompra: obra.id, obraNome: obra.nome_obra }} // Pass obraId and name
+                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
+                >
+                    + Adicionar Nova Compra
+                </Link>
+            </div>
+            {todasComprasError && <p className="text-red-500 text-sm mb-2">Erro: {todasComprasError}</p>}
+            <ObraCompletaComprasTable
+                compras={todasCompras}
+                isLoading={isLoading}
+                error={todasComprasError}
+            />
+          </div>
+        )}
+
+        {activeTab === 'despesas' && (
+          <div className="bg-white shadow-lg rounded-lg p-6">
+             <div className="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 className="text-xl font-semibold text-gray-700">Despesas Extras da Obra</h2>
+                <Link
+                    to="/despesas-extras" // Link to general despesas page or a modal
+                    state={{ obraIdParaNovaDespesa: obra.id, obraNome: obra.nome_obra }} // Pass obraId and name
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-1 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
+                >
+                    + Adicionar Despesa Extra
+                </Link>
+            </div>
+            {despesasExtrasObraError && <p className="text-red-500 text-sm mb-2">Erro: {despesasExtrasObraError}</p>}
+            <ObraDespesasExtrasTable
+                despesas={despesasExtrasObra}
+                isLoading={isLoading}
+                error={despesasExtrasObraError}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* Remaining charts can stay outside tabs or be moved into a 'Visão Geral' or 'Financeiro' tab later */}
+    <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Gráfico Histórico de Custos Mensais */}
-        <div className="bg-white shadow-lg rounded-lg p-6 lg:col-span-2">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Histórico de Custos Mensais</h2>
+        <div className="bg-white shadow-lg rounded-lg p-6 lg:col-span-2"> {/* Making it full width for now */}
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Visão Geral: Histórico de Custos Mensais</h2>
           {custosError && <p className="text-red-500 text-sm mb-2">Erro: {custosError}</p>}
           {historicoCustos.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -250,39 +488,9 @@ const ObraDetailPage = () => {
           )}
         </div>
 
-        {/* Gráfico Custos por Categoria de Despesa */}
+        {/* Gráfico Materiais Mais Caros - Pode ser movido para aba "Compras" ou "Análise" futuramente */}
         <div className="bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Despesas por Categoria</h2>
-          {categoriaError && <p className="text-red-500 text-sm mb-2">Erro: {categoriaError}</p>}
-          {custosCategoria.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={custosCategoria}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {custosCategoria.map((entry, index) => (
-                    <Cell key={`cell-cat-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1919'][index % 6]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            !categoriaError && <p className="text-gray-500 text-sm">Nenhuma despesa extra registrada para este gráfico.</p>
-          )}
-        </div>
-
-        {/* Gráfico Materiais Mais Caros */}
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Top Materiais por Custo</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Visão Geral: Top Materiais por Custo</h2>
           {materialError && <p className="text-red-500 text-sm mb-2">Erro: {materialError}</p>}
           {custosMaterial.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>

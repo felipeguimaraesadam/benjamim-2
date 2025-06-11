@@ -244,8 +244,8 @@ export { apiClient }; // Keep this if other parts of app use apiClient directly
 // The above named exports for functions are more typical for a service file.
 
 // --- Despesa Extra Service Functions ---
-export const getDespesasExtras = () => {
-  return apiClient.get('/despesas/');
+export const getDespesasExtras = (params) => { // Accept a params object
+  return apiClient.get('/despesas/', { params }); // Pass params to axios config
 };
 
 export const getDespesaExtraById = (id) => {
@@ -291,8 +291,8 @@ export const getDashboardStats = () => {
 };
 
 // --- Compra Service Functions ---
-export const getCompras = () => {
-  return apiClient.get('/compras/');
+export const getCompras = (params) => { // Accept a params object
+  return apiClient.get('/compras/', { params }); // Pass params to axios config
 };
 
 export const createCompra = (compraData) => {
@@ -305,6 +305,15 @@ export const updateCompra = (id, compraData) => {
 
 export const deleteCompra = (id) => {
   return apiClient.delete(`/compras/${id}/`);
+};
+
+// --- UsoMaterial Service Functions ---
+export const createUsoMaterial = (data) => {
+  return apiClient.post('/usomateriais/', data);
+};
+
+export const getUsosMaterial = (obraId) => {
+  return apiClient.get('/usomateriais/', { params: { obra_id: obraId } });
 };
 
 // --- Ocorrencia Service Functions ---

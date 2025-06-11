@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from decimal import Decimal
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, login, password=None, **extra_fields):
@@ -54,6 +55,7 @@ class Obra(models.Model):
     data_real_fim = models.DateField(null=True, blank=True)
     responsavel = models.ForeignKey('Funcionario', on_delete=models.SET_NULL, null=True, blank=True, related_name='obras_responsaveis')
     cliente_nome = models.CharField(max_length=255, blank=True, null=True)
+    orcamento_previsto = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, default=Decimal('0.00'))
 
     def __str__(self):
         return self.nome_obra
@@ -126,3 +128,19 @@ class Ocorrencia_Funcionario(models.Model):
 
     def __str__(self):
         return f"{self.tipo} - {self.funcionario.nome_completo} em {self.data}"
+
+class UsoMaterial(models.Model):
+    compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name='usos')
+    obra = models.ForeignKey(Obra, on_delete=models.CASCADE, related_name='usos_materiais')
+    quantidade_usada = models.DecimalField(max_digits=10, decimal_places=2)
+    data_uso = models.DateField(auto_now_add=True)
+    andar = models.CharField(max_length=50, choices=[('Terreo', 'Térreo'), ('1 Andar', '1º Andar'), ('2 Andar', '2º Andar'), ('Cobertura', 'Cobertura'), ('Area Externa', 'Área Externa'), ('Outro', 'Outro')])
+    categoria_uso = models.CharField(max_length=50, choices=[('Geral', 'Geral'), ('Eletrica', 'Elétrica'), ('Hidraulica', 'Hidráulica'), ('Alvenaria', 'Alvenaria'), ('Acabamento', 'Acabamento'), ('Estrutura', 'Estrutura'), ('Uso da Equipe', 'Uso da Equipe')], default='Geral')
+    descricao = models.TextField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        self.obra = self.compra.obra
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.quantidade_usada} de {self.compra.material.nome} em {self.data_uso}"
