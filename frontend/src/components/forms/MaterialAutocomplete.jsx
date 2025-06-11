@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useImperativeHandle } from 'react'; // Added useRef, useImperativeHandle
+import React, { useState, useEffect, useCallback, useRef, useImperativeHandle } from 'react';
 import * as api from '../../services/api';
 import MaterialForm from './MaterialForm';
 
@@ -12,7 +12,7 @@ const debounce = (func, delay) => {
     };
 };
 
-const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIndex, error, onKeyDown }, ref) => { // Added onKeyDown prop and ref
+const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIndex, error, parentOnKeyDown }, ref) => { // Renamed onKeyDown to parentOnKeyDown
     const [inputValue, setInputValue] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -20,10 +20,11 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
     const [showNewMaterialModal, setShowNewMaterialModal] = useState(false);
     const [isSubmittingNewMaterial, setIsSubmittingNewMaterial] = useState(false);
     const [newMaterialError, setNewMaterialError] = useState(null);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
-    const inputRef = useRef(null); // Ref for the actual input element
+    const inputRef = useRef(null);
+    const suggestionItemRefs = useRef([]); // To store refs to <li> elements
 
-    // Expose focus method to parent components
     useImperativeHandle(ref, () => ({
         focus: () => {
             inputRef.current.focus();
@@ -40,15 +41,33 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
         }
     }, [value]);
 
+    useEffect(() => {
+        if (!showSuggestions || suggestions.length === 0) {
+            setHighlightedIndex(-1);
+        }
+        suggestionItemRefs.current = suggestionItemRefs.current.slice(0, suggestions.length);
+    }, [suggestions, showSuggestions]);
+
+    const scrollToSuggestion = (index) => {
+        if (suggestionItemRefs.current[index]) {
+            suggestionItemRefs.current[index].scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+            });
+        }
+    };
+
     const debouncedFetchSuggestions = useCallback(
         debounce(async (query) => {
             if (!query || query.length < 1) {
                 setSuggestions([]);
                 setShowSuggestions(false);
+                setHighlightedIndex(-1);
                 return;
             }
             setIsLoading(true);
             setShowSuggestions(true);
+            setHighlightedIndex(-1); // Reset highlight on new search
             try {
                 const response = await api.getMateriais({ nome__icontains: query, page_size: 10 });
                 setSuggestions(response.data?.results || response.data || response || []);
@@ -65,11 +84,12 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
     const handleInputChange = (e) => {
         const newInputValue = e.target.value;
         setInputValue(newInputValue);
+        setHighlightedIndex(-1); // Reset highlight on input change
         if (newInputValue.trim() === '') {
             setSuggestions([]);
             setShowSuggestions(false);
             if (value) {
-              onMaterialSelect(itemIndex, null);
+                onMaterialSelect(itemIndex, null);
             }
         } else {
             debouncedFetchSuggestions(newInputValue);
@@ -80,6 +100,7 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
         setInputValue(material.nome);
         setSuggestions([]);
         setShowSuggestions(false);
+        setHighlightedIndex(-1);
         onMaterialSelect(itemIndex, material);
     };
 
@@ -88,10 +109,10 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
             if (suggestions.length > 0) {
                 setShowSuggestions(true);
             } else {
-                 debouncedFetchSuggestions(inputValue);
+                debouncedFetchSuggestions(inputValue);
             }
         } else if (suggestions.length > 0 && !showNewMaterialModal) {
-             setShowSuggestions(true);
+            setShowSuggestions(true);
         }
     };
 
@@ -114,7 +135,7 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
     const handleCloseNewMaterialModal = () => {
         setShowNewMaterialModal(false);
         setNewMaterialError(null);
-        inputRef.current?.focus(); // Focus back to autocomplete input
+        inputRef.current?.focus();
     };
 
     const handleNewMaterialSubmit = async (materialFormData) => {
@@ -147,34 +168,67 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
         }
     };
 
-    // Propagate keydown event to parent if it's provided (for navigation)
-    const internalOnKeyDown = (e) => {
-        if (onKeyDown) {
-            onKeyDown(e);
+    const handleInputKeyDown = (e) => {
+        if (showSuggestions && suggestions.length > 0 && !showNewMaterialModal) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const nextIndex = highlightedIndex >= suggestions.length - 1 ? 0 : highlightedIndex + 1;
+                setHighlightedIndex(nextIndex);
+                scrollToSuggestion(nextIndex);
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prevIndex = highlightedIndex <= 0 ? suggestions.length - 1 : highlightedIndex - 1;
+                setHighlightedIndex(prevIndex);
+                scrollToSuggestion(prevIndex);
+                return;
+            }
+            if (e.key === 'Enter' && highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
+                e.preventDefault();
+                handleSuggestionClick(suggestions[highlightedIndex]);
+                setHighlightedIndex(-1);
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setShowSuggestions(false);
+                setHighlightedIndex(-1);
+                return;
+            }
+        } else if (e.key === 'Enter' && showSuggestions && suggestions.length === 0 && inputValue.trim() !== '' && !isLoading && !showNewMaterialModal) {
+            // If "No results" is shown with "Add New" button, Enter might trigger "Add New"
+            // Or, if there's a different primary action, handle that.
+            // For now, if suggestions are shown (even if empty message), Enter is "handled" by this component.
+            // We can let parentOnKeyDown handle it if we want Enter to navigate away.
+            // This specific case (Enter on "No results") is tricky.
+            // Let's assume for now if suggestions box is open, Enter is for it.
+            // If we want Enter to navigate away from an empty suggestion box, then don't return here.
         }
-        // Prevent suggestions list from stealing Enter key if it's not handled by parent
-        if (e.key === 'Enter' && showSuggestions && suggestions.length > 0) {
-             // Potentially select first suggestion or handle as needed, or let parent handle
+
+
+        if (parentOnKeyDown) {
+            parentOnKeyDown(e); // Call parent's onKeyDown for Tab, Enter (if not selecting suggestion), etc.
         }
     };
-
 
     return (
         <div className="relative w-full">
             <input
-                ref={inputRef} // Assign ref to the input
+                ref={inputRef}
                 type="text"
                 id={`material-input-${itemIndex}`}
                 value={inputValue}
                 onChange={handleInputChange}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                onKeyDown={internalOnKeyDown} // Use internal handler that calls prop
+                onKeyDown={handleInputKeyDown} // Enhanced internal handler
                 placeholder="Digite para buscar material..."
                 className={`w-full p-1.5 border ${error ? 'border-red-500' : 'border-slate-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm`}
                 aria-autocomplete="list"
-                aria-expanded={showSuggestions && suggestions.length > 0 && !showNewMaterialModal}
+                aria-expanded={showSuggestions && !showNewMaterialModal}
                 aria-controls={`suggestions-list-${itemIndex}`}
+                aria-activedescendant={highlightedIndex >= 0 ? `suggestion-${itemIndex}-${highlightedIndex}` : undefined}
                 autoComplete="off"
             />
             {error && <p className="text-xs text-red-600 mt-0.5">{error}</p>}
@@ -193,22 +247,24 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
                     </div>
                 )}
                 {showSuggestions && suggestions.length > 0 && !showNewMaterialModal && (
-                     <ul id={`suggestions-list-${itemIndex}`} role="listbox" className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
+                    <ul id={`suggestions-list-${itemIndex}`} role="listbox" className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
                         {suggestions.map((material, idx) => (
                             <li
                                 key={material.id}
+                                ref={el => suggestionItemRefs.current[idx] = el} // Assign ref to li
                                 id={`suggestion-${itemIndex}-${idx}`}
                                 role="option"
-                                aria-selected={false}
+                                aria-selected={idx === highlightedIndex}
                                 onMouseDown={() => handleSuggestionClick(material)}
-                                className="px-3 py-2 hover:bg-primary-100 cursor-pointer text-sm text-slate-700"
+                                onMouseEnter={() => setHighlightedIndex(idx)} // Sync mouse hover
+                                className={`px-3 py-2 cursor-pointer text-sm text-slate-700 ${idx === highlightedIndex ? 'bg-primary-200 text-primary-700 font-semibold' : 'hover:bg-primary-100'}`}
                             >
                                 {material.nome} ({material.unidade_medida})
                             </li>
                         ))}
                     </ul>
                 )}
-                 {isLoading && showSuggestions && !showNewMaterialModal && (
+                {isLoading && showSuggestions && !showNewMaterialModal && (
                     <div className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 p-3 text-sm text-slate-500 shadow-lg">
                         Buscando...
                     </div>
@@ -223,7 +279,7 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
                             <button onClick={handleCloseNewMaterialModal} className="text-slate-500 hover:text-slate-700 text-2xl leading-none p-1 -mr-1 -mt-1" aria-label="Fechar modal">&times;</button>
                         </div>
                         {newMaterialError && (
-                             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded mb-3 text-sm" role="alert">
+                            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded mb-3 text-sm" role="alert">
                                 <p><span className="font-bold">Erro:</span> {newMaterialError}</p>
                             </div>
                         )}
@@ -238,6 +294,6 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
             )}
         </div>
     );
-}); // End of React.forwardRef
+});
 
 export default MaterialAutocomplete;

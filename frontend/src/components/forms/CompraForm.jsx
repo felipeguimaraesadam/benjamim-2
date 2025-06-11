@@ -9,14 +9,13 @@ const WarningIcon = ({ className = "w-4 h-4 inline mr-1" }) => (
 let itemUniqueIdCounter = 0;
 const generateItemUniqueId = () => `temp-item-${itemUniqueIdCounter++}`;
 
-// ItemRow Sub-Component Definition
 const ItemRow = ({
     item, index, onItemChange, onRemoveItem, totalItems, errors,
     onMaterialSelectForItem, initialData,
     onItemKeyDown,
-    materialRef, // Changed from materialInputRef to materialRef for clarity
-    quantityRef, // Changed from quantityInputRef to quantityRef
-    unitPriceRef   // Changed from unitPriceInputRef to unitPriceRef
+    materialRef,
+    quantityRef,
+    unitPriceRef
 }) => {
     const getError = (fieldName) => errors && errors[`item_${index}_${fieldName}`];
 
@@ -27,7 +26,7 @@ const ItemRow = ({
         <tr className={`${index % 2 === 0 ? 'bg-slate-50' : 'bg-white'} transition-colors duration-150 ease-in-out hover:bg-slate-100`}>
             <td className="px-3 py-2.5 border-b border-slate-200 text-sm min-w-[250px] align-top">
                 <MaterialAutocomplete
-                    ref={materialRef} // Use the passed ref
+                    ref={materialRef}
                     value={item.material}
                     onMaterialSelect={onMaterialSelectForItem}
                     itemIndex={index}
@@ -37,14 +36,15 @@ const ItemRow = ({
             </td>
             <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top">
                 <input
-                    ref={quantityRef} // Use the passed ref
-                    type="number"
+                    ref={quantityRef}
+                    type="text"
+                    inputMode="decimal"
                     name="quantidade"
                     value={item.quantidade}
                     onChange={(e) => onItemChange(index, 'quantidade', e.target.value)}
                     onKeyDown={(e) => onItemKeyDown(e, index, 'quantity')}
                     className={`w-24 p-1.5 border ${getError('quantidade') ? 'border-red-500' : 'border-slate-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm`}
-                    placeholder="0.000" step="0.001" min="0"
+                    placeholder="0.000"
                 />
                 {getError('quantidade') && <p className="text-xs text-red-600 mt-1 flex items-center"><WarningIcon className="w-3 h-3 mr-0.5"/>{getError('quantidade')}</p>}
             </td>
@@ -53,19 +53,20 @@ const ItemRow = ({
             </td>
             <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top">
                 <input
-                    ref={unitPriceRef} // Use the passed ref
-                    type="number"
+                    ref={unitPriceRef}
+                    type="text"
+                    inputMode="decimal"
                     name="valorUnitario"
                     value={item.valorUnitario}
                     onChange={(e) => onItemChange(index, 'valorUnitario', e.target.value)}
                     onKeyDown={(e) => onItemKeyDown(e, index, 'unitPrice')}
                     className={`w-28 p-1.5 border ${getError('valorUnitario') ? 'border-red-500' : 'border-slate-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm`}
-                    placeholder="0.00" step="0.01" min="0"
+                    placeholder="0.00"
                 />
                 {getError('valorUnitario') && <p className="text-xs text-red-600 mt-1 flex items-center"><WarningIcon className="w-3 h-3 mr-0.5"/>{getError('valorUnitario')}</p>}
             </td>
             <td className="px-3 py-2.5 border-b border-slate-200 text-sm text-slate-800 font-medium align-middle">
-                R$ {parseFloat(item.valorTotalItem || 0).toFixed(2)}
+                R$ {parseFloat(item.valorTotalItem || 0).toFixed(2).replace('.',',')}
             </td>
             <td className="px-3 py-2.5 border-b border-slate-200 text-center align-middle">
                 <button type="button" onClick={() => onRemoveItem(index)}
@@ -91,11 +92,10 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     const [obras, setObras] = useState([]);
     const [errors, setErrors] = useState({});
 
-    const itemFieldRefs = useRef([]); // Stores refs for [material, quantity, unitPrice] per item
+    const itemFieldRefs = useRef([]);
     const focusAfterAddRef = useRef(false);
 
     useEffect(() => {
-        // Ensure itemFieldRefs array has a ref object for each item
         itemFieldRefs.current = items.map(
             (_, i) => itemFieldRefs.current[i] || {
                 material: React.createRef(),
@@ -103,17 +103,17 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 unitPrice: React.createRef(),
             }
         );
-    }, [items.length]); // Only re-run if the number of items changes
+    }, [items.length]);
 
     useEffect(() => {
         if (focusAfterAddRef.current && items.length > 0) {
             const lastItemIndex = items.length - 1;
-            setTimeout(() => { // Use setTimeout to ensure DOM is updated
+            setTimeout(() => {
                 itemFieldRefs.current[lastItemIndex]?.material?.current?.focus();
             }, 0);
             focusAfterAddRef.current = false;
         }
-    }, [items]); // Depend on items state to catch new row addition
+    }, [items]);
 
 
     useEffect(() => {
@@ -143,17 +143,17 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             setFornecedor(initialData.fornecedor || '');
             setNotaFiscal(initialData.nota_fiscal || '');
             setObservacoes(initialData.observacoes || '');
-            setDesconto(String(initialData.desconto || '0.00'));
+            setDesconto(String(initialData.desconto || '0.00').replace(',', '.'));
 
             const initialItems = initialData.itens?.map(item => ({
                 id: item.id || generateItemUniqueId(),
                 material: item.material_obj || { id: String(item.material), nome: item.material_nome, unidade_medida: item.unidade_medida },
                 materialId: String(item.material) || '',
                 materialNome: item.material_nome || (item.material_obj ? item.material_obj.nome : ''),
-                quantidade: String(item.quantidade || ''),
+                quantidade: String(item.quantidade || '').replace(',', '.'),
                 unidadeMedida: item.unidade_medida || (item.material_obj ? item.material_obj.unidade_medida : ''),
-                valorUnitario: String(item.valor_unitario || ''),
-                valorTotalItem: String(item.valor_total_item || '0.00')
+                valorUnitario: String(item.valor_unitario || '').replace(',', '.'),
+                valorTotalItem: String(item.valor_total_item || '0.00').replace(',', '.')
             })) || [];
 
             setItems(initialItems.length > 0 ? initialItems : [createNewEmptyItem()]);
@@ -171,12 +171,18 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
     const handleHeaderChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'obraId') setObraId(value);
+        let processedValue = value;
+        if (name === 'desconto') {
+            processedValue = typeof value === 'string' ? value.replace(',', '.') : value;
+        }
+
+        if (name === 'obraId') setObraId(value); // obraId is already string from select
         else if (name === 'dataCompra') setDataCompra(value);
         else if (name === 'fornecedor') setFornecedor(value);
         else if (name === 'notaFiscal') setNotaFiscal(value);
-        else if (name === 'observacoes') setObservacoes(value);
-        else if (name === 'desconto') setDesconto(value);
+        else if (name === 'observacoes') setObservacoes(value); // observacoes is a string
+        else if (name === 'desconto') setDesconto(processedValue);
+
 
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
@@ -209,18 +215,29 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         setTimeout(() => itemFieldRefs.current[index]?.quantity?.current?.focus(), 0);
     };
 
-    const handleItemChange = (index, fieldName, value) => {
+    const handleItemChange = (index, fieldName, rawValue) => {
         const updatedItems = items.map((item, i) => {
             if (i === index) {
-                const newItem = { ...item, [fieldName]: value };
+                let processedValue = rawValue;
+                if (fieldName === 'valorUnitario' || fieldName === 'quantidade') {
+                    processedValue = typeof rawValue === 'string' ? rawValue.replace(',', '.') : rawValue;
+                }
+
+                const newItem = { ...item, [fieldName]: processedValue };
+
                 if (fieldName === 'quantidade' || fieldName === 'valorUnitario') {
                     const qty = parseFloat(newItem.quantidade) || 0;
                     const price = parseFloat(newItem.valorUnitario) || 0;
                     newItem.valorTotalItem = (qty * price).toFixed(2);
                 }
+
                 const errorKey = `item_${index}_${fieldName}`;
-                if(errors[errorKey]) {
-                    setErrors(prev => ({...prev, [errorKey]: null}));
+                if (errors[errorKey]) {
+                    setErrors(prevErrors => {
+                        const newErrors = { ...prevErrors };
+                        delete newErrors[errorKey];
+                        return newErrors;
+                    });
                 }
                 return newItem;
             }
@@ -267,18 +284,23 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         const newErrors = {};
         if (!obraId) newErrors.obraId = 'Obra é obrigatória.';
         if (!dataCompra) newErrors.dataCompra = 'Data da compra é obrigatória.';
-        const parsedDesconto = parseFloat(desconto);
-        if (isNaN(parsedDesconto) || parsedDesconto < 0) {
-            newErrors.desconto = 'Desconto deve ser um número positivo ou zero.';
+
+        const currentDescontoStr = String(desconto); // Ensure 'desconto' is string before replace
+        const standardizedDesconto = currentDescontoStr.replace(',', '.');
+        if (standardizedDesconto.trim() !== '' && (isNaN(parseFloat(standardizedDesconto)) || parseFloat(standardizedDesconto) < 0)) {
+            newErrors.desconto = 'Desconto deve ser um número válido e não negativo.';
         }
+
         items.forEach((item, index) => {
             if (!item.material && !item.materialId) {
                 newErrors[`item_${index}_material`] = 'Material é obrigatório.';
             }
-            if (item.quantidade === '' || parseFloat(item.quantidade) <= 0) {
+            const standardizedQuantidade = String(item.quantidade).replace(',', '.');
+            if (standardizedQuantidade === '' || parseFloat(standardizedQuantidade) <= 0) {
                 newErrors[`item_${index}_quantidade`] = 'Quantidade deve ser positiva.';
             }
-            if (item.valorUnitario === '' || parseFloat(item.valorUnitario) < 0) {
+            const standardizedValorUnitario = String(item.valorUnitario).replace(',', '.');
+            if (standardizedValorUnitario === '' || parseFloat(standardizedValorUnitario) < 0) {
                 newErrors[`item_${index}_valorUnitario`] = 'Valor unitário deve ser positivo ou zero.';
             }
         });
@@ -289,18 +311,24 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (validateForm()) {
+            const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;
             const compraData = {
                 obra: parseInt(obraId, 10),
                 data_compra: dataCompra,
                 fornecedor: fornecedor,
                 nota_fiscal: notaFiscal || null,
-                desconto: parseFloat(desconto) || 0,
+                desconto: finalDesconto,
                 observacoes: observacoes || null,
-                itens: items.filter(item => item.materialId && item.quantidade && item.valorUnitario)
-                           .map(item => ({
-                    material: parseInt(item.materialId, 10),
-                    quantidade: parseFloat(item.quantidade),
-                    valor_unitario: parseFloat(item.valorUnitario)
+                itens: items
+                    .filter(item =>
+                        item.materialId &&
+                        String(item.quantidade).replace(',', '.') !== '' && parseFloat(String(item.quantidade).replace(',', '.')) > 0 &&
+                        String(item.valorUnitario).replace(',', '.') !== '' && parseFloat(String(item.valorUnitario).replace(',', '.')) >= 0
+                    )
+                    .map(item => ({
+                        material: parseInt(item.materialId, 10),
+                        quantidade: parseFloat(String(item.quantidade).replace(',', '.')),
+                        valor_unitario: parseFloat(String(item.valorUnitario).replace(',', '.'))
                 }))
             };
             if (compraData.itens.length === 0 && items.length > 0 && items.some(i => i.materialId || i.quantidade || i.valorUnitario)) {
@@ -315,9 +343,19 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         }
     };
 
+    // Calculate Subtotal and Total Geral
+    const subtotalCalculado = items.reduce((sum, item) => {
+        const valorTotal = parseFloat(String(item.valorTotalItem).replace(',', '.')) || 0;
+        return sum + valorTotal;
+    }, 0);
+
+    const descontoNumerico = parseFloat(String(desconto).replace(',', '.')) || 0;
+    const totalGeralCalculado = subtotalCalculado - descontoNumerico;
+
     return (
         <form onSubmit={handleSubmit} className="w-full max-w-5xl mx-auto p-6 md:p-8 space-y-6 bg-white rounded-lg shadow-xl">
             <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">Informações da Compra</h2>
+            {/* Header Section ... */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <div>
                     <label htmlFor="dataCompra" className="block mb-1 text-sm font-medium text-gray-700">Data da Compra <span className="text-red-500">*</span></label>
@@ -350,6 +388,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 </div>
             </div>
 
+            {/* Dynamic Item Table Section ... */}
             <div className="mt-8 pt-6 border-t">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold text-gray-700">Itens da Compra</h3>
@@ -374,15 +413,11 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                         <tbody className="bg-white divide-y divide-slate-200">
                             {items.map((item, index) => (
                                 <ItemRow
-                                    key={item.id}
-                                    item={item}
-                                    index={index}
+                                    key={item.id} item={item} index={index}
                                     onItemChange={handleItemChange}
                                     onRemoveItem={removeItemRow}
                                     onMaterialSelectForItem={handleMaterialSelected}
-                                    totalItems={items.length}
-                                    errors={errors}
-                                    initialData={initialData}
+                                    totalItems={items.length} errors={errors} initialData={initialData}
                                     onItemKeyDown={handleItemKeyDown}
                                     materialRef={itemFieldRefs.current[index]?.material}
                                     quantityRef={itemFieldRefs.current[index]?.quantity}
@@ -397,14 +432,45 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 )}
             </div>
 
-            <div className="mt-8 pt-6 border-t">
+            {/* Footer and Summary Section */}
+            <div className="mt-8 pt-6 border-t border-slate-300">
                 <h3 className="text-xl font-semibold text-gray-700 mb-4">Resumo da Compra</h3>
-                <div className="p-4 border border-dashed border-gray-300 rounded-md min-h-[50px]">
-                     <p className="text-sm text-gray-500">
-                        A seção de resumo (Subtotal, Desconto, Total Geral, Observações) será implementada aqui.
-                    </p>
-                    <div>Desconto Atual (state): {desconto}</div>
-                    <div>Observações Atuais (state): {observacoes}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div className="md:col-span-2">
+                        <label htmlFor="observacoes" className="block mb-1 text-sm font-medium text-gray-700">Observações</label>
+                        <textarea
+                            name="observacoes" id="observacoes" value={observacoes}
+                            onChange={handleHeaderChange}
+                            rows="3" placeholder="Notas ou observações sobre a compra (opcional)"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div className="mt-6 bg-slate-50 p-4 rounded-lg shadow">
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-slate-600">Subtotal dos Itens:</span>
+                            <span className="font-semibold text-slate-800">R$ {subtotalCalculado.toFixed(2).replace('.', ',')}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-sm">
+                            <label htmlFor="desconto" className="text-slate-600">Desconto (R$):</label>
+                            <input
+                                type="text" inputMode="decimal" name="desconto" id="desconto"
+                                value={desconto}
+                                onChange={handleHeaderChange}
+                                placeholder="0,00"
+                                className={`w-28 p-1.5 border ${errors.desconto ? 'border-red-500' : 'border-slate-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm text-right`}
+                            />
+                        </div>
+                        {errors.desconto && <p className="text-xs text-red-600 text-right -mt-1 mb-1">{errors.desconto}</p>}
+
+                        <div className="flex justify-between items-center text-lg font-semibold border-t border-slate-300 pt-2 mt-2">
+                            <span className="text-gray-700">Total Geral:</span>
+                            <span className="text-primary-600">R$ {totalGeralCalculado.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
