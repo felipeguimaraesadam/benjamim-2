@@ -46,14 +46,14 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="obra" className="block text-sm font-medium text-gray-700">Obra</label>
+        <label htmlFor="obra" className="block text-sm font-medium text-gray-900">Obra</label>
         <select
           name="obra"
           id="obra"
           value={formData.obra}
           onChange={handleChange}
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
         >
           <option value="">Selecione uma Obra</option>
           {obras && obras.map(obra => (
@@ -63,14 +63,14 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
       </div>
 
       <div>
-        <label htmlFor="equipe" className="block text-sm font-medium text-gray-700">Equipe</label>
+        <label htmlFor="equipe" className="block text-sm font-medium text-gray-900">Equipe</label>
         <select
           name="equipe"
           id="equipe"
           value={formData.equipe}
           onChange={handleChange}
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
         >
           <option value="">Selecione uma Equipe</option>
           {equipes && equipes.map(equipe => (
@@ -81,7 +81,7 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="data_alocacao_inicio" className="block text-sm font-medium text-gray-700">Data Início Alocação</label>
+          <label htmlFor="data_alocacao_inicio" className="block text-sm font-medium text-gray-900">Data Início Alocação</label>
           <input
             type="date"
             name="data_alocacao_inicio"
@@ -89,18 +89,18 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
             value={formData.data_alocacao_inicio}
             onChange={handleChange}
             required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
           />
         </div>
         <div>
-          <label htmlFor="data_alocacao_fim" className="block text-sm font-medium text-gray-700">Data Fim Alocação (Opcional)</label>
+          <label htmlFor="data_alocacao_fim" className="block text-sm font-medium text-gray-900">Data Fim Alocação (Opcional)</label>
           <input
             type="date"
             name="data_alocacao_fim"
             id="data_alocacao_fim"
             value={formData.data_alocacao_fim}
             onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
           />
         </div>
       </div>
@@ -110,14 +110,14 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="py-2 px-4 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="py-2 px-4 text-sm font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300"
         >
           {isLoading ? 'Salvando...' : (initialData ? 'Atualizar Alocação' : 'Adicionar Alocação')}
         </button>

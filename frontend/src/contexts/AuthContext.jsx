@@ -47,6 +47,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (loginUsername, password) => {
     try {
+      console.log('Attempting login with data:', {
+        login: loginUsername,
+        type_login: typeof loginUsername,
+        password: password, // Be cautious logging passwords in production
+        type_password: typeof password
+      });
       const response = await apiClient.post('/token/', {
         login: loginUsername, // Ensure this matches backend expectation (login vs username)
         password: password,

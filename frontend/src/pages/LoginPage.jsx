@@ -1,90 +1,113 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; // Assuming path is correct
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+
+// Placeholder icon - replace with actual icon
+const LoginIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 mr-2"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>;
 
 const LoginPage = () => {
-  const [loginUsername, setLoginUsername] = useState(''); // 'login' is the field name for backend
-  const [password, setPassword] = useState('');
+  const [loginField, setLoginField] = useState(''); // Renamed email to loginField for clarity
+  const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const auth = useAuth();
+  const { login: authLogin } = useAuth(); // Renamed login to authLogin to avoid conflict
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setIsSubmitting(true);
-
-    if (!auth) {
-      setError("Contexto de autenticação não carregado. Tente novamente.");
-      setIsSubmitting(false);
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      // The login function in AuthContext handles API call, token storage, and user state update
-      await auth.login(loginUsername, password);
-      navigate('/'); // Navigate to Dashboard on successful login
+      await authLogin(loginField, senha); // Use loginField
+      navigate('/');
     } catch (err) {
-      setError(err.message || 'Falha no login. Verifique suas credenciais.');
+      // Assuming login function from AuthContext throws an error with a message property
+      setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-center text-gray-900">SGO - Login</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-xl rounded-xl">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-primary-600">SGO</h1>
+          <p className="mt-2 text-sm text-gray-600">Bem-vindo! Faça login para continuar.</p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label
-              htmlFor="loginUsername"
-              className="text-sm font-medium text-gray-700 sr-only"> {/* Label hidden for cleaner look, but good for a11y */}
-              Usuário (Login)
+            <label htmlFor="login" className="block text-sm font-medium text-gray-700 mb-1">
+              Login
             </label>
             <input
-              id="loginUsername"
+              id="login"
+              name="login"
               type="text"
-              value={loginUsername}
-              onChange={(e) => setLoginUsername(e.target.value)}
+              autoComplete="username"
               required
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Usuário (Login)"
+              value={loginField}
+              onChange={(e) => setLoginField(e.target.value)}
+              className="form-input"
+              placeholder="Seu login ou email"
             />
           </div>
+
           <div>
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-gray-700 sr-only">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
               Senha
             </label>
             <input
               id="password"
+              name="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               required
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Senha"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="form-input"
+              placeholder="Sua senha"
             />
           </div>
 
-          {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+              {error}
+            </div>
+          )}
 
           <div>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+              disabled={isLoading}
+              className="w-full btn-primary flex items-center justify-center"
             >
-              {isSubmitting ? 'Entrando...' : 'Entrar'}
+              {isLoading ? (
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <>
+                  <LoginIcon />
+                  Entrar
+                </>
+              )}
             </button>
           </div>
         </form>
+
+        <p className="text-sm text-center text-gray-600">
+          Não tem uma conta?{' '}
+          <Link to="/registrar" className="font-medium text-primary-600 hover:text-primary-500">
+            Registre-se aqui
+          </Link>
+        </p>
       </div>
     </div>
   );
 };
+
 export default LoginPage;
