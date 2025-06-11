@@ -244,8 +244,8 @@ export { apiClient }; // Keep this if other parts of app use apiClient directly
 // The above named exports for functions are more typical for a service file.
 
 // --- Despesa Extra Service Functions ---
-export const getDespesasExtras = () => {
-  return apiClient.get('/despesas/');
+export const getDespesasExtras = (params) => { // Accept a params object
+  return apiClient.get('/despesas/', { params }); // Pass params to axios config
 };
 
 export const getDespesaExtraById = (id) => {

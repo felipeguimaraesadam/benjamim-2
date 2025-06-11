@@ -103,9 +103,29 @@ class DespesaExtraViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows despesas extras to be viewed or edited.
     """
-    queryset = Despesa_Extra.objects.all()
+    # queryset = Despesa_Extra.objects.all() # Replaced by get_queryset
     serializer_class = DespesaExtraSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Despesa_Extra.objects.all().order_by('-data') # Default ordering by most recent
+
+        obra_id = self.request.query_params.get('obra_id')
+        if obra_id:
+            queryset = queryset.filter(obra_id=obra_id)
+
+        # Can add other filters like date range, category, etc. in the future
+        # data_inicio = self.request.query_params.get('data_inicio')
+        # if data_inicio:
+        #     queryset = queryset.filter(data__gte=data_inicio)
+        # data_fim = self.request.query_params.get('data_fim')
+        # if data_fim:
+        #     queryset = queryset.filter(data__lte=data_fim)
+        # categoria = self.request.query_params.get('categoria')
+        # if categoria:
+        #     queryset = queryset.filter(categoria=categoria)
+
+        return queryset
 
 
 class UsoMaterialViewSet(viewsets.ModelViewSet):

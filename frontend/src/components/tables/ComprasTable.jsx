@@ -61,10 +61,11 @@ const ComprasTable = ({ compras, onEdit, onDelete, isLoading }) => {
                                 </button>
                                 <button
                                     onClick={() => onDelete(compra.id)}
-                                    className="font-medium text-red-600 hover:underline disabled:text-gray-400"
+                                    className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 disabled:text-gray-400 disabled:hover:bg-transparent"
                                     disabled={isLoading}
+                                    title="Excluir Compra"
                                 >
-                                    Excluir
+                                    <span className="font-bold text-lg leading-none">&times;</span>
                                 </button>
                             </td>
                         </tr>

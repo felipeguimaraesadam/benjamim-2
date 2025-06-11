@@ -5,6 +5,10 @@ import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
+import DistribuicaoMaterialForm from '../components/forms/DistribuicaoMaterialForm';
+import HistoricoUsoTable from '../components/tables/HistoricoUsoTable';
+import ObraCompletaComprasTable from '../components/tables/ObraCompletaComprasTable';
+import ObraDespesasExtrasTable from '../components/tables/ObraDespesasExtrasTable';
 
 const ObraDetailPage = () => {
   const { id } = useParams(); // Get obra ID from URL
@@ -23,6 +27,12 @@ const ObraDetailPage = () => {
   const [custosError, setCustosError] = useState(null);       // Error for historicoCustos chart
   const [categoriaError, setCategoriaError] = useState(null); // Error for custosCategoria chart
   const [materialError, setMaterialError] = useState(null);   // Error for custosMaterial chart
+  const [showDistribuicaoModal, setShowDistribuicaoModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('equipes'); // Default tab
+  const [todasCompras, setTodasCompras] = useState([]);
+  const [despesasExtrasObra, setDespesasExtrasObra] = useState([]);
+  const [todasComprasError, setTodasComprasError] = useState(null);
+  const [despesasExtrasObraError, setDespesasExtrasObraError] = useState(null);
 
 
   const fetchObraData = async () => {
@@ -32,6 +42,8 @@ const ObraDetailPage = () => {
     setCustosError(null);
     setCategoriaError(null);
     setMaterialError(null);
+    setTodasComprasError(null);
+    setDespesasExtrasObraError(null);
     try {
       // Fetch obra details
       const obraRes = await api.getObraById(id);
@@ -89,6 +101,24 @@ const ObraDetailPage = () => {
         // Consider setting a specific error state for usos if needed
       }
 
+      // Fetch all compras for "Todas as Compras" tab
+      try {
+        const todasComprasRes = await api.getCompras({ obra_id: id });
+        setTodasCompras(todasComprasRes.data || []);
+      } catch (err) {
+        console.error("Erro ao buscar todas as compras:", err);
+        setTodasComprasError("Falha ao carregar todas as compras.");
+      }
+
+      // Fetch despesas extras for "Despesas Extras" tab
+      try {
+        const despesasRes = await api.getDespesasExtras({ obra_id: id });
+        setDespesasExtrasObra(despesasRes.data || []);
+      } catch (err) {
+        console.error("Erro ao buscar despesas extras:", err);
+        setDespesasExtrasObraError("Falha ao carregar despesas extras.");
+      }
+
     } catch (err) {
       setError(err.message || `Falha ao buscar dados da obra ${id}`);
       console.error("Fetch Obra Main Data Error:", err);
@@ -127,8 +157,24 @@ const ObraDetailPage = () => {
     return new Date(dateString).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   };
 
+  const handleOpenDistribuicaoModal = () => setShowDistribuicaoModal(true);
+  const handleCloseDistribuicaoModal = () => setShowDistribuicaoModal(false);
+
+  const handleSubmitDistribuicaoSuccess = () => {
+    fetchObraData(); // Refresh all obra data, including estoque and usos
+    // alert('Uso de material registrado com sucesso!'); // Basic feedback
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
+      {showDistribuicaoModal && (
+        <DistribuicaoMaterialForm
+          obraId={id}
+          onClose={handleCloseDistribuicaoModal}
+          onSubmitSuccess={handleSubmitDistribuicaoSuccess}
+          showModal={showDistribuicaoModal}
+        />
+      )}
       {/* Breadcrumbs or Back Link */}
       <div className="mb-6">
         <Link to="/obras" className="text-primary-600 hover:text-primary-700 transition duration-150 ease-in-out inline-flex items-center">
@@ -239,8 +285,8 @@ const ObraDetailPage = () => {
     <div className="mb-8 p-6 bg-white shadow-lg rounded-lg">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Ações Rápidas</h2>
       <button
-        // onClick={() => setIsDistribuirModalOpen(true)} // Logic to be added later
-        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out"
+        onClick={handleOpenDistribuicaoModal}
+        className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out"
       >
         Distribuir Materiais (Registrar Uso)
       </button>
@@ -279,82 +325,150 @@ const ObraDetailPage = () => {
       )}
     </div>
 
-    {/* Placeholder Histórico de Uso */}
-    <div className="mb-8 p-6 bg-white shadow-lg rounded-lg">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Histórico de Uso de Materiais</h2>
-      {usosMaterial.length > 0 ? (
-         <p>{usosMaterial.length} registros de uso encontrados. Tabela completa a ser implementada.</p>
-      ) : (
-        <p className="text-gray-500">Nenhum uso de material registrado para esta obra.</p>
-      )}
-      {/* Tabela de Usos de Material (a ser detalhada em outro passo) */}
+    {/* Histórico de Uso de Materiais */}
+    <div className="bg-white shadow-lg rounded-lg p-6 mt-6"> {/* Use a consistent container like others */}
+      <h2 className="text-2xl font-semibold mb-4 text-gray-800 border-b pb-2">
+        Histórico de Uso de Materiais
+      </h2>
+      <HistoricoUsoTable
+        usosMaterial={usosMaterial}
+        isLoading={isLoading}
+        error={error} // Can pass general page error or a specific one if created for usos
+      />
     </div>
 
 
-    {/* Abas de Detalhamento (placeholder) */}
-    <div className="mb-8 p-6 bg-white shadow-lg rounded-lg">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Detalhamento da Obra (Em Abas)</h2>
-        <p className="text-gray-600">Conteúdo das abas (Equipes, Compras, Despesas, etc.) será implementado aqui.</p>
-    </div>
+    {/* Abas de Detalhamento */}
+    <div className="mb-8">
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+          <button
+            onClick={() => setActiveTab('equipes')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'equipes'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Equipes Alocadas
+          </button>
+          <button
+            onClick={() => setActiveTab('compras')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'compras'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Todas as Compras
+          </button>
+          <button
+            onClick={() => setActiveTab('despesas')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'despesas'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Despesas Extras
+          </button>
+          {/* Adicionar mais abas conforme necessário */}
+        </nav>
+      </div>
 
-
-    {/* Related Data Sections Grid - Mantendo gráficos existentes por enquanto */}
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-      {/* Equipes Alocadas Section - Será movida para aba */}
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <div className="flex justify-between items-center mb-4 border-b pb-2">
-          <h2 className="text-xl font-semibold text-gray-700">Equipes Alocadas (a mover para aba)</h2>
-            <Link
-              to="/alocacoes"
-              state={{ obraIdParaNovaAlocacao: obra.id }}
-              className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-1 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
-            >
-              + Alocar Nova Equipe
-            </Link>
-          </div>
-          {alocacaoError && <p className="text-red-500 text-sm mb-2">Erro: {alocacaoError}</p>}
-          {alocacoesEquipe.length > 0 ? (
-            <ul className="space-y-3">
-              {alocacoesEquipe.map(aloc => (
-                <li key={aloc.id} className="p-3 bg-gray-50 rounded-md shadow-sm text-sm">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      {aloc.equipe_nome ? (
-                        <p className="font-semibold text-primary-700">Equipe: {aloc.equipe_nome}</p>
-                      ) : (
-                        <p className="font-semibold text-primary-700">Serviço Externo: {aloc.servico_externo || 'Não especificado'}</p>
-                      )}
-                      <p className="text-gray-600">De: {formatDate(aloc.data_alocacao_inicio)}</p>
-                      <p className="text-gray-600">Até: {aloc.data_alocacao_fim ? formatDate(aloc.data_alocacao_fim) : 'Presente'}</p>
+      {/* Conteúdo das Abas */}
+      <div className="py-6">
+        {activeTab === 'equipes' && (
+          <div className="bg-white shadow-lg rounded-lg p-6">
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+              <h2 className="text-xl font-semibold text-gray-700">Equipes Alocadas</h2>
+              <Link
+                to="/alocacoes" // Assuming a page/modal to create new alocacoes
+                state={{ obraIdParaNovaAlocacao: obra.id }}
+                className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-1 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
+              >
+                + Alocar Nova Equipe/Serviço
+              </Link>
+            </div>
+            {alocacaoError && <p className="text-red-500 text-sm mb-2">Erro: {alocacaoError}</p>}
+            {alocacoesEquipe.length > 0 ? (
+              <ul className="space-y-3">
+                {alocacoesEquipe.map(aloc => (
+                  <li key={aloc.id} className="p-3 bg-gray-50 rounded-md shadow-sm text-sm">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        {aloc.equipe_nome ? (
+                          <p className="font-semibold text-primary-700">Equipe: {aloc.equipe_nome}</p>
+                        ) : (
+                          <p className="font-semibold text-primary-700">Serviço Externo: {aloc.servico_externo || 'Não especificado'}</p>
+                        )}
+                        <p className="text-gray-600">De: {formatDate(aloc.data_alocacao_inicio)}</p>
+                        <p className="text-gray-600">Até: {aloc.data_alocacao_fim ? formatDate(aloc.data_alocacao_fim) : 'Presente'}</p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoverAlocacao(aloc.id)}
+                        className="text-red-500 hover:text-red-700 font-semibold py-1 px-2 rounded-md text-xs hover:bg-red-100 transition-colors"
+                        title="Remover Alocação"
+                      >
+                        Remover
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleRemoverAlocacao(aloc.id)}
-                      className="text-red-500 hover:text-red-700 font-semibold py-1 px-2 rounded-md text-xs hover:bg-red-100 transition-colors"
-                      title="Remover Alocação"
-                    >
-                      Remover
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (<p className="text-gray-500 text-sm">Nenhuma equipe alocada para esta obra.</p>)}
-        </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (<p className="text-gray-500 text-sm">Nenhuma equipe ou serviço externo alocado para esta obra.</p>)}
+          </div>
+        )}
 
-      {/* REMOVED Compras Section Placeholder - Substituído por Estoque Atual e futura aba */}
+        {activeTab === 'compras' && (
+          <div className="bg-white shadow-lg rounded-lg p-6">
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 className="text-xl font-semibold text-gray-700">Todas as Compras da Obra</h2>
+                <Link
+                    to="/compras" // Link to general compras page or a modal for new compra
+                    state={{ obraIdParaNovaCompra: obra.id, obraNome: obra.nome_obra }} // Pass obraId and name
+                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
+                >
+                    + Adicionar Nova Compra
+                </Link>
+            </div>
+            {todasComprasError && <p className="text-red-500 text-sm mb-2">Erro: {todasComprasError}</p>}
+            <ObraCompletaComprasTable
+                compras={todasCompras}
+                isLoading={isLoading}
+                error={todasComprasError}
+            />
+          </div>
+        )}
 
-      {/* Despesas Extras Section Placeholder - Mantido comentado, será movido para aba */}
-        {/* <div className="bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Despesas Extras</h2>
-          {despesas.length > 0 ? (
-            <ul className="space-y-2 text-sm text-gray-600">{despesas.map(d => <li key={d.id}>{d.descricao}: R$ {parseFloat(d.valor).toFixed(2)} ({d.categoria})</li>)}</ul>
-          ) : (<p className="text-gray-500 text-sm">Nenhuma despesa extra registrada (dados de exemplo).</p>)}
-        </div> */}
+        {activeTab === 'despesas' && (
+          <div className="bg-white shadow-lg rounded-lg p-6">
+             <div className="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 className="text-xl font-semibold text-gray-700">Despesas Extras da Obra</h2>
+                <Link
+                    to="/despesas-extras" // Link to general despesas page or a modal
+                    state={{ obraIdParaNovaDespesa: obra.id, obraNome: obra.nome_obra }} // Pass obraId and name
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-1 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
+                >
+                    + Adicionar Despesa Extra
+                </Link>
+            </div>
+            {despesasExtrasObraError && <p className="text-red-500 text-sm mb-2">Erro: {despesasExtrasObraError}</p>}
+            <ObraDespesasExtrasTable
+                despesas={despesasExtrasObra}
+                isLoading={isLoading}
+                error={despesasExtrasObraError}
+            />
+          </div>
+        )}
+      </div>
+    </div>
 
+    {/* Remaining charts can stay outside tabs or be moved into a 'Visão Geral' or 'Financeiro' tab later */}
+    <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Gráfico Histórico de Custos Mensais */}
-        <div className="bg-white shadow-lg rounded-lg p-6 lg:col-span-2">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Histórico de Custos Mensais</h2>
+        <div className="bg-white shadow-lg rounded-lg p-6 lg:col-span-2"> {/* Making it full width for now */}
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Visão Geral: Histórico de Custos Mensais</h2>
           {custosError && <p className="text-red-500 text-sm mb-2">Erro: {custosError}</p>}
           {historicoCustos.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -374,39 +488,9 @@ const ObraDetailPage = () => {
           )}
         </div>
 
-      {/* Gráfico Custos por Categoria de Despesa - ESTE SERÁ SUBSTITUÍDO PELO NOVO "COMPOSIÇÃO DOS CUSTOS" */}
-      {/* <div className="bg-white shadow-lg rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Despesas por Categoria (Antigo)</h2>
-          {categoriaError && <p className="text-red-500 text-sm mb-2">Erro: {categoriaError}</p>}
-        {custosCategoria.length > 0 ? ( // Esta 'custosCategoria' é do fetch antigo getObraCustosPorCategoria
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={custosCategoria}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {custosCategoria.map((entry, index) => (
-                  <Cell key={`cell-cat-old-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1919'][index % 6]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            !categoriaError && <p className="text-gray-500 text-sm">Nenhuma despesa extra registrada para este gráfico.</p>
-          )}
-      </div> */}
-
-        {/* Gráfico Materiais Mais Caros */}
+        {/* Gráfico Materiais Mais Caros - Pode ser movido para aba "Compras" ou "Análise" futuramente */}
         <div className="bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Top Materiais por Custo</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Visão Geral: Top Materiais por Custo</h2>
           {materialError && <p className="text-red-500 text-sm mb-2">Erro: {materialError}</p>}
           {custosMaterial.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
