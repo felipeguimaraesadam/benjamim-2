@@ -61,7 +61,7 @@ const Navegacao = () => {
     <div className="w-64 h-screen bg-white shadow-lg fixed top-0 left-0 flex flex-col p-4 space-y-2">
       <div className="text-center py-6">
         <Link to="/" className="text-2xl font-bold text-primary-600">
-          FiscalizaAI
+          SGO
         </Link>
       </div>
 
