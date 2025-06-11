@@ -100,15 +100,36 @@ class Material(models.Model):
 
 class Compra(models.Model):
     obra = models.ForeignKey(Obra, on_delete=models.CASCADE, related_name='compras')
-    material = models.ForeignKey(Material, on_delete=models.PROTECT, related_name='compras')
-    quantidade = models.DecimalField(max_digits=10, decimal_places=2)
-    custo_total = models.DecimalField(max_digits=10, decimal_places=2)
     fornecedor = models.CharField(max_length=255, null=True, blank=True)
     data_compra = models.DateField()
     nota_fiscal = models.CharField(max_length=255, null=True, blank=True)
+    valor_total_bruto = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    desconto = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    valor_total_liquido = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    observacoes = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Compra de {self.material.nome} para {self.obra.nome_obra} em {self.data_compra}"
+        return f"Compra para {self.obra.nome_obra} em {self.data_compra}"
+
+    def save(self, *args, **kwargs):
+        # Lógica para calcular o valor líquido antes de salvar
+        self.valor_total_liquido = self.valor_total_bruto - self.desconto
+        super().save(*args, **kwargs)
+
+class ItemCompra(models.Model):
+    compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name='itens')
+    material = models.ForeignKey(Material, on_delete=models.PROTECT, related_name='itens_comprados')
+    quantidade = models.DecimalField(max_digits=10, decimal_places=3) # Suporta 1,5 kg, etc.
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    valor_total_item = models.DecimalField(max_digits=12, decimal_places=2, editable=False)
+
+    def __str__(self):
+        return f"{self.quantidade}x {self.material.nome} na Compra {self.compra.id}"
+
+    def save(self, *args, **kwargs):
+        # Calcular o valor total do item antes de salvar
+        self.valor_total_item = self.quantidade * self.valor_unitario
+        super().save(*args, **kwargs)
 
 class Despesa_Extra(models.Model):
     obra = models.ForeignKey(Obra, on_delete=models.CASCADE, related_name='despesas_extras')

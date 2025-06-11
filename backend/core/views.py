@@ -1,12 +1,12 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, F
 from decimal import Decimal
 from datetime import datetime
 
-from .models import Usuario, Obra, Funcionario, Equipe, Alocacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial
-from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, AlocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer
+from .models import Usuario, Obra, Funcionario, Equipe, Alocacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra
+from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, AlocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer
 from .permissions import IsNivelAdmin
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -85,18 +85,91 @@ class CompraViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Compra.objects.all().select_related('obra', 'material').order_by('-data_compra')
+        queryset = Compra.objects.all().select_related('obra').order_by('-data_compra')
 
         obra_id = self.request.query_params.get('obra_id')
         if obra_id:
             queryset = queryset.filter(obra_id=obra_id)
 
-        # Consider adding other filters if useful, e.g., material_id
-        # material_id = self.request.query_params.get('material_id')
-        # if material_id:
-        #    queryset = queryset.filter(material_id=material_id)
-
         return queryset
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object() # Get Compra instance
+
+        # Basic data for Compra model itself
+        instance.obra_id = request.data.get('obra', instance.obra_id)
+        instance.fornecedor = request.data.get('fornecedor', instance.fornecedor)
+        instance.data_compra = request.data.get('data_compra', instance.data_compra)
+        instance.nota_fiscal = request.data.get('nota_fiscal', instance.nota_fiscal)
+        # Ensure Decimal conversion for DecimalFields
+        desconto_str = request.data.get('desconto', str(instance.desconto))
+        try:
+            instance.desconto = Decimal(desconto_str)
+        except: # Catch potential InvalidOperation if string is not a valid decimal
+            instance.desconto = instance.desconto # Keep original if conversion fails
+            # Optionally, return a 400 error here if strict validation is needed
+            # return Response({"error": "Invalid format for desconto."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        instance.observacoes = request.data.get('observacoes', instance.observacoes)
+
+        # Handling 'itens'
+        itens_data = request.data.get('itens', None)
+
+        if itens_data is not None: # If 'itens' is part of the request
+            existing_items_ids = set(instance.itens.values_list('id', flat=True))
+            request_items_ids = set()
+
+            for item_data in itens_data:
+                item_id = item_data.get('id', None)
+                material_id = item_data.get('material')
+
+                # Ensure Decimal conversion for quantidade and valor_unitario
+                try:
+                    quantidade_str = item_data.get('quantidade', '0')
+                    quantidade = Decimal(quantidade_str)
+                    valor_unitario_str = item_data.get('valor_unitario', '0')
+                    valor_unitario = Decimal(valor_unitario_str)
+                except:
+                    # Skip this item or return error if conversion fails
+                    # Consider logging this issue or returning a specific error message
+                    continue # Skip this item if data is invalid
+
+                if not material_id:
+                    continue
+
+                if item_id:
+                    request_items_ids.add(item_id)
+                    if item_id in existing_items_ids:
+                        item_instance = ItemCompra.objects.get(id=item_id, compra=instance)
+                        item_instance.material_id = material_id
+                        item_instance.quantidade = quantidade
+                        item_instance.valor_unitario = valor_unitario
+                        item_instance.save()
+                    # else: item_id provided but not found for this Compra - could be an error
+                else: # New item
+                    item_instance = ItemCompra.objects.create(
+                        compra=instance,
+                        material_id=material_id,
+                        quantidade=quantidade,
+                        valor_unitario=valor_unitario
+                    )
+                    request_items_ids.add(item_instance.id) # Add new item's ID to request_items_ids
+
+            ids_to_delete = existing_items_ids - request_items_ids
+            if ids_to_delete:
+                ItemCompra.objects.filter(id__in=ids_to_delete, compra=instance).delete()
+
+        # Recalculate valor_total_bruto based on current items
+        all_current_items = instance.itens.all() # Fetch fresh list of items
+        total_bruto_calculado = sum(item.valor_total_item for item in all_current_items if item.valor_total_item is not None)
+        instance.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
+
+        instance.save() # Save Compra instance to update valor_total_liquido via its save() method
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class DespesaExtraViewSet(viewsets.ModelViewSet):
@@ -247,7 +320,7 @@ class RelatorioFinanceiroObraView(APIView):
             data__lte=data_fim
         )
 
-        total_compras = compras.aggregate(total=Sum('custo_total'))['total'] or Decimal('0.00')
+        total_compras = compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         total_despesas_extras = despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
         custo_total_geral = total_compras + total_despesas_extras
 
@@ -269,7 +342,7 @@ class RelatorioGeralComprasView(APIView):
         data_inicio_str = request.query_params.get('data_inicio')
         data_fim_str = request.query_params.get('data_fim')
         obra_id_str = request.query_params.get('obra_id')
-        material_id_str = request.query_params.get('material_id')
+        # material_id_str = request.query_params.get('material_id') # Material filter removed for now
 
         if not all([data_inicio_str, data_fim_str]):
             return Response(
@@ -308,20 +381,25 @@ class RelatorioGeralComprasView(APIView):
             except Obra.DoesNotExist: # Check if obra exists
                 return Response({"error": f"Obra com id {obra_id_str} não encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Filtering by material_id directly on Compra is no longer straightforward
+        # as Compra does not have a direct material field.
+        # This would require joining through ItemCompra.
+        # For now, the material_id filter is removed from this specific report.
+        # if material_id_str:
+        #     try:
+        #         material_id = int(material_id_str)
+        #         # This filter would need to be more complex:
+        #         # filters &= Q(itens__material_id=material_id)
+        #         # And would likely require .distinct() on compras_qs if a compra has multiple items of the same material.
+        #         applied_filters_echo["material_id"] = material_id
+        #     except ValueError:
+        #         return Response({"error": "material_id deve ser um número inteiro."}, status=status.HTTP_400_BAD_REQUEST)
+        #     # except Material.DoesNotExist: # Check if material exists
+        #     #      return Response({"error": f"Material com id {material_id_str} não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-        if material_id_str:
-            try:
-                material_id = int(material_id_str)
-                filters &= Q(material_id=material_id)
-                applied_filters_echo["material_id"] = material_id
-            except ValueError:
-                return Response({"error": "material_id deve ser um número inteiro."}, status=status.HTTP_400_BAD_REQUEST)
-            except Material.DoesNotExist: # Check if material exists
-                 return Response({"error": f"Material com id {material_id_str} não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-
-        compras_qs = Compra.objects.filter(filters)
-        soma_total_compras = compras_qs.aggregate(total=Sum('custo_total'))['total'] or Decimal('0.00')
+        compras_qs = Compra.objects.filter(filters).distinct() # Added distinct in case of future joins that might duplicate Compras
+        soma_total_compras = compras_qs.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
 
         serializer = CompraSerializer(compras_qs, many=True)
 
@@ -353,7 +431,7 @@ class DashboardStatsView(APIView):
         custo_compras_mes = Compra.objects.filter(
             data_compra__year=current_year,
             data_compra__month=current_month
-        ).aggregate(total=Sum('custo_total'))['total'] or Decimal('0.00')
+        ).aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
 
         custo_despesas_extras_mes = Despesa_Extra.objects.filter(
             data__year=current_year,
@@ -496,7 +574,7 @@ class RelatorioCustoGeralView(APIView):
         total_compras = Compra.objects.filter(
             data_compra__gte=data_inicio,
             data_compra__lte=data_fim
-        ).aggregate(total=Sum('custo_total', output_field=DecimalField()))['total'] or Decimal('0.00')
+        ).aggregate(total=Sum('valor_total_liquido', output_field=DecimalField()))['total'] or Decimal('0.00')
 
         # Calculate total cost from Despesas Extras
         total_despesas_extras = Despesa_Extra.objects.filter(
@@ -532,7 +610,7 @@ class ObraHistoricoCustosView(APIView):
         custos_compras = Compra.objects.filter(obra=obra) \
                     .annotate(mes=TruncMonth('data_compra')) \
                     .values('mes') \
-                    .annotate(total_compras=Sum('custo_total')) \
+                    .annotate(total_compras=Sum('valor_total_liquido')) \
                     .order_by('mes')
 
         # Custos de Despesas Extras agrupados por mês
@@ -603,18 +681,18 @@ class ObraCustosPorMaterialView(APIView):
         except Obra.DoesNotExist:
             return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
-        custos_por_material = Compra.objects.filter(obra=obra) \
-            .select_related('material') \
+        # Sum valor_total_item from ItemCompra related to the Compra instances of the Obra
+        custos_por_material = ItemCompra.objects.filter(compra__obra=obra) \
             .values('material__nome') \
-            .annotate(total_custo=Sum('custo_total')) \
-            .order_by('-total_custo') # Opcional: ordenar
+            .annotate(total_custo=Sum('valor_total_item')) \
+            .order_by('-total_custo')
 
         # Formatar para [{ name: 'Material Nome', value: X }, ...]
         # Filtrar itens onde material__nome é None ou total_custo é None para evitar problemas no frontend
         resultado_formatado = [
             {'name': item['material__nome'], 'value': item['total_custo'] or Decimal('0.00')}
             for item in custos_por_material
-            if item['material__nome'] is not None and item['total_custo'] is not None
+            if item['material__nome'] is not None and item['total_custo'] is not None # Ensure value is not None
         ]
 
         return Response(resultado_formatado)
