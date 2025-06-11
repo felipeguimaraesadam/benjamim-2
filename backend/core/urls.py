@@ -17,7 +17,7 @@ router.register(r'equipes', EquipeViewSet)
 router.register(r'alocacoes', AlocacaoObrasEquipesViewSet)
 router.register(r'materiais', MaterialViewSet)
 router.register(r'compras', CompraViewSet, basename='compra')
-router.register(r'despesas', DespesaExtraViewSet)
+router.register(r'despesas', DespesaExtraViewSet, basename='despesaextra')
 router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
 router.register(r'usomateriais', UsoMaterialViewSet, basename='usomaterial')
 
