@@ -1,5 +1,4 @@
 import React from 'react';
-import { AuthProvider } from './contexts/AuthContext';
 import {
   createBrowserRouter,
   RouterProvider,
@@ -101,11 +100,7 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;
