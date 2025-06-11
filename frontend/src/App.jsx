@@ -22,6 +22,7 @@ import DespesasExtrasPage from './pages/DespesasExtrasPage';
 import AlocacoesPage from './pages/AlocacoesPage';
 import ComprasPage from './pages/ComprasPage'; // Import ComprasPage
 import UsuariosPage from './pages/UsuariosPage'; // Import UsuariosPage
+import ObraDetailPage from './pages/ObraDetailPage'; // Import ObraDetailPage
 
 const router = createBrowserRouter([
   {
@@ -72,6 +73,10 @@ const router = createBrowserRouter([
             path: 'compras',
             element: <ComprasPage />,
           },
+          {
+            path: 'obras/:id', // Dynamic route for work ID
+            element: <ObraDetailPage />,
+          }
         ],
       }
     ]
