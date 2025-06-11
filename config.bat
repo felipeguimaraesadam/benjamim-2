@@ -1,128 +1,99 @@
-REM @ECHO OFF
-TITLE SGO Project Configuration - DEBUG MODE
-CLS
-ECHO =====================================
-ECHO  SGO Project Configuration Script (DEBUG MODE)
-ECHO =====================================
+@echo off
+echo ==========================================================
+echo [SGO] SCRIPT DE CONFIGURACAO DO AMBIENTE
+echo ==========================================================
+echo Este script ira instalar todas as dependencias.
+echo Certifique-se de que Python e Node.js estao instalados.
+echo.
+pause
+echo.
 
-PAUSE
-
-ECHO Verificando dependencias necessarias...
-
-PAUSE
-
-ECHO --- Checking Python ---
-python --version
-ECHO Python version command executed. ERRORLEVEL: %ERRORLEVEL%
+echo [PASSO 1 de 2] - Configurando o Backend (Python/Django)...
+cd backend
 IF ERRORLEVEL 1 (
-    ECHO ERRO: Python nao encontrado.
-    ECHO Por favor, instale Python (versao 3.x recomendada) e adicione ao PATH.
-    GOTO EndScript
+    echo Erro ao acessar a pasta backend.
+    pause
+    exit /b %ERRORLEVEL%
 )
-ECHO Python encontrado.
 
-PAUSE
-
-ECHO --- Checking Node.js ---
-node --version
-ECHO Node.js version command executed. ERRORLEVEL: %ERRORLEVEL%
+echo    - Criando ambiente virtual 'venv'...
+python -m venv venv
+echo Exit code from venv creation: %ERRORLEVEL%
 IF ERRORLEVEL 1 (
-    ECHO ERRO: Node.js nao encontrado.
-    ECHO Por favor, instale Node.js (que inclui npm) e adicione ao PATH.
-    GOTO EndScript
+    echo Erro ao criar ambiente virtual.
+    pause
+    exit /b %ERRORLEVEL%
 )
-ECHO Node.js encontrado.
 
-PAUSE
-
-ECHO --- Checking npm ---
-npm --version
-ECHO npm version command executed. ERRORLEVEL: %ERRORLEVEL%
+echo    - Ativando ambiente virtual...
+call venv\Scripts\activate.bat
+echo Exit code from venv activation: %ERRORLEVEL%
 IF ERRORLEVEL 1 (
-    ECHO ERRO: npm nao encontrado.
-    ECHO Por favor, verifique sua instalacao do Node.js.
-    GOTO EndScript
+    echo Erro ao ativar ambiente virtual.
+    pause
+    exit /b %ERRORLEVEL%
 )
-ECHO npm encontrado.
+echo VENV Python:
+where python
+echo VENV Pip:
+where pip
 
-ECHO Todas as dependencias basicas foram encontradas.
-ECHO =====================================
-
-PAUSE
-
-ECHO --- Configuring Backend ---
-ECHO Current directory: %CD%
-CD backend
-ECHO Changed to directory: %CD%
-IF NOT "%CD%"=="%~dp0backend\" (
-   ECHO ERRO: Nao foi possivel mudar para o diretorio backend.
-   GOTO EndScript
+echo    - Instalando dependencias Python (requirements.txt)...
+call venv\Scripts\pip.exe install -r requirements.txt
+echo Exit code from pip install: %ERRORLEVEL%
+IF ERRORLEVEL 1 (
+    echo Erro ao instalar dependencias Python.
+    pause
+    exit /b %ERRORLEVEL%
 )
 
-PAUSE
+echo    - Executando migracoes do banco de dados...
+call venv\Scripts\python.exe manage.py migrate
+echo Exit code from migrate: %ERRORLEVEL%
+IF ERRORLEVEL 1 (
+    echo Erro ao executar migracoes do banco de dados.
+    pause
+    exit /b %ERRORLEVEL%
+)
 
-ECHO --- Checking/Creating Python venv ---
-IF NOT EXIST .venv (
-    ECHO Criando ambiente virtual Python em backend\.venv...
-    python -m venv .venv
-    ECHO python -m venv .venv - ERRORLEVEL: %ERRORLEVEL%
-    IF ERRORLEVEL 1 ( ECHO ERRO ao criar ambiente virtual. & CD .. & GOTO EndScript )
+echo Backend configurado com sucesso!
+pause
+cd ..
+echo.
+
+echo [PASSO 2 de 2] - Configurando o Frontend (React/Vite)...
+cd frontend
+IF ERRORLEVEL 1 (
+    echo Erro ao acessar a pasta frontend.
+    pause
+    exit /b %ERRORLEVEL%
+)
+
+echo    - Instalando dependencias (npm install)...
+call npm install
+echo Exit code from npm install: %ERRORLEVEL%
+IF ERRORLEVEL 1 (
+    echo Erro ao instalar dependencias Node.js.
+    pause
+    exit /b %ERRORLEVEL%
+)
+
+echo    - Verificando instalacao do @tailwindcss/postcss...
+IF NOT EXIST "node_modules\@tailwindcss\postcss\package.json" (
+    echo ATENCAO: @tailwindcss/postcss nao foi encontrado em node_modules.
+    echo Verifique o log do 'npm install' acima para erros.
+    pause
 ) ELSE (
-    ECHO Ambiente virtual backend\.venv ja existe.
+    echo @tailwindcss/postcss encontrado em node_modules.
 )
 
-PAUSE
+echo Frontend configurado com sucesso!
+pause
+cd ..
+echo.
 
-ECHO --- Activating venv and installing Python dependencies ---
-CALL .venv\Scripts\activate.bat
-ECHO CALL .venv\Scripts\activate.bat - ERRORLEVEL: %ERRORLEVEL% (Note: activate.bat itself doesn't set ERRORLEVEL typically)
-pip install -r requirements.txt
-ECHO pip install -r requirements.txt - ERRORLEVEL: %ERRORLEVEL%
-IF ERRORLEVEL 1 ( ECHO ERRO ao instalar dependencias Python. & CD .. & GOTO EndScript )
-
-PAUSE
-
-ECHO --- Running Django migrations ---
-python manage.py migrate
-ECHO python manage.py migrate - ERRORLEVEL: %ERRORLEVEL%
-IF ERRORLEVEL 1 ( ECHO ERRO ao executar migracoes. & CD .. & GOTO EndScript )
-ECHO Ambiente do Backend configurado com sucesso.
-CD ..
-ECHO Changed to directory: %CD%
-ECHO =====================================
-
-PAUSE
-
-ECHO --- Configuring Frontend ---
-ECHO Current directory: %CD%
-CD frontend
-ECHO Changed to directory: %CD%
-IF NOT "%CD%"=="%~dp0frontend\" (
-   ECHO ERRO: Nao foi possivel mudar para o diretorio frontend.
-   GOTO EndScript
-)
-
-PAUSE
-
-ECHO --- Installing Node.js dependencies ---
-IF NOT EXIST node_modules (
-    ECHO Instalando dependencias Node.js (npm install)... Isto pode levar alguns minutos.
-    npm install
-    ECHO npm install - ERRORLEVEL: %ERRORLEVEL%
-    IF ERRORLEVEL 1 ( ECHO ERRO ao instalar dependencias Node.js. & CD .. & GOTO EndScript )
-) ELSE (
-    ECHO Diretorio node_modules ja existe. Pulando npm install.
-)
-ECHO Ambiente do Frontend configurado com sucesso.
-CD ..
-ECHO Changed to directory: %CD%
-ECHO =====================================
-
-PAUSE
-
-ECHO Configuracao do projeto SGO concluida com sucesso!
-ECHO Voce pode agora usar o script start.bat para iniciar a aplicacao.
-
-:EndScript
-ECHO Script config.bat finalizado. Pressione qualquer tecla para sair...
-PAUSE > nul
+echo ==========================================================
+echo    CONFIGURACAO CONCLUIDA!
+echo    Execute 'start.bat' para iniciar a aplicacao.
+echo ==========================================================
+pause

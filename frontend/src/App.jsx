@@ -21,17 +21,19 @@ import RelatoriosPage from './pages/RelatoriosPage';
 import DespesasExtrasPage from './pages/DespesasExtrasPage';
 import AlocacoesPage from './pages/AlocacoesPage';
 import ComprasPage from './pages/ComprasPage'; // Import ComprasPage
+import UsuariosPage from './pages/UsuariosPage'; // Import UsuariosPage
 
 const router = createBrowserRouter([
   {
-    element: <ProtectedRoute />, // Protect all routes within this element
+    // General authenticated routes
+    element: <ProtectedRoute />,
     children: [
       {
         path: '/',
-        element: <Layout />, // Layout is now a child of ProtectedRoute
+        element: <Layout />,
         children: [
           {
-            index: true, // Corresponds to '/'
+            index: true,
             element: <DashboardPage />,
           },
           {
@@ -43,7 +45,7 @@ const router = createBrowserRouter([
             element: <FuncionariosPage />,
           },
           {
-            path: 'ocorrencias', // Add Ocorrencias route
+            path: 'ocorrencias',
             element: <OcorrenciasPage />,
           },
           {
@@ -67,23 +69,34 @@ const router = createBrowserRouter([
             element: <AlocacoesPage />,
           },
           {
-            path: 'compras', // Add Compras route
+            path: 'compras',
             element: <ComprasPage />,
           },
-          // Add other CRUD/report pages as children of Layout here
         ],
       }
     ]
   },
   {
-    path: '/login',
-    element: <LoginPage />, // Login page does not use ProtectedRoute or main Layout
+    // Admin-specific routes
+    element: <ProtectedRoute isAdminRoute={true} />,
+    children: [
+      {
+        path: '/usuarios', // Path for admin user management
+        element: <Layout />, // Still use the main layout
+        children: [
+          {
+            index: true,
+            element: <UsuariosPage />,
+          }
+        ]
+      }
+      // Add other admin-only routes here if needed
+    ]
   },
-  // TODO: Add a catch-all 404 route if desired
-  // {
-  //   path: '*',
-  //   element: <NotFoundPage /> // Example, if you create a NotFoundPage
-  // }
+  {
+    path: '/login',
+    element: <LoginPage />,
+  },
 ]);
 
 function App() {

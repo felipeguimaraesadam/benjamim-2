@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import apiClient from '../services/api'; // Use the created apiClient
+import { apiClient } from '../services/api'; // Use the created apiClient
 import { jwtDecode } from 'jwt-decode'; // Correct named import
 
 const AuthContext = createContext(null);
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
     // or by ProtectedRoute redirecting.
   };
 
-  const refreshAuthToken = async ()_Internal() => {
+  const refreshAuthToken = async () => {
     if (!refreshToken) {
       setIsLoading(false); // Ensure loading stops if no refresh token
       return logout(); // or simply return if no refresh token

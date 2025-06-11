@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
+import { exportDataToCsv } from '../utils/csvExporter'; // Import CSV exporter
 
 const RelatoriosPage = () => {
   const [obras, setObras] = useState([]);
@@ -290,6 +291,75 @@ const RelatoriosPage = () => {
     }
   };
 
+  // --- Helper functions for data transformation before CSV export ---
+  // It's important that these functions have access to 'obras', 'materiais', 'formatDate', 'formatCurrency'
+  // So, they are defined within the component scope.
+
+  const handleExportFinanceiroObra = (data) => {
+    if (!data) return;
+    const exportableData = [
+        {
+            "Obra Nome": data.nome_obra,
+            "Obra ID": data.obra_id,
+            "Data Início": formatDate(data.data_inicio), // formatDate is in scope
+            "Data Fim": formatDate(data.data_fim),
+            "Total Compras": formatCurrency(data.total_compras), // formatCurrency is in scope
+            "Total Despesas Extras": formatCurrency(data.total_despesas_extras),
+            "Custo Total Geral": formatCurrency(data.custo_total_geral),
+        }
+    ];
+    exportDataToCsv(exportableData, `relatorio_financeiro_obra_${data.obra_id}_${data.data_inicio}_${data.data_fim}.csv`);
+  };
+
+  const handleExportGeralCompras = (data) => {
+      if (!data || !data.compras || data.compras.length === 0) return;
+
+      const exportableData = data.compras.map(compra => ({
+          "Material ID": compra.material_id,
+          "Material Nome": materiais.find(m => m.id === compra.material_id)?.nome || 'N/A', // 'materiais' is in scope
+          "Obra ID": compra.obra_id,
+          "Obra Nome": obras.find(o => o.id === compra.obra_id)?.nome_obra || 'N/A', // 'obras' is in scope
+          "Quantidade": compra.quantidade,
+          "Custo Total": formatCurrency(compra.custo_total),
+          "Fornecedor": compra.fornecedor,
+          "Data Compra": formatDate(compra.data_compra),
+          "Nota Fiscal": compra.nota_fiscal || '', // Ensure empty string for null/undefined
+      }));
+      exportDataToCsv(exportableData, `relatorio_geral_compras_${data.filtros.data_inicio}_${data.filtros.data_fim}.csv`);
+  };
+
+  const handleExportDesempenhoEquipe = (data) => {
+      if (!data || !data.alocacoes || data.alocacoes.length === 0) return;
+
+      const exportableData = data.alocacoes.map(aloc => ({
+          "Equipe Nome": data.filtros.nome_equipe,
+          "Equipe ID": data.filtros.equipe_id,
+          "Obra Nome": aloc.obra_nome,
+          "Obra ID": aloc.obra_id, // Assuming obra_id is part of aloc if needed, or look up if only obra_nome is present
+          "Data Alocação Início": formatDate(aloc.data_alocacao_inicio),
+          "Data Alocação Fim": formatDate(aloc.data_alocacao_fim),
+          "Funcionarios Alocados": aloc.funcionarios_alocados_nomes ? aloc.funcionarios_alocados_nomes.join('; ') : 'N/A', // Example if this data is available
+          "Descricao Alocacao": aloc.descricao_alocacao || '', // Example if this data is available
+      }));
+      // Filename might need adjustment based on available filter info for equipe.
+      exportDataToCsv(exportableData, `relatorio_desempenho_equipe_${data.filtros.equipe_id}_${data.filtros.nome_equipe}.csv`);
+  };
+
+  const handleExportCustoGeral = (data) => {
+      if (!data) return;
+      const exportableData = [
+          {
+              "Data Início": formatDate(data.filtros.data_inicio),
+              "Data Fim": formatDate(data.filtros.data_fim),
+              "Total Compras": formatCurrency(data.total_compras),
+              "Total Despesas Extras": formatCurrency(data.total_despesas_extras),
+              "Custo Consolidado Total": formatCurrency(data.custo_consolidado_total),
+          }
+      ];
+      exportDataToCsv(exportableData, `relatorio_custo_geral_${data.filtros.data_inicio}_${data.filtros.data_fim}.csv`);
+  };
+
+
   return (
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-3xl font-semibold text-gray-800 mb-6">Página de Relatórios</h1>
@@ -327,6 +397,15 @@ const RelatoriosPage = () => {
               <p><strong>Total Compras:</strong> <span className="font-semibold">{formatCurrency(reportData.data.total_compras)}</span></p>
               <p><strong>Total Despesas Extras:</strong> <span className="font-semibold">{formatCurrency(reportData.data.total_despesas_extras)}</span></p>
               <p className="text-lg"><strong>Custo Total Geral:</strong> <span className="font-bold text-primary-700">{formatCurrency(reportData.data.custo_total_geral)}</span></p>
+              <div className="mt-4">
+                <button
+                  onClick={() => handleExportFinanceiroObra(reportData.data)}
+                  disabled={!reportData.data}
+                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 disabled:opacity-50"
+                >
+                  Exportar para CSV
+                </button>
+              </div>
             </div>
           )}
           {/* Display logic for 'geralCompras' */}
@@ -356,8 +435,8 @@ const RelatoriosPage = () => {
                    <tbody>
                      {reportData.data.compras.map(compra => (
                        <tr key={compra.id} className="bg-white border-b hover:bg-gray-50">
-                         <td className="px-4 py-2">{materiais.find(m=>m.id === compra.material)?.nome || 'N/A'}</td>
-                         <td className="px-4 py-2">{obras.find(o=>o.id === compra.obra)?.nome_obra || 'N/A'}</td>
+                         <td className="px-4 py-2">{materiais.find(m=>m.id === compra.material_id)?.nome || 'N/A'}</td> {/* Corrected: compra.material_id */}
+                         <td className="px-4 py-2">{obras.find(o=>o.id === compra.obra_id)?.nome_obra || 'N/A'}</td> {/* Corrected: compra.obra_id */}
                          <td className="px-4 py-2">{compra.quantidade}</td>
                          <td className="px-4 py-2">{formatCurrency(compra.custo_total)}</td>
                          <td className="px-4 py-2">{formatDate(compra.data_compra)}</td>
@@ -365,6 +444,15 @@ const RelatoriosPage = () => {
                      ))}
                    </tbody>
                  </table>
+                 <div className="mt-4">
+                    <button
+                        onClick={() => handleExportGeralCompras(reportData.data)}
+                        disabled={!reportData.data || !reportData.data.compras || reportData.data.compras.length === 0}
+                        className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 disabled:opacity-50"
+                    >
+                        Exportar para CSV
+                    </button>
+                 </div>
                </div>
              ) : <p>Nenhuma compra encontrada para os filtros aplicados.</p>}
            </div>
@@ -399,6 +487,15 @@ const RelatoriosPage = () => {
                         ))}
                     </tbody>
                     </table>
+                    <div className="mt-4">
+                        <button
+                            onClick={() => handleExportDesempenhoEquipe(reportData.data)}
+                            disabled={!reportData.data || !reportData.data.alocacoes || reportData.data.alocacoes.length === 0}
+                            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 disabled:opacity-50"
+                        >
+                            Exportar para CSV
+                        </button>
+                    </div>
                 </div>
                 ) : <p>Nenhuma alocação encontrada para a equipe e filtros selecionados.</p>}
             </div>
@@ -423,6 +520,15 @@ const RelatoriosPage = () => {
                     <h4 className="text-md font-semibold text-gray-700">Custo Consolidado Total</h4>
                     <p className="text-2xl font-bold text-primary-600">{formatCurrency(reportData.data.custo_consolidado_total)}</p>
                 </div>
+                </div>
+                <div className="mt-4 col-span-1 md:col-span-3">
+                     <button
+                        onClick={() => handleExportCustoGeral(reportData.data)}
+                        disabled={!reportData.data}
+                        className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 disabled:opacity-50"
+                    >
+                        Exportar para CSV
+                    </button>
                 </div>
             </div>
           )}

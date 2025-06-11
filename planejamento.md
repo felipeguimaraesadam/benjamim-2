@@ -171,6 +171,7 @@ Módulo 1: Segurança e Acesso
 Tela de login com usuário e senha.
 Validação de credenciais e controle de sessão.
 Botão de Logout.
+✅ Interface de Gerenciamento de Usuários (Painel Admin).
 Módulo 2: Dashboard Principal
 ✅ Painel com visão geral e indicadores chave (KPIs): obras ativas, custos do mês, etc.
 Atalhos para as seções mais usadas.
@@ -179,16 +180,17 @@ CRUD (Criar, Ler, Atualizar, Deletar) completo para Obras.
 Listagem de obras com filtros por status e busca por nome.
 Tela de detalhe da obra exibindo resumo financeiro, equipes e materiais.
 Módulo 4: Gestão de Pessoas (Equipes e Funcionários)
-CRUD para Funcionários.
-CRUD para Equipes, com adição e remoção de membros.
+✅ CRUD para Funcionários.
+✅ CRUD para Equipes, com adição e remoção de membros.
 ✅ Interface para alocar e desalocar equipes em obras, definindo os períodos (Alocacao_Obras_Equipes).
 ✅ Registro de ocorrências para funcionários (atrasos, faltas).
 Módulo 5: Gestão de Suprimentos
-CRUD para o catálogo de Materiais.
+✅ CRUD para o catálogo de Materiais.
 ✅ CRUD para o registro de Compras, sempre associadas a uma obra.
 Módulo 6: Gestão Financeira
 ✅ CRUD para Despesas Extras, sempre associadas a uma obra.
 Módulo 7: Relatórios
+✅ Exportação de Relatórios para CSV.
 Relatório de Compras:
 Filtros por período (data de início e fim).
 Filtros por obra específica ou todas.
@@ -207,7 +209,7 @@ Gestão de Fornecedores: Um CRUD para cadastrar fornecedores e associá-los às 
 Anexos de Documentos: Permitir o upload de arquivos (fotos de notas fiscais, recibos, plantas) e vinculá-los a uma compra, despesa ou obra.
 Linha do Tempo da Obra (Gráfico de Gantt): Uma visualização gráfica do cronograma da obra com suas etapas e dependências.
 Controle de Estoque: Além de registrar a compra, permitir dar baixa nos materiais conforme são requisitados para uma obra, oferecendo uma visão do estoque disponível.
-Exportação de Relatórios: Capacidade de exportar qualquer relatório para formatos como PDF e Excel, além de CSV.
+Exportação de Relatórios: Capacidade de exportar qualquer relatório para outros formatos como PDF e Excel (CSV já implementado).
 7. Roteiro de Desenvolvimento (Plano de Fases)
 Fase 1: Configuração e Estrutura Base
 Inicializar o projeto Django e os apps (core, obras, etc.).
