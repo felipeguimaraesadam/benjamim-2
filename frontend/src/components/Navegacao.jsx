@@ -28,7 +28,7 @@ const NavLink = ({ to, icon, children }) => {
 };
 
 const Navegacao = () => {
-  const { auth, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -36,7 +36,7 @@ const Navegacao = () => {
     navigate('/login');
   };
 
-  if (!auth.isAuthenticated) {
+  if (!isAuthenticated) {
     return null; // Não renderiza nada se não estiver autenticado
   }
 
@@ -50,7 +50,7 @@ const Navegacao = () => {
 
       <nav className="flex-grow space-y-1">
         <NavLink to="/obras" icon={<BuildingIcon />}>Obras</NavLink>
-        {auth.user?.role === 'admin' && (
+        {user?.nivel_acesso === 'admin' && (
           <>
             <NavLink to="/usuarios" icon={<UsersIcon />}>Usuários</NavLink>
             <NavLink to="/documentos" icon={<DocumentTextIcon />}>Documentos</NavLink>
@@ -68,7 +68,7 @@ const Navegacao = () => {
         </button>
       </div>
       <div className="text-center py-2 text-xs text-gray-500">
-        <p>{auth.user?.nome} ({auth.user?.role})</p>
+        <p>{user?.nome_completo} ({user?.nivel_acesso})</p>
       </div>
     </div>
   );
