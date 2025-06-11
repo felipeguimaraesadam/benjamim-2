@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'; // Added useRef
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as api from '../../services/api';
 import MaterialAutocomplete from './MaterialAutocomplete';
 
@@ -13,10 +13,10 @@ const generateItemUniqueId = () => `temp-item-${itemUniqueIdCounter++}`;
 const ItemRow = ({
     item, index, onItemChange, onRemoveItem, totalItems, errors,
     onMaterialSelectForItem, initialData,
-    onItemKeyDown, // New prop for handling keydown
-    materialInputRef, // New prop for ref
-    quantityInputRef, // New prop for ref
-    unitPriceInputRef   // New prop for ref
+    onItemKeyDown,
+    materialRef, // Changed from materialInputRef to materialRef for clarity
+    quantityRef, // Changed from quantityInputRef to quantityRef
+    unitPriceRef   // Changed from unitPriceInputRef to unitPriceRef
 }) => {
     const getError = (fieldName) => errors && errors[`item_${index}_${fieldName}`];
 
@@ -27,22 +27,22 @@ const ItemRow = ({
         <tr className={`${index % 2 === 0 ? 'bg-slate-50' : 'bg-white'} transition-colors duration-150 ease-in-out hover:bg-slate-100`}>
             <td className="px-3 py-2.5 border-b border-slate-200 text-sm min-w-[250px] align-top">
                 <MaterialAutocomplete
-                    ref={materialInputRef} // Assign ref
+                    ref={materialRef} // Use the passed ref
                     value={item.material}
                     onMaterialSelect={onMaterialSelectForItem}
                     itemIndex={index}
                     error={getError('material')}
-                    onKeyDown={(e) => onItemKeyDown(e, index, 'material')} // Pass keydown event
+                    onKeyDown={(e) => onItemKeyDown(e, index, 'material')}
                 />
             </td>
             <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top">
                 <input
-                    ref={quantityInputRef} // Assign ref
+                    ref={quantityRef} // Use the passed ref
                     type="number"
                     name="quantidade"
                     value={item.quantidade}
                     onChange={(e) => onItemChange(index, 'quantidade', e.target.value)}
-                    onKeyDown={(e) => onItemKeyDown(e, index, 'quantity')} // Pass keydown event
+                    onKeyDown={(e) => onItemKeyDown(e, index, 'quantity')}
                     className={`w-24 p-1.5 border ${getError('quantidade') ? 'border-red-500' : 'border-slate-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm`}
                     placeholder="0.000" step="0.001" min="0"
                 />
@@ -53,12 +53,12 @@ const ItemRow = ({
             </td>
             <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top">
                 <input
-                    ref={unitPriceInputRef} // Assign ref
+                    ref={unitPriceRef} // Use the passed ref
                     type="number"
                     name="valorUnitario"
                     value={item.valorUnitario}
                     onChange={(e) => onItemChange(index, 'valorUnitario', e.target.value)}
-                    onKeyDown={(e) => onItemKeyDown(e, index, 'unitPrice')} // Pass keydown event
+                    onKeyDown={(e) => onItemKeyDown(e, index, 'unitPrice')}
                     className={`w-28 p-1.5 border ${getError('valorUnitario') ? 'border-red-500' : 'border-slate-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm`}
                     placeholder="0.00" step="0.01" min="0"
                 />
@@ -91,23 +91,29 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     const [obras, setObras] = useState([]);
     const [errors, setErrors] = useState({});
 
-    // Refs for focus management
-    const itemRefs = useRef([]); // Will store { materialRef, quantityRef, unitPriceRef } for each row
-    const focusAfterAddRef = useRef(false); // Flag to trigger focus on new row
+    const itemFieldRefs = useRef([]); // Stores refs for [material, quantity, unitPrice] per item
+    const focusAfterAddRef = useRef(false);
 
     useEffect(() => {
-        // Initialize or resize refs array when items change
-        itemRefs.current = items.map(
-            (_, i) => itemRefs.current[i] || { material: React.createRef(), quantity: React.createRef(), unitPrice: React.createRef() }
+        // Ensure itemFieldRefs array has a ref object for each item
+        itemFieldRefs.current = items.map(
+            (_, i) => itemFieldRefs.current[i] || {
+                material: React.createRef(),
+                quantity: React.createRef(),
+                unitPrice: React.createRef(),
+            }
         );
-    }, [items.length]);
+    }, [items.length]); // Only re-run if the number of items changes
 
     useEffect(() => {
-        if (focusAfterAddRef.current && itemRefs.current[items.length - 1]?.material?.current) {
-            itemRefs.current[items.length - 1].material.current.focus();
+        if (focusAfterAddRef.current && items.length > 0) {
+            const lastItemIndex = items.length - 1;
+            setTimeout(() => { // Use setTimeout to ensure DOM is updated
+                itemFieldRefs.current[lastItemIndex]?.material?.current?.focus();
+            }, 0);
             focusAfterAddRef.current = false;
         }
-    }, [items]); // Rerun when items array itself changes (new row added)
+    }, [items]); // Depend on items state to catch new row addition
 
 
     useEffect(() => {
@@ -141,7 +147,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
             const initialItems = initialData.itens?.map(item => ({
                 id: item.id || generateItemUniqueId(),
-                material: item.material_obj || { id: item.material, nome: item.material_nome, unidade_medida: item.unidade_medida },
+                material: item.material_obj || { id: String(item.material), nome: item.material_nome, unidade_medida: item.unidade_medida },
                 materialId: String(item.material) || '',
                 materialNome: item.material_nome || (item.material_obj ? item.material_obj.nome : ''),
                 quantidade: String(item.quantidade || ''),
@@ -167,12 +173,10 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         const { name, value } = e.target;
         if (name === 'obraId') setObraId(value);
         else if (name === 'dataCompra') setDataCompra(value);
-        // ... other header fields
         else if (name === 'fornecedor') setFornecedor(value);
         else if (name === 'notaFiscal') setNotaFiscal(value);
         else if (name === 'observacoes') setObservacoes(value);
         else if (name === 'desconto') setDesconto(value);
-
 
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
@@ -202,8 +206,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             return item;
         });
         setItems(updatedItems);
-        // After material is selected, focus on quantity input of the same row
-        setTimeout(() => itemRefs.current[index]?.quantity?.current?.focus(), 0);
+        setTimeout(() => itemFieldRefs.current[index]?.quantity?.current?.focus(), 0);
     };
 
     const handleItemChange = (index, fieldName, value) => {
@@ -227,8 +230,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     };
 
     const addNewItemRow = () => {
-        setItems([...items, createNewEmptyItem()]);
-        focusAfterAddRef.current = true; // Set flag to focus after state update
+        setItems(prevItems => [...prevItems, createNewEmptyItem()]);
+        focusAfterAddRef.current = true;
     };
 
     const removeItemRow = (index) => {
@@ -244,32 +247,30 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     const handleItemKeyDown = (event, itemIndex, currentFieldType) => {
         if (event.key === 'Enter' || (event.key === 'Tab' && !event.shiftKey)) {
             event.preventDefault();
+            const currentItemRefs = itemFieldRefs.current[itemIndex];
+
             if (currentFieldType === 'material') {
-                itemRefs.current[itemIndex]?.quantity?.current?.focus();
+                currentItemRefs?.quantity?.current?.focus();
             } else if (currentFieldType === 'quantity') {
-                itemRefs.current[itemIndex]?.unitPrice?.current?.focus();
+                currentItemRefs?.unitPrice?.current?.focus();
             } else if (currentFieldType === 'unitPrice') {
-                if (itemIndex === items.length - 1) { // If on the last item's unit price
+                if (itemIndex === items.length - 1) {
                     addNewItemRow();
-                    // Focus will be handled by useEffect watching items.length and focusAfterAddRef
-                } else { // Navigate to next item's material input
-                    itemRefs.current[itemIndex + 1]?.material?.current?.focus();
+                } else {
+                    itemFieldRefs.current[itemIndex + 1]?.material?.current?.focus();
                 }
             }
         }
     };
 
     const validateForm = () => {
-        // ... (validation logic as before, ensuring item error keys match ItemRow's getError)
         const newErrors = {};
         if (!obraId) newErrors.obraId = 'Obra é obrigatória.';
         if (!dataCompra) newErrors.dataCompra = 'Data da compra é obrigatória.';
-
         const parsedDesconto = parseFloat(desconto);
         if (isNaN(parsedDesconto) || parsedDesconto < 0) {
             newErrors.desconto = 'Desconto deve ser um número positivo ou zero.';
         }
-
         items.forEach((item, index) => {
             if (!item.material && !item.materialId) {
                 newErrors[`item_${index}_material`] = 'Material é obrigatório.';
@@ -286,7 +287,6 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     };
 
     const handleSubmit = (e) => {
-        // ... (submit logic as before)
         e.preventDefault();
         if (validateForm()) {
             const compraData = {
@@ -307,7 +307,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 setErrors(prev => ({...prev, form: "Preencha os itens corretamente ou remova linhas desnecessárias."}));
                 return;
             }
-            if (compraData.itens.length === 0 && items.length === 0 && !initialData) { // Only prevent submission if no items and it's a new form
+            if (compraData.itens.length === 0 && items.length === 0 && !initialData) {
                 setErrors(prev => ({...prev, form: "Uma compra deve ter pelo menos um item."}));
                 return;
             }
@@ -316,8 +316,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 p-4 bg-white rounded-lg shadow-md">
-            {/* Header Section (already implemented) ... */}
+        <form onSubmit={handleSubmit} className="w-full max-w-5xl mx-auto p-6 md:p-8 space-y-6 bg-white rounded-lg shadow-xl">
             <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">Informações da Compra</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <div>
@@ -351,7 +350,6 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 </div>
             </div>
 
-            {/* Dynamic Item Table Section */}
             <div className="mt-8 pt-6 border-t">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold text-gray-700">Itens da Compra</h3>
@@ -361,7 +359,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                         Adicionar Novo Item
                     </button>
                 </div>
-                <div className="overflow-x-auto rounded-md shadow-sm border border-slate-200">
+                <div className="overflow-visible rounded-md shadow-sm border border-slate-200">
                     <table className="min-w-full divide-y divide-slate-200">
                         <thead className="bg-slate-100">
                             <tr>
@@ -385,11 +383,10 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                                     totalItems={items.length}
                                     errors={errors}
                                     initialData={initialData}
-                                    onItemKeyDown={handleItemKeyDown} // Pass the keydown handler
-                                    // Assign refs to each input field for programmatic focus
-                                    materialInputRef={el => itemRefs.current[index] = { ...itemRefs.current[index], material: el }}
-                                    quantityInputRef={el => itemRefs.current[index] = { ...itemRefs.current[index], quantity: el }}
-                                    unitPriceInputRef={el => itemRefs.current[index] = { ...itemRefs.current[index], unitPrice: el }}
+                                    onItemKeyDown={handleItemKeyDown}
+                                    materialRef={itemFieldRefs.current[index]?.material}
+                                    quantityRef={itemFieldRefs.current[index]?.quantity}
+                                    unitPriceRef={itemFieldRefs.current[index]?.unitPrice}
                                 />
                             ))}
                         </tbody>
@@ -400,10 +397,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 )}
             </div>
 
-            {/* Summary Section (Placeholder) */}
             <div className="mt-8 pt-6 border-t">
                 <h3 className="text-xl font-semibold text-gray-700 mb-4">Resumo da Compra</h3>
-                 {/* ... (Rest of summary and action buttons as before) ... */}
                 <div className="p-4 border border-dashed border-gray-300 rounded-md min-h-[50px]">
                      <p className="text-sm text-gray-500">
                         A seção de resumo (Subtotal, Desconto, Total Geral, Observações) será implementada aqui.
