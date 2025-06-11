@@ -174,11 +174,11 @@ Botão de Logout.
 ✅ Interface de Gerenciamento de Usuários (Painel Admin).
 Módulo 2: Dashboard Principal
 ✅ Painel com visão geral e indicadores chave (KPIs): obras ativas, custos do mês, etc.
-Atalhos para as seções mais usadas.
+✅ Atalhos para as seções mais usadas.
 Módulo 3: Gestão de Obras
-CRUD (Criar, Ler, Atualizar, Deletar) completo para Obras.
-Listagem de obras com filtros por status e busca por nome.
-Tela de detalhe da obra exibindo resumo financeiro, equipes e materiais.
+✅ CRUD (Criar, Ler, Atualizar, Deletar) completo para Obras.
+✅ Listagem de obras com filtros por status e busca por nome.
+✅ Tela de detalhe da obra exibindo resumo financeiro, equipes e materiais.
 Módulo 4: Gestão de Pessoas (Equipes e Funcionários)
 ✅ CRUD para Funcionários.
 ✅ CRUD para Equipes, com adição e remoção de membros.
@@ -191,19 +191,19 @@ Módulo 6: Gestão Financeira
 ✅ CRUD para Despesas Extras, sempre associadas a uma obra.
 Módulo 7: Relatórios
 ✅ Exportação de Relatórios para CSV.
-Relatório de Compras:
-Filtros por período (data de início e fim).
-Filtros por obra específica ou todas.
-Filtros por material específico.
-Agrupamento de resultados com totais.
-Relatório de Desempenho de Equipes:
-Listar todas as obras em que uma equipe trabalhou.
-Histórico de alocações.
-Relatório Financeiro Geral de Obra:
-Visão consolidada para uma obra, somando todos os custos (Compras + Despesas Extras).
-Filtros por período.
-Relatório Geral do Sistema:
-Visão de custo total de todas as obras em um determinado período.
+✅ Relatório de Compras:
+✅ Filtros por período (data de início e fim).
+✅ Filtros por obra específica ou todas.
+✅ Filtros por material específico.
+✅ Agrupamento de resultados com totais.
+✅ Relatório de Desempenho de Equipes:
+✅ Listar todas as obras em que uma equipe trabalhou.
+✅ Histórico de alocações.
+✅ Relatório Financeiro Geral de Obra:
+✅ Visão consolidada para uma obra, somando todos os custos (Compras + Despesas Extras).
+✅ Filtros por período.
+✅ Relatório Geral do Sistema:
+✅ Visão de custo total de todas as obras em um determinado período.
 6. Sugestões de Funcionalidades Adicionais
 Gestão de Fornecedores: Um CRUD para cadastrar fornecedores e associá-los às compras.
 Anexos de Documentos: Permitir o upload de arquivos (fotos de notas fiscais, recibos, plantas) e vinculá-los a uma compra, despesa ou obra.
@@ -236,3 +236,13 @@ Configurar o PyInstaller para empacotar a aplicação Django e o build do React 
 Testar o executável final em diferentes ambientes.
 8. Conclusão
 Este documento estabelece um plano sólido e abrangente para o desenvolvimento do SGO. A arquitetura e as tecnologias escolhidas visam criar um sistema moderno, estável e que atenda a todos os requisitos funcionais e não funcionais, resultando em um produto final profissional e de alta qualidade.
+
+## Próximos Passos
+
+Com as recentes atualizações, o sistema está mais próximo da conclusão. As próximas etapas incluem:
+
+*   **Finalizar Detalhes da Obra:** Implementar a busca e exibição dos dados relacionados na tela de Detalhes da Obra (Compras, Despesas, Equipes), que atualmente são placeholders.
+*   **Testes Abrangentes:** Realizar testes completos em todas as funcionalidades do sistema para garantir estabilidade e corrigir bugs.
+*   **Refinamento da Interface:** Coletar feedback e realizar ajustes finos na interface do usuário para melhorar a experiência de uso.
+*   **Empacotamento para Distribuição:** Configurar e testar o processo de empacotamento da aplicação (utilizando PyInstaller) para gerar o executável final para distribuição.
+*   **Documentação do Usuário:** Criar um manual básico para o usuário final.

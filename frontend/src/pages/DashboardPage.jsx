@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom'; // Import Link
 import * as api from '../services/api';
 
 // Placeholder SVG Icons
@@ -19,6 +20,14 @@ const UsersIcon = ({ className = "w-8 h-8 text-primary-500 mb-3" }) => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 016-6h6a6 6 0 016 6v1h-3M15 21a2 2 0 002-2v-1a2 2 0 00-2-2h-3a2 2 0 00-2 2v1a2 2 0 002 2h3zm-3-14a2 2 0 012-2h3a2 2 0 012 2v2a2 2 0 01-2 2h-3a2 2 0 01-2-2v-2z"></path>
   </svg>
 );
+
+// Icon for Relatórios (ChartBarIcon or similar)
+const ChartBarIcon = ({ className = "w-7 h-7 mr-3 text-primary-500" }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+  </svg>
+);
+
 
 const DashboardPage = () => {
   const [stats, setStats] = useState(null);
@@ -84,6 +93,48 @@ const DashboardPage = () => {
 
       {/* Placeholder for other dashboard content */}
       {/* Example: <p className="text-gray-600">Mais conteúdo do dashboard aqui...</p> */}
+
+      {/* Quick Access Section */}
+      <div className="mt-10">
+        <h2 className="text-2xl font-semibold text-gray-700 mb-5">Acesso Rápido</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Shortcut to Obras */}
+          <Link
+            to="/obras"
+            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 hover:bg-primary-50 group"
+          >
+            <BuildingIcon className="w-7 h-7 mr-4 text-primary-500 group-hover:text-primary-600 transition-colors" />
+            <div>
+              <h3 className="text-lg font-semibold group-hover:text-primary-600 transition-colors">Gerenciar Obras</h3>
+              <p className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors">Visualizar e cadastrar obras.</p>
+            </div>
+          </Link>
+
+          {/* Shortcut to Funcionários */}
+          <Link
+            to="/funcionarios"
+            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 hover:bg-primary-50 group"
+          >
+            <UsersIcon className="w-7 h-7 mr-4 text-primary-500 group-hover:text-primary-600 transition-colors" />
+            <div>
+              <h3 className="text-lg font-semibold group-hover:text-primary-600 transition-colors">Gerenciar Funcionários</h3>
+              <p className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors">Administrar quadro de funcionários.</p>
+            </div>
+          </Link>
+
+          {/* Shortcut to Relatórios */}
+          <Link
+            to="/relatorios"
+            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 hover:bg-primary-50 group"
+          >
+            <ChartBarIcon className="w-7 h-7 mr-4 text-primary-500 group-hover:text-primary-600 transition-colors" />
+            <div>
+              <h3 className="text-lg font-semibold group-hover:text-primary-600 transition-colors">Ver Relatórios</h3>
+              <p className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors">Analisar dados e informações.</p>
+            </div>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };

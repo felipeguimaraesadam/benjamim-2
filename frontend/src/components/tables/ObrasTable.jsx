@@ -22,7 +22,7 @@ const getStatusClass = (status) => {
   }
 };
 
-const ObrasTable = ({ obras, onEdit, onDelete, onView }) => {
+const ObrasTable = ({ obras, onEdit, onDelete }) => { // Removed onView from props
   const navigate = useNavigate();
 
   if (!obras || obras.length === 0) {
@@ -69,7 +69,7 @@ const ObrasTable = ({ obras, onEdit, onDelete, onView }) => {
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{obra.responsavel?.nome || 'Não atribuído'}</td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                 <button
-                  onClick={() => onView(obra.id)}
+                  onClick={() => navigate(`/obras/${obra.id}`)} // Changed to navigate
                   className="text-blue-600 hover:text-blue-800 transition-colors p-1"
                   title="Visualizar"
                 >
