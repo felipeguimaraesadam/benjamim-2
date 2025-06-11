@@ -19,7 +19,7 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      await authLogin({ login: loginField, senha }); // Use loginField
+      await authLogin(loginField, senha); // Use loginField
       navigate('/');
     } catch (err) {
       // Assuming login function from AuthContext throws an error with a message property
