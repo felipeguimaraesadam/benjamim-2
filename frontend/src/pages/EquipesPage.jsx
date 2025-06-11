@@ -105,10 +105,10 @@ const EquipesPage = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold text-gray-800">Gestão de Equipes</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Gestão de Equipes</h1>
         <button
           onClick={handleAddNew}
-          className="bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-75"
+          className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:bg-primary-300"
         >
           Adicionar Nova Equipe
         </button>
@@ -133,7 +133,7 @@ const EquipesPage = () => {
       {showFormModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-700">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800">
               {currentEquipe ? 'Editar Equipe' : 'Adicionar Nova Equipe'}
             </h2>
             {error && ( // Display error specific to form submission attempt inside modal
@@ -169,14 +169,14 @@ const EquipesPage = () => {
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isLoading}
-                className="py-2 px-4 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300"
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={isLoading}
-                className="py-2 px-4 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300"
+                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50"
               >
                 {isLoading ? 'Excluindo...' : 'Excluir'}
               </button>

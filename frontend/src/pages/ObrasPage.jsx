@@ -96,10 +96,10 @@ const ObrasPage = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold text-gray-800">Gestão de Obras</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Gestão de Obras</h1>
         <button
           onClick={handleAddNew}
-          className="bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-75"
+          className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:bg-primary-300"
         >
           Adicionar Nova Obra
         </button>

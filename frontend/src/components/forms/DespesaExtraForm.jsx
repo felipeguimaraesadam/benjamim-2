@@ -53,14 +53,14 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="obra" className="block text-sm font-medium text-gray-700">Obra Associada</label>
+        <label htmlFor="obra" className="block text-sm font-medium text-gray-900">Obra Associada</label>
         <select
           name="obra"
           id="obra"
           value={formData.obra}
           onChange={handleChange}
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
         >
           <option value="">Selecione uma Obra</option>
           {obras && obras.map(obra => (
@@ -70,7 +70,7 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
       </div>
 
       <div>
-        <label htmlFor="descricao" className="block text-sm font-medium text-gray-700">Descrição</label>
+        <label htmlFor="descricao" className="block text-sm font-medium text-gray-900">Descrição</label>
         <textarea
           name="descricao"
           id="descricao"
@@ -78,13 +78,13 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
           value={formData.descricao}
           onChange={handleChange}
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
         ></textarea>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="valor" className="block text-sm font-medium text-gray-700">Valor (R$)</label>
+          <label htmlFor="valor" className="block text-sm font-medium text-gray-900">Valor (R$)</label>
           <input
             type="number"
             name="valor"
@@ -93,11 +93,11 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
             value={formData.valor}
             onChange={handleChange}
             required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
           />
         </div>
         <div>
-          <label htmlFor="data" className="block text-sm font-medium text-gray-700">Data</label>
+          <label htmlFor="data" className="block text-sm font-medium text-gray-900">Data</label>
           <input
             type="date"
             name="data"
@@ -105,20 +105,20 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
             value={formData.data}
             onChange={handleChange}
             required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor="categoria" className="block text-sm font-medium text-gray-700">Categoria</label>
+        <label htmlFor="categoria" className="block text-sm font-medium text-gray-900">Categoria</label>
         <select
           name="categoria"
           id="categoria"
           value={formData.categoria}
           onChange={handleChange}
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
         >
           {categoriasDespesa.map(cat => (
             <option key={cat} value={cat}>{cat}</option>
@@ -131,14 +131,14 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="py-2 px-4 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="py-2 px-4 text-sm font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300"
         >
           {isLoading ? 'Salvando...' : (initialData ? 'Atualizar Despesa' : 'Adicionar Despesa')}
         </button>
