@@ -291,8 +291,8 @@ export const getDashboardStats = () => {
 };
 
 // --- Compra Service Functions ---
-export const getCompras = () => {
-  return apiClient.get('/compras/');
+export const getCompras = (params) => { // Accept a params object
+  return apiClient.get('/compras/', { params }); // Pass params to axios config
 };
 
 export const createCompra = (compraData) => {
@@ -305,6 +305,15 @@ export const updateCompra = (id, compraData) => {
 
 export const deleteCompra = (id) => {
   return apiClient.delete(`/compras/${id}/`);
+};
+
+// --- UsoMaterial Service Functions ---
+export const createUsoMaterial = (data) => {
+  return apiClient.post('/usomateriais/', data);
+};
+
+export const getUsosMaterial = (obraId) => {
+  return apiClient.get('/usomateriais/', { params: { obra_id: obraId } });
 };
 
 // --- Ocorrencia Service Functions ---

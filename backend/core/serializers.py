@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import Usuario, Obra, Funcionario, Equipe, Alocacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario
+from .models import Usuario, Obra, Funcionario, Equipe, Alocacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial
+from django.db.models import Sum
+from decimal import Decimal
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
@@ -59,10 +61,41 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class ObraSerializer(serializers.ModelSerializer):
     responsavel_nome = serializers.CharField(source='responsavel.nome_completo', read_only=True, allow_null=True)
+    custo_total_realizado = serializers.SerializerMethodField()
+    balanco_financeiro = serializers.SerializerMethodField()
+    custos_por_categoria = serializers.SerializerMethodField()
 
     class Meta:
         model = Obra
-        fields = '__all__'
+        fields = [
+            'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
+            'data_inicio', 'data_prevista_fim', 'data_real_fim',
+            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto',
+            'custo_total_realizado', 'balanco_financeiro', 'custos_por_categoria'
+        ]
+
+    def get_custo_total_realizado(self, obj):
+        # obj is the Obra instance
+        total_compras = obj.compras.aggregate(total=Sum('custo_total'))['total'] or Decimal('0.00')
+        total_despesas = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+        # Costs for 'servicos' and 'equipes' are assumed to be 0 as per plan clarification
+        return total_compras + total_despesas
+
+    def get_balanco_financeiro(self, obj):
+        custo_realizado = self.get_custo_total_realizado(obj) # Reuse the already calculated value
+        orcamento = obj.orcamento_previsto if obj.orcamento_previsto is not None else Decimal('0.00')
+        return orcamento - custo_realizado
+
+    def get_custos_por_categoria(self, obj):
+        total_compras = obj.compras.aggregate(total=Sum('custo_total'))['total'] or Decimal('0.00')
+        total_despesas = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+        # Costs for 'servicos' and 'equipes' are assumed to be 0
+        return {
+            'materiais': total_compras,
+            'despesas_extras': total_despesas,
+            'servicos': Decimal('0.00'),
+            'equipes': Decimal('0.00')
+        }
 
 
 class FuncionarioSerializer(serializers.ModelSerializer):
@@ -137,9 +170,20 @@ class MaterialSerializer(serializers.ModelSerializer):
 
 
 class CompraSerializer(serializers.ModelSerializer):
+    quantidade_disponivel = serializers.SerializerMethodField()
+    material_nome = serializers.CharField(source='material.nome', read_only=True)
+    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)
+
     class Meta:
         model = Compra
-        fields = '__all__'
+        fields = ['id', 'obra', 'obra_nome', 'material', 'material_nome', 'quantidade', 'custo_total', 'fornecedor', 'data_compra', 'nota_fiscal', 'quantidade_disponivel']
+
+    def get_quantidade_disponivel(self, obj):
+        # obj is the Compra instance
+        # Sum all 'quantidade_usada' from related UsoMaterial instances
+        total_usada = obj.usos.aggregate(total=models.Sum('quantidade_usada'))['total'] or Decimal('0.00')
+        disponivel = obj.quantidade - total_usada
+        return disponivel
 
 
 class DespesaExtraSerializer(serializers.ModelSerializer):
@@ -152,3 +196,59 @@ class OcorrenciaFuncionarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ocorrencia_Funcionario
         fields = '__all__'
+
+
+class UsoMaterialSerializer(serializers.ModelSerializer):
+    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True, allow_null=True)
+    material_nome = serializers.CharField(source='compra.material.nome', read_only=True, allow_null=True)
+    compra_original_quantidade = serializers.DecimalField(source='compra.quantidade', max_digits=10, decimal_places=2, read_only=True)
+    compra_original_custo = serializers.DecimalField(source='compra.custo_total', max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = UsoMaterial
+        fields = [
+            'id', 'compra', 'obra', 'obra_nome', 'material_nome',
+            'compra_original_quantidade', 'compra_original_custo',
+            'quantidade_usada', 'data_uso', 'andar', 'categoria_uso', 'descricao'
+        ]
+        read_only_fields = ['obra', 'data_uso', 'obra_nome', 'material_nome', 'compra_original_quantidade', 'compra_original_custo']
+
+    def validate(self, data):
+        # 'compra' in data will be a Compra instance if it's a valid PK.
+        # If 'compra' is not in data (e.g. PATCH and not updating compra_id),
+        # we should use self.instance.compra.
+        compra_instance = data.get('compra') if 'compra' in data else getattr(self.instance, 'compra', None)
+
+        # 'quantidade_usada' could be absent in a PATCH if not being updated.
+        # If it's not being updated, no need to validate it against available quantity.
+        if 'quantidade_usada' not in data:
+            return data
+
+        quantidade_usada = data.get('quantidade_usada')
+
+        if quantidade_usada is None: # Should be caught by field validation if not blank=True
+            raise serializers.ValidationError({"quantidade_usada": "Este campo é obrigatório."})
+
+        if quantidade_usada <= Decimal('0'):
+            raise serializers.ValidationError({"quantidade_usada": "A quantidade usada deve ser maior que zero."})
+
+        if compra_instance:
+            # Calculate total already used for this Compra
+            total_ja_usado_na_compra = compra_instance.usos.aggregate(total=Sum('quantidade_usada'))['total'] or Decimal('0.00')
+
+            quantidade_disponivel_na_compra = compra_instance.quantidade - total_ja_usado_na_compra
+
+            if self.instance: # This is an update
+                # Add back the old value of quantidade_usada for this specific UsoMaterial instance
+                # because it's included in total_ja_usado_na_compra.
+                # This allows updating the current usage without it counting against itself.
+                quantidade_disponivel_na_compra += self.instance.quantidade_usada
+
+            if quantidade_usada > quantidade_disponivel_na_compra:
+                raise serializers.ValidationError({
+                    "quantidade_usada": f"A quantidade usada ({quantidade_usada}) excede a quantidade disponível ({quantidade_disponivel_na_compra}) para o material desta compra."
+                })
+        elif not self.instance and not compra_instance : # Create operation and compra is not provided (should be caught by field validation)
+             raise serializers.ValidationError({"compra": "Este campo é obrigatório."})
+
+        return data

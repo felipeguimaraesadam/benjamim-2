@@ -5,8 +5,8 @@ from django.db.models import Q, Sum
 from decimal import Decimal
 from datetime import datetime
 
-from .models import Usuario, Obra, Funcionario, Equipe, Alocacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario
-from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, AlocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer
+from .models import Usuario, Obra, Funcionario, Equipe, Alocacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial
+from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, AlocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer
 from .permissions import IsNivelAdmin
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -80,9 +80,23 @@ class CompraViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows compras to be viewed or edited.
     """
-    queryset = Compra.objects.all()
+    # queryset = Compra.objects.all() # Replaced by get_queryset
     serializer_class = CompraSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Compra.objects.all().select_related('obra', 'material').order_by('-data_compra')
+
+        obra_id = self.request.query_params.get('obra_id')
+        if obra_id:
+            queryset = queryset.filter(obra_id=obra_id)
+
+        # Consider adding other filters if useful, e.g., material_id
+        # material_id = self.request.query_params.get('material_id')
+        # if material_id:
+        #    queryset = queryset.filter(material_id=material_id)
+
+        return queryset
 
 
 class DespesaExtraViewSet(viewsets.ModelViewSet):
@@ -92,6 +106,28 @@ class DespesaExtraViewSet(viewsets.ModelViewSet):
     queryset = Despesa_Extra.objects.all()
     serializer_class = DespesaExtraSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class UsoMaterialViewSet(viewsets.ModelViewSet):
+    serializer_class = UsoMaterialSerializer
+    permission_classes = [permissions.IsAuthenticated] # Or your specific project permissions
+
+    def get_queryset(self):
+        queryset = UsoMaterial.objects.all().select_related(
+            'compra__material', # For material_nome, compra_original_quantidade, compra_original_custo
+            'obra' # For obra_nome
+        ).order_by('-data_uso') # Default ordering
+
+        obra_id = self.request.query_params.get('obra_id')
+        if obra_id:
+            queryset = queryset.filter(obra_id=obra_id)
+
+        # Optional: filter by compra_id if needed in the future
+        # compra_id = self.request.query_params.get('compra_id')
+        # if compra_id:
+        #     queryset = queryset.filter(compra_id=compra_id)
+
+        return queryset
 
 
 class OcorrenciaFuncionarioViewSet(viewsets.ModelViewSet):

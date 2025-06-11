@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     UsuarioViewSet, ObraViewSet, FuncionarioViewSet, EquipeViewSet,
     AlocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
-    DespesaExtraViewSet, OcorrenciaFuncionarioViewSet,
+    DespesaExtraViewSet, OcorrenciaFuncionarioViewSet, UsoMaterialViewSet,
     RelatorioFinanceiroObraView, RelatorioGeralComprasView, DashboardStatsView,
     RelatorioDesempenhoEquipeView, RelatorioCustoGeralView, ObraHistoricoCustosView,
     ObraCustosPorCategoriaView, ObraCustosPorMaterialView # Added new views
@@ -19,6 +19,7 @@ router.register(r'materiais', MaterialViewSet)
 router.register(r'compras', CompraViewSet)
 router.register(r'despesas', DespesaExtraViewSet)
 router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
+router.register(r'usomateriais', UsoMaterialViewSet, basename='usomaterial')
 
 urlpatterns = [
     path('', include(router.urls)),
