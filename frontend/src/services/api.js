@@ -25,6 +25,30 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Se a requisição original já era para obter/refrescar o token, não faz sentido tentar o refresh de novo.
+    // A URL completa da requisição original é error.config.url
+    // A baseURL do apiClient é apiClient.defaults.baseURL
+    // Precisamos verificar se originalRequest.url (que é a URL completa) termina com /token/ ou /token/refresh/
+    // ou se a parte relativa (originalRequest.url sem a baseURL) é /token/ ou /token/refresh/
+    const requestUrlPath = originalRequest.url.replace(apiClient.defaults.baseURL, '');
+
+    if (requestUrlPath.endsWith('/token/') || requestUrlPath.endsWith('/token/refresh/')) {
+      // Limpa tokens se a falha foi no refresh e redireciona para login
+      if (requestUrlPath.endsWith('/token/refresh/')) {
+        console.error("Refresh token attempt failed (original request was /token/refresh/), logging out:", error);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        delete apiClient.defaults.headers.common['Authorization'];
+        if (typeof window !== 'undefined') {
+            // Apenas redireciona se não estiver já no login para evitar loop se o login falhar aqui
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
+        }
+      }
+      return Promise.reject(error); // Rejeita o erro original diretamente
+    }
+
     // Verifica se o erro é 401 e se não é uma tentativa de repetição
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true; // Marca como tentativa de repetição
@@ -67,19 +91,24 @@ apiClient.interceptors.response.use(
 
           // Força o redirecionamento para a página de login
           if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+            if (window.location.pathname !== '/login') { // Evita loop se já estiver no login
+                window.location.href = '/login';
+            }
           }
           return Promise.reject(refreshError);
         }
       } else {
-         console.log("No refresh token available, redirecting to login.");
-         // Limpa qualquer token de acesso restante e redireciona
-         localStorage.removeItem('accessToken');
+         console.log("No refresh token available, redirecting to login (from interceptor).");
+         localStorage.removeItem('accessToken'); // Garante que o accessToken também seja limpo
+         // refreshToken já seria nulo aqui, mas remover por segurança.
+         localStorage.removeItem('refreshToken');
          delete apiClient.defaults.headers.common['Authorization'];
          if (typeof window !== 'undefined') {
-           window.location.href = '/login';
+            if (window.location.pathname !== '/login') {  // Evita loop se já estiver no login
+                window.location.href = '/login';
+            }
          }
-         return Promise.reject(new Error("No refresh token available."));
+         return Promise.reject(new Error("No refresh token available. User needs to login."));
       }
     }
 
