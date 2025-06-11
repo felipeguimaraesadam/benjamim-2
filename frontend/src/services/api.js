@@ -155,8 +155,8 @@ export const deleteDespesaExtra = (id) => {
 };
 
 // --- Alocacao Service Functions ---
-export const getAlocacoes = () => {
-  return apiClient.get('/alocacoes/');
+export const getAlocacoes = (params) => { // Added params argument
+  return apiClient.get('/alocacoes/', { params }); // Pass params to axios
 };
 
 export const getAlocacaoById = (id) => {

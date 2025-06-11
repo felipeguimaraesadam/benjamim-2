@@ -53,6 +53,19 @@ class AlocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     serializer_class = AlocacaoObrasEquipesSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        queryset = Alocacao_Obras_Equipes.objects.all().order_by('-data_alocacao_inicio') # Default ordering
+        obra_id = self.request.query_params.get('obra_id')
+        if obra_id is not None:
+            queryset = queryset.filter(obra_id=obra_id)
+
+        # You could add more filters here, e.g., by equipe_id, date ranges, etc.
+        # equipe_id = self.request.query_params.get('equipe_id')
+        # if equipe_id is not None:
+        #     queryset = queryset.filter(equipe_id=equipe_id)
+
+        return queryset
+
 
 class MaterialViewSet(viewsets.ModelViewSet):
     """

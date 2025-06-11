@@ -93,8 +93,11 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         e.preventDefault();
         if (validateForm()) {
             // Ensure numeric fields are numbers
+            const { material_id, obra_id, ...rest } = formData;
             const dataToSubmit = {
-                ...formData,
+                ...rest,
+                material: material_id, // Renamed from material_id
+                obra: obra_id,         // Renamed from obra_id
                 quantidade: parseFloat(formData.quantidade),
                 custo_total: parseFloat(formData.custo_total),
                 // Backend might expect null for empty optional fields like nota_fiscal

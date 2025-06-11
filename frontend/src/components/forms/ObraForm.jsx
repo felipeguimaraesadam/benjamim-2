@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as api from '../../services/api'; // Import API services
 
 // Warning Icon for validation errors
 const WarningIcon = ({ className = "w-4 h-4 inline mr-1" }) => ( // Added className prop with default
@@ -16,8 +17,25 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     data_inicio: '',
     data_prevista_fim: '',
     data_real_fim: '',
+    responsavel: '', // Added responsavel field
+    cliente_nome: '', // Added cliente_nome field
   });
   const [errors, setErrors] = useState({});
+  const [funcionarios, setFuncionarios] = useState([]); // State for funcionarios
+
+  // Fetch funcionarios when component mounts
+  useEffect(() => {
+    const fetchFuncionarios = async () => {
+      try {
+        const response = await api.getFuncionarios();
+        setFuncionarios(response.data || response); // Adjust based on API response structure
+      } catch (error) {
+        console.error('Erro ao buscar funcionários:', error);
+        setErrors(prev => ({ ...prev, funcionarios: 'Falha ao carregar funcionários.' }));
+      }
+    };
+    fetchFuncionarios();
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -30,6 +48,8 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         data_inicio: initialData.data_inicio ? initialData.data_inicio.split('T')[0] : '',
         data_prevista_fim: initialData.data_prevista_fim ? initialData.data_prevista_fim.split('T')[0] : '',
         data_real_fim: initialData.data_real_fim ? initialData.data_real_fim.split('T')[0] : '',
+        responsavel: initialData.responsavel || '', // Populate responsavel
+        cliente_nome: initialData.cliente_nome || '', // Populate cliente_nome
       });
     } else {
       // Reset form for new entry
@@ -41,6 +61,8 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         data_inicio: '',
         data_prevista_fim: '',
         data_real_fim: '',
+        responsavel: '', // Reset responsavel
+        cliente_nome: '', // Reset cliente_nome
       });
     }
   }, [initialData]);
@@ -80,6 +102,8 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         data_inicio: formData.data_inicio || null,
         data_prevista_fim: formData.data_prevista_fim || null,
         data_real_fim: formData.data_real_fim || null,
+        responsavel: formData.responsavel ? parseInt(formData.responsavel, 10) : null,
+        cliente_nome: formData.cliente_nome.trim() || null, // Add cliente_nome, ensure null if empty
       };
       onSubmit(dataToSubmit);
     }
@@ -100,6 +124,22 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                className={`bg-gray-50 border ${errors.nome_obra ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`} />
         {errors.nome_obra && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.nome_obra}</p>}
       </div>
+
+      {/* Cliente Nome Field */}
+      <div>
+        <label htmlFor="cliente_nome" className="block mb-2 text-sm font-medium text-gray-900">Nome do Cliente (Opcional)</label>
+        <input
+          type="text"
+          name="cliente_nome"
+          id="cliente_nome"
+          value={formData.cliente_nome}
+          onChange={handleChange}
+          className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2"
+          maxLength="255"
+        />
+        {/* errors.cliente_nome might be added here if specific validation is needed */}
+      </div>
+
       <div>
         <label htmlFor="endereco_completo" className="block mb-2 text-sm font-medium text-gray-900">Endereço Completo</label>
         <textarea name="endereco_completo" id="endereco_completo" value={formData.endereco_completo} onChange={handleChange} rows="3"
@@ -122,6 +162,28 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         </select>
         {errors.status && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.status}</p>}
       </div>
+
+      {/* Responsavel Field */}
+      <div>
+        <label htmlFor="responsavel" className="block mb-2 text-sm font-medium text-gray-900">Responsável pela Obra</label>
+        <select
+          name="responsavel"
+          id="responsavel"
+          value={formData.responsavel}
+          onChange={handleChange}
+          className={`bg-gray-50 border ${errors.responsavel ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
+        >
+          <option value="">Selecione um Responsável (Opcional)</option>
+          {funcionarios.map((funcionario) => (
+            <option key={funcionario.id} value={funcionario.id}>
+              {funcionario.nome_completo}
+            </option>
+          ))}
+        </select>
+        {errors.responsavel && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.responsavel}</p>}
+        {errors.funcionarios && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.funcionarios}</p>}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label htmlFor="data_inicio" className="block mb-2 text-sm font-medium text-gray-900">Data Início</label>

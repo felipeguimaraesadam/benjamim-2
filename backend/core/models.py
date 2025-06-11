@@ -52,6 +52,8 @@ class Obra(models.Model):
     data_inicio = models.DateField(null=True, blank=True)
     data_prevista_fim = models.DateField(null=True, blank=True)
     data_real_fim = models.DateField(null=True, blank=True)
+    responsavel = models.ForeignKey('Funcionario', on_delete=models.SET_NULL, null=True, blank=True, related_name='obras_responsaveis')
+    cliente_nome = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.nome_obra

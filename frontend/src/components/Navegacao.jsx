@@ -1,7 +1,12 @@
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 // Placeholder icons - replace with actual icons from a library like react-icons or Heroicons
+// Hamburger Icon for mobile
+const HamburgerIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>;
+const CloseIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
+
 const BuildingIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h6M9 12.75h6m-6 6h6M4.5 6.75h.75m13.5 0h.75M4.5 12.75h.75m13.5 0h.75m-15 6h.75m13.5 0h.75M3 3h18M3 21h18" /></svg>;
 const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>;
 // DocumentTextIcon removed as the link is being removed
@@ -25,13 +30,14 @@ const NavGroupHeader = ({ title }) => (
   </div>
 );
 
-const NavLink = ({ to, icon, children }) => {
+const NavLink = ({ to, icon, children, onClick }) => {
   const location = useLocation();
   const isActive = location.pathname.startsWith(to);
 
   return (
     <Link
       to={to}
+      onClick={onClick} // Added onClick prop
       className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-150 ease-in-out
                   ${isActive
                     ? 'bg-primary-500 text-white shadow-md'
@@ -47,10 +53,18 @@ const NavLink = ({ to, icon, children }) => {
 const Navegacao = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
+    setIsMobileMenuOpen(false); // Close mobile menu on logout
     navigate('/login');
+  };
+
+  const closeMobileMenu = () => {
+    if (isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+    }
   };
 
   if (!isAuthenticated) {
@@ -58,44 +72,57 @@ const Navegacao = () => {
   }
 
   return (
-    <div className="w-64 h-screen bg-white shadow-lg fixed top-0 left-0 flex flex-col p-4 space-y-2">
-      <div className="text-center py-6">
-        <Link to="/" className="text-2xl font-bold text-primary-600">
-          SGO
-        </Link>
-      </div>
+    <>
+      {/* Hamburger Button - visible only on small screens */}
+      <button
+        className="md:hidden fixed top-4 left-4 z-50 p-2 text-gray-600 hover:text-primary-600"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        {isMobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
+      </button>
 
-      <nav className="flex-grow space-y-1">
-        <NavLink to="/" icon={<DashboardIcon />}>Dashboard</NavLink>
-        <NavLink to="/obras" icon={<BuildingIcon />}>Obras</NavLink>
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-40 w-64 h-screen bg-white shadow-lg flex flex-col p-4 space-y-2
+                   transform transition-transform duration-300 ease-in-out md:translate-x-0
+                   ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="text-center py-6">
+          <Link to="/" onClick={closeMobileMenu} className="text-2xl font-bold text-primary-600">
+            SGO
+          </Link>
+        </div>
 
-        <NavGroupHeader title="Cadastros" />
-        <NavLink to="/funcionarios" icon={<FuncionariosIcon />}>Funcionários</NavLink>
-        <NavLink to="/equipes" icon={<EquipesIcon />}>Equipes</NavLink>
-        <NavLink to="/materiais" icon={<MateriaisIcon />}>Materiais</NavLink>
+        <nav className="flex-grow space-y-1 overflow-y-auto">
+          <NavLink to="/" icon={<DashboardIcon />} onClick={closeMobileMenu}>Dashboard</NavLink>
+          <NavLink to="/obras" icon={<BuildingIcon />} onClick={closeMobileMenu}>Obras</NavLink>
 
-        <NavGroupHeader title="Financeiro" />
-        <NavLink to="/compras" icon={<ComprasIcon />}>Compras</NavLink>
-        <NavLink to="/despesas" icon={<DespesasIcon />}>Despesas</NavLink>
+          <NavGroupHeader title="Cadastros" />
+          <NavLink to="/funcionarios" icon={<FuncionariosIcon />} onClick={closeMobileMenu}>Funcionários</NavLink>
+          <NavLink to="/equipes" icon={<EquipesIcon />} onClick={closeMobileMenu}>Equipes</NavLink>
+          <NavLink to="/materiais" icon={<MateriaisIcon />} onClick={closeMobileMenu}>Materiais</NavLink>
 
-        <NavGroupHeader title="Operacional" />
-        <NavLink to="/alocacoes" icon={<AlocacoesIcon />}>Alocações</NavLink>
-        <NavLink to="/ocorrencias" icon={<OcorrenciasIcon />}>Ocorrências</NavLink>
+          <NavGroupHeader title="Financeiro" />
+          <NavLink to="/compras" icon={<ComprasIcon />} onClick={closeMobileMenu}>Compras</NavLink>
+          <NavLink to="/despesas" icon={<DespesasIcon />} onClick={closeMobileMenu}>Despesas</NavLink>
 
-        <NavLink to="/relatorios" icon={<RelatoriosIcon />}>Relatórios</NavLink>
+          <NavGroupHeader title="Operacional" />
+          <NavLink to="/alocacoes" icon={<AlocacoesIcon />} onClick={closeMobileMenu}>Alocações</NavLink>
+          <NavLink to="/ocorrencias" icon={<OcorrenciasIcon />} onClick={closeMobileMenu}>Ocorrências</NavLink>
 
-        {user?.nivel_acesso === 'admin' && (
-          <>
-            <NavGroupHeader title="Administração" />
-            <NavLink to="/usuarios" icon={<UsersIcon />}>Usuários</NavLink>
-            {/* Documentos link removed as per requirements */}
-          </>
-        )}
-      </nav>
+          <NavLink to="/relatorios" icon={<RelatoriosIcon />} onClick={closeMobileMenu}>Relatórios</NavLink>
 
-      <div className="pt-2 border-t border-gray-200">
+          {user?.nivel_acesso === 'admin' && (
+            <>
+              <NavGroupHeader title="Administração" />
+              <NavLink to="/usuarios" icon={<UsersIcon />} onClick={closeMobileMenu}>Usuários</NavLink>
+            </>
+          )}
+        </nav>
+
+        <div className="pt-2 border-t border-gray-200">
         <button
-          onClick={handleLogout}
+          onClick={handleLogout} // handleLogout already calls closeMobileMenu
           className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-150 ease-in-out"
         >
           <ArrowLeftOnRectangleIcon />
@@ -106,6 +133,14 @@ const Navegacao = () => {
         <p>{user?.nome_completo} ({user?.nivel_acesso})</p>
       </div>
     </div>
+    {/* Optional: Overlay for mobile menu - closes menu on click */}
+    {isMobileMenuOpen && (
+        <div
+            className="fixed inset-0 z-30 bg-black opacity-50 md:hidden"
+            onClick={closeMobileMenu}
+        ></div>
+    )}
+    </>
   );
 };
 
