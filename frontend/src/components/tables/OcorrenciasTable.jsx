@@ -8,16 +8,7 @@ const OcorrenciasTable = ({ ocorrencias, funcionarios, onEdit, onDelete, isLoadi
             return 'Carregando...'; // Or 'N/A' or some other placeholder
         }
         const funcionario = funcionarios.find(f => f.id === funcionarioId);
-        return funcionario ? funcionario.nome : 'Funcionário não encontrado';
-    };
-
-    const formatTipoOcorrencia = (tipo) => {
-        const tipos = {
-            'atraso': 'Atraso',
-            'falta_justificada': 'Falta Justificada',
-            'falta_nao_justificada': 'Falta Não Justificada',
-        };
-        return tipos[tipo] || tipo;
+        return funcionario ? funcionario.nome_completo : 'Funcionário não encontrado';
     };
 
     const formatDate = (dateString) => {
@@ -52,14 +43,10 @@ const OcorrenciasTable = ({ ocorrencias, funcionarios, onEdit, onDelete, isLoadi
                     {ocorrencias.map((ocorrencia) => (
                         <tr key={ocorrencia.id} className="bg-white border-b hover:bg-gray-50">
                             <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                {/* Assuming ocorrencia.funcionario is an object with name, if backend sends populated data.
-                                    If not, use getFuncionarioNome(ocorrencia.funcionario_id).
-                                    The instruction implies backend might not be changed, so using getFuncionarioNome.
-                                */}
-                                {ocorrencia.funcionario?.nome || getFuncionarioNome(ocorrencia.funcionario_id)}
+                                {getFuncionarioNome(ocorrencia.funcionario)}
                             </td>
                             <td className="px-6 py-4">{formatDate(ocorrencia.data)}</td>
-                            <td className="px-6 py-4">{formatTipoOcorrencia(ocorrencia.tipo_ocorrencia)}</td>
+                            <td className="px-6 py-4">{ocorrencia.tipo}</td>
                             <td className="px-6 py-4">{ocorrencia.observacao || '-'}</td>
                             <td className="px-6 py-4 text-center space-x-2">
                                 <button

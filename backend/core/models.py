@@ -52,6 +52,8 @@ class Obra(models.Model):
     data_inicio = models.DateField(null=True, blank=True)
     data_prevista_fim = models.DateField(null=True, blank=True)
     data_real_fim = models.DateField(null=True, blank=True)
+    responsavel = models.ForeignKey('Funcionario', on_delete=models.SET_NULL, null=True, blank=True, related_name='obras_responsaveis')
+    cliente_nome = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.nome_obra
@@ -75,12 +77,17 @@ class Equipe(models.Model):
 
 class Alocacao_Obras_Equipes(models.Model):
     obra = models.ForeignKey(Obra, on_delete=models.CASCADE)
-    equipe = models.ForeignKey(Equipe, on_delete=models.CASCADE)
+    equipe = models.ForeignKey(Equipe, on_delete=models.CASCADE, null=True, blank=True) # Made nullable
+    servico_externo = models.CharField(max_length=255, blank=True, null=True) # New field
     data_alocacao_inicio = models.DateField()
     data_alocacao_fim = models.DateField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.obra.nome_obra} - {self.equipe.nome_equipe}"
+        if self.equipe:
+            return f"{self.obra.nome_obra} - Equipe: {self.equipe.nome_equipe}"
+        elif self.servico_externo:
+            return f"{self.obra.nome_obra} - Externo: {self.servico_externo}"
+        return f"Alocação ID {self.id} para {self.obra.nome_obra} (detalhes pendentes)"
 
 class Material(models.Model):
     nome = models.CharField(max_length=100, unique=True)

@@ -64,8 +64,19 @@ const OcorrenciaForm = ({ initialData, funcionarios, onSubmit, onCancel, isLoadi
     const handleSubmit = (e) => {
         e.preventDefault();
         if (validateForm()) {
+            const { funcionario_id, tipo_ocorrencia, ...rest } = formData;
+
+            // Map frontend value to backend choice for 'tipo'
+            let tipoBackendValue = '';
+            if (tipo_ocorrencia === 'atraso') tipoBackendValue = 'Atraso';
+            else if (tipo_ocorrencia === 'falta_justificada') tipoBackendValue = 'Falta Justificada';
+            else if (tipo_ocorrencia === 'falta_nao_justificada') tipoBackendValue = 'Falta não Justificada';
+            // Add more mappings if other types are introduced
+
             const dataToSubmit = {
-                ...formData,
+                ...rest,
+                funcionario: funcionario_id, // Renamed from funcionario_id
+                tipo: tipoBackendValue,      // Renamed from tipo_ocorrencia and value mapped
                 // Ensure observacao is null if empty, if backend expects this
                 observacao: formData.observacao.trim() === '' ? null : formData.observacao,
             };
@@ -87,7 +98,7 @@ const OcorrenciaForm = ({ initialData, funcionarios, onSubmit, onCancel, isLoadi
                     <option value="">Selecione o Funcionário</option>
                     {(funcionarios || []).map((funcionario) => (
                         <option key={funcionario.id} value={funcionario.id}>
-                            {funcionario.nome}
+                            {funcionario.nome_completo}
                         </option>
                     ))}
                 </select>

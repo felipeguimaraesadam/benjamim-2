@@ -19,6 +19,104 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Interceptor de Resposta para lidar com erros 401 e refresh token
+apiClient.interceptors.response.use(
+  (response) => response, // Passa adiante respostas bem-sucedidas
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Se a requisição original já era para obter/refrescar o token, não faz sentido tentar o refresh de novo.
+    // A URL completa da requisição original é error.config.url
+    // A baseURL do apiClient é apiClient.defaults.baseURL
+    // Precisamos verificar se originalRequest.url (que é a URL completa) termina com /token/ ou /token/refresh/
+    // ou se a parte relativa (originalRequest.url sem a baseURL) é /token/ ou /token/refresh/
+    const requestUrlPath = originalRequest.url.replace(apiClient.defaults.baseURL, '');
+
+    if (requestUrlPath.endsWith('/token/') || requestUrlPath.endsWith('/token/refresh/')) {
+      // Limpa tokens se a falha foi no refresh e redireciona para login
+      if (requestUrlPath.endsWith('/token/refresh/')) {
+        console.error("Refresh token attempt failed (original request was /token/refresh/), logging out:", error);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        delete apiClient.defaults.headers.common['Authorization'];
+        if (typeof window !== 'undefined') {
+            // Apenas redireciona se não estiver já no login para evitar loop se o login falhar aqui
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
+        }
+      }
+      return Promise.reject(error); // Rejeita o erro original diretamente
+    }
+
+    // Verifica se o erro é 401 e se não é uma tentativa de repetição
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // Marca como tentativa de repetição
+
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (refreshToken) {
+        try {
+          // Usa uma nova instância do axios para a chamada de refresh para evitar loop no interceptor
+          // A URL base é pega de apiClient.defaults.baseURL
+          const refreshUrl = `${apiClient.defaults.baseURL}/token/refresh/`;
+
+          const response = await axios.post(refreshUrl, {
+            refresh: refreshToken,
+          });
+
+          const { access: newAccessToken, refresh: newRefreshToken } = response.data;
+
+          // Atualiza os tokens no localStorage
+          localStorage.setItem('accessToken', newAccessToken);
+          if (newRefreshToken) { // Backend pode ou não retornar um novo refresh token
+            localStorage.setItem('refreshToken', newRefreshToken);
+          }
+
+          // Atualiza os headers para futuras requisições na instância principal apiClient
+          apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+
+          // Atualiza o header da requisição original que falhou
+          originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+
+          // Reenvia a requisição original com o novo token
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          // Se a renovação falhar, desloga o usuário
+          console.error("Refresh token failed, logging out:", refreshError);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          // Remove o header de autorização da instância apiClient
+          delete apiClient.defaults.headers.common['Authorization'];
+
+          // Força o redirecionamento para a página de login
+          if (typeof window !== 'undefined') {
+            if (window.location.pathname !== '/login') { // Evita loop se já estiver no login
+                window.location.href = '/login';
+            }
+          }
+          return Promise.reject(refreshError);
+        }
+      } else {
+         console.log("No refresh token available, redirecting to login (from interceptor).");
+         localStorage.removeItem('accessToken'); // Garante que o accessToken também seja limpo
+         // refreshToken já seria nulo aqui, mas remover por segurança.
+         localStorage.removeItem('refreshToken');
+         delete apiClient.defaults.headers.common['Authorization'];
+         if (typeof window !== 'undefined') {
+            if (window.location.pathname !== '/login') {  // Evita loop se já estiver no login
+                window.location.href = '/login';
+            }
+         }
+         return Promise.reject(new Error("No refresh token available. User needs to login."));
+      }
+    }
+
+    // Para qualquer outro erro (não 401 ou já tentado), apenas rejeita a promise
+    return Promise.reject(error);
+  }
+);
+
 // --- Obra Service Functions ---
 export const getObras = () => {
   return apiClient.get('/obras/');
@@ -38,6 +136,18 @@ export const updateObra = (id, obraData) => {
 
 export const deleteObra = (id) => {
   return apiClient.delete(`/obras/${id}/`);
+};
+
+export const getObraHistoricoCustos = (obraId) => {
+  return apiClient.get(`/obras/${obraId}/historico-custos/`);
+};
+
+export const getObraCustosPorCategoria = (obraId) => { // New function
+    return apiClient.get(`/obras/${obraId}/custos-por-categoria/`);
+};
+
+export const getObraCustosPorMaterial = (obraId) => { // New function
+    return apiClient.get(`/obras/${obraId}/custos-por-material/`);
 };
 
 // --- Funcionario Service Functions ---
@@ -155,8 +265,8 @@ export const deleteDespesaExtra = (id) => {
 };
 
 // --- Alocacao Service Functions ---
-export const getAlocacoes = () => {
-  return apiClient.get('/alocacoes/');
+export const getAlocacoes = (params) => { // Added params argument
+  return apiClient.get('/alocacoes/', { params }); // Pass params to axios
 };
 
 export const getAlocacaoById = (id) => {
@@ -198,8 +308,8 @@ export const deleteCompra = (id) => {
 };
 
 // --- Ocorrencia Service Functions ---
-export const getOcorrencias = () => {
-  return apiClient.get('/ocorrencias/');
+export const getOcorrencias = (params) => { // Added params argument
+  return apiClient.get('/ocorrencias/', { params }); // Pass params to axios
 };
 
 export const createOcorrencia = (ocorrenciaData) => {

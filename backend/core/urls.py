@@ -5,7 +5,8 @@ from .views import (
     AlocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
     DespesaExtraViewSet, OcorrenciaFuncionarioViewSet,
     RelatorioFinanceiroObraView, RelatorioGeralComprasView, DashboardStatsView,
-    RelatorioDesempenhoEquipeView, RelatorioCustoGeralView
+    RelatorioDesempenhoEquipeView, RelatorioCustoGeralView, ObraHistoricoCustosView,
+    ObraCustosPorCategoriaView, ObraCustosPorMaterialView # Added new views
 )
 
 router = DefaultRouter()
@@ -26,4 +27,7 @@ urlpatterns = [
     path('dashboard/stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
     path('relatorios/desempenho-equipe/', RelatorioDesempenhoEquipeView.as_view(), name='relatorio-desempenho-equipe'),
     path('relatorios/custo-geral/', RelatorioCustoGeralView.as_view(), name='relatorio-custo-geral'),
+    path('obras/<int:pk>/historico-custos/', ObraHistoricoCustosView.as_view(), name='obra-historico-custos'),
+    path('obras/<int:pk>/custos-por-categoria/', ObraCustosPorCategoriaView.as_view(), name='obra-custos-categoria'), # New route
+    path('obras/<int:pk>/custos-por-material/', ObraCustosPorMaterialView.as_view(), name='obra-custos-material'), # New route
 ]

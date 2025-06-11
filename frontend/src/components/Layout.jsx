@@ -6,7 +6,8 @@ const Layout = () => {
   return (
     <div className="flex h-screen bg-gray-100">
       <Navegacao />
-      <main className="flex-1 p-4 md:p-6 overflow-auto ml-64">
+      {/* Apply left margin for sidebar only on medium screens and up */}
+      <main className="flex-1 p-4 md:p-6 overflow-auto md:ml-64">
         <Outlet />
       </main>
     </div>

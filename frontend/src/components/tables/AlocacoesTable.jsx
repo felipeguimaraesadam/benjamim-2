@@ -30,7 +30,7 @@ const AlocacoesTable = ({ alocacoes, obras, equipes, onEdit, onDelete, isLoading
         <thead className="text-xs text-gray-700 uppercase bg-gray-100">
           <tr>
             <th scope="col" className="px-6 py-3">Obra</th>
-            <th scope="col" className="px-6 py-3">Equipe</th>
+            <th scope="col" className="px-6 py-3">Alocação (Equipe/Serviço Externo)</th>
             <th scope="col" className="px-6 py-3">Data Início</th>
             <th scope="col" className="px-6 py-3">Data Fim</th>
             <th scope="col" className="px-6 py-3">Ações</th>
@@ -39,8 +39,14 @@ const AlocacoesTable = ({ alocacoes, obras, equipes, onEdit, onDelete, isLoading
         <tbody>
           {alocacoes.map((alocacao) => (
             <tr key={alocacao.id} className="bg-white border-b hover:bg-gray-50">
-              <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{getObraNome(alocacao.obra)}</td>
-              <td className="px-6 py-4">{getEquipeNome(alocacao.equipe)}</td>
+              <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{alocacao.obra_nome || getObraNome(alocacao.obra)}</td>
+              <td className="px-6 py-4">
+                {alocacao.equipe_nome
+                  ? `Equipe: ${alocacao.equipe_nome}`
+                  : alocacao.servico_externo
+                    ? `Serviço Externo: ${alocacao.servico_externo}`
+                    : 'N/A'}
+              </td>
               <td className="px-6 py-4">{formatDate(alocacao.data_alocacao_inicio)}</td>
               <td className="px-6 py-4">{formatDate(alocacao.data_alocacao_fim)}</td>
               <td className="px-6 py-4 flex space-x-2">

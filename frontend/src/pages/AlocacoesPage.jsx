@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom'; // Added useLocation and useNavigate
 import * as api from '../services/api';
 import AlocacoesTable from '../components/tables/AlocacoesTable';
 import AlocacaoForm from '../components/forms/AlocacaoForm';
 
 const AlocacoesPage = () => {
+  const location = useLocation(); // Hook to access location state
+  const navigate = useNavigate(); // Hook to navigate and modify state
   const [alocacoes, setAlocacoes] = useState([]);
   const [obras, setObras] = useState([]);
   const [equipes, setEquipes] = useState([]);
@@ -56,8 +59,15 @@ const AlocacoesPage = () => {
   }, [fetchAlocacoes, fetchObras, fetchEquipes]);
 
   const handleAddNew = () => {
-    setCurrentAlocacao(null);
+    const obraIdFromState = location.state?.obraIdParaNovaAlocacao;
+    // Assuming AlocacaoForm expects the obra ID as 'obra' in initialData
+    setCurrentAlocacao(obraIdFromState ? { obra: obraIdFromState } : null);
+    setError(null); // Clear previous errors
     setShowFormModal(true);
+    // Clear location state after using it
+    if (obraIdFromState) {
+        navigate(location.pathname, { replace: true, state: {} });
+    }
   };
 
   const handleEdit = (alocacao) => {

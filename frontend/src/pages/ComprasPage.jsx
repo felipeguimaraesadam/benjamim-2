@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom'; // Added useLocation and useNavigate
 import ComprasTable from '../components/tables/ComprasTable';
 import CompraForm from '../components/forms/CompraForm';
 import * as api from '../services/api'; // Import all functions from api.js
 
 const ComprasPage = () => {
+    const location = useLocation(); // Hook to access location state
+    const navigate = useNavigate(); // Hook to navigate and modify state
     const [compras, setCompras] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingForm, setIsLoadingForm] = useState(false);
@@ -36,9 +39,14 @@ const ComprasPage = () => {
     }, [fetchCompras]);
 
     const handleAddNew = () => {
-        setCurrentCompra(null);
+        const obraIdFromState = location.state?.obraIdParaNovaCompra;
+        setCurrentCompra(obraIdFromState ? { obra_id: obraIdFromState } : null);
         setError(null); // Clear previous errors
         setShowFormModal(true);
+        // Clear location state after using it
+        if (obraIdFromState) {
+            navigate(location.pathname, { replace: true, state: {} });
+        }
     };
 
     const handleEdit = (compra) => {
