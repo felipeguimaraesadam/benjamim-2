@@ -40,6 +40,18 @@ export const deleteObra = (id) => {
   return apiClient.delete(`/obras/${id}/`);
 };
 
+export const getObraHistoricoCustos = (obraId) => {
+  return apiClient.get(`/obras/${obraId}/historico-custos/`);
+};
+
+export const getObraCustosPorCategoria = (obraId) => { // New function
+    return apiClient.get(`/obras/${obraId}/custos-por-categoria/`);
+};
+
+export const getObraCustosPorMaterial = (obraId) => { // New function
+    return apiClient.get(`/obras/${obraId}/custos-por-material/`);
+};
+
 // --- Funcionario Service Functions ---
 export const getFuncionarios = () => {
   return apiClient.get('/funcionarios/');
@@ -198,8 +210,8 @@ export const deleteCompra = (id) => {
 };
 
 // --- Ocorrencia Service Functions ---
-export const getOcorrencias = () => {
-  return apiClient.get('/ocorrencias/');
+export const getOcorrencias = (params) => { // Added params argument
+  return apiClient.get('/ocorrencias/', { params }); // Pass params to axios
 };
 
 export const createOcorrencia = (ocorrenciaData) => {

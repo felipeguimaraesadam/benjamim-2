@@ -98,9 +98,46 @@ class OcorrenciaFuncionarioViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows ocorrencias de funcionarios to be viewed or edited.
     """
-    queryset = Ocorrencia_Funcionario.objects.all()
+    queryset = Ocorrencia_Funcionario.objects.all() # Base queryset
     serializer_class = OcorrenciaFuncionarioSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Ocorrencia_Funcionario.objects.all().select_related('funcionario').order_by('-data')
+
+        data_inicio_str = self.request.query_params.get('data_inicio')
+        data_fim_str = self.request.query_params.get('data_fim')
+        funcionario_id_str = self.request.query_params.get('funcionario_id')
+        tipo_ocorrencia_str = self.request.query_params.get('tipo') # Matches model field 'tipo'
+
+        if data_inicio_str:
+            try:
+                data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
+                queryset = queryset.filter(data__gte=data_inicio)
+            except ValueError:
+                # Silently ignore invalid date format for now, or raise ParseError
+                pass
+
+        if data_fim_str:
+            try:
+                data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
+                queryset = queryset.filter(data__lte=data_fim)
+            except ValueError:
+                pass
+
+        if funcionario_id_str:
+            try:
+                funcionario_id = int(funcionario_id_str)
+                queryset = queryset.filter(funcionario_id=funcionario_id)
+            except ValueError:
+                pass # Silently ignore invalid funcionario_id
+
+        if tipo_ocorrencia_str:
+            # Assumes frontend sends the exact string value as stored in the model's 'tipo' field
+            # e.g., "Atraso", "Falta Justificada", "Falta não Justificada"
+            queryset = queryset.filter(tipo=tipo_ocorrencia_str)
+
+        return queryset
 
 
 # Reports Views
@@ -422,3 +459,106 @@ class RelatorioCustoGeralView(APIView):
             "total_despesas_extras": total_despesas_extras,
             "custo_consolidado_total": custo_consolidado_total
         })
+
+
+from django.db.models.functions import TruncMonth
+
+class ObraHistoricoCustosView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk, format=None): # pk será o ID da obra
+        try:
+            obra = Obra.objects.get(pk=pk)
+        except Obra.DoesNotExist:
+            return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Custos de Compras agrupados por mês
+        custos_compras = Compra.objects.filter(obra=obra) \
+                    .annotate(mes=TruncMonth('data_compra')) \
+                    .values('mes') \
+                    .annotate(total_compras=Sum('custo_total')) \
+                    .order_by('mes')
+
+        # Custos de Despesas Extras agrupados por mês
+        custos_despesas = Despesa_Extra.objects.filter(obra=obra) \
+                    .annotate(mes=TruncMonth('data')) \
+                    .values('mes') \
+                    .annotate(total_despesas=Sum('valor')) \
+                    .order_by('mes')
+
+        # Combinar os resultados
+        historico = {}
+        for compra in custos_compras:
+            # Ensure 'mes' is not None; skip if it is (though TruncMonth should always return a date)
+            if compra['mes'] is None:
+                continue
+            mes_str = compra['mes'].strftime('%Y-%m')
+            if mes_str not in historico:
+                historico[mes_str] = {'compras': Decimal('0.00'), 'despesas_extras': Decimal('0.00')}
+            historico[mes_str]['compras'] += compra['total_compras'] or Decimal('0.00')
+
+        for despesa in custos_despesas:
+            # Ensure 'mes' is not None
+            if despesa['mes'] is None:
+                continue
+            mes_str = despesa['mes'].strftime('%Y-%m')
+            if mes_str not in historico:
+                historico[mes_str] = {'compras': Decimal('0.00'), 'despesas_extras': Decimal('0.00')}
+            historico[mes_str]['despesas_extras'] += despesa['total_despesas'] or Decimal('0.00')
+
+        # Formatar para a saída desejada (array de objetos)
+        resultado_final = []
+        for mes, totais in sorted(historico.items()):
+            resultado_final.append({
+                'mes': mes,
+                'total_custo_compras': totais['compras'],
+                'total_custo_despesas': totais['despesas_extras'],
+                'total_geral_mes': totais['compras'] + totais['despesas_extras']
+            })
+
+        return Response(resultado_final)
+
+
+class ObraCustosPorCategoriaView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk, format=None): # pk é o ID da obra
+        try:
+            obra = Obra.objects.get(pk=pk)
+        except Obra.DoesNotExist:
+            return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        custos_por_categoria = Despesa_Extra.objects.filter(obra=obra) \
+            .values('categoria') \
+            .annotate(total_valor=Sum('valor')) \
+            .order_by('-total_valor') # Opcional: ordenar por valor
+
+        # Formatar para [{ name: 'Categoria', value: X }, ...] para Recharts PieChart
+        resultado_formatado = [{'name': item['categoria'], 'value': item['total_valor'] or Decimal('0.00')} for item in custos_por_categoria if item['total_valor'] is not None]
+
+        return Response(resultado_formatado)
+
+class ObraCustosPorMaterialView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk, format=None): # pk é o ID da obra
+        try:
+            obra = Obra.objects.get(pk=pk)
+        except Obra.DoesNotExist:
+            return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        custos_por_material = Compra.objects.filter(obra=obra) \
+            .select_related('material') \
+            .values('material__nome') \
+            .annotate(total_custo=Sum('custo_total')) \
+            .order_by('-total_custo') # Opcional: ordenar
+
+        # Formatar para [{ name: 'Material Nome', value: X }, ...]
+        # Filtrar itens onde material__nome é None ou total_custo é None para evitar problemas no frontend
+        resultado_formatado = [
+            {'name': item['material__nome'], 'value': item['total_custo'] or Decimal('0.00')}
+            for item in custos_por_material
+            if item['material__nome'] is not None and item['total_custo'] is not None
+        ]
+
+        return Response(resultado_formatado)

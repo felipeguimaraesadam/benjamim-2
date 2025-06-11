@@ -14,6 +14,7 @@ const UsuariosPage = () => {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDeleteId, setUserToDeleteId] = useState(null);
+  const [showHelpModal, setShowHelpModal] = useState(false); // State for help modal
 
   const fetchUsuarios = useCallback(async () => {
     setIsLoading(true);
@@ -100,7 +101,18 @@ const UsuariosPage = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Gestão de Usuários</h1>
+        <div className="flex items-center">
+          <h1 className="text-3xl font-bold text-gray-800">Gestão de Usuários</h1>
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="ml-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            title="Ajuda sobre Permissões"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-gray-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+            </svg>
+          </button>
+        </div>
         <button
           onClick={handleAddNew}
           className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:bg-primary-300"
@@ -166,6 +178,50 @@ const UsuariosPage = () => {
                 className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50"
               >
                 {isLoading ? 'Excluindo...' : 'Excluir'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Help Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">Níveis de Permissão</h2>
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="p-1 rounded-full hover:bg-gray-200"
+                title="Fechar"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="text-sm text-gray-700 space-y-3">
+              <p><strong>Administrador (admin):</strong></p>
+              <ul className="list-disc list-inside ml-4 space-y-1">
+                <li>Acesso total a todas as funcionalidades do sistema.</li>
+                <li>Pode gerenciar obras, finanças, equipes, materiais.</li>
+                <li>Pode gerenciar usuários (criar, editar, excluir, definir nível de acesso).</li>
+                <li>Pode visualizar todos os relatórios.</li>
+              </ul>
+              <p><strong>Gerente (gerente):</strong></p>
+              <ul className="list-disc list-inside ml-4 space-y-1">
+                <li>Acesso limitado às funcionalidades operacionais e de gerenciamento de obras.</li>
+                <li>Pode criar e gerenciar obras, compras, despesas, alocações, ocorrências.</li>
+                <li>Pode visualizar relatórios relevantes à gestão de obras.</li>
+                <li>Não pode gerenciar usuários ou acessar configurações administrativas do sistema.</li>
+              </ul>
+            </div>
+            <div className="mt-6 text-right">
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300"
+              >
+                Entendido
               </button>
             </div>
           </div>

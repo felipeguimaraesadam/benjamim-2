@@ -1,37 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import * as api from '../services/api.js'; // Corrected import
+import * as api from '../services/api.js';
+import {
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    PieChart, Pie, Cell, BarChart, Bar
+} from 'recharts';
 
 const ObraDetailPage = () => {
   const { id } = useParams(); // Get obra ID from URL
-  const { id } = useParams(); // Get obra ID from URL
   const [obra, setObra] = useState(null);
-  const [compras, setCompras] = useState([]); // Assuming you might fetch these later
-  const [despesas, setDespesas] = useState([]); // Assuming you might fetch these later
-  const [alocacoesEquipe, setAlocacoesEquipe] = useState([]); // State for allocated teams
+  // const [compras, setCompras] = useState([]); // Placeholder, not fully implemented in this task
+  // const [despesas, setDespesas] = useState([]); // Placeholder, not fully implemented in this task
+  const [alocacoesEquipe, setAlocacoesEquipe] = useState([]);
+  const [historicoCustos, setHistoricoCustos] = useState([]);
+  const [custosCategoria, setCustosCategoria] = useState([]); // State for category costs
+  const [custosMaterial, setCustosMaterial] = useState([]);   // State for material costs
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [alocacaoError, setAlocacaoError] = useState(null); // Separate error state for alocacao operations
+  const [error, setError] = useState(null); // General page error
+  const [alocacaoError, setAlocacaoError] = useState(null); // Error for alocacao operations
+  const [custosError, setCustosError] = useState(null);       // Error for historicoCustos chart
+  const [categoriaError, setCategoriaError] = useState(null); // Error for custosCategoria chart
+  const [materialError, setMaterialError] = useState(null);   // Error for custosMaterial chart
+
 
   const fetchObraData = async () => {
     setIsLoading(true);
     setError(null);
     setAlocacaoError(null);
+    setCustosError(null);
+    setCategoriaError(null);
+    setMaterialError(null);
     try {
+      // Fetch obra details
       const obraRes = await api.getObraById(id);
       setObra(obraRes.data);
 
       // Fetch alocacoes for this obra
       const alocacoesRes = await api.getAlocacoes({ obra_id: id });
-      setAlocacoesEquipe(alocacoesRes.data || alocacoesRes);
+      setAlocacoesEquipe(alocacoesRes.data || []);
 
-      // Placeholder for other related data, can be fetched similarly
-      setCompras([]);
-      setDespesas([]);
+      // Fetch cost history for this obra
+      try {
+        const custosRes = await api.getObraHistoricoCustos(id);
+        setHistoricoCustos(custosRes.data || []);
+      } catch (err) {
+        console.error("Erro ao buscar histórico de custos:", err);
+        setCustosError("Falha ao carregar histórico de custos.");
+      }
+
+      // Fetch custos por categoria
+      try {
+        const categoriaRes = await api.getObraCustosPorCategoria(id);
+        setCustosCategoria(categoriaRes.data || []);
+      } catch (err) {
+        console.error("Erro ao buscar custos por categoria:", err);
+        setCategoriaError("Falha ao carregar custos por categoria.");
+      }
+
+      // Fetch custos por material
+      try {
+        const materialRes = await api.getObraCustosPorMaterial(id);
+        setCustosMaterial(materialRes.data || []);
+      } catch (err) {
+        console.error("Erro ao buscar custos por material:", err);
+        setMaterialError("Falha ao carregar custos por material.");
+      }
+
+      // Placeholders - these would be fetched if their sections were fully implemented
+      // setCompras([]);
+      // setDespesas([]);
 
     } catch (err) {
-      setError(err.message || `Falha ao buscar detalhes da obra ${id}`);
-      console.error("Fetch Obra Detail Error:", err);
+      setError(err.message || `Falha ao buscar dados da obra ${id}`); // General error for primary data
+      console.error("Fetch Obra Main Data Error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +189,11 @@ const ObraDetailPage = () => {
                 <li key={aloc.id} className="p-3 bg-gray-50 rounded-md shadow-sm text-sm">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-semibold text-primary-700">{aloc.equipe_nome || 'Equipe não informada'}</p>
+                      {aloc.equipe_nome ? (
+                        <p className="font-semibold text-primary-700">Equipe: {aloc.equipe_nome}</p>
+                      ) : (
+                        <p className="font-semibold text-primary-700">Serviço Externo: {aloc.servico_externo || 'Não especificado'}</p>
+                      )}
                       <p className="text-gray-600">De: {formatDate(aloc.data_alocacao_inicio)}</p>
                       <p className="text-gray-600">Até: {aloc.data_alocacao_fim ? formatDate(aloc.data_alocacao_fim) : 'Presente'}</p>
                     </div>
@@ -175,14 +220,85 @@ const ObraDetailPage = () => {
           ) : (<p className="text-gray-500 text-sm">Nenhuma compra registrada para esta obra (dados de exemplo).</p>)}
         </div>
 
-        {/* Despesas Extras Section Placeholder (can be expanded similarly) */}
-        <div className="bg-white shadow-lg rounded-lg p-6">
+        {/* Despesas Extras Section Placeholder - can be detailed like Compras if needed */}
+        {/* <div className="bg-white shadow-lg rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Despesas Extras</h2>
           {despesas.length > 0 ? (
             <ul className="space-y-2 text-sm text-gray-600">{despesas.map(d => <li key={d.id}>{d.descricao}: R$ {parseFloat(d.valor).toFixed(2)} ({d.categoria})</li>)}</ul>
           ) : (<p className="text-gray-500 text-sm">Nenhuma despesa extra registrada (dados de exemplo).</p>)}
+        </div> */}
+
+        {/* Gráfico Histórico de Custos Mensais */}
+        <div className="bg-white shadow-lg rounded-lg p-6 lg:col-span-2">
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Histórico de Custos Mensais</h2>
+          {custosError && <p className="text-red-500 text-sm mb-2">Erro: {custosError}</p>}
+          {historicoCustos.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={historicoCustos} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis tickFormatter={(value) => `R$${value.toLocaleString('pt-BR')}`} />
+                <Tooltip formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                <Legend />
+                <Line type="monotone" dataKey="total_custo_compras" name="Compras" stroke="#8884d8" activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="total_custo_despesas" name="Despesas Extras" stroke="#82ca9d" activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="total_geral_mes" name="Custo Total Mensal" stroke="#ff7300" activeDot={{ r: 8 }} strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            !custosError && <p className="text-gray-500 text-sm">Não há dados de custos mensais para exibir o histórico.</p>
+          )}
         </div>
 
+        {/* Gráfico Custos por Categoria de Despesa */}
+        <div className="bg-white shadow-lg rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Despesas por Categoria</h2>
+          {categoriaError && <p className="text-red-500 text-sm mb-2">Erro: {categoriaError}</p>}
+          {custosCategoria.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={custosCategoria}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {custosCategoria.map((entry, index) => (
+                    <Cell key={`cell-cat-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1919'][index % 6]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            !categoriaError && <p className="text-gray-500 text-sm">Nenhuma despesa extra registrada para este gráfico.</p>
+          )}
+        </div>
+
+        {/* Gráfico Materiais Mais Caros */}
+        <div className="bg-white shadow-lg rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Top Materiais por Custo</h2>
+          {materialError && <p className="text-red-500 text-sm mb-2">Erro: {materialError}</p>}
+          {custosMaterial.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={custosMaterial.slice(0, 10)} layout="vertical" margin={{ top: 5, right: 30, left: 120, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" tickFormatter={(value) => `R$${(value/1000).toLocaleString('pt-BR')}k`} />
+                <YAxis dataKey="name" type="category" width={110} interval={0} />
+                <Tooltip formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                <Legend />
+                <Bar dataKey="value" name="Custo Total" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            !materialError && <p className="text-gray-500 text-sm">Nenhuma compra registrada para este gráfico.</p>
+          )}
+        </div>
       </div>
     </div>
   );

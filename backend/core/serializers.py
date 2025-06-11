@@ -89,6 +89,46 @@ class AlocacaoObrasEquipesSerializer(serializers.ModelSerializer):
         # If you want these extra fields to always appear, ensure they are listed or __all__ is used.
         # For more complex scenarios, consider depth or explicit field listing.
 
+    def validate(self, data):
+        # .get allows us to check for key presence without raising KeyError if not found
+        # This is important because in PATCH requests, not all fields might be present.
+        # However, for create (POST), we might want to ensure certain fields are present or have defaults.
+
+        # Retrieve 'equipe' and 'servico_externo' from data.
+        # If a field is not present in `data` (e.g. during a PATCH operation where it's not being updated),
+        # and the field has an existing value on the instance (i.e., self.instance is not None),
+        # we should use the existing instance value for validation.
+
+        equipe = data.get('equipe', getattr(self.instance, 'equipe', None))
+        servico_externo = data.get('servico_externo', getattr(self.instance, 'servico_externo', None))
+
+        # Ensure servico_externo is stripped if it's a string, as blank strings might be passed
+        if isinstance(servico_externo, str):
+            servico_externo = servico_externo.strip()
+
+        if equipe and servico_externo:
+            raise serializers.ValidationError(
+                "Não é possível selecionar uma equipe interna e preencher um serviço externo ao mesmo tempo. Escolha apenas um."
+            )
+
+        # This validation should only apply if both are truly empty or not provided.
+        # For PATCH, if one is provided and the other is not, that's a valid update.
+        # This logic is more for 'create' or if both fields are explicitly being set to empty.
+        # If it's a create operation (self.instance is None) or both fields are in data:
+        if self.instance is None or ('equipe' in data and 'servico_externo' in data):
+             if not equipe and not servico_externo:
+                raise serializers.ValidationError(
+                    "É necessário selecionar uma equipe interna ou preencher o nome do serviço externo."
+                )
+        # If it's a PATCH operation and only one of the fields is in data, this means the other is unchanged.
+        # We need to ensure that if one is being explicitly set to empty/null, the other one must have a value.
+        elif 'equipe' in data and not data.get('equipe') and not servico_externo: # Trying to null out equipe
+             raise serializers.ValidationError("Ao remover a equipe, é necessário preencher o serviço externo ou selecionar outra equipe.")
+        elif 'servico_externo' in data and not data.get('servico_externo', '').strip() and not equipe: # Trying to null out servico_externo
+             raise serializers.ValidationError("Ao remover o serviço externo, é necessário selecionar uma equipe ou preencher novamente o serviço externo.")
+
+        return data
+
 
 class MaterialSerializer(serializers.ModelSerializer):
     class Meta:
