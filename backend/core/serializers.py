@@ -203,15 +203,31 @@ class UsoMaterialSerializer(serializers.ModelSerializer):
     material_nome = serializers.CharField(source='compra.material.nome', read_only=True, allow_null=True)
     compra_original_quantidade = serializers.DecimalField(source='compra.quantidade', max_digits=10, decimal_places=2, read_only=True)
     compra_original_custo = serializers.DecimalField(source='compra.custo_total', max_digits=10, decimal_places=2, read_only=True)
+    custo_proporcional = serializers.SerializerMethodField()
 
     class Meta:
         model = UsoMaterial
         fields = [
             'id', 'compra', 'obra', 'obra_nome', 'material_nome',
-            'compra_original_quantidade', 'compra_original_custo',
+            'compra_original_quantidade', 'compra_original_custo', 'custo_proporcional',
             'quantidade_usada', 'data_uso', 'andar', 'categoria_uso', 'descricao'
         ]
-        read_only_fields = ['obra', 'data_uso', 'obra_nome', 'material_nome', 'compra_original_quantidade', 'compra_original_custo']
+        read_only_fields = ['obra', 'data_uso', 'obra_nome', 'material_nome', 'compra_original_quantidade', 'compra_original_custo', 'custo_proporcional']
+
+    def get_custo_proporcional(self, obj):
+        # obj is the UsoMaterial instance
+        compra = obj.compra
+        if compra and compra.quantidade is not None and compra.quantidade != 0 and \
+           compra.custo_total is not None and obj.quantidade_usada is not None:
+
+            # Ensure all parts are Decimal for precision
+            quantidade_usada = Decimal(str(obj.quantidade_usada))
+            compra_quantidade = Decimal(str(compra.quantidade))
+            compra_custo_total = Decimal(str(compra.custo_total))
+
+            custo_proporcional = (quantidade_usada / compra_quantidade) * compra_custo_total
+            return custo_proporcional.quantize(Decimal('0.01')) # Ensure two decimal places
+        return Decimal('0.00')
 
     def validate(self, data):
         # 'compra' in data will be a Compra instance if it's a valid PK.

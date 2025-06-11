@@ -1,143 +1,152 @@
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import * as api from '../../services/api';
+import * as api from '../../services/api'; // Path to api.js
+
+const ANDAR_CHOICES = [
+  { value: 'Terreo', label: 'Térreo' },
+  { value: '1 Andar', label: '1º Andar' },
+  { value: '2 Andar', label: '2º Andar' },
+  { value: 'Cobertura', label: 'Cobertura' },
+  { value: 'Area Externa', label: 'Área Externa' },
+  { value: 'Outro', label: 'Outro' },
+];
+
+const CATEGORIA_USO_CHOICES = [
+  { value: 'Geral', label: 'Geral' },
+  { value: 'Eletrica', label: 'Elétrica' },
+  { value: 'Hidraulica', label: 'Hidráulica' },
+  { value: 'Alvenaria', label: 'Alvenaria' },
+  { value: 'Acabamento', label: 'Acabamento' },
+  { value: 'Estrutura', label: 'Estrutura' },
+  { value: 'Uso da Equipe', label: 'Uso da Equipe' },
+];
 
 const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal }) => {
-  const initialFormData = {
-    compra_id: '',
+  const [formData, setFormData] = useState({
+    compra: '', // Will store compra ID
     quantidade_usada: '',
-    andar: 'Terreo', // Default value
-    categoria_uso: 'Geral', // Default value
+    andar: ANDAR_CHOICES[0].value,
+    categoria_uso: CATEGORIA_USO_CHOICES[0].value,
     descricao: '',
-  };
-
-  const [formData, setFormData] = useState(initialFormData);
-  const [comprasDisponiveis, setComprasDisponiveis] = useState([]);
-  const [selectedCompraInfo, setSelectedCompraInfo] = useState({
-    quantidade_disponivel: 0,
-    unidade_medida: ''
   });
+  const [comprasDisponiveis, setComprasDisponiveis] = useState([]);
+  const [selectedCompraEstoque, setSelectedCompraEstoque] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [fieldErrors, setFieldErrors] = useState({});
-
-  const andarOptions = ['Terreo', '1 Andar', '2 Andar', 'Cobertura', 'Area Externa', 'Outro'];
-  const categoriaUsoOptions = ['Geral', 'Eletrica', 'Hidraulica', 'Alvenaria', 'Acabamento', 'Estrutura', 'Uso da Equipe'];
 
   useEffect(() => {
-    const fetchCompras = async () => {
-      if (!obraId) return;
+    if (obraId && showModal) {
       setIsLoading(true);
-      setError(null);
-      try {
-        const response = await api.getCompras({ obra_id: obraId });
-        const disponiveis = response.data.filter(c => parseFloat(c.quantidade_disponivel) > 0);
-        setComprasDisponiveis(disponiveis);
-        if (disponiveis.length > 0) {
-          // Pre-select first compra and set its info
-          // setFormData(prev => ({ ...prev, compra_id: disponiveis[0].id }));
-          // updateSelectedCompraInfo(disponiveis[0].id, disponiveis);
-          // No pre-selection to force user choice.
-        } else {
-            setError('Nenhum material com estoque disponível encontrado para esta obra.');
-        }
-      } catch (err) {
-        setError('Falha ao carregar materiais disponíveis.');
-        console.error("Fetch Compras Error:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setError(null); // Clear previous errors
+      setComprasDisponiveis([]); // Reset compras list
+      setSelectedCompraEstoque(0); // Reset stock
+      setFormData(prev => ({ // Reset relevant parts of form
+        ...prev,
+        compra: '',
+        quantidade_usada: '',
+        andar: ANDAR_CHOICES[0].value,
+        categoria_uso: CATEGORIA_USO_CHOICES[0].value,
+        descricao: '',
+      }));
 
-    if (showModal) { // Fetch only when modal becomes visible or obraId changes
-      fetchCompras();
+      api.getCompras({ obra_id: obraId })
+        .then(response => {
+          const filteredCompras = response.data.filter(c => parseFloat(c.quantidade_disponivel) > 0);
+          setComprasDisponiveis(filteredCompras);
+          if (filteredCompras.length === 0) {
+            setError({ general: 'Nenhuma compra com material disponível encontrada para esta obra.' });
+          }
+        })
+        .catch(err => {
+          console.error("Erro ao buscar compras disponíveis:", err);
+          setError({ general: 'Falha ao carregar lista de compras disponíveis. ' + (err.response?.data?.detail || err.message) });
+        })
+        .finally(() => setIsLoading(false));
     }
   }, [obraId, showModal]);
-
-  const updateSelectedCompraInfo = (compraId, comprasList) => {
-    const selected = (comprasList || comprasDisponiveis).find(c => c.id.toString() === compraId.toString());
-    if (selected) {
-      setSelectedCompraInfo({
-        quantidade_disponivel: parseFloat(selected.quantidade_disponivel),
-        unidade_medida: selected.material_unidade_medida || selected.material_details?.unidade_medida || '' // Adjust based on actual material details
-      });
-    } else {
-      setSelectedCompraInfo({ quantidade_disponivel: 0, unidade_medida: '' });
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    setFieldErrors(prev => ({ ...prev, [name]: null })); // Clear error on change
+    setError(prevError => prevError ? { ...prevError, [name]: null, general: null } : null);
 
-    if (name === 'compra_id') {
-      updateSelectedCompraInfo(value);
+
+    if (name === 'compra') {
+      const selected = comprasDisponiveis.find(c => c.id.toString() === value);
+      if (selected) {
+        setSelectedCompraEstoque(parseFloat(selected.quantidade_disponivel));
+      } else {
+        setSelectedCompraEstoque(0);
+      }
+      // Reset quantidade_usada when compra changes
+      setFormData(prev => ({ ...prev, quantidade_usada: '' }));
     }
   };
 
   const validateForm = () => {
-    const errors = {};
-    const { compra_id, quantidade_usada } = formData;
-
-    if (!compra_id) {
-      errors.compra_id = 'Selecione um material da lista de compras.';
+    const newErrors = {};
+    if (!formData.compra) {
+      newErrors.compra = 'Selecione uma compra.';
+    }
+    const quantidade = parseFloat(formData.quantidade_usada);
+    if (isNaN(quantidade) || quantidade <= 0) {
+      newErrors.quantidade_usada = 'Quantidade usada deve ser um número maior que zero.';
+    }
+    if (selectedCompraEstoque > 0 && quantidade > selectedCompraEstoque) { // Only validate against stock if stock is known
+      newErrors.quantidade_usada = `Quantidade usada (${quantidade.toLocaleString('pt-BR')}) não pode ser maior que a disponível (${selectedCompraEstoque.toLocaleString('pt-BR')}).`;
+    }
+    if (!formData.andar) {
+      newErrors.andar = 'Selecione o andar/destino.';
+    }
+    if (!formData.categoria_uso) {
+      newErrors.categoria_uso = 'Selecione a categoria de uso.';
     }
 
-    const qtdUsada = parseFloat(quantidade_usada);
-    if (isNaN(qtdUsada) || qtdUsada <= 0) {
-      errors.quantidade_usada = 'A quantidade usada deve ser um número maior que zero.';
-    } else if (selectedCompraInfo.quantidade_disponivel > 0 && qtdUsada > selectedCompraInfo.quantidade_disponivel) {
-      errors.quantidade_usada = `Quantidade excede o disponível (${selectedCompraInfo.quantidade_disponivel} ${selectedCompraInfo.unidade_medida}).`;
+    if (Object.keys(newErrors).length > 0) {
+      setError(newErrors);
+      return false;
     }
-
-    // Add other field validations if necessary (e.g., andar, categoria_uso)
-    if (!formData.andar) errors.andar = "Selecione um andar.";
-    if (!formData.categoria_uso) errors.categoria_uso = "Selecione uma categoria de uso.";
-
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
+    setError(null);
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setFieldErrors({});
-
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
+    setError(null);
     try {
-      // The 'obra' field for UsoMaterial will be set by the backend model's save method
-      const dataToSubmit = {
-        compra: formData.compra_id, // Ensure backend expects 'compra' not 'compra_id' if using PK
+      // Do not send obraId, backend derives it from compra
+      // const { obra, ...payload } = { ...formData, obra: obraId }; // Ensure obra is included if needed by backend
+
+      // Correct payload: backend expects 'compra' (ID), 'quantidade_usada', 'andar', 'categoria_uso', 'descricao'
+      // The 'obra' field for UsoMaterial is derived by the backend from the 'compra' instance.
+      const submissionPayload = {
+        compra: formData.compra, // This is compra_id
         quantidade_usada: formData.quantidade_usada,
         andar: formData.andar,
         categoria_uso: formData.categoria_uso,
         descricao: formData.descricao,
       };
-      await api.createUsoMaterial(dataToSubmit);
-      onSubmitSuccess(); // Callback to refresh parent data
-      onClose(); // Close modal
+
+      await api.createUsoMaterial(submissionPayload);
+      onSubmitSuccess();
+      onClose();
     } catch (err) {
-      console.error("Submit UsoMaterial Error:", err);
+      console.error("Erro ao registrar uso de material:", err);
       const apiError = err.response?.data;
-      if (apiError) {
-        if (typeof apiError === 'object') {
-          // Handle field errors (e.g., { quantidade_usada: ["Ensure this value is less than or equal to X."] })
-          const backendFieldErrors = {};
-          for (const key in apiError) {
-            backendFieldErrors[key] = Array.isArray(apiError[key]) ? apiError[key].join(' ') : apiError[key];
-          }
-          setFieldErrors(backendFieldErrors);
-          setError("Erro de validação. Verifique os campos.");
-        } else {
-           setError(apiError.detail || apiError.message || 'Falha ao registrar uso do material.');
+      if (apiError && typeof apiError === 'object') {
+        const processedErrors = {};
+        for (const key in apiError) {
+            processedErrors[key] = Array.isArray(apiError[key]) ? apiError[key].join(', ') : apiError[key];
         }
+        setError(processedErrors);
+      } else if (apiError && typeof apiError === 'string') {
+        setError({ general: apiError });
       } else {
-        setError('Falha ao registrar uso do material. Tente novamente.');
+        setError({ general: 'Falha ao registrar uso. Verifique os dados e tente novamente.' });
       }
     } finally {
       setIsLoading(false);
@@ -149,122 +158,119 @@ const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal 
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center p-4">
       <div className="relative mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
-        <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Registrar Uso de Material</h3>
-
-        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">{error}</div>}
-
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="space-y-4">
-            {/* Compra (Material) Select */}
-            <div>
-              <label htmlFor="compra_id" className="block text-sm font-medium text-gray-700">
-                Material (Compra)
-              </label>
-              <select
-                id="compra_id"
-                name="compra_id"
-                value={formData.compra_id}
-                onChange={handleChange}
-                className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${fieldErrors.compra_id ? 'border-red-500' : ''}`}
-                disabled={isLoading || comprasDisponiveis.length === 0}
-              >
-                <option value="">Selecione um material...</option>
-                {comprasDisponiveis.map(compra => (
-                  <option key={compra.id} value={compra.id}>
-                    {compra.material_nome} (Disp: {parseFloat(compra.quantidade_disponivel).toLocaleString('pt-BR')} {compra.material_unidade_medida || compra.material_details?.unidade_medida || ''}) - Compra: {new Date(compra.data_compra).toLocaleDateString('pt-BR')}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.compra_id && <p className="mt-1 text-xs text-red-500">{fieldErrors.compra_id}</p>}
-              {formData.compra_id && selectedCompraInfo.quantidade_disponivel > 0 && (
-                <p className="mt-1 text-xs text-gray-500">
-                  Disponível nesta compra: {selectedCompraInfo.quantidade_disponivel.toLocaleString('pt-BR')} {selectedCompraInfo.unidade_medida}
-                </p>
-              )}
+        <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">Registrar Uso de Material</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                <span className="sr-only">Fechar</span>
+                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error?.general && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-3" role="alert">
+              <span className="block sm:inline">{error.general}</span>
             </div>
+          )}
 
-            {/* Quantidade Usada */}
-            <div>
-              <label htmlFor="quantidade_usada" className="block text-sm font-medium text-gray-700">
-                Quantidade Utilizada ({selectedCompraInfo.unidade_medida || 'unidade'})
-              </label>
-              <input
-                type="number"
-                name="quantidade_usada"
-                id="quantidade_usada"
-                value={formData.quantidade_usada}
-                onChange={handleChange}
-                step="0.01"
-                className={`mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${fieldErrors.quantidade_usada ? 'border-red-500' : ''}`}
-                disabled={isLoading}
-              />
-              {fieldErrors.quantidade_usada && <p className="mt-1 text-xs text-red-500">{fieldErrors.quantidade_usada}</p>}
-            </div>
-
-            {/* Andar Select */}
-            <div>
-              <label htmlFor="andar" className="block text-sm font-medium text-gray-700">Andar</label>
-              <select
-                name="andar"
-                id="andar"
-                value={formData.andar}
-                onChange={handleChange}
-                className={`mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${fieldErrors.andar ? 'border-red-500' : ''}`}
-                disabled={isLoading}
-              >
-                {andarOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
-              {fieldErrors.andar && <p className="mt-1 text-xs text-red-500">{fieldErrors.andar}</p>}
-            </div>
-
-            {/* Categoria de Uso Select */}
-            <div>
-              <label htmlFor="categoria_uso" className="block text-sm font-medium text-gray-700">Categoria de Uso</label>
-              <select
-                name="categoria_uso"
-                id="categoria_uso"
-                value={formData.categoria_uso}
-                onChange={handleChange}
-                className={`mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md ${fieldErrors.categoria_uso ? 'border-red-500' : ''}`}
-                disabled={isLoading}
-              >
-                {categoriaUsoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
-              {fieldErrors.categoria_uso && <p className="mt-1 text-xs text-red-500">{fieldErrors.categoria_uso}</p>}
-            </div>
-
-            {/* Descrição */}
-            <div>
-              <label htmlFor="descricao" className="block text-sm font-medium text-gray-700">
-                Descrição (Opcional)
-              </label>
-              <textarea
-                name="descricao"
-                id="descricao"
-                rows="3"
-                value={formData.descricao}
-                onChange={handleChange}
-                className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                disabled={isLoading}
-              ></textarea>
-            </div>
+          <div>
+            <label htmlFor="compra" className="block text-sm font-medium text-gray-700">Compra Disponível</label>
+            <select
+              id="compra"
+              name="compra"
+              value={formData.compra}
+              onChange={handleChange}
+              className={`mt-1 block w-full py-2 px-3 border ${error?.compra ? 'border-red-500' : 'border-gray-300'} bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+              disabled={isLoading || (comprasDisponiveis.length === 0 && !error?.general?.includes('Falha ao carregar'))}
+            >
+              <option value="">{isLoading ? "Carregando..." : (comprasDisponiveis.length === 0 && !error?.general?.includes('Falha ao carregar')) ? "Nenhuma compra disponível" : "Selecione uma compra"}</option>
+              {comprasDisponiveis.map(compra => (
+                <option key={compra.id} value={compra.id}>
+                  {compra.material_nome} (Disp: {parseFloat(compra.quantidade_disponivel).toLocaleString('pt-BR')} {compra.material_unidade_medida || ''}) - {new Date(compra.data_compra).toLocaleDateString('pt-BR')}
+                </option>
+              ))}
+            </select>
+            {selectedCompraEstoque > 0 && formData.compra && (
+              <p className="text-xs text-gray-500 mt-1">Estoque selecionado: {selectedCompraEstoque.toLocaleString('pt-BR')}</p>
+            )}
+            {error?.compra && <p className="text-xs text-red-500 mt-1">{error.compra}</p>}
           </div>
 
-          <div className="mt-6 flex items-center justify-end space-x-3">
+          <div>
+            <label htmlFor="quantidade_usada" className="block text-sm font-medium text-gray-700">Quantidade Usada</label>
+            <input
+              type="number"
+              id="quantidade_usada"
+              name="quantidade_usada"
+              value={formData.quantidade_usada}
+              onChange={handleChange}
+              className={`mt-1 block w-full py-2 px-3 border ${error?.quantidade_usada ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+              step="0.01"
+              placeholder="Ex: 10.50"
+              disabled={isLoading || !formData.compra}
+            />
+            {error?.quantidade_usada && <p className="text-xs text-red-500 mt-1">{error.quantidade_usada}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="andar" className="block text-sm font-medium text-gray-700">Andar/Destino</label>
+            <select
+              id="andar"
+              name="andar"
+              value={formData.andar}
+              onChange={handleChange}
+              className={`mt-1 block w-full py-2 px-3 border ${error?.andar ? 'border-red-500' : 'border-gray-300'} bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+              disabled={isLoading}
+            >
+              {ANDAR_CHOICES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+            {error?.andar && <p className="text-xs text-red-500 mt-1">{error.andar}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="categoria_uso" className="block text-sm font-medium text-gray-700">Categoria de Uso</label>
+            <select
+              id="categoria_uso"
+              name="categoria_uso"
+              value={formData.categoria_uso}
+              onChange={handleChange}
+              className={`mt-1 block w-full py-2 px-3 border ${error?.categoria_uso ? 'border-red-500' : 'border-gray-300'} bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+              disabled={isLoading}
+            >
+              {CATEGORIA_USO_CHOICES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+            {error?.categoria_uso && <p className="text-xs text-red-500 mt-1">{error.categoria_uso}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="descricao" className="block text-sm font-medium text-gray-700">Descrição (Opcional)</label>
+            <textarea
+              id="descricao"
+              name="descricao"
+              value={formData.descricao}
+              onChange={handleChange}
+              rows="3"
+              className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-4 pt-2">
             <button
               type="button"
               onClick={onClose}
+              className="py-2 px-4 bg-gray-200 text-gray-800 font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={isLoading || comprasDisponiveis.length === 0}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="py-2 px-4 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              disabled={isLoading || (comprasDisponiveis.length === 0 && !error?.general?.includes('Falha ao carregar'))}
             >
               {isLoading ? 'Salvando...' : 'Salvar Uso'}
             </button>
@@ -273,13 +279,6 @@ const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal 
       </div>
     </div>
   );
-};
-
-DistribuicaoMaterialForm.propTypes = {
-  obraId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  onClose: PropTypes.func.isRequired,
-  onSubmitSuccess: PropTypes.func.isRequired,
-  showModal: PropTypes.bool.isRequired,
 };
 
 export default DistribuicaoMaterialForm;
