@@ -19,6 +19,75 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Interceptor de Resposta para lidar com erros 401 e refresh token
+apiClient.interceptors.response.use(
+  (response) => response, // Passa adiante respostas bem-sucedidas
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Verifica se o erro é 401 e se não é uma tentativa de repetição
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // Marca como tentativa de repetição
+
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (refreshToken) {
+        try {
+          // Usa uma nova instância do axios para a chamada de refresh para evitar loop no interceptor
+          // A URL base é pega de apiClient.defaults.baseURL
+          const refreshUrl = `${apiClient.defaults.baseURL}/token/refresh/`;
+
+          const response = await axios.post(refreshUrl, {
+            refresh: refreshToken,
+          });
+
+          const { access: newAccessToken, refresh: newRefreshToken } = response.data;
+
+          // Atualiza os tokens no localStorage
+          localStorage.setItem('accessToken', newAccessToken);
+          if (newRefreshToken) { // Backend pode ou não retornar um novo refresh token
+            localStorage.setItem('refreshToken', newRefreshToken);
+          }
+
+          // Atualiza os headers para futuras requisições na instância principal apiClient
+          apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+
+          // Atualiza o header da requisição original que falhou
+          originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+
+          // Reenvia a requisição original com o novo token
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          // Se a renovação falhar, desloga o usuário
+          console.error("Refresh token failed, logging out:", refreshError);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          // Remove o header de autorização da instância apiClient
+          delete apiClient.defaults.headers.common['Authorization'];
+
+          // Força o redirecionamento para a página de login
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          return Promise.reject(refreshError);
+        }
+      } else {
+         console.log("No refresh token available, redirecting to login.");
+         // Limpa qualquer token de acesso restante e redireciona
+         localStorage.removeItem('accessToken');
+         delete apiClient.defaults.headers.common['Authorization'];
+         if (typeof window !== 'undefined') {
+           window.location.href = '/login';
+         }
+         return Promise.reject(new Error("No refresh token available."));
+      }
+    }
+
+    // Para qualquer outro erro (não 401 ou já tentado), apenas rejeita a promise
+    return Promise.reject(error);
+  }
+);
+
 // --- Obra Service Functions ---
 export const getObras = () => {
   return apiClient.get('/obras/');
