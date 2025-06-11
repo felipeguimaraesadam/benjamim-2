@@ -12,7 +12,7 @@ const debounce = (func, delay) => {
     };
 };
 
-const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIndex, error, parentOnKeyDown }, ref) => { // Renamed onKeyDown to parentOnKeyDown
+const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIndex, error, parentOnKeyDown }, ref) => {
     const [inputValue, setInputValue] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -23,20 +23,21 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
     const inputRef = useRef(null);
-    const suggestionItemRefs = useRef([]); // To store refs to <li> elements
+    const suggestionItemRefs = useRef([]);
 
     useImperativeHandle(ref, () => ({
         focus: () => {
-            inputRef.current.focus();
+            // console.log("MaterialAutocomplete: focus() method called via ref.");
+            inputRef.current?.focus();
         }
     }));
 
     useEffect(() => {
         if (value && value.nome) {
             setInputValue(value.nome);
-        } else if (typeof value === 'string') {
+        } else if (typeof value === 'string' && value) { // If value is a non-empty string (e.g. materialNome from parent)
             setInputValue(value);
-        } else {
+        } else if (!value) { // If value is null, undefined, or empty object without 'nome'
             setInputValue('');
         }
     }, [value]);
@@ -67,7 +68,7 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
             }
             setIsLoading(true);
             setShowSuggestions(true);
-            setHighlightedIndex(-1); // Reset highlight on new search
+            setHighlightedIndex(-1);
             try {
                 const response = await api.getMateriais({ nome__icontains: query, page_size: 10 });
                 setSuggestions(response.data?.results || response.data || response || []);
@@ -84,12 +85,12 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
     const handleInputChange = (e) => {
         const newInputValue = e.target.value;
         setInputValue(newInputValue);
-        setHighlightedIndex(-1); // Reset highlight on input change
+        setHighlightedIndex(-1);
         if (newInputValue.trim() === '') {
             setSuggestions([]);
             setShowSuggestions(false);
-            if (value) {
-                onMaterialSelect(itemIndex, null);
+            if (value) { // If there was a selected material object
+              onMaterialSelect(itemIndex, null); // Notify parent that selection is cleared
             }
         } else {
             debouncedFetchSuggestions(newInputValue);
@@ -106,14 +107,15 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
 
     const handleFocus = () => {
         if (inputValue.trim() && !showNewMaterialModal) {
-            if (suggestions.length > 0) {
+            if (suggestions.length > 0 && inputValue === (value?.nome || value)) { // Show existing suggestions if input matches current value
                 setShowSuggestions(true);
-            } else {
-                debouncedFetchSuggestions(inputValue);
+            } else { // Otherwise, fetch new ones
+                 debouncedFetchSuggestions(inputValue);
             }
         } else if (suggestions.length > 0 && !showNewMaterialModal) {
-            setShowSuggestions(true);
+             setShowSuggestions(true);
         }
+        // If input is empty on focus, don't fetch, wait for user input.
     };
 
     const handleBlur = () => {
@@ -169,7 +171,14 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
     };
 
     const handleInputKeyDown = (e) => {
-        if (showSuggestions && suggestions.length > 0 && !showNewMaterialModal) {
+        if (showNewMaterialModal) { // If modal is open, don't interfere with its inputs
+            if (e.key === 'Escape') {
+                 handleCloseNewMaterialModal();
+            }
+            return;
+        }
+
+        if (showSuggestions && suggestions.length > 0) {
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 const nextIndex = highlightedIndex >= suggestions.length - 1 ? 0 : highlightedIndex + 1;
@@ -190,25 +199,17 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
                 setHighlightedIndex(-1);
                 return;
             }
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                setShowSuggestions(false);
-                setHighlightedIndex(-1);
-                return;
-            }
-        } else if (e.key === 'Enter' && showSuggestions && suggestions.length === 0 && inputValue.trim() !== '' && !isLoading && !showNewMaterialModal) {
-            // If "No results" is shown with "Add New" button, Enter might trigger "Add New"
-            // Or, if there's a different primary action, handle that.
-            // For now, if suggestions are shown (even if empty message), Enter is "handled" by this component.
-            // We can let parentOnKeyDown handle it if we want Enter to navigate away.
-            // This specific case (Enter on "No results") is tricky.
-            // Let's assume for now if suggestions box is open, Enter is for it.
-            // If we want Enter to navigate away from an empty suggestion box, then don't return here.
         }
 
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            setShowSuggestions(false);
+            setHighlightedIndex(-1);
+            return;
+        }
 
         if (parentOnKeyDown) {
-            parentOnKeyDown(e); // Call parent's onKeyDown for Tab, Enter (if not selecting suggestion), etc.
+            parentOnKeyDown(e);
         }
     };
 
@@ -222,9 +223,9 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
                 onChange={handleInputChange}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                onKeyDown={handleInputKeyDown} // Enhanced internal handler
+                onKeyDown={handleInputKeyDown}
                 placeholder="Digite para buscar material..."
-                className={`w-full p-1.5 border ${error ? 'border-red-500' : 'border-slate-300'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm`}
+                className={`w-full p-1.5 border ${error ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
                 aria-autocomplete="list"
                 aria-expanded={showSuggestions && !showNewMaterialModal}
                 aria-controls={`suggestions-list-${itemIndex}`}
@@ -247,25 +248,25 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
                     </div>
                 )}
                 {showSuggestions && suggestions.length > 0 && !showNewMaterialModal && (
-                    <ul id={`suggestions-list-${itemIndex}`} role="listbox" className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
+                     <ul id={`suggestions-list-${itemIndex}`} role="listbox" className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
                         {suggestions.map((material, idx) => (
                             <li
                                 key={material.id}
-                                ref={el => suggestionItemRefs.current[idx] = el} // Assign ref to li
+                                ref={el => suggestionItemRefs.current[idx] = el}
                                 id={`suggestion-${itemIndex}-${idx}`}
                                 role="option"
                                 aria-selected={idx === highlightedIndex}
                                 onMouseDown={() => handleSuggestionClick(material)}
-                                onMouseEnter={() => setHighlightedIndex(idx)} // Sync mouse hover
-                                className={`px-3 py-2 cursor-pointer text-sm text-slate-700 ${idx === highlightedIndex ? 'bg-primary-200 text-primary-700 font-semibold' : 'hover:bg-primary-100'}`}
+                                onMouseEnter={() => setHighlightedIndex(idx)}
+                                className={`px-3 py-2 cursor-pointer text-sm ${idx === highlightedIndex ? 'bg-primary-100 text-primary-700 font-semibold' : 'text-slate-700 hover:bg-slate-100'}`}
                             >
-                                {material.nome} ({material.unidade_medida})
+                                {material.nome} <span className="text-slate-500">({material.unidade_medida})</span>
                             </li>
                         ))}
                     </ul>
                 )}
-                {isLoading && showSuggestions && !showNewMaterialModal && (
-                    <div className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 p-3 text-sm text-slate-500 shadow-lg">
+                 {isLoading && showSuggestions && !showNewMaterialModal && (
+                    <div className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 px-3 py-2 text-sm text-slate-500 shadow-lg">
                         Buscando...
                     </div>
                 )}
@@ -273,13 +274,13 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
 
             {showNewMaterialModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4 new-material-modal-container" role="dialog" aria-modal="true" aria-labelledby="new-material-modal-title">
-                    <div className="bg-white p-5 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-4">
+                    <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"> {/* Increased padding to p-6, max-w-lg */}
+                        <div className="flex justify-between items-center mb-5"> {/* Increased mb */}
                             <h2 id="new-material-modal-title" className="text-xl font-semibold text-slate-800">Cadastrar Novo Material</h2>
-                            <button onClick={handleCloseNewMaterialModal} className="text-slate-500 hover:text-slate-700 text-2xl leading-none p-1 -mr-1 -mt-1" aria-label="Fechar modal">&times;</button>
+                            <button onClick={handleCloseNewMaterialModal} className="text-slate-400 hover:text-slate-600 text-3xl leading-none p-1 -mr-2 -mt-2" aria-label="Fechar modal">&times;</button>
                         </div>
                         {newMaterialError && (
-                            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded mb-3 text-sm" role="alert">
+                             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-4 text-sm" role="alert"> {/* Increased padding */}
                                 <p><span className="font-bold">Erro:</span> {newMaterialError}</p>
                             </div>
                         )}
@@ -288,6 +289,7 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
                             onSubmit={handleNewMaterialSubmit}
                             onCancel={handleCloseNewMaterialModal}
                             isLoading={isSubmittingNewMaterial}
+                            isModalContext={true} // Indicate modal context if MaterialForm needs different styling/behavior
                         />
                     </div>
                 </div>
