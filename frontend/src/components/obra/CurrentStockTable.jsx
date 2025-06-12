@@ -18,8 +18,8 @@ const CurrentStockTable = ({ comprasEstoque, formatDate }) => {
             <tbody className="divide-y divide-gray-200">
               {comprasEstoque.map(compra => (
                 <tr key={compra.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{compra.material_nome}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{parseFloat(compra.quantidade_disponivel).toLocaleString('pt-BR')} {compra.material_unidade_medida || ''}</td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{compra.material_nome || 'Nome Indisponível'}</td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{parseFloat(compra.quantidade_disponivel || 0).toLocaleString('pt-BR')} {compra.material_unidade_medida || ''}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatDate(compra.data_compra)}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{compra.fornecedor || 'N/A'}</td>
                 </tr>

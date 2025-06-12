@@ -108,7 +108,7 @@ const HistoricoUsoTable = ({ usosMaterial, isLoading, error }) => {
               <tr key={uso.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 whitespace-nowrap">{formatDate(uso.data_uso)}</td>
                 <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900">{uso.material_nome || 'N/A'}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-right">{parseFloat(uso.quantidade_usada).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-right">{parseFloat(uso.quantidade_usada || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td className="px-4 py-3 whitespace-nowrap">{getAndarLabel(uso.andar)}</td>
                 <td className="px-4 py-3 whitespace-nowrap">{getCategoriaLabel(uso.categoria_uso)}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-right">{formatCurrency(uso.custo_proporcional)}</td>

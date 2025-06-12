@@ -44,7 +44,7 @@ const ObraCompletaComprasTable = ({ compras, isLoading, error }) => {
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{formatDate(compra.data_compra)}</td>
               <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{compra.material_nome || 'N/A'}</td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {parseFloat(compra.quantidade).toLocaleString('pt-BR')}
+                {parseFloat(compra.quantidade || 0).toLocaleString('pt-BR')}
                 {' '}
                 {compra.material_unidade_medida || compra.material_details?.unidade_medida || ''}
               </td>
@@ -52,7 +52,7 @@ const ObraCompletaComprasTable = ({ compras, isLoading, error }) => {
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{compra.fornecedor || '-'}</td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{compra.nota_fiscal || '-'}</td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {parseFloat(compra.quantidade_disponivel).toLocaleString('pt-BR')}
+                {parseFloat(compra.quantidade_disponivel || 0).toLocaleString('pt-BR')}
                 {' '}
                 {compra.material_unidade_medida || compra.material_details?.unidade_medida || ''}
               </td>
