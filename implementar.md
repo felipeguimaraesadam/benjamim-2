@@ -61,6 +61,14 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
     - **Critério de Aceitação:** Após a correção, ao cadastrar uma nova compra, a digitação no campo de material deve filtrar dinamicamente a lista de sugestões, exibindo apenas os materiais correspondentes.
     - **Resolução:** Corrigida a função `getMateriais` em `frontend/src/services/api.js` para aceitar e repassar os parâmetros de busca (`params`) para a chamada da API, conforme o plano de ação especificado.
 
+- [X] **B08: Perda de Dados ao Salvar Novo Produto Durante Cadastro de Compra**
+    - **Status:** Concluído ✅
+    - **Sintoma:** Ao salvar um novo produto durante o cadastro de uma compra, o sistema redireciona para fora da tela de compras, fazendo com que os dados da nota fiscal em andamento sejam perdidos. O esperado é que, após o cadastro do novo produto, o sistema retorne à tela de compra, com todos os dados previamente inseridos preservados e o foco no campo do produto recém-cadastrado.
+    - **Solução:**
+        - Modificado o componente `MaterialAutocomplete.jsx` para gerenciar corretamente o foco após o cadastro de um novo material. A alteração impede que o foco retorne automaticamente para o campo de autocompletar, permitindo que o formulário de compra (`CompraForm.jsx`) controle e defina o foco para o campo de quantidade do novo item adicionado.
+        - Adicionada maior robustez ao `CompraForm.jsx`, especificamente na função `handleMaterialSelected`, através da implementação de um bloco `try...catch`. Isso previne que erros não tratados durante a seleção e processamento de um material causem instabilidade no formulário ou perda de estado dos dados já inseridos.
+        - A lógica atualizada assegura que, após o cadastro rápido de um novo material e o retorno ao formulário de compra, este permaneça aberto, todos os dados preenchidos da nota fiscal e de outros itens sejam mantidos, o novo material seja corretamente selecionado na linha de item correspondente, e o foco do usuário seja direcionado para o campo de quantidade deste novo material, conforme o comportamento esperado.
+
 ## Melhorias de Usabilidade (UI/UX)
 
 - [X] **UX01: Checkbox para Seleção de Membros de Equipe**

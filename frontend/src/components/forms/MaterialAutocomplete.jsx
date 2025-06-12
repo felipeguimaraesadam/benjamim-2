@@ -161,10 +161,12 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
         setShowNewMaterialModal(true);
     };
 
-    const handleCloseNewMaterialModal = () => {
+    const handleCloseNewMaterialModal = (materialSuccessfullySubmitted = false) => {
         setShowNewMaterialModal(false);
         setNewMaterialError(null);
-        inputRef.current?.focus();
+        if (!materialSuccessfullySubmitted) {
+            inputRef.current?.focus();
+        }
     };
 
     const handleNewMaterialSubmit = async (materialFormData) => {
@@ -175,7 +177,7 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
             const createdMaterial = response.data || response;
             onMaterialSelect(itemIndex, createdMaterial);
             setInputValue(createdMaterial.nome);
-            handleCloseNewMaterialModal();
+            handleCloseNewMaterialModal(true); // Pass true here
         } catch (err) {
             console.error("Error creating new material:", err);
             let errorMessage = 'Falha ao criar novo material.';
@@ -200,7 +202,7 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
     const handleInputKeyDown = (e) => {
         if (showNewMaterialModal) { // If modal is open, don't interfere with its inputs
             if (e.key === 'Escape') {
-                 handleCloseNewMaterialModal();
+                 handleCloseNewMaterialModal(false); // Pass false here
             }
             return;
         }
@@ -330,7 +332,7 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
                         <MaterialForm
                             initialData={{ nome: inputValue.trim() }}
                             onSubmit={handleNewMaterialSubmit}
-                            onCancel={handleCloseNewMaterialModal}
+                            onCancel={() => handleCloseNewMaterialModal(false)} // Pass false for explicit cancel
                             isLoading={isSubmittingNewMaterial}
                             isModalContext={true} // Indicate modal context if MaterialForm needs different styling/behavior
                         />
