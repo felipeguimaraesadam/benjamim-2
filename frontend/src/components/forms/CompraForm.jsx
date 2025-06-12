@@ -70,7 +70,8 @@ const ItemRowInternal = ({
     materialRef, // input ref for MaterialAutocomplete's input
     quantityRef, // input ref for quantity
     unitPriceRef, // input ref for unitPrice
-    onItemFieldBlur // New prop for blur handling
+    onItemFieldBlur, // New prop for blur handling
+    onNewMaterialErrorInRow // New prop for MaterialAutocomplete error
 }) => {
     const getError = (fieldName) => errors && errors[`item_${index}_${fieldName}`];
 
@@ -93,6 +94,7 @@ const ItemRowInternal = ({
                     error={getError('material')}
                     parentOnKeyDown={handleMaterialAutocompleteKeyDown}
                     onBlurReport={(blurState) => onItemFieldBlur(index, 'material', blurState.selectedMaterial)} // New onBlurReport
+                    onNewMaterialError={onNewMaterialErrorInRow} // Pass down the error handler
                 />
             </td>
             <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top w-[120px]">
@@ -154,6 +156,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     const [obras, setObras] = useState([]);
     const [errors, setErrors] = useState({});
     const [itemToFocusId, setItemToFocusId] = useState(null);
+    const [newMaterialCreationError, setNewMaterialCreationError] = useState(null); // State for material creation error
 
     const itemFieldRefs = useRef([]);
 
@@ -304,6 +307,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
     const handleMaterialSelected = useCallback((index, selectedMaterialObj) => {
         try {
+            setNewMaterialCreationError(null); // Clear any previous material creation error
             dispatchItems({
                 type: ITEM_ACTION_TYPES.SET_MATERIAL,
                 payload: { index, material: selectedMaterialObj }
@@ -331,6 +335,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     }, [dispatchItems]); // dispatchItems is stable
 
     const addNewItemRow = useCallback(() => {
+        setNewMaterialCreationError(null); // Clear material creation error when adding a new item
         const newTempId = generateItemUniqueId(); // Global function
         setItemToFocusId(newTempId); // setItemToFocusId is stable
         dispatchItems({ type: ITEM_ACTION_TYPES.ADD_ITEM, payload: { id: newTempId } });
@@ -397,8 +402,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => { /* ... (existing submit logic is largely kept) ... */
+    const handleSubmit = (e) => {
         e.preventDefault();
+        setNewMaterialCreationError(null); // Clear material creation error on submit attempt
         if (validateForm()) {
             const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;
             const itemsToSubmit = items
@@ -475,6 +481,11 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                         Adicionar Novo Item
                     </button>
                 </div>
+                {newMaterialCreationError && (
+                    <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md text-sm" role="alert">
+                        <p><span className="font-bold">Erro ao criar material:</span> {newMaterialCreationError}</p>
+                    </div>
+                )}
                 <div className="overflow-visible rounded-md shadow-sm border border-slate-200"> {/* Kept overflow-visible for autocomplete, might not be needed if portal is only solution */}
                     <div className="overflow-x-auto"> {/* Reverted: Removed overflow-y-visible as portal handles clipping */}
                         <table className="min-w-full">
@@ -499,6 +510,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                                         initialData={initialData}
                                         onItemKeyDown={handleItemKeyDown}
                                         onItemFieldBlur={handleItemFieldBlur} // Pass blur handler to ItemRow
+                                        onNewMaterialErrorInRow={(errMsg) => setNewMaterialCreationError(errMsg)} // Pass error handler
                                         materialRef={itemFieldRefs.current[index]?.material}
                                         quantityRef={itemFieldRefs.current[index]?.quantity}
                                         unitPriceRef={itemFieldRefs.current[index]?.unitPrice}

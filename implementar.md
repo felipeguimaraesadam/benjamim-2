@@ -69,6 +69,16 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
         - Adicionada maior robustez ao `CompraForm.jsx`, especificamente na função `handleMaterialSelected`, através da implementação de um bloco `try...catch`. Isso previne que erros não tratados durante a seleção e processamento de um material causem instabilidade no formulário ou perda de estado dos dados já inseridos.
         - A lógica atualizada assegura que, após o cadastro rápido de um novo material e o retorno ao formulário de compra, este permaneça aberto, todos os dados preenchidos da nota fiscal e de outros itens sejam mantidos, o novo material seja corretamente selecionado na linha de item correspondente, e o foco do usuário seja direcionado para o campo de quantidade deste novo material, conforme o comportamento esperado.
 
+- [X] **B09: Redirecionamento Incorreto e Perda de Dados ao Adicionar Produto em Compra**
+    - **Status:** Concluído ✅
+    - **Contexto:** Adicionar um novo produto através do botão de adição rápida (e.g., ícone "+") na página de 'adicionar compra', quando o formulário de compra já possui dados preenchidos.
+    - **Problema:** Após salvar o novo produto, o sistema redireciona incorretamente para a página de listagem de compras. Isso resulta na perda de todos os dados que já haviam sido inseridos no formulário da compra atual. Além disso, o produto recém-criado não é salvo no banco de dados.
+    - **Impacto:** Frustração do usuário devido à perda de dados e interrupção do fluxo de trabalho, exigindo que o formulário de compra seja preenchido novamente desde o início. Falha em persistir o novo produto cadastrado.
+    - **Solução:**
+        - Melhorada a gestão de erros no modal de criação de material (`MaterialAutocomplete.jsx`) para assegurar que falhas sejam claramente comunicadas ao formulário principal de compra (`CompraForm.jsx`) através de uma nova prop de callback (`onNewMaterialError`).
+        - Verificado e garantido, através de revisão de código e walkthrough conceitual, que o `CompraForm.jsx` permanece aberto, retém todos os dados inseridos (cabeçalho e outros itens), e gerencia corretamente o foco após um novo material ser adicionado com sucesso pelo modal. O problema de fechamento prematuro ou perda de dados após a interação com o modal foi endereçado.
+        - O sistema agora aguarda corretamente que o usuário salve explicitamente toda a ordem de compra, em vez de qualquer comportamento inesperado após o cadastro de um novo material. A lógica de callbacks e gestão de estado entre `MaterialAutocomplete`, `CompraForm`, e `ComprasPage` foi confirmada como robusta para este cenário.
+
 ## Melhorias de Usabilidade (UI/UX)
 
 - [X] **UX01: Checkbox para Seleção de Membros de Equipe**

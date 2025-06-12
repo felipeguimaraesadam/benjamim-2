@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useImperativeHandle } from 'react';
+import PropTypes from 'prop-types'; // Import PropTypes
 import { createPortal } from 'react-dom'; // Import createPortal
 import * as api from '../../services/api';
 import MaterialForm from './MaterialForm';
@@ -13,7 +14,7 @@ const debounce = (func, delay) => {
     };
 };
 
-const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSelect, itemIndex, error, parentOnKeyDown, onBlurReport }, ref) => {
+const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSelect, itemIndex, error, parentOnKeyDown, onBlurReport, onNewMaterialError }, ref) => {
     const [inputValue, setInputValue] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -194,6 +195,9 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
                 }
             } else if (err.message) errorMessage = err.message;
             setNewMaterialError(errorMessage);
+            if (typeof onNewMaterialError === 'function') {
+                onNewMaterialError(errorMessage);
+            }
         } finally {
             setIsSubmittingNewMaterial(false);
         }
@@ -342,5 +346,18 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
         </div>
     );
 }));
+
+MaterialAutocomplete.displayName = 'MaterialAutocomplete';
+
+// PropTypes for MaterialAutocomplete
+MaterialAutocomplete.propTypes = {
+    value: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
+    onMaterialSelect: PropTypes.func.isRequired,
+    itemIndex: PropTypes.number.isRequired,
+    error: PropTypes.string,
+    parentOnKeyDown: PropTypes.func,
+    onBlurReport: PropTypes.func,
+    onNewMaterialError: PropTypes.func, // New prop type
+};
 
 export default MaterialAutocomplete;
