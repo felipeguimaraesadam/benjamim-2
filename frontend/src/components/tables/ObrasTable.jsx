@@ -66,7 +66,7 @@ const ObrasTable = ({ obras, onEdit, onDelete }) => { // Removed onView from pro
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{obra.cidade}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{obra.responsavel?.nome || 'Não atribuído'}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{obra.responsavel_nome || 'Não atribuído'}</td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                 <button
                   onClick={() => navigate(`/obras/${obra.id}`)} // Changed to navigate

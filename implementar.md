@@ -36,8 +36,8 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
     - **Sintoma:** Em telas menores, o conteúdo principal não se ajustava corretamente.
     - **Resolução:** As classes de CSS responsivo em `Layout.jsx` e `Navegacao.jsx` foram ajustadas para gerenciar corretamente o `margin-left` do conteúdo principal.
 
-- [ ] **B05: Responsável da Obra Não Aparece na Listagem Principal**
-    - **Status:** Pendente ⏳
+- [X] **B05: Responsável da Obra Não Aparece na Listagem Principal**
+    - **Status:** Concluído ✅
     - **Sintoma:** Na tabela de `ObrasPage.jsx`, a coluna "Responsável" está sempre como "Não atribuído", mesmo que um responsável tenha sido salvo.
     - **Hipótese:** A API `GET /api/obras/` pode estar usando um serializador que não inclui o `responsavel_nome`, ou o componente `ObrasTable.jsx` está tentando acessar um campo com nome incorreto.
     - **Ação:** Verificar o `ObraSerializer` e a `ObraViewSet`. É provável que o `ObraSerializer` precise ser usado na listagem ou que um serializador de lista mais simples precise incluir o `responsavel_nome`. Confirmar o nome do campo no componente `ObrasTable.jsx`.
