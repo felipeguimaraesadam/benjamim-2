@@ -171,32 +171,47 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
     };
 
     const handleNewMaterialSubmit = async (materialFormData) => {
-        setIsSubmittingNewMaterial(true);
+        setIsSubmittingNewMaterial(true); // Renamed from setIsLoading for clarity with other isLoading state
         setNewMaterialError(null);
         try {
             const response = await api.createMaterial(materialFormData);
             const createdMaterial = response.data || response;
-            onMaterialSelect(itemIndex, createdMaterial);
-            setInputValue(createdMaterial.nome);
-            handleCloseNewMaterialModal(true); // Pass true here
+            onMaterialSelect(itemIndex, createdMaterial); // Propagate selection to parent
+            setInputValue(createdMaterial.nome); // Update input field
+            handleCloseNewMaterialModal(true); // Close modal on success
+            // Any other success-specific logic should be here
         } catch (err) {
-            console.error("Error creating new material:", err);
-            let errorMessage = 'Falha ao criar novo material.';
+            // Robust error message extraction
+            let errorMessage = "Ocorreu um erro ao criar o material."; // Default message
             if (err.response && err.response.data) {
-                const errorData = err.response.data;
-                if (typeof errorData === 'string') errorMessage = errorData;
-                else if (errorData.detail) errorMessage = errorData.detail;
-                else if (errorData.nome && Array.isArray(errorData.nome)) errorMessage = `Nome: ${errorData.nome.join(' ')}`;
-                else if (errorData.unidade_medida && Array.isArray(errorData.unidade_medida)) errorMessage = `Unidade: ${errorData.unidade_medida.join(' ')}`;
-                else if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) errorMessage = errorData.non_field_errors.join('; ');
-                else {
-                    const fieldErrors = Object.entries(errorData).map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`).join('; ');
-                    if (fieldErrors) errorMessage = fieldErrors;
+                if (err.response.data.nome && Array.isArray(err.response.data.nome) && err.response.data.nome.length > 0) {
+                    errorMessage = `Nome: ${err.response.data.nome[0]}`;
+                } else if (err.response.data.unidade_medida && Array.isArray(err.response.data.unidade_medida) && err.response.data.unidade_medida.length > 0) {
+                    errorMessage = `Unidade de Medida: ${err.response.data.unidade_medida[0]}`;
+                } else if (err.response.data.detail) {
+                    errorMessage = err.response.data.detail;
+                } else if (typeof err.response.data === 'string') {
+                    errorMessage = err.response.data;
+                } else {
+                    // Fallback for other structured errors (e.g., non_field_errors or multiple field errors)
+                    const errors = err.response.data;
+                    const messages = Object.entries(errors).map(([key, value]) => {
+                        if (Array.isArray(value)) {
+                            return `${key}: ${value.join(', ')}`;
+                        }
+                        return `${key}: ${value}`;
+                    });
+                    if (messages.length > 0) {
+                        errorMessage = messages.join('; ');
+                    }
                 }
-            } else if (err.message) errorMessage = err.message;
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
             setNewMaterialError(errorMessage);
+            // Ensure no other calls like props.onError or props.onNewMaterialCreated here
         } finally {
-            setIsSubmittingNewMaterial(false);
+            setIsSubmittingNewMaterial(false); // This correctly uses the state variable for the modal submission
         }
     };
 

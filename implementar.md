@@ -81,9 +81,11 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
 
 - [ ] **B10: Cadastro Rápido de Material Causa Perda de Dados**
   - **Status:** Pendente ⏳
-  - **Sintoma:** Ao usar o modal de cadastro rápido de material no formulário de compra, um erro na submissão do novo material (ex: validação de nome duplicado) causa o fechamento de todo o formulário de compra, redirecionando o usuário e perdendo todos os dados inseridos. O novo material também não é salvo.
-  - **Causa Raiz:** O erro da API `createMaterial` não está sendo tratado localmente no modal. Ele se propaga para os componentes pais, causando um reset de estado na página.
-  - **Solução Esperada:** O modal deve capturar seus próprios erros de submissão e exibi-los internamente, sem fechar ou afetar o formulário de compra principal. Em caso de sucesso, o modal deve fechar, e o formulário de compra deve ser atualizado com o novo material, mantendo todos os outros dados.
+  - **Sintoma:** Ao preencher o formulário de compra, o usuário tenta adicionar um novo material através do modal de cadastro rápido. Se a submissão do novo material falhar (ex: erro de validação do backend, como nome duplicado), o modal e todo o formulário de compra são fechados. O usuário é redirecionado para a página de listagem de compras, perdendo todos os dados já inseridos na nota. O novo material também não é salvo.
+  - **Causa Raiz Provável:** Um erro não tratado na promise da chamada `api.createMaterial` dentro do componente `MaterialAutocomplete.jsx` está se propagando para os componentes pais (`CompraForm`, `ComprasPage`), acionando um reset de estado geral ou uma exceção não capturada que interrompe a renderização. A lógica de `catch` pode não estar funcionando como esperado ou o erro pode estar sendo re-lançado implicitamente.
+  - **Comportamento Esperado:**
+      1.  **Em caso de erro:** O modal de cadastro de material deve permanecer aberto. Uma mensagem de erro clara, retornada pela API, deve ser exibida dentro do modal. O formulário de compra principal deve permanecer intacto, com todos os seus dados preservados, visível no fundo.
+      2.  **Em caso de sucesso:** O modal deve fechar. O formulário de compra deve permanecer aberto, com todos os dados preenchidos retidos. O material recém-criado deve ser selecionado automaticamente no item de compra correspondente, e o foco do cursor deve ser movido para o campo de "Quantidade" desse mesmo item, permitindo a continuação fluida do trabalho.
 
 ## Melhorias de Usabilidade (UI/UX)
 
