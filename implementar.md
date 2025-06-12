@@ -44,7 +44,8 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
 
 ## Melhorias de Usabilidade (UI/UX)
 
-- [ ] **UX01: Checkbox para Seleção de Membros de Equipe**
+- [X] **UX01: Checkbox para Seleção de Membros de Equipe**
+    - **Status:** Concluído ✅
     - **Descrição:** Substituir o `select` múltiplo no formulário de equipes por uma lista de funcionários com checkboxes.
     - **Benefício:** Melhora significativamente a usabilidade em comparação com a seleção múltipla padrão (que exige Ctrl/Cmd + clique).
     - **Ação:** Em `EquipeForm.jsx`, renderizar a lista de `funcionarios` como uma série de `<div>` contendo um `<input type="checkbox">` e o nome do funcionário. Gerenciar o estado `membros` (array de IDs) com base nos checkboxes marcados.
