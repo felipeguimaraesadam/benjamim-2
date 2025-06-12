@@ -73,22 +73,14 @@ export const useApiData = (
         }
     }, [executeFetch, currentParams, autoFetch, apiFunction]);
 
-    const fetchData = useCallback(async (paramsForThisFetch) => {
-        const paramsToUse = paramsForThisFetch !== undefined ? paramsForThisFetch : currentParams;
+    const fetchData = useCallback(async (paramsForThisFetchOverride) => {
+        // Use override if provided, otherwise use the hook's current internal params.
+        const paramsToExecuteWith = paramsForThisFetchOverride !== undefined ? paramsForThisFetchOverride : currentParams;
 
-        // Update currentParams only if new params are explicitly provided for this fetch call
-        if (paramsForThisFetch !== undefined && JSON.stringify(paramsForThisFetch) !== JSON.stringify(currentParams)) {
-            setCurrentParams(paramsForThisFetch);
-            // Note: executeFetch will be called by the useEffect listening to currentParams change if autoFetch is true.
-            // However, for explicit fetchData call, we want to execute immediately with new params.
-            // The useEffect might also run, leading to double fetch if not careful.
-            // For explicit fetchData, execute directly and rely on useCallback dependencies to prevent stale closures.
-            // The useEffect dependency on currentParams will trigger if paramsForThisFetch is different.
-            // If autoFetch is true, this might lead to a double fetch.
-            // Simplification: fetchData always executes, and if params change, currentParams state updates.
-            // The useEffect will then use the *new* currentParams. This is generally fine.
-        }
-        return executeFetch(paramsToUse);
+        // Note: We are NOT calling setCurrentParams(paramsToExecuteWith) here.
+        // If the intention is to change the hook's default params for reactive fetching,
+        // the component using the hook should change the 'initialParams' prop it passes to useApiData.
+        return executeFetch(paramsToExecuteWith);
     }, [executeFetch, currentParams]);
 
 

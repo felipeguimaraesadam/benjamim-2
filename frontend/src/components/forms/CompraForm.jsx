@@ -215,28 +215,23 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             const focusIndex = items.findIndex(item => item.id === itemToFocusId);
 
             if (focusIndex !== -1) {
-                // Ensure refs array is long enough and material ref exists
+                // Ensure the refs array for this index is populated and material ref exists
                 if (itemFieldRefs.current && itemFieldRefs.current[focusIndex] && itemFieldRefs.current[focusIndex].material) {
-                    const materialInputRef = itemFieldRefs.current[focusIndex].material.current;
-                    if (materialInputRef && typeof materialInputRef.focus === 'function') {
+                    const materialAutocompleteInstance = itemFieldRefs.current[focusIndex].material.current;
+
+                    if (materialAutocompleteInstance && typeof materialAutocompleteInstance.focus === 'function') {
                         setTimeout(() => {
-                            materialInputRef.focus();
-                            setItemToFocusId(null); // Reset after focus attempt
-                        }, 0);
-                    } else {
-                        // Ref not yet available or not focusable, reset to prevent loop
-                        setItemToFocusId(null);
+                            materialAutocompleteInstance.focus();
+                            // setItemToFocusId(null); // Moved down to always consume ID after attempt
+                        }, 0); // Delay to allow DOM updates and ref attachment
                     }
-                } else {
-                    // Refs for this index not initialized, reset
-                    setItemToFocusId(null);
                 }
+                setItemToFocusId(null); // Consume the ID to prevent re-focusing on subsequent renders
             } else {
-                // Item not found (e.g., removed quickly), reset
-                setItemToFocusId(null);
+                setItemToFocusId(null); // Item not found, consume ID
             }
         }
-    }, [items, itemToFocusId]); // Dependencies include items and itemToFocusId
+    }, [items, itemToFocusId, itemFieldRefs]); // Added itemFieldRefs
 
     useEffect(() => {
         const fetchObras = async () => {
@@ -470,8 +465,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                         Adicionar Novo Item
                     </button>
                 </div>
-                <div className="overflow-visible rounded-md shadow-sm border border-slate-200"> {/* Kept overflow-visible for autocomplete */}
-                    <div className="overflow-x-auto overflow-y-visible"> {/* Added inner div for table scroll on small screens AND overflow-y-visible */}
+                <div className="overflow-visible rounded-md shadow-sm border border-slate-200"> {/* Kept overflow-visible for autocomplete, might not be needed if portal is only solution */}
+                    <div className="overflow-x-auto"> {/* Reverted: Removed overflow-y-visible as portal handles clipping */}
                         <table className="min-w-full">
                             <thead className="bg-slate-100">
                                 <tr>

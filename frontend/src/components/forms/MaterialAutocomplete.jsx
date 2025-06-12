@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useImperativeHandle } from 'react';
+import { createPortal } from 'react-dom'; // Import createPortal
 import * as api from '../../services/api';
 import MaterialForm from './MaterialForm';
 
@@ -21,6 +22,9 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
     const [isSubmittingNewMaterial, setIsSubmittingNewMaterial] = useState(false);
     const [newMaterialError, setNewMaterialError] = useState(null);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+    const [portalTarget, setPortalTarget] = useState(null);
 
     const inputRef = useRef(null);
     const suggestionItemRefs = useRef([]);
@@ -48,6 +52,24 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
         }
         suggestionItemRefs.current = suggestionItemRefs.current.slice(0, suggestions.length);
     }, [suggestions, showSuggestions]);
+
+    // Effect to set portal target
+    useEffect(() => {
+        setPortalTarget(document.body); // Target document.body for the portal
+    }, []);
+
+    // Effect to calculate dropdown position
+    useEffect(() => {
+        if (showSuggestions && inputRef.current) {
+            const inputRect = inputRef.current.getBoundingClientRect();
+            setDropdownPosition({
+                top: inputRect.bottom + window.scrollY,
+                left: inputRect.left + window.scrollX,
+                width: inputRect.width,
+            });
+        }
+    }, [showSuggestions]); // Recalculate if showSuggestions changes (or inputRef.current if it could change)
+
 
     const scrollToSuggestion = (index) => {
         if (suggestionItemRefs.current[index]) {
@@ -217,8 +239,59 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
         }
     };
 
+    const suggestionsJsx = (
+        showSuggestions && (
+            <div
+                className="suggestions-list-content" // This div will be portaled and styled
+                style={{
+                    position: 'absolute',
+                    top: `${dropdownPosition.top}px`,
+                    left: `${dropdownPosition.left}px`,
+                    width: `${dropdownPosition.width}px`,
+                    zIndex: 1050, // High z-index
+                }}
+            >
+                {isLoading && (
+                    <div className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-500 shadow-lg">
+                        Buscando...
+                    </div>
+                )}
+                {!isLoading && suggestions.length === 0 && inputValue.trim() !== '' && !showNewMaterialModal && (
+                    <div className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm text-slate-500 shadow-lg">
+                        <span>Nenhum material encontrado com "{inputValue}".</span>
+                        <button
+                            type="button"
+                            onClick={handleShowNewMaterialModal}
+                            className="ml-2 text-sm text-primary-600 hover:text-primary-700 font-semibold focus:outline-none underline"
+                        >
+                            + Cadastrar Novo Material
+                        </button>
+                    </div>
+                )}
+                {suggestions.length > 0 && !showNewMaterialModal && (
+                     <ul id={`suggestions-list-${itemIndex}`} role="listbox" className="w-full bg-white border border-slate-300 rounded-md max-h-60 overflow-y-auto shadow-lg"> {/* Removed absolute, z-10, mt-1 */}
+                        {suggestions.map((material, idx) => (
+                            <li
+                                key={material.id}
+                                ref={el => suggestionItemRefs.current[idx] = el}
+                                id={`suggestion-${itemIndex}-${idx}`}
+                                role="option"
+                                aria-selected={idx === highlightedIndex}
+                                onMouseDown={() => handleSuggestionClick(material)}
+                                onMouseEnter={() => setHighlightedIndex(idx)}
+                                className={`px-3 py-2 cursor-pointer text-sm ${idx === highlightedIndex ? 'bg-primary-100 text-primary-700 font-semibold' : 'text-slate-700 hover:bg-slate-100'}`}
+                            >
+                                {material.nome} <span className="text-slate-500">({material.unidade_medida})</span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        )
+    );
+
     return (
-        <div className="relative w-full">
+        <div className="relative w-full"> {/* This relative div is for the input itself if needed, or can be simplified if not strictly necessary for input layout */}
             <input
                 ref={inputRef}
                 type="text"
@@ -238,43 +311,7 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
             />
             {error && <p className="text-xs text-red-600 mt-0.5">{error}</p>}
 
-            <div className="suggestions-list-container">
-                {showSuggestions && !isLoading && suggestions.length === 0 && inputValue.trim() !== '' && !showNewMaterialModal && (
-                    <div className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 p-3 text-sm text-slate-500 shadow-lg">
-                        <span>Nenhum material encontrado com "{inputValue}".</span>
-                        <button
-                            type="button"
-                            onClick={handleShowNewMaterialModal}
-                            className="ml-2 text-sm text-primary-600 hover:text-primary-700 font-semibold focus:outline-none underline"
-                        >
-                            + Cadastrar Novo Material
-                        </button>
-                    </div>
-                )}
-                {showSuggestions && suggestions.length > 0 && !showNewMaterialModal && (
-                     <ul id={`suggestions-list-${itemIndex}`} role="listbox" className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
-                        {suggestions.map((material, idx) => (
-                            <li
-                                key={material.id}
-                                ref={el => suggestionItemRefs.current[idx] = el}
-                                id={`suggestion-${itemIndex}-${idx}`}
-                                role="option"
-                                aria-selected={idx === highlightedIndex}
-                                onMouseDown={() => handleSuggestionClick(material)}
-                                onMouseEnter={() => setHighlightedIndex(idx)}
-                                className={`px-3 py-2 cursor-pointer text-sm ${idx === highlightedIndex ? 'bg-primary-100 text-primary-700 font-semibold' : 'text-slate-700 hover:bg-slate-100'}`}
-                            >
-                                {material.nome} <span className="text-slate-500">({material.unidade_medida})</span>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-                 {isLoading && showSuggestions && !showNewMaterialModal && (
-                    <div className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 px-3 py-2 text-sm text-slate-500 shadow-lg">
-                        Buscando...
-                    </div>
-                )}
-            </div>
+            {portalTarget ? createPortal(suggestionsJsx, portalTarget) : null}
 
             {showNewMaterialModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4 new-material-modal-container" role="dialog" aria-modal="true" aria-labelledby="new-material-modal-title">
