@@ -1,33 +1,107 @@
 # Checklist de Implementação e Correções - SGO
 
-## Bugs
-- [ ] 1. Corrigir erro 400 ao salvar uma nova 'Compra'.
-- [ ] 2. Corrigir erro 400 ao salvar uma nova 'Ocorrência'.
-- [ ] 3. Corrigir nomes de funcionários em branco no formulário de 'Ocorrência'.
-- [ ] 4. Corrigir responsividade do layout em telas pequenas.
-- [X] 5. Corrigir o problema de clipping (lista cortada) do MaterialAutocomplete no formulário de Compras.
-    - Solução: Implementado React Portal para a lista de sugestões, garantindo que ela renderize no topo da hierarquia DOM e não seja afetada por containers com overflow.
-- [~] 6. Corrigir foco inconsistente/duplo Tab-Enter ao adicionar itens de compra no formulário de Compras.
-    - Status: Comportamento do foco foi tornado mais consistente. Refinamentos adicionais foram aplicados para tentar resolver a necessidade de pressionar Tab/Enter duas vezes. Requer teste para confirmar se o problema de "duas pressionadas" foi totalmente resolvido.
-    - Solução Parcial: Lógica de foco refatorada usando estado `itemToFocusId` e `useEffect` com `setTimeout(0)`. Dependências do `useEffect` foram refinadas.
-- [~] 7. Investigar e corrigir loop de requests/travamento na página de Detalhes da Obra.
-    - Iteração 1 (Backend):
-        - Causa Identificada: Erro 500 na API `/api/usomateriais/` devido a um `FieldError` (uso incorreto de `select_related('material')`).
-        - Solução Aplicada: Corrigido o `select_related` em `UsoMaterialViewSet` e atualizado `UsoMaterialSerializer` para compatibilidade com a estrutura de models e para remover referências a campos obsoletos. Método `__str__` do modelo `UsoMaterial` também atualizado.
-        - Resultado: API `/api/usomateriais/` normalizada (retorna 200).
-    - Iteração 2 (Frontend - Loop Persistente na Carga da Página):
-        - Sintoma: Mesmo com todas as APIs retornando 200, a página entrava em loop de requests para todas as suas fontes de dados ao ser carregada.
-        - Hipótese: Erros de renderização no cliente ao lidar com dados vazios (arrays `[]` retornados por algumas APIs), possivelmente causando um ciclo de re-renderização via error boundaries.
-        - Solução Aplicada: Revisão extensiva dos componentes filhos de `ObraDetailPage.jsx` e da própria página. Adicionadas verificações defensivas para garantir que o acesso a propriedades de dados e o mapeamento de arrays sejam feitos de forma segura, especialmente com arrays vazios ou objetos `null`. Pequenos ajustes como `parseFloat(valor || 0)` foram adicionados para robustez. A maioria dos componentes já possuía boas práticas de verificação de dados antes de renderizar.
-    - Status Atual: Múltiplas causas de loops foram abordadas (erro de API backend, robustez de renderização frontend). Requer teste para confirmar se o loop de carregamento da página foi completamente resolvido.
+Este documento detalha as próximas tarefas de desenvolvimento, incluindo correção de bugs, melhorias de usabilidade e implementação de novas funcionalidades.
 
-## Novas Funcionalidades e Melhorias
-- [ ] 5. Adicionar seleção de 'Responsável' (Funcionário) ao criar/editar uma 'Obra'.
-- [ ] 6. Adicionar campo para informações do 'Cliente' na 'Obra'.
-- [ ] 7. Melhorar a página de 'Detalhes da Obra' com botões de ação e gráficos.
-- [ ] 8. Permitir a edição completa dos dados da 'Obra', incluindo equipes e responsável.
-- [ ] 9. Permitir o registro de 'Equipes Externas' ou serviços terceirizados em 'Alocações'.
-- [ ] 10. Melhorar a página de 'Usuários' com um menu de ajuda sobre permissões e garantir o acesso apenas para administradores.
-- [ ] 11. Adicionar gráfico de histórico de despesas na página 'Gerenciar Obras'.
-- [ ] 12. Adicionar filtros e histórico de ocorrências na página 'Gestão de Ocorrências'.
-- [ ] 13. Adicionar mais gráficos de dados relevantes na página de 'Detalhes da Obra'.
+## Bugs a Corrigir
+
+- [X] **B01: Erro 400 ao Salvar 'Compra'**
+    - **Status:** Concluído ✅
+    - **Sintoma:** Ocorria um erro de Bad Request (400) ao submeter o formulário de uma nova compra.
+    - **Resolução:** O payload enviado pelo frontend em `ComprasPage.jsx` foi ajustado para corresponder à estrutura esperada pelo `CompraSerializer` no backend.
+
+- [X] **B02: Erro 400 ao Salvar 'Ocorrência'**
+    - **Status:** Concluído ✅
+    - **Sintoma:** Ocorria um erro de Bad Request (400) ao submeter o formulário de uma nova ocorrência.
+    - **Resolução:** Ajustado o `handleFormSubmit` em `OcorrenciasPage.jsx` para mapear os valores do select para os textos exatos esperados pelo modelo `Ocorrencia_Funcionario`.
+
+- [X] **B03: Nomes de Funcionários em Branco no Formulário 'Ocorrência'**
+    - **Status:** Concluído ✅
+    - **Sintoma:** O dropdown para selecionar um funcionário no formulário de ocorrência aparecia vazio.
+    - **Resolução:** A passagem da prop `funcionarios` de `OcorrenciasPage.jsx` para `OcorrenciaForm` foi corrigida.
+
+- [X] **B04: Responsividade do Layout Principal**
+    - **Status:** Concluído ✅
+    - **Sintoma:** Em telas menores, o conteúdo principal não se ajustava corretamente.
+    - **Resolução:** As classes de CSS responsivo em `Layout.jsx` e `Navegacao.jsx` foram ajustadas para gerenciar corretamente o `margin-left` do conteúdo principal.
+
+- [ ] **B05: Responsável da Obra Não Aparece na Listagem Principal**
+    - **Status:** Pendente ⏳
+    - **Sintoma:** Na tabela de `ObrasPage.jsx`, a coluna "Responsável" está sempre como "Não atribuído", mesmo que um responsável tenha sido salvo.
+    - **Hipótese:** A API `GET /api/obras/` pode estar usando um serializador que não inclui o `responsavel_nome`, ou o componente `ObrasTable.jsx` está tentando acessar um campo com nome incorreto.
+    - **Ação:** Verificar o `ObraSerializer` e a `ObraViewSet`. É provável que o `ObraSerializer` precise ser usado na listagem ou que um serializador de lista mais simples precise incluir o `responsavel_nome`. Confirmar o nome do campo no componente `ObrasTable.jsx`.
+
+## Melhorias de Usabilidade (UI/UX)
+
+- [ ] **UX01: Checkbox para Seleção de Membros de Equipe**
+    - **Descrição:** Substituir o `select` múltiplo no formulário de equipes por uma lista de funcionários com checkboxes.
+    - **Benefício:** Melhora significativamente a usabilidade em comparação com a seleção múltipla padrão (que exige Ctrl/Cmd + clique).
+    - **Ação:** Em `EquipeForm.jsx`, renderizar a lista de `funcionarios` como uma série de `<div>` contendo um `<input type="checkbox">` e o nome do funcionário. Gerenciar o estado `membros` (array de IDs) com base nos checkboxes marcados.
+
+- [ ] **UX02: Botões para Unidade de Medida no Formulário de Material**
+    - **Descrição:** Em vez de um dropdown para "Unidade de Medida", exibir botões para as 4 opções principais.
+    - **Benefício:** Acelera o cadastro, tornando as opções mais visíveis e acessíveis com um único clique.
+    - **Ação:** Em `MaterialForm.jsx`, remover o `<select>`. Adicionar um `<div>` com 4 botões, cada um representando uma unidade. O clique em um botão atualiza o estado `formData.unidade_medida`. Aplicar estilo para destacar o botão ativo.
+
+- [ ] **UX03: Cadastro Rápido de Material no Formulário de Compra**
+    - **Descrição:** No `MaterialAutocomplete` dentro de `CompraForm.jsx`, se um material não for encontrado, exibir um ícone de "+" que abre um modal para cadastro rápido.
+    - **Benefício:** Evita que o usuário tenha que sair do fluxo de cadastro de compra para adicionar um novo material.
+    - **Ação:** Em `MaterialAutocomplete.jsx`, quando a busca não retornar resultados, exibir um botão "+". Ao clicar, abrir um modal (`MaterialForm`). Após o submit bem-sucedido no modal, o novo material deve ser automaticamente selecionado no `MaterialAutocomplete` do item da compra.
+
+- [ ] **UX04: Adição Rápida de Ocorrência na Listagem de Funcionários**
+    - **Descrição:** Na tabela de `FuncionariosPage.jsx`, adicionar um botão de ação em cada linha para "Adicionar Ocorrência".
+    - **Benefício:** Agiliza o processo de registro de ocorrências para um funcionário específico.
+    - **Ação:** Adicionar um novo botão na `FuncionariosTable.jsx`. O clique deve abrir um modal contendo o `OcorrenciaForm`, já com o funcionário pré-selecionado e bloqueado para edição.
+
+- [ ] **UX05: Padronização de Botões de Ação**
+    - **Descrição:** Substituir os links de texto "Editar" e "Excluir" por botões com ícones em todas as tabelas de listagem, seguindo o padrão já usado em `ObrasTable.jsx`.
+    - **Benefício:** Consistência visual e de interação em todo o sistema.
+    - **Ação:** Atualizar os componentes `EquipesTable.jsx`, `MateriaisTable.jsx`, e `FuncionariosTable.jsx`, trocando os `<a>` ou `<button>` de texto por botões com ícones (lápis para editar, lixeira para excluir).
+
+## Novas Funcionalidades (Features Maiores)
+
+- [ ] **F01: Adicionar Informações de Cliente e Orçamento na Obra**
+    - **Descrição:** Incluir campos para `cliente_nome` e `orcamento_previsto` no modelo e formulários de Obra.
+    - **Backend:** Adicionar `cliente_nome = models.CharField(...)` e `orcamento_previsto = models.DecimalField(...)` ao `Obra` em `models.py`. Migrar o banco. Atualizar `ObraSerializer`.
+    - **Frontend:** Adicionar os campos correspondentes em `ObraForm.jsx` e exibir as informações em `ObraDetailPage.jsx`.
+
+- [ ] **F02: Sujestão de Fornecedores no Formulário de Compra**
+    - **Descrição:** O campo "Fornecedor" em `CompraForm.jsx` deve salvar os nomes digitados e sugeri-los em compras futuras.
+    - **Benefício:** Reduz a redigitação e padroniza os nomes dos fornecedores.
+    - **Backend:** Criar um novo endpoint de API, por exemplo, `/api/fornecedores/`, que retorne uma lista de nomes distintos de fornecedores (`Compra.objects.values_list('fornecedor', flat=True).distinct()`).
+    - **Frontend:** Transformar o input de "Fornecedor" em `CompraForm.jsx` em um componente de autocomplete que consome a nova API.
+
+- [ ] **F03: Permitir Alocação de Serviços Externos**
+    - **Descrição:** No formulário de alocação, permitir que o usuário escolha entre uma equipe interna ou digite o nome de um serviço terceirizado.
+    - **Backend:** Adicionar `servico_externo = models.CharField(...)` ao modelo `Alocacao_Obras_Equipes`. Tornar `equipe_id` opcional (`null=True, blank=True`). Adicionar validação no `AlocacaoObrasEquipesSerializer` para garantir que ou `equipe` ou `servico_externo` seja preenchido, mas não ambos.
+    - **Frontend:** Modificar `AlocacaoForm.jsx` para incluir o novo campo e a lógica de desabilitar um campo quando o outro é preenchido.
+
+- [ ] **F04: Página de Detalhes do Funcionário**
+    - **Descrição:** Criar uma nova página (`/funcionarios/:id`) que exiba um dashboard completo para cada funcionário.
+    - **Conteúdo:**
+        - **Informações Pessoais:** Cargo, salário, data de contratação.
+        - **Histórico de Ocorrências:** Tabela com todas as suas ocorrências.
+        - **Histórico de Obras:** Lista de obras em que trabalhou, com datas.
+        - **Controle Financeiro:** Um novo módulo para registrar pagamentos de salários, adiantamentos, etc.
+    - **Ação:** Criar `FuncionarioDetailPage.jsx`, novos endpoints de API no backend para buscar dados agregados do funcionário e um novo modelo `PagamentoFuncionario` para o controle financeiro.
+
+- [ ] **F05: Página de Detalhes da Equipe**
+    - **Descrição:** Criar uma página (`/equipes/:id`) para detalhar informações de uma equipe.
+    - **Conteúdo:**
+        - Lista de membros e líder.
+        - Histórico de alocações em obras.
+        - **Gráfico de Custo:** Um gráfico mostrando o custo médio da equipe (soma dos salários dos membros) por semana/mês para estimativas.
+    - **Ação:** Criar `EquipeDetailPage.jsx` e endpoints de API para calcular e fornecer os dados agregados de custo e histórico.
+
+- [ ] **F06: Página de Detalhes do Material**
+    - **Descrição:** Criar uma página (`/materiais/:id`) para detalhar o histórico de um material.
+    - **Conteúdo:**
+        - Total comprado (quantidade e valor).
+        - Histórico de compras (datas, quantidades, obras).
+        - Gráfico de variação de preço ao longo do tempo.
+    - **Ação:** Criar `MaterialDetailPage.jsx` e endpoints de API para buscar e agregar todas as compras (`ItemCompra`) relacionadas a um `Material`.
+
+- [ ] **F07: Cálculo de Custos da Equipe no Financeiro da Obra**
+    - **Descrição:** Na página de detalhes da obra, incluir uma estimativa de custo com mão de obra.
+    - **Benefício:** Oferece uma visão financeira muito mais completa da obra.
+    - **Cálculo:** Para cada equipe alocada na obra, somar o salário/dia de seus membros e multiplicar pelos dias de alocação.
+    - **Ação:** Requer uma lógica complexa no backend (provavelmente em `ObraSerializer` ou um endpoint dedicado) para calcular este custo com base nas alocações e salários atuais dos funcionários.
