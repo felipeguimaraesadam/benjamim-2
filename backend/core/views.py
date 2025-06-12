@@ -206,10 +206,12 @@ class UsoMaterialViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated] # Or your specific project permissions
 
     def get_queryset(self):
-        queryset = UsoMaterial.objects.all().select_related(
-            'compra__material', # For material_nome, compra_original_quantidade, compra_original_custo
-            'obra' # For obra_nome
-        ).order_by('-data_uso') # Default ordering
+        queryset = UsoMaterial.objects.select_related(
+            'compra',
+            'obra'
+        ).prefetch_related(
+            'compra__itens__material' # Prefetch items and their materials for each compra
+        ).order_by('-data_uso')
 
         obra_id = self.request.query_params.get('obra_id')
         if obra_id:
