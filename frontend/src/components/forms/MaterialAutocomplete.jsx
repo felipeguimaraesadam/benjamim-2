@@ -195,9 +195,6 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
                 }
             } else if (err.message) errorMessage = err.message;
             setNewMaterialError(errorMessage);
-            if (typeof onNewMaterialError === 'function') {
-                onNewMaterialError(errorMessage);
-            }
         } finally {
             setIsSubmittingNewMaterial(false);
         }
@@ -357,7 +354,6 @@ MaterialAutocomplete.propTypes = {
     error: PropTypes.string,
     parentOnKeyDown: PropTypes.func,
     onBlurReport: PropTypes.func,
-    onNewMaterialError: PropTypes.func, // New prop type
 };
 
 export default MaterialAutocomplete;

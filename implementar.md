@@ -79,6 +79,12 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
         - Verificado e garantido, através de revisão de código e walkthrough conceitual, que o `CompraForm.jsx` permanece aberto, retém todos os dados inseridos (cabeçalho e outros itens), e gerencia corretamente o foco após um novo material ser adicionado com sucesso pelo modal. O problema de fechamento prematuro ou perda de dados após a interação com o modal foi endereçado.
         - O sistema agora aguarda corretamente que o usuário salve explicitamente toda a ordem de compra, em vez de qualquer comportamento inesperado após o cadastro de um novo material. A lógica de callbacks e gestão de estado entre `MaterialAutocomplete`, `CompraForm`, e `ComprasPage` foi confirmada como robusta para este cenário.
 
+- [ ] **B10: Cadastro Rápido de Material Causa Perda de Dados**
+  - **Status:** Pendente ⏳
+  - **Sintoma:** Ao usar o modal de cadastro rápido de material no formulário de compra, um erro na submissão do novo material (ex: validação de nome duplicado) causa o fechamento de todo o formulário de compra, redirecionando o usuário e perdendo todos os dados inseridos. O novo material também não é salvo.
+  - **Causa Raiz:** O erro da API `createMaterial` não está sendo tratado localmente no modal. Ele se propaga para os componentes pais, causando um reset de estado na página.
+  - **Solução Esperada:** O modal deve capturar seus próprios erros de submissão e exibi-los internamente, sem fechar ou afetar o formulário de compra principal. Em caso de sucesso, o modal deve fechar, e o formulário de compra deve ser atualizado com o novo material, mantendo todos os outros dados.
+
 ## Melhorias de Usabilidade (UI/UX)
 
 - [X] **UX01: Checkbox para Seleção de Membros de Equipe**
