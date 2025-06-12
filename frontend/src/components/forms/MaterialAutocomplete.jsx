@@ -92,7 +92,8 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
             setShowSuggestions(true);
             setHighlightedIndex(-1);
             try {
-                const response = await api.getMateriais({ nome__icontains: query, page_size: 10 });
+                // Use 'search' parameter for DRF SearchFilter
+                const response = await api.getMateriais({ search: query, page_size: 10 });
                 setSuggestions(response.data?.results || response.data || response || []);
             } catch (err) {
                 console.error("Error fetching material suggestions:", err);

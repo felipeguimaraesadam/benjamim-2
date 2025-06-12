@@ -8,7 +8,7 @@ Este documento gerencia o fluxo de trabalho de desenvolvimento. As regras abaixo
 
 1.  **Seu Papel:** Você é uma IA especialista em desenvolvimento Full-Stack com conhecimento em Django/DRF e React.
 2.  **Sua Missão:** Seu objetivo é ler este arquivo, encontrar a **PRIMEIRA** tarefa com o status `[ ] Pendente ⏳` na seção "Plano de Execução Sequencial".
-3.  **Foco Absoluto:** Você deve executar **APENAS E EXCLUSIVAMENTE ESTA TAREFA ENCONTRADA**. Ignore todas as outras tarefas pendentes por enquanto.
+3.  **Foco Absoluto:** Você deve executar **APENAS E EXCLUSIVamente ESTA TAREFA ENCONTRADA**. Ignore todas as outras tarefas pendentes por enquanto.
 4.  **Atualização Obrigatória:** Após concluir a implementação da tarefa, você deve **ATUALIZAR ESTE ARQUIVO**. Altere o status da tarefa que você completou de `[ ] Pendente ⏳` para `[X] Concluído ✅`.
 5.  **Entregáveis:** Ao final, sua resposta deve ser feito o commit e confirmado se a tarefa foi um sucesso, se foi continuar para proxima, se não, anotar bug como subtarefa e seguir com ela até terminar.
 
@@ -41,6 +41,13 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
     - **Sintoma:** Na tabela de `ObrasPage.jsx`, a coluna "Responsável" está sempre como "Não atribuído", mesmo que um responsável tenha sido salvo.
     - **Hipótese:** A API `GET /api/obras/` pode estar usando um serializador que não inclui o `responsavel_nome`, ou o componente `ObrasTable.jsx` está tentando acessar um campo com nome incorreto.
     - **Ação:** Verificar o `ObraSerializer` e a `ObraViewSet`. É provável que o `ObraSerializer` precise ser usado na listagem ou que um serializador de lista mais simples precise incluir o `responsavel_nome`. Confirmar o nome do campo no componente `ObrasTable.jsx`.
+
+- [X] **B06: Filtro de Sugestão no Autocomplete de Material Quebrado**
+    - **Status:** Concluído ✅
+    - **Sintoma:** A lista de sugestões no MaterialAutocomplete não filtra os materiais com base no texto digitado pelo usuário. Exibe todos os materiais ou uma lista não filtrada, mesmo que o texto de busca não corresponda a nenhum nome de material.
+    - **Hipótese:** A API `/api/materiais/` pode não estar recebendo o parâmetro de busca (search term) corretamente, ou o endpoint no backend não está implementando a lógica de filtragem baseada nesse termo. Alternativamente, a lógica de filtragem no frontend ao receber os dados pode estar ausente ou incorreta.
+    - **Ação:** Verificar a chamada da API em `MaterialAutocomplete.jsx` para garantir que o termo de busca está sendo enviado. Inspecionar a view e o serializer correspondentes no backend (provavelmente em `core/views.py` e `core/serializers.py`) para confirmar que a filtragem por nome está implementada. Ajustar frontend ou backend conforme necessário.
+    - **Resolução:** O backend (`MaterialViewSet` em `core/views.py`) foi atualizado para usar `rest_framework.filters.SearchFilter`, configurado para buscar no campo `nome` do material e ordenar os resultados por nome. O frontend (`MaterialAutocomplete.jsx`) foi ajustado para enviar o termo de busca através do parâmetro `search` (ex: `/api/materiais/?search=termo`), alinhando-se com a expectativa do `SearchFilter`.
 
 ## Melhorias de Usabilidade (UI/UX)
 

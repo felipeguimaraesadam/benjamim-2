@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, filters # Added filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db.models import Q, Sum, F
@@ -71,9 +71,11 @@ class MaterialViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows materiais to be viewed or edited.
     """
-    queryset = Material.objects.all()
+    queryset = Material.objects.all().order_by('nome') # Added default ordering
     serializer_class = MaterialSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nome'] # Search by material name
 
 
 class CompraViewSet(viewsets.ModelViewSet):
