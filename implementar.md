@@ -1,6 +1,18 @@
 # Checklist de Implementação e Correções - SGO
 
-Este documento detalha as próximas tarefas de desenvolvimento, incluindo correção de bugs, melhorias de usabilidade e implementação de novas funcionalidades.
+Este documento gerencia o fluxo de trabalho de desenvolvimento. As regras abaixo devem ser seguidas rigorosamente a cada execução.
+
+---
+
+### **Regras de Execução para a IA Programadora**
+
+1.  **Seu Papel:** Você é uma IA especialista em desenvolvimento Full-Stack com conhecimento em Django/DRF e React.
+2.  **Sua Missão:** Seu objetivo é ler este arquivo, encontrar a **PRIMEIRA** tarefa com o status `[ ] Pendente ⏳` na seção "Plano de Execução Sequencial".
+3.  **Foco Absoluto:** Você deve executar **APENAS E EXCLUSIVAMENTE ESTA TAREFA ENCONTRADA**. Ignore todas as outras tarefas pendentes por enquanto.
+4.  **Atualização Obrigatória:** Após concluir a implementação da tarefa, você deve **ATUALIZAR ESTE ARQUIVO**. Altere o status da tarefa que você completou de `[ ] Pendente ⏳` para `[X] Concluído ✅`.
+5.  **Entregáveis:** Ao final, sua resposta deve ser feito o commit e confirmado se a tarefa foi um sucesso, se foi continuar para proxima, se não, anotar bug como subtarefa e seguir com ela até terminar.
+
+Estas regras se aplicam a cada vez que você for acionada para trabalhar neste projeto.
 
 ## Bugs a Corrigir
 
