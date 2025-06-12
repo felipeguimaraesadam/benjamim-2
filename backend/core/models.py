@@ -164,4 +164,11 @@ class UsoMaterial(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.quantidade_usada} de {self.compra.material.nome} em {self.data_uso}"
+        # Attempt to get the material name safely for the string representation
+        material_display_name = "Material não especificado"
+        if self.compra and self.compra.itens.exists():
+            first_item = self.compra.itens.first()
+            if first_item and first_item.material:
+                material_display_name = first_item.material.nome
+
+        return f"Uso de {self.quantidade_usada} de '{material_display_name}' (Obra: {self.obra.nome_obra}, Compra ID: {self.compra.id}) em {self.data_uso}"

@@ -219,19 +219,28 @@ class OcorrenciaFuncionarioSerializer(serializers.ModelSerializer):
 
 class UsoMaterialSerializer(serializers.ModelSerializer):
     obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True, allow_null=True)
-    material_nome = serializers.CharField(source='compra.material.nome', read_only=True, allow_null=True)
-    compra_original_quantidade = serializers.DecimalField(source='compra.quantidade', max_digits=10, decimal_places=2, read_only=True, required=False) # Made required=False
-    compra_original_custo = serializers.DecimalField(source='compra.custo_total', max_digits=10, decimal_places=2, read_only=True, required=False) # Made required=False
+    material_nome = serializers.SerializerMethodField() # CHANGED
+    # compra_original_quantidade and compra_original_custo are removed as direct fields
     custo_proporcional = serializers.SerializerMethodField()
 
     class Meta:
         model = UsoMaterial
         fields = [
-            'id', 'compra', 'obra', 'obra_nome', 'material_nome',
-            'compra_original_quantidade', 'compra_original_custo', 'custo_proporcional',
+            'id', 'compra', 'obra', 'obra_nome', 'material_nome', # material_nome is now method field
+            # 'compra_original_quantidade', 'compra_original_custo', # REMOVED THESE
+            'custo_proporcional',
             'quantidade_usada', 'data_uso', 'andar', 'categoria_uso', 'descricao'
         ]
-        read_only_fields = ['obra', 'data_uso', 'obra_nome', 'material_nome', 'compra_original_quantidade', 'compra_original_custo', 'custo_proporcional']
+        read_only_fields = ['obra', 'data_uso', 'obra_nome', 'material_nome', 'custo_proporcional'] # REMOVED compra_original fields
+
+    def get_material_nome(self, obj):
+        # obj is UsoMaterial instance
+        # Try to get the material name from the first item of the compra
+        if obj.compra and obj.compra.itens.exists():
+            first_item = obj.compra.itens.first()
+            if first_item and first_item.material:
+                return first_item.material.nome
+        return None # Or some default like "Material não especificado"
 
     def get_custo_proporcional(self, obj):
         # obj is the UsoMaterial instance
@@ -277,31 +286,25 @@ class UsoMaterialSerializer(serializers.ModelSerializer):
             total_ja_usado_na_compra = compra_instance.usos.aggregate(total=Sum('quantidade_usada'))['total'] or Decimal('0.00')
 
             # The field compra_instance.quantidade has been removed.
-            # This validation logic needs to be refactored.
-            # For now, we will skip this part of the validation.
-            # quantidade_disponivel_na_compra = compra_instance.quantidade - total_ja_usado_na_compra
-            quantidade_disponivel_na_compra = Decimal('Infinity') # Placeholder
+            # The following validation block related to 'compra_instance.quantidade'
+            # is problematic because 'Compra.quantidade' was removed.
+            # This needs a more significant refactor to check against ItemCompra stock,
+            # potentially requiring UsoMaterial to be linked to ItemCompra directly.
+            # For now, commenting out this specific stock check to prevent errors.
+            # A proper stock validation mechanism should be implemented later.
+            pass # Leaving this section as pass to avoid erroring on the removed field
 
-            if not hasattr(compra_instance, 'quantidade'): # Check if old field is gone
-                pass # Skip detailed validation if structure has changed
-            else:
-                # This block should ideally not be reached if 'quantidade' is removed.
-                original_quantidade_field_exists = hasattr(compra_instance, 'quantidade') # Should be false
-                # Fallback to old logic if somehow 'quantidade' still exists
-                if original_quantidade_field_exists:
-                    quantidade_disponivel_na_compra = compra_instance.quantidade - total_ja_usado_na_compra
-                    if self.instance: # This is an update
-                        # Add back the old value of quantidade_usada for this specific UsoMaterial instance
-                        # because it's included in total_ja_usado_na_compra.
-                        # This allows updating the current usage without it counting against itself.
-                        quantidade_disponivel_na_compra += self.instance.quantidade_usada
-
-            # This check needs to be reconsidered if quantidade_disponivel_na_compra is Decimal('Infinity')
-            if quantidade_disponivel_na_compra != Decimal('Infinity') and quantidade_usada > quantidade_disponivel_na_compra:
-                raise serializers.ValidationError({
-                    "quantidade_usada": f"A quantidade usada ({quantidade_usada}) excede a quantidade disponível ({quantidade_disponivel_na_compra}) para o material desta compra."
-                })
-        elif not self.instance and not compra_instance : # Create operation and compra is not provided (should be caught by field validation)
+            # Example of how it might be (if UsoMaterial was linked to ItemCompra via 'item_compra_usada_fk'):
+            # item_compra = data.get('item_compra_usada_fk') # This field doesn't exist on UsoMaterial
+            # if item_compra:
+            #     # Calculate total used for this specific ItemCompra
+            #     total_ja_usado_do_item = UsoMaterial.objects.filter(item_compra_usada_fk=item_compra).exclude(pk=self.instance.pk if self.instance else None).aggregate(total=Sum('quantidade_usada'))['total'] or Decimal('0.00')
+            #     quantidade_disponivel_do_item = item_compra.quantidade - total_ja_usado_do_item
+            #     if quantidade_usada > quantidade_disponivel_do_item:
+            #         raise serializers.ValidationError({
+            #             "quantidade_usada": f"A quantidade usada ({quantidade_usada}) excede a quantidade disponível ({quantidade_disponivel_do_item}) para o item."
+            #         })
+        elif not self.instance and not compra_instance: # Create operation and compra is not provided (should be caught by field validation)
              raise serializers.ValidationError({"compra": "Este campo é obrigatório."})
 
         return data
