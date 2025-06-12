@@ -56,10 +56,12 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
     - **Benefício:** Acelera o cadastro, tornando as opções mais visíveis e acessíveis com um único clique.
     - **Ação:** Em `MaterialForm.jsx`, remover o `<select>`. Adicionar um `<div>` com 4 botões, cada um representando uma unidade. O clique em um botão atualiza o estado `formData.unidade_medida`. Aplicar estilo para destacar o botão ativo.
 
-- [ ] **UX03: Cadastro Rápido de Material no Formulário de Compra**
+- [X] **UX03: Cadastro Rápido de Material no Formulário de Compra**
+    - **Status:** Concluído ✅
     - **Descrição:** No `MaterialAutocomplete` dentro de `CompraForm.jsx`, se um material não for encontrado, exibir um ícone de "+" que abre um modal para cadastro rápido.
     - **Benefício:** Evita que o usuário tenha que sair do fluxo de cadastro de compra para adicionar um novo material.
     - **Ação:** Em `MaterialAutocomplete.jsx`, quando a busca não retornar resultados, exibir um botão "+". Ao clicar, abrir um modal (`MaterialForm`). Após o submit bem-sucedido no modal, o novo material deve ser automaticamente selecionado no `MaterialAutocomplete` do item da compra.
+    - **Resolução:** A funcionalidade de cadastro rápido já existia. A alteração principal foi a substituição do botão de texto "+ Cadastrar Novo Material" por um botão de ícone "+" mais compacto em `MaterialAutocomplete.jsx` para alinhar com a descrição da tarefa.
 
 - [ ] **UX04: Adição Rápida de Ocorrência na Listagem de Funcionários**
     - **Descrição:** Na tabela de `FuncionariosPage.jsx`, adicionar um botão de ação em cada linha para "Adicionar Ocorrência".

@@ -262,9 +262,10 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
                         <button
                             type="button"
                             onClick={handleShowNewMaterialModal}
-                            className="ml-2 text-sm text-primary-600 hover:text-primary-700 font-semibold focus:outline-none underline"
+                            className="ml-2 p-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+                            aria-label="Cadastrar Novo Material"
                         >
-                            + Cadastrar Novo Material
+                            <span className="text-lg font-bold">+</span>
                         </button>
                     </div>
                 )}
