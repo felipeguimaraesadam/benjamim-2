@@ -49,6 +49,18 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
     - **Ação:** Verificar a chamada da API em `MaterialAutocomplete.jsx` para garantir que o termo de busca está sendo enviado. Inspecionar a view e o serializer correspondentes no backend (provavelmente em `core/views.py` e `core/serializers.py`) para confirmar que a filtragem por nome está implementada. Ajustar frontend ou backend conforme necessário.
     - **Resolução:** O backend (`MaterialViewSet` em `core/views.py`) foi atualizado para usar `rest_framework.filters.SearchFilter`, configurado para buscar no campo `nome` do material e ordenar os resultados por nome. O frontend (`MaterialAutocomplete.jsx`) foi ajustado para enviar o termo de busca através do parâmetro `search` (ex: `/api/materiais/?search=termo`), alinhando-se com a expectativa do `SearchFilter`.
 
+- [X] **B07: Autocomplete de Material Não Filtra Resultados**
+    - **Status:** Concluído ✅
+    - **Sintoma:** No formulário de 'Nova Compra', ao digitar no campo de busca de um material, a lista de sugestões não é filtrada. A API retorna sempre a lista completa de materiais, independentemente do texto inserido.
+    - **Diagnóstico:** A função `getMateriais` no arquivo `frontend/src/services/api.js` está incorreta. Ela é chamada com parâmetros de busca pelo componente `MaterialAutocomplete.jsx`, mas a função descarta esses parâmetros e sempre executa um `GET /api/materiais/` sem filtros. O backend (`MaterialViewSet`) já está configurado corretamente com `SearchFilter` e espera um parâmetro `?search=...`.
+    - **Plano de Ação:**
+        1.  Abra o arquivo `frontend/src/services/api.js`.
+        2.  Localize a função `getMateriais`.
+        3.  Modifique a assinatura da função de `export const getMateriais = () => {` para `export const getMateriais = (params) => {`.
+        4.  Altere a chamada do `apiClient` dentro da função de `return apiClient.get('/materiais/');` para `return apiClient.get('/materiais/', { params });`. Isso garantirá que quaisquer parâmetros de busca (como `{ search: 'termo' }`) sejam corretamente anexados à URL da requisição.
+    - **Critério de Aceitação:** Após a correção, ao cadastrar uma nova compra, a digitação no campo de material deve filtrar dinamicamente a lista de sugestões, exibindo apenas os materiais correspondentes.
+    - **Resolução:** Corrigida a função `getMateriais` em `frontend/src/services/api.js` para aceitar e repassar os parâmetros de busca (`params`) para a chamada da API, conforme o plano de ação especificado.
+
 ## Melhorias de Usabilidade (UI/UX)
 
 - [X] **UX01: Checkbox para Seleção de Membros de Equipe**
