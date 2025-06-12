@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export const useApiData = (
     apiFunction,
@@ -6,6 +6,7 @@ export const useApiData = (
     initialData = null,
     autoFetch = true
 ) => {
+    const initialDataRef = useRef(initialData);
     const [data, setData] = useState(initialData);
     const [isLoading, setIsLoading] = useState(autoFetch && initialParams !== undefined); // Only true if auto-fetching with params
     const [error, setError] = useState(null);
@@ -45,19 +46,19 @@ export const useApiData = (
         setError(null);
         try {
             const response = await apiFunction(fetchParamsToUse); // Pass params even if undefined, let API func handle
-            const responseData = response.data || response || (Array.isArray(initialData) ? [] : null);
+            const responseData = response.data || response || (Array.isArray(initialDataRef.current) ? [] : null);
             setData(responseData);
             return { success: true, data: responseData };
         } catch (err) {
             const errorMessage = err.response?.data?.detail || err.message || 'Falha ao buscar dados.';
             setError(errorMessage);
             console.error(`Error in useApiData with ${apiFunction?.name || 'anonymous API function'}:`, err);
-            setData(initialData); // Reset to initialData on error
+            setData(initialDataRef.current); // Reset to initialData on error
             return { success: false, error: errorMessage };
         } finally {
             setIsLoading(false);
         }
-    }, [apiFunction, initialData]); // Removed JSON.stringify from initialData dependency
+    }, [apiFunction]); // Removed JSON.stringify from initialData dependency
 
     useEffect(() => {
         if (autoFetch) {
