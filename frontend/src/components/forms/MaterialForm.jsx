@@ -90,7 +90,7 @@ const MaterialForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         </button>
         <button type="submit" disabled={isLoading}
                 className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300">
-          {isLoading ? 'Salvando...' : 'Salvar'}
+          {isLoading ? 'Salvando...' : (initialData && initialData.id ? 'Atualizar Material' : 'Salvar Material')}
         </button>
       </div>
     </form>

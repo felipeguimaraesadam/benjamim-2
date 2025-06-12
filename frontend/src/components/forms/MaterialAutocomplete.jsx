@@ -12,7 +12,7 @@ const debounce = (func, delay) => {
     };
 };
 
-const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIndex, error, parentOnKeyDown }, ref) => {
+const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSelect, itemIndex, error, parentOnKeyDown, onBlurReport }, ref) => {
     const [inputValue, setInputValue] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -122,9 +122,13 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
         setTimeout(() => {
             const activeEl = document.activeElement;
             if (activeEl && (activeEl.closest('.suggestions-list-container') || activeEl.closest('.new-material-modal-container'))) {
-                return;
+                return; // Don't run blur logic if focus moved to suggestions or modal
             }
             setShowSuggestions(false);
+            if (typeof onBlurReport === 'function') {
+                // Pass the current selected material object (value) and the raw input value
+                onBlurReport({ selectedMaterial: value, currentInputValue: inputValue });
+            }
         }, 200);
     };
 
@@ -296,6 +300,6 @@ const MaterialAutocomplete = React.forwardRef(({ value, onMaterialSelect, itemIn
             )}
         </div>
     );
-});
+}));
 
 export default MaterialAutocomplete;
