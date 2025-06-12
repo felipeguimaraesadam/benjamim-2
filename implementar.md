@@ -50,7 +50,8 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
     - **Benefício:** Melhora significativamente a usabilidade em comparação com a seleção múltipla padrão (que exige Ctrl/Cmd + clique).
     - **Ação:** Em `EquipeForm.jsx`, renderizar a lista de `funcionarios` como uma série de `<div>` contendo um `<input type="checkbox">` e o nome do funcionário. Gerenciar o estado `membros` (array de IDs) com base nos checkboxes marcados.
 
-- [ ] **UX02: Botões para Unidade de Medida no Formulário de Material**
+- [X] **UX02: Botões para Unidade de Medida no Formulário de Material**
+    - **Status:** Concluído ✅
     - **Descrição:** Em vez de um dropdown para "Unidade de Medida", exibir botões para as 4 opções principais.
     - **Benefício:** Acelera o cadastro, tornando as opções mais visíveis e acessíveis com um único clique.
     - **Ação:** Em `MaterialForm.jsx`, remover o `<select>`. Adicionar um `<div>` com 4 botões, cada um representando uma unidade. O clique em um botão atualiza o estado `formData.unidade_medida`. Aplicar estilo para destacar o botão ativo.
