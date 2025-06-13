@@ -58,14 +58,17 @@ const MaterialForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    // e.preventDefault(); // Not strictly necessary for type="button" but harmless if kept
+    if (e && typeof e.preventDefault === 'function') { // Keep if e might sometimes be an event
+        e.preventDefault();
+    }
     if (validateForm()) {
       onSubmit(formData);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6"> {/* Changed from form to div, removed onSubmit */}
       <div>
         <label htmlFor="nome" className="block mb-2 text-sm font-medium text-gray-900">Nome do Material</label>
         <input type="text" name="nome" id="nome" value={formData.nome} onChange={handleChange}
@@ -104,12 +107,12 @@ const MaterialForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 className="py-2 px-4 text-sm font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50">
           Cancelar
         </button>
-        <button type="submit" disabled={isLoading}
+        <button type="button" onClick={handleSubmit} disabled={isLoading} // Changed type to "button", added onClick
                 className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300">
           {isLoading ? 'Salvando...' : (initialData && initialData.id ? 'Atualizar Material' : 'Salvar Material')}
         </button>
       </div>
-    </form>
+    </div> // Changed from /form to /div
   );
 };
 

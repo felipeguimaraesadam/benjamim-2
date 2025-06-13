@@ -170,71 +170,61 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
         }
     };
 
-    const handleNewMaterialSubmit = async (materialFormData) => {
-      try {
-        setIsSubmittingNewMaterial(true);
-        setNewMaterialError(null); // Ensure this is set before the API call
-      } catch (e) {
-        console.error("Error in pre-submission phase of handleNewMaterialSubmit:", e);
-        // Optionally, set a generic error message if this phase fails
-        // setNewMaterialError("Erro inesperado ao iniciar o cadastro.");
-        // setIsSubmittingNewMaterial(false); // Ensure loading state is reset if we were to set it before this block
-        return; // Prevent further execution if this setup fails
-      }
+const handleNewMaterialSubmit = async (materialFormData) => {
+    // Initial phase: setting loading and clearing previous errors
+    // No try-catch here as per original structure; state setters are unlikely to fail.
+    // If they were to fail, it would be a React-level issue.
+    setIsSubmittingNewMaterial(true);
+    setNewMaterialError(null);
 
-      try {
-        const response = await api.createMaterial(materialFormData); // Main API call
-        const createdMaterial = response.data || response; // Ensure createdMaterial is defined for success path
+    try {
+        const response = await api.createMaterial(materialFormData);
+        // Ensure createdMaterial is correctly assigned, checking response.data first
+        const createdMaterial = response && response.data ? response.data : response;
+
         // SUCCESS PATH:
-        // Ensure these are only called on actual success
-        onMaterialSelect(itemIndex, createdMaterial); // Propagate selection to parent. Removed 'true' flag as it's not in original prop signature for onMaterialSelect in CompraForm
-        setInputValue(createdMaterial.nome); // Update input field after successful creation
+        // Access props directly as they are destructured in the component's function signature
+        onMaterialSelect(itemIndex, createdMaterial, true); // Pass true for isNewMaterial
+
+        // Ensure `setInputValue` is the state setter for the component's inputValue state
+        // and `createdMaterial.nome` is safely accessed.
+        if (createdMaterial && typeof createdMaterial.nome === 'string') {
+            setInputValue(createdMaterial.nome);
+        }
+
+        // Ensure `handleCloseNewMaterialModal` is a method of this component
         handleCloseNewMaterialModal(true); // true indicates success
-      } catch (err) {
+    } catch (err) {
         // MAIN ERROR HANDLING for api.createMaterial
-        try {
-          let errorMessage = "Ocorreu um erro ao criar o material.";
-          if (err.response && err.response.data) {
-            if (err.response.data.nome && Array.isArray(err.response.data.nome) && err.response.data.nome.length > 0) {
-              errorMessage = `Nome: ${err.response.data.nome[0]}`;
-            } else if (err.response.data.unidade_medida && Array.isArray(err.response.data.unidade_medida) && err.response.data.unidade_medida.length > 0) {
-              errorMessage = `Unidade de Medida: ${err.response.data.unidade_medida[0]}`;
-            } else if (err.response.data.detail) {
-              errorMessage = err.response.data.detail;
-            } else if (typeof err.response.data === 'string') {
-              errorMessage = err.response.data;
-            // Fallback for other structured errors (e.g., non_field_errors or multiple field errors)
+        let errorMessage = "Ocorreu um erro desconhecido ao criar o material.";
+        if (err.response && err.response.data) {
+            const errorData = err.response.data;
+            if (errorData.nome && Array.isArray(errorData.nome) && errorData.nome.length > 0) {
+                errorMessage = `Nome: ${errorData.nome[0]}`; // More specific error for 'nome'
+            } else if (errorData.unidade_medida && Array.isArray(errorData.unidade_medida) && errorData.unidade_medida.length > 0) {
+                errorMessage = `Unidade de Medida: ${errorData.unidade_medida[0]}`; // Specific for 'unidade_medida'
+            } else if (errorData.detail) {
+                errorMessage = errorData.detail;
             } else {
-                const errors = err.response.data;
-                const messages = Object.entries(errors).map(([key, value]) => {
-                    if (Array.isArray(value)) {
-                        return `${key}: ${value.join(', ')}`;
-                    }
-                    return `${key}: ${value}`;
-                });
-                if (messages.length > 0) {
-                    errorMessage = messages.join('; ');
+                try {
+                    // Attempt to stringify if it's an object, otherwise use as is if string.
+                    errorMessage = typeof errorData === 'string' ? errorData : JSON.stringify(errorData);
+                } catch (e_stringify) {
+                    console.error("Error stringifying API error data:", e_stringify);
+                    errorMessage = "Erro complexo e não serializável retornado pela API.";
                 }
             }
-          } else if (err.message) {
+        } else if (err.message) {
             errorMessage = err.message;
-          }
-          console.error("API Create Material Error:", err); // Log the original error object
-          setNewMaterialError(errorMessage); // Set the error state for display
-        } catch (e_set_error) {
-          // This would catch an error if setNewMaterialError itself or logging fails
-          console.error("Error while setting material error state:", e_set_error);
         }
-      } finally {
-        // CLEANUP
-        try {
-          setIsSubmittingNewMaterial(false);
-        } catch (e_set_loading) {
-          // This would catch an error if setIsSubmittingNewMaterial fails
-          console.error("Error while setting submitting new material to false:", e_set_loading);
-        }
-      }
-    };
+
+        console.error("Erro ao criar material (api.createMaterial call):", err);
+        setNewMaterialError(errorMessage);
+    } finally {
+        // CLEANUP: This will always run, regardless of success or failure in try/catch.
+        setIsSubmittingNewMaterial(false);
+    }
+};
 
     const handleInputKeyDown = (e) => {
         if (showNewMaterialModal) { // If modal is open, don't interfere with its inputs
