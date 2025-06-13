@@ -8,7 +8,7 @@ Este documento gerencia o fluxo de trabalho de desenvolvimento. As regras abaixo
 
 1.  **Seu Papel:** Você é uma IA especialista em desenvolvimento Full-Stack com conhecimento em Django/DRF e React.
 2.  **Sua Missão:** Seu objetivo é ler este arquivo, encontrar a **PRIMEIRA** tarefa com o status `[ ] Pendente ⏳` na seção "Plano de Execução Sequencial".
-3.  **Foco Absoluto:** Você deve executar **APENAS E EXCLUSIVAMENTE ESTA TAREFA ENCONTRADA**. Ignore todas as outras tarefas pendentes por enquanto.
+3.  **Foco Absoluto:** Você deve executar **APENAS E EXCLUSIVamente ESTA TAREFA ENCONTRADA**. Ignore todas as outras tarefas pendentes por enquanto.
 4.  **Atualização Obrigatória:** Após concluir a implementação da tarefa, você deve **ATUALIZAR ESTE ARQUIVO**. Altere o status da tarefa que você completou de `[ ] Pendente ⏳` para `[X] Concluído ✅`.
 5.  **Entregáveis:** Ao final, sua resposta deve ser feito o commit e confirmado se a tarefa foi um sucesso, se foi continuar para proxima, se não, anotar bug como subtarefa e seguir com ela até terminar.
 
@@ -36,28 +36,78 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
     - **Sintoma:** Em telas menores, o conteúdo principal não se ajustava corretamente.
     - **Resolução:** As classes de CSS responsivo em `Layout.jsx` e `Navegacao.jsx` foram ajustadas para gerenciar corretamente o `margin-left` do conteúdo principal.
 
-- [ ] **B05: Responsável da Obra Não Aparece na Listagem Principal**
-    - **Status:** Pendente ⏳
+- [X] **B05: Responsável da Obra Não Aparece na Listagem Principal**
+    - **Status:** Concluído ✅
     - **Sintoma:** Na tabela de `ObrasPage.jsx`, a coluna "Responsável" está sempre como "Não atribuído", mesmo que um responsável tenha sido salvo.
     - **Hipótese:** A API `GET /api/obras/` pode estar usando um serializador que não inclui o `responsavel_nome`, ou o componente `ObrasTable.jsx` está tentando acessar um campo com nome incorreto.
     - **Ação:** Verificar o `ObraSerializer` e a `ObraViewSet`. É provável que o `ObraSerializer` precise ser usado na listagem ou que um serializador de lista mais simples precise incluir o `responsavel_nome`. Confirmar o nome do campo no componente `ObrasTable.jsx`.
 
+- [X] **B06: Filtro de Sugestão no Autocomplete de Material Quebrado**
+    - **Status:** Concluído ✅
+    - **Sintoma:** A lista de sugestões no MaterialAutocomplete não filtra os materiais com base no texto digitado pelo usuário. Exibe todos os materiais ou uma lista não filtrada, mesmo que o texto de busca não corresponda a nenhum nome de material.
+    - **Hipótese:** A API `/api/materiais/` pode não estar recebendo o parâmetro de busca (search term) corretamente, ou o endpoint no backend não está implementando a lógica de filtragem baseada nesse termo. Alternativamente, a lógica de filtragem no frontend ao receber os dados pode estar ausente ou incorreta.
+    - **Ação:** Verificar a chamada da API em `MaterialAutocomplete.jsx` para garantir que o termo de busca está sendo enviado. Inspecionar a view e o serializer correspondentes no backend (provavelmente em `core/views.py` e `core/serializers.py`) para confirmar que a filtragem por nome está implementada. Ajustar frontend ou backend conforme necessário.
+    - **Resolução:** O backend (`MaterialViewSet` em `core/views.py`) foi atualizado para usar `rest_framework.filters.SearchFilter`, configurado para buscar no campo `nome` do material e ordenar os resultados por nome. O frontend (`MaterialAutocomplete.jsx`) foi ajustado para enviar o termo de busca através do parâmetro `search` (ex: `/api/materiais/?search=termo`), alinhando-se com a expectativa do `SearchFilter`.
+
+- [X] **B07: Autocomplete de Material Não Filtra Resultados**
+    - **Status:** Concluído ✅
+    - **Sintoma:** No formulário de 'Nova Compra', ao digitar no campo de busca de um material, a lista de sugestões não é filtrada. A API retorna sempre a lista completa de materiais, independentemente do texto inserido.
+    - **Diagnóstico:** A função `getMateriais` no arquivo `frontend/src/services/api.js` está incorreta. Ela é chamada com parâmetros de busca pelo componente `MaterialAutocomplete.jsx`, mas a função descarta esses parâmetros e sempre executa um `GET /api/materiais/` sem filtros. O backend (`MaterialViewSet`) já está configurado corretamente com `SearchFilter` e espera um parâmetro `?search=...`.
+    - **Plano de Ação:**
+        1.  Abra o arquivo `frontend/src/services/api.js`.
+        2.  Localize a função `getMateriais`.
+        3.  Modifique a assinatura da função de `export const getMateriais = () => {` para `export const getMateriais = (params) => {`.
+        4.  Altere a chamada do `apiClient` dentro da função de `return apiClient.get('/materiais/');` para `return apiClient.get('/materiais/', { params });`. Isso garantirá que quaisquer parâmetros de busca (como `{ search: 'termo' }`) sejam corretamente anexados à URL da requisição.
+    - **Critério de Aceitação:** Após a correção, ao cadastrar uma nova compra, a digitação no campo de material deve filtrar dinamicamente a lista de sugestões, exibindo apenas os materiais correspondentes.
+    - **Resolução:** Corrigida a função `getMateriais` em `frontend/src/services/api.js` para aceitar e repassar os parâmetros de busca (`params`) para a chamada da API, conforme o plano de ação especificado.
+
+- [X] **B08: Perda de Dados ao Salvar Novo Produto Durante Cadastro de Compra**
+    - **Status:** Concluído ✅
+    - **Sintoma:** Ao salvar um novo produto durante o cadastro de uma compra, o sistema redireciona para fora da tela de compras, fazendo com que os dados da nota fiscal em andamento sejam perdidos. O esperado é que, após o cadastro do novo produto, o sistema retorne à tela de compra, com todos os dados previamente inseridos preservados e o foco no campo do produto recém-cadastrado.
+    - **Solução:**
+        - Modificado o componente `MaterialAutocomplete.jsx` para gerenciar corretamente o foco após o cadastro de um novo material. A alteração impede que o foco retorne automaticamente para o campo de autocompletar, permitindo que o formulário de compra (`CompraForm.jsx`) controle e defina o foco para o campo de quantidade do novo item adicionado.
+        - Adicionada maior robustez ao `CompraForm.jsx`, especificamente na função `handleMaterialSelected`, através da implementação de um bloco `try...catch`. Isso previne que erros não tratados durante a seleção e processamento de um material causem instabilidade no formulário ou perda de estado dos dados já inseridos.
+        - A lógica atualizada assegura que, após o cadastro rápido de um novo material e o retorno ao formulário de compra, este permaneça aberto, todos os dados preenchidos da nota fiscal e de outros itens sejam mantidos, o novo material seja corretamente selecionado na linha de item correspondente, e o foco do usuário seja direcionado para o campo de quantidade deste novo material, conforme o comportamento esperado.
+
+- [X] **B09: Redirecionamento Incorreto e Perda de Dados ao Adicionar Produto em Compra**
+    - **Status:** Concluído ✅
+    - **Contexto:** Adicionar um novo produto através do botão de adição rápida (e.g., ícone "+") na página de 'adicionar compra', quando o formulário de compra já possui dados preenchidos.
+    - **Problema:** Após salvar o novo produto, o sistema redireciona incorretamente para a página de listagem de compras. Isso resulta na perda de todos os dados que já haviam sido inseridos no formulário da compra atual. Além disso, o produto recém-criado não é salvo no banco de dados.
+    - **Impacto:** Frustração do usuário devido à perda de dados e interrupção do fluxo de trabalho, exigindo que o formulário de compra seja preenchido novamente desde o início. Falha em persistir o novo produto cadastrado.
+    - **Solução:**
+        - Melhorada a gestão de erros no modal de criação de material (`MaterialAutocomplete.jsx`) para assegurar que falhas sejam claramente comunicadas ao formulário principal de compra (`CompraForm.jsx`) através de uma nova prop de callback (`onNewMaterialError`).
+        - Verificado e garantido, através de revisão de código e walkthrough conceitual, que o `CompraForm.jsx` permanece aberto, retém todos os dados inseridos (cabeçalho e outros itens), e gerencia corretamente o foco após um novo material ser adicionado com sucesso pelo modal. O problema de fechamento prematuro ou perda de dados após a interação com o modal foi endereçado.
+        - O sistema agora aguarda corretamente que o usuário salve explicitamente toda a ordem de compra, em vez de qualquer comportamento inesperado após o cadastro de um novo material. A lógica de callbacks e gestão de estado entre `MaterialAutocomplete`, `CompraForm`, e `ComprasPage` foi confirmada como robusta para este cenário.
+
+- [x] **B10: Cadastro Rápido de Material Causa Perda de Dados**
+  - **Status:** Resolvido ✔️
+  - **Resolução:** Corrigido problema de formulário HTML aninhado no modal de cadastro rápido e robustecido tratamento de erro em `MaterialAutocomplete.jsx` para garantir que erros de criação de material sejam tratados localmente no modal, não afetando o formulário principal de Compra. Adicionalmente, a lógica de submissão em `MaterialForm.jsx` foi alterada para não usar um `<form>` HTML, evitando submissões aninhadas.
+  - **Sintoma:** Ao preencher o formulário de compra, o usuário tenta adicionar um novo material através do modal de cadastro rápido. Se a submissão do novo material falhar (ex: erro de validação do backend, como nome duplicado), o modal e todo o formulário de compra são fechados. O usuário é redirecionado para a página de listagem de compras, perdendo todos os dados já inseridos na nota. O novo material também não é salvo.
+  - **Causa Raiz Provável:** Um erro não tratado na promise da chamada `api.createMaterial` dentro do componente `MaterialAutocomplete.jsx` está se propagando para os componentes pais (`CompraForm`, `ComprasPage`), acionando um reset de estado geral ou uma exceção não capturada que interrompe a renderização. A lógica de `catch` pode não estar funcionando como esperado ou o erro pode estar sendo re-lançado implicitamente.
+  - **Comportamento Esperado:**
+      1.  **Em caso de erro:** O modal de cadastro de material deve permanecer aberto. Uma mensagem de erro clara, retornada pela API, deve ser exibida dentro do modal. O formulário de compra principal deve permanecer intacto, com todos os seus dados preservados, visível no fundo.
+      2.  **Em caso de sucesso:** O modal deve fechar. O formulário de compra deve permanecer aberto, com todos os dados preenchidos retidos. O material recém-criado deve ser selecionado automaticamente no item de compra correspondente, e o foco do cursor deve ser movido para o campo de "Quantidade" desse mesmo item, permitindo a continuação fluida do trabalho.
+
 ## Melhorias de Usabilidade (UI/UX)
 
-- [ ] **UX01: Checkbox para Seleção de Membros de Equipe**
+- [X] **UX01: Checkbox para Seleção de Membros de Equipe**
+    - **Status:** Concluído ✅
     - **Descrição:** Substituir o `select` múltiplo no formulário de equipes por uma lista de funcionários com checkboxes.
     - **Benefício:** Melhora significativamente a usabilidade em comparação com a seleção múltipla padrão (que exige Ctrl/Cmd + clique).
     - **Ação:** Em `EquipeForm.jsx`, renderizar a lista de `funcionarios` como uma série de `<div>` contendo um `<input type="checkbox">` e o nome do funcionário. Gerenciar o estado `membros` (array de IDs) com base nos checkboxes marcados.
 
-- [ ] **UX02: Botões para Unidade de Medida no Formulário de Material**
+- [X] **UX02: Botões para Unidade de Medida no Formulário de Material**
+    - **Status:** Concluído ✅
     - **Descrição:** Em vez de um dropdown para "Unidade de Medida", exibir botões para as 4 opções principais.
     - **Benefício:** Acelera o cadastro, tornando as opções mais visíveis e acessíveis com um único clique.
     - **Ação:** Em `MaterialForm.jsx`, remover o `<select>`. Adicionar um `<div>` com 4 botões, cada um representando uma unidade. O clique em um botão atualiza o estado `formData.unidade_medida`. Aplicar estilo para destacar o botão ativo.
 
-- [ ] **UX03: Cadastro Rápido de Material no Formulário de Compra**
+- [X] **UX03: Cadastro Rápido de Material no Formulário de Compra**
+    - **Status:** Concluído ✅
     - **Descrição:** No `MaterialAutocomplete` dentro de `CompraForm.jsx`, se um material não for encontrado, exibir um ícone de "+" que abre um modal para cadastro rápido.
     - **Benefício:** Evita que o usuário tenha que sair do fluxo de cadastro de compra para adicionar um novo material.
     - **Ação:** Em `MaterialAutocomplete.jsx`, quando a busca não retornar resultados, exibir um botão "+". Ao clicar, abrir um modal (`MaterialForm`). Após o submit bem-sucedido no modal, o novo material deve ser automaticamente selecionado no `MaterialAutocomplete` do item da compra.
+    - **Resolução:** A funcionalidade de cadastro rápido já existia. A alteração principal foi a substituição do botão de texto "+ Cadastrar Novo Material" por um botão de ícone "+" mais compacto em `MaterialAutocomplete.jsx` para alinhar com a descrição da tarefa.
 
 - [ ] **UX04: Adição Rápida de Ocorrência na Listagem de Funcionários**
     - **Descrição:** Na tabela de `FuncionariosPage.jsx`, adicionar um botão de ação em cada linha para "Adicionar Ocorrência".

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useImperativeHandle } from 'react';
+import PropTypes from 'prop-types'; // Import PropTypes
 import { createPortal } from 'react-dom'; // Import createPortal
 import * as api from '../../services/api';
 import MaterialForm from './MaterialForm';
@@ -13,7 +14,7 @@ const debounce = (func, delay) => {
     };
 };
 
-const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSelect, itemIndex, error, parentOnKeyDown, onBlurReport }, ref) => {
+const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSelect, itemIndex, error, parentOnKeyDown, onBlurReport, onNewMaterialError }, ref) => {
     const [inputValue, setInputValue] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -92,7 +93,8 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
             setShowSuggestions(true);
             setHighlightedIndex(-1);
             try {
-                const response = await api.getMateriais({ nome__icontains: query, page_size: 10 });
+                // Use 'search' parameter for DRF SearchFilter
+                const response = await api.getMateriais({ search: query, page_size: 10 });
                 setSuggestions(response.data?.results || response.data || response || []);
             } catch (err) {
                 console.error("Error fetching material suggestions:", err);
@@ -160,46 +162,74 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
         setShowNewMaterialModal(true);
     };
 
-    const handleCloseNewMaterialModal = () => {
+    const handleCloseNewMaterialModal = (materialSuccessfullySubmitted = false) => {
         setShowNewMaterialModal(false);
         setNewMaterialError(null);
-        inputRef.current?.focus();
-    };
-
-    const handleNewMaterialSubmit = async (materialFormData) => {
-        setIsSubmittingNewMaterial(true);
-        setNewMaterialError(null);
-        try {
-            const response = await api.createMaterial(materialFormData);
-            const createdMaterial = response.data || response;
-            onMaterialSelect(itemIndex, createdMaterial);
-            setInputValue(createdMaterial.nome);
-            handleCloseNewMaterialModal();
-        } catch (err) {
-            console.error("Error creating new material:", err);
-            let errorMessage = 'Falha ao criar novo material.';
-            if (err.response && err.response.data) {
-                const errorData = err.response.data;
-                if (typeof errorData === 'string') errorMessage = errorData;
-                else if (errorData.detail) errorMessage = errorData.detail;
-                else if (errorData.nome && Array.isArray(errorData.nome)) errorMessage = `Nome: ${errorData.nome.join(' ')}`;
-                else if (errorData.unidade_medida && Array.isArray(errorData.unidade_medida)) errorMessage = `Unidade: ${errorData.unidade_medida.join(' ')}`;
-                else if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) errorMessage = errorData.non_field_errors.join('; ');
-                else {
-                    const fieldErrors = Object.entries(errorData).map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`).join('; ');
-                    if (fieldErrors) errorMessage = fieldErrors;
-                }
-            } else if (err.message) errorMessage = err.message;
-            setNewMaterialError(errorMessage);
-        } finally {
-            setIsSubmittingNewMaterial(false);
+        if (!materialSuccessfullySubmitted) {
+            inputRef.current?.focus();
         }
     };
+
+const handleNewMaterialSubmit = async (materialFormData) => {
+    // Initial phase: setting loading and clearing previous errors
+    // No try-catch here as per original structure; state setters are unlikely to fail.
+    // If they were to fail, it would be a React-level issue.
+    setIsSubmittingNewMaterial(true);
+    setNewMaterialError(null);
+
+    try {
+        const response = await api.createMaterial(materialFormData);
+        // Ensure createdMaterial is correctly assigned, checking response.data first
+        const createdMaterial = response && response.data ? response.data : response;
+
+        // SUCCESS PATH:
+        // Access props directly as they are destructured in the component's function signature
+        onMaterialSelect(itemIndex, createdMaterial, true); // Pass true for isNewMaterial
+
+        // Ensure `setInputValue` is the state setter for the component's inputValue state
+        // and `createdMaterial.nome` is safely accessed.
+        if (createdMaterial && typeof createdMaterial.nome === 'string') {
+            setInputValue(createdMaterial.nome);
+        }
+
+        // Ensure `handleCloseNewMaterialModal` is a method of this component
+        handleCloseNewMaterialModal(true); // true indicates success
+    } catch (err) {
+        // MAIN ERROR HANDLING for api.createMaterial
+        let errorMessage = "Ocorreu um erro desconhecido ao criar o material.";
+        if (err.response && err.response.data) {
+            const errorData = err.response.data;
+            if (errorData.nome && Array.isArray(errorData.nome) && errorData.nome.length > 0) {
+                errorMessage = `Nome: ${errorData.nome[0]}`; // More specific error for 'nome'
+            } else if (errorData.unidade_medida && Array.isArray(errorData.unidade_medida) && errorData.unidade_medida.length > 0) {
+                errorMessage = `Unidade de Medida: ${errorData.unidade_medida[0]}`; // Specific for 'unidade_medida'
+            } else if (errorData.detail) {
+                errorMessage = errorData.detail;
+            } else {
+                try {
+                    // Attempt to stringify if it's an object, otherwise use as is if string.
+                    errorMessage = typeof errorData === 'string' ? errorData : JSON.stringify(errorData);
+                } catch (e_stringify) {
+                    console.error("Error stringifying API error data:", e_stringify);
+                    errorMessage = "Erro complexo e não serializável retornado pela API.";
+                }
+            }
+        } else if (err.message) {
+            errorMessage = err.message;
+        }
+
+        console.error("Erro ao criar material (api.createMaterial call):", err);
+        setNewMaterialError(errorMessage);
+    } finally {
+        // CLEANUP: This will always run, regardless of success or failure in try/catch.
+        setIsSubmittingNewMaterial(false);
+    }
+};
 
     const handleInputKeyDown = (e) => {
         if (showNewMaterialModal) { // If modal is open, don't interfere with its inputs
             if (e.key === 'Escape') {
-                 handleCloseNewMaterialModal();
+                 handleCloseNewMaterialModal(false); // Pass false here
             }
             return;
         }
@@ -262,9 +292,10 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
                         <button
                             type="button"
                             onClick={handleShowNewMaterialModal}
-                            className="ml-2 text-sm text-primary-600 hover:text-primary-700 font-semibold focus:outline-none underline"
+                            className="ml-2 p-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+                            aria-label="Cadastrar Novo Material"
                         >
-                            + Cadastrar Novo Material
+                            <span className="text-lg font-bold">+</span>
                         </button>
                     </div>
                 )}
@@ -328,7 +359,7 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
                         <MaterialForm
                             initialData={{ nome: inputValue.trim() }}
                             onSubmit={handleNewMaterialSubmit}
-                            onCancel={handleCloseNewMaterialModal}
+                            onCancel={() => handleCloseNewMaterialModal(false)} // Pass false for explicit cancel
                             isLoading={isSubmittingNewMaterial}
                             isModalContext={true} // Indicate modal context if MaterialForm needs different styling/behavior
                         />
@@ -338,5 +369,17 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
         </div>
     );
 }));
+
+MaterialAutocomplete.displayName = 'MaterialAutocomplete';
+
+// PropTypes for MaterialAutocomplete
+MaterialAutocomplete.propTypes = {
+    value: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
+    onMaterialSelect: PropTypes.func.isRequired,
+    itemIndex: PropTypes.number.isRequired,
+    error: PropTypes.string,
+    parentOnKeyDown: PropTypes.func,
+    onBlurReport: PropTypes.func,
+};
 
 export default MaterialAutocomplete;

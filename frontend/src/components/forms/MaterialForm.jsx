@@ -14,11 +14,12 @@ const MaterialForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   });
   const [errors, setErrors] = useState({});
 
+  // Updated labels for buttons
   const unidadeMedidaOptions = [
-    { value: 'un', label: 'Unidade (un)' },
-    { value: 'm²', label: 'Metro Quadrado (m²)' },
-    { value: 'kg', label: 'Quilograma (kg)' },
-    { value: 'saco', label: 'Saco (saco)' },
+    { value: 'un', label: 'UN' },
+    { value: 'm²', label: 'M²' },
+    { value: 'kg', label: 'KG' },
+    { value: 'saco', label: 'SACO' },
   ];
 
   useEffect(() => {
@@ -57,14 +58,17 @@ const MaterialForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    // e.preventDefault(); // Not strictly necessary for type="button" but harmless if kept
+    if (e && typeof e.preventDefault === 'function') { // Keep if e might sometimes be an event
+        e.preventDefault();
+    }
     if (validateForm()) {
       onSubmit(formData);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6"> {/* Changed from form to div, removed onSubmit */}
       <div>
         <label htmlFor="nome" className="block mb-2 text-sm font-medium text-gray-900">Nome do Material</label>
         <input type="text" name="nome" id="nome" value={formData.nome} onChange={handleChange}
@@ -73,13 +77,28 @@ const MaterialForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       </div>
 
       <div>
-        <label htmlFor="unidade_medida" className="block mb-2 text-sm font-medium text-gray-900">Unidade de Medida</label>
-        <select name="unidade_medida" id="unidade_medida" value={formData.unidade_medida} onChange={handleChange}
-                className={`bg-gray-50 border ${errors.unidade_medida ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}>
-          {unidadeMedidaOptions.map(option => (
-            <option key={option.value} value={option.value}>{option.label}</option>
+        <label className="block mb-1 text-sm font-medium text-gray-900">Unidade de Medida</label>
+        <div className="flex space-x-2 mt-1">
+          {unidadeMedidaOptions.map(unit => (
+            <button
+              type="button"
+              key={unit.value}
+              onClick={() => {
+                setFormData(prev => ({ ...prev, unidade_medida: unit.value }));
+                if (errors.unidade_medida) { // Clear error if one was set
+                  setErrors(prev => ({ ...prev, unidade_medida: null }));
+                }
+              }}
+              className={`py-2 px-4 rounded-md border text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500
+                ${formData.unidade_medida === unit.value
+                  ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-700'
+                  : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 hover:border-gray-400'
+                }`}
+            >
+              {unit.label}
+            </button>
           ))}
-        </select>
+        </div>
         {errors.unidade_medida && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.unidade_medida}</p>}
       </div>
 
@@ -88,12 +107,12 @@ const MaterialForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 className="py-2 px-4 text-sm font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50">
           Cancelar
         </button>
-        <button type="submit" disabled={isLoading}
+        <button type="button" onClick={handleSubmit} disabled={isLoading} // Changed type to "button", added onClick
                 className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300">
           {isLoading ? 'Salvando...' : (initialData && initialData.id ? 'Atualizar Material' : 'Salvar Material')}
         </button>
       </div>
-    </form>
+    </div> // Changed from /form to /div
   );
 };
 

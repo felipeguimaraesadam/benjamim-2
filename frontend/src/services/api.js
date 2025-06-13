@@ -193,8 +193,8 @@ export const deleteEquipe = (id) => {
 };
 
 // --- Material Service Functions ---
-export const getMateriais = () => {
-  return apiClient.get('/materiais/');
+export const getMateriais = (params) => { // Accept params
+  return apiClient.get('/materiais/', { params }); // Pass params to axios config
 };
 
 export const getMaterialById = (id) => {

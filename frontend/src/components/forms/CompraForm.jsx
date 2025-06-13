@@ -70,7 +70,7 @@ const ItemRowInternal = ({
     materialRef, // input ref for MaterialAutocomplete's input
     quantityRef, // input ref for quantity
     unitPriceRef, // input ref for unitPrice
-    onItemFieldBlur // New prop for blur handling
+    onItemFieldBlur, // New prop for blur handling
 }) => {
     const getError = (fieldName) => errors && errors[`item_${index}_${fieldName}`];
 
@@ -303,14 +303,24 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     };
 
     const handleMaterialSelected = useCallback((index, selectedMaterialObj) => {
-        dispatchItems({
-            type: ITEM_ACTION_TYPES.SET_MATERIAL,
-            payload: { index, material: selectedMaterialObj }
-        });
-        setErrors(prevErr => ({...prevErr, [`item_${index}_material`]: null})); // setErrors is stable
-        // itemFieldRefs.current access for focus is a side effect, ref object itself is stable
-        setTimeout(() => itemFieldRefs.current[index]?.quantity?.current?.focus(), 0);
-    }, [dispatchItems]); // dispatchItems is stable
+        try {
+            dispatchItems({
+                type: ITEM_ACTION_TYPES.SET_MATERIAL,
+                payload: { index, material: selectedMaterialObj }
+            });
+            setErrors(prevErr => ({...prevErr, [`item_${index}_material`]: null}));
+            setTimeout(() => {
+                if (itemFieldRefs.current && itemFieldRefs.current[index] && itemFieldRefs.current[index].quantity && itemFieldRefs.current[index].quantity.current) {
+                    itemFieldRefs.current[index].quantity.current.focus();
+                } else {
+                    // console.warn(`Could not focus quantity for item index ${index}: Refs not available.`);
+                }
+            }, 0);
+        } catch (error) {
+            console.error("Error in handleMaterialSelected:", error);
+            // Optionally, set some error state here to inform the user if appropriate
+        }
+    }, [dispatchItems]);
 
     const handleItemChange = useCallback((index, fieldName, rawValue) => {
         dispatchItems({
@@ -387,7 +397,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => { /* ... (existing submit logic is largely kept) ... */
+    const handleSubmit = (e) => {
         e.preventDefault();
         if (validateForm()) {
             const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;

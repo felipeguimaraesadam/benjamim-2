@@ -51,12 +51,8 @@ const EquipeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
   const handleChange = (e) => {
     const { name, value, options, type } = e.target;
-    if (name === "membros" && type === "select-multiple") {
-      const selectedMembros = Array.from(options).filter(option => option.selected).map(option => option.value);
-      setFormData(prev => ({ ...prev, [name]: selectedMembros.map(id => parseInt(id, 10)) })); // Ensure IDs are numbers
-    } else {
-      setFormData(prev => ({ ...prev, [name]: name === "lider" ? (value ? parseInt(value, 10) : '') : value }));
-    }
+    // Removed select-multiple logic from here
+    setFormData(prev => ({ ...prev, [name]: name === "lider" ? (value ? parseInt(value, 10) : '') : value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
     }
@@ -69,6 +65,26 @@ const EquipeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     // if (!formData.lider) newErrors.lider = 'Líder da equipe é obrigatório.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleMemberChange = (event) => {
+    const funcionarioId = parseInt(event.target.value, 10);
+    const isChecked = event.target.checked;
+
+    setFormData(prevFormData => {
+      const currentMembros = prevFormData.membros || [];
+      let newMembros;
+      if (isChecked) {
+        if (!currentMembros.includes(funcionarioId)) {
+          newMembros = [...currentMembros, funcionarioId];
+        } else {
+          newMembros = currentMembros; // Already includes, no change
+        }
+      } else {
+        newMembros = currentMembros.filter(id => id !== funcionarioId);
+      }
+      return { ...prevFormData, membros: newMembros };
+    });
   };
 
   const handleSubmit = (e) => {
@@ -111,16 +127,29 @@ const EquipeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       </div>
 
       <div>
-        <label htmlFor="membros" className="block mb-2 text-sm font-medium text-gray-900">Membros da Equipe</label>
-        <select multiple name="membros" id="membros" value={formData.membros.map(String)} onChange={handleChange} // Value needs to be array of strings for multi-select
-                className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2 h-32">
-          {funcionarios.map(f => (
-            // Prevent leader from being listed as a member if a leader is selected and it's the same person (optional UX improvement)
-            // For now, allow anyone to be a member.
-            <option key={f.id} value={f.id}>{f.nome_completo}</option>
-          ))}
-        </select>
-        <p className="mt-1 text-xs text-gray-500">Segure Ctrl (ou Cmd) para selecionar múltiplos membros.</p>
+        <label className="block mb-2 text-sm font-medium text-gray-900">Membros da Equipe</label>
+        <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-md p-2 bg-gray-50">
+          {funcionarios.length > 0 ? (
+            funcionarios.map(f => (
+              <div key={f.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`funcionario-checkbox-${f.id}`}
+                  value={f.id}
+                  checked={formData.membros.includes(f.id)}
+                  onChange={handleMemberChange}
+                  className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                />
+                <label htmlFor={`funcionario-checkbox-${f.id}`} className="ml-2 text-sm font-medium text-gray-900">
+                  {f.nome_completo}
+                </label>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">Nenhum funcionário disponível para seleção.</p>
+          )}
+        </div>
+        {/* Removed the Ctrl/Cmd selection helper text as it's no longer applicable */}
       </div>
 
       <div className="flex items-center justify-end space-x-3 pt-2">
