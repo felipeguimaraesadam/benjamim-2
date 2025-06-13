@@ -79,8 +79,9 @@ Estas regras se aplicam a cada vez que você for acionada para trabalhar neste p
         - Verificado e garantido, através de revisão de código e walkthrough conceitual, que o `CompraForm.jsx` permanece aberto, retém todos os dados inseridos (cabeçalho e outros itens), e gerencia corretamente o foco após um novo material ser adicionado com sucesso pelo modal. O problema de fechamento prematuro ou perda de dados após a interação com o modal foi endereçado.
         - O sistema agora aguarda corretamente que o usuário salve explicitamente toda a ordem de compra, em vez de qualquer comportamento inesperado após o cadastro de um novo material. A lógica de callbacks e gestão de estado entre `MaterialAutocomplete`, `CompraForm`, e `ComprasPage` foi confirmada como robusta para este cenário.
 
-- [ ] **B10: Cadastro Rápido de Material Causa Perda de Dados**
-  - **Status:** Pendente ⏳
+- [x] **B10: Cadastro Rápido de Material Causa Perda de Dados**
+  - **Status:** Resolvido ✔️
+  - **Resolução:** Corrigido problema de formulário HTML aninhado no modal de cadastro rápido e robustecido tratamento de erro em `MaterialAutocomplete.jsx` para garantir que erros de criação de material sejam tratados localmente no modal, não afetando o formulário principal de Compra. Adicionalmente, a lógica de submissão em `MaterialForm.jsx` foi alterada para não usar um `<form>` HTML, evitando submissões aninhadas.
   - **Sintoma:** Ao preencher o formulário de compra, o usuário tenta adicionar um novo material através do modal de cadastro rápido. Se a submissão do novo material falhar (ex: erro de validação do backend, como nome duplicado), o modal e todo o formulário de compra são fechados. O usuário é redirecionado para a página de listagem de compras, perdendo todos os dados já inseridos na nota. O novo material também não é salvo.
   - **Causa Raiz Provável:** Um erro não tratado na promise da chamada `api.createMaterial` dentro do componente `MaterialAutocomplete.jsx` está se propagando para os componentes pais (`CompraForm`, `ComprasPage`), acionando um reset de estado geral ou uma exceção não capturada que interrompe a renderização. A lógica de `catch` pode não estar funcionando como esperado ou o erro pode estar sendo re-lançado implicitamente.
   - **Comportamento Esperado:**
