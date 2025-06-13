@@ -1,6 +1,6 @@
 import React from 'react';
 
-const AlocacoesTable = ({ alocacoes, obras, equipes, onEdit, onDelete, isLoading }) => {
+const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }) => {
   const getObraNome = (obraId) => {
     const obra = obras && obras.find(o => o.id === obraId);
     return obra ? obra.nome_obra : 'N/A';
@@ -17,11 +17,11 @@ const AlocacoesTable = ({ alocacoes, obras, equipes, onEdit, onDelete, isLoading
   };
 
   if (isLoading) {
-    return <div className="text-center py-4">Carregando alocações...</div>;
+    return <div className="text-center py-4">Carregando locações...</div>;
   }
 
-  if (!alocacoes || alocacoes.length === 0) {
-    return <div className="text-center py-4 text-gray-600">Nenhuma alocação encontrada.</div>;
+  if (!locacoes || locacoes.length === 0) {
+    return <div className="text-center py-4 text-gray-600">Nenhuma locação encontrada.</div>;
   }
 
   return (
@@ -30,34 +30,34 @@ const AlocacoesTable = ({ alocacoes, obras, equipes, onEdit, onDelete, isLoading
         <thead className="text-xs text-gray-700 uppercase bg-gray-100">
           <tr>
             <th scope="col" className="px-6 py-3">Obra</th>
-            <th scope="col" className="px-6 py-3">Alocação (Equipe/Serviço Externo)</th>
+            <th scope="col" className="px-6 py-3">Locação (Equipe/Serviço Externo)</th>
             <th scope="col" className="px-6 py-3">Data Início</th>
             <th scope="col" className="px-6 py-3">Data Fim</th>
             <th scope="col" className="px-6 py-3">Ações</th>
           </tr>
         </thead>
         <tbody>
-          {alocacoes.map((alocacao) => (
-            <tr key={alocacao.id} className="bg-white border-b hover:bg-gray-50">
-              <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{alocacao.obra_nome || getObraNome(alocacao.obra)}</td>
+          {locacoes.map((locacao) => (
+            <tr key={locacao.id} className="bg-white border-b hover:bg-gray-50">
+              <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{locacao.obra_nome || getObraNome(locacao.obra)}</td>
               <td className="px-6 py-4">
-                {alocacao.equipe_nome
-                  ? `Equipe: ${alocacao.equipe_nome}`
-                  : alocacao.servico_externo
-                    ? `Serviço Externo: ${alocacao.servico_externo}`
+                {locacao.equipe_nome
+                  ? `Equipe: ${locacao.equipe_nome}`
+                  : locacao.servico_externo
+                    ? `Serviço Externo: ${locacao.servico_externo}`
                     : 'N/A'}
               </td>
-              <td className="px-6 py-4">{formatDate(alocacao.data_alocacao_inicio)}</td>
-              <td className="px-6 py-4">{formatDate(alocacao.data_alocacao_fim)}</td>
+              <td className="px-6 py-4">{formatDate(locacao.data_locacao_inicio)}</td>
+              <td className="px-6 py-4">{formatDate(locacao.data_locacao_fim)}</td>
               <td className="px-6 py-4 flex space-x-2">
                 <button
-                  onClick={() => onEdit(alocacao)}
+                  onClick={() => onEdit(locacao)}
                   className="font-medium text-blue-600 hover:underline"
                 >
                   Editar
                 </button>
                 <button
-                  onClick={() => onDelete(alocacao.id)}
+                  onClick={() => onDelete(locacao.id)}
                   className="font-medium text-red-600 hover:underline"
                 >
                   Excluir
@@ -71,4 +71,4 @@ const AlocacoesTable = ({ alocacoes, obras, equipes, onEdit, onDelete, isLoading
   );
 };
 
-export default AlocacoesTable;
+export default LocacoesTable;

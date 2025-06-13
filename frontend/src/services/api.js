@@ -265,23 +265,23 @@ export const deleteDespesaExtra = (id) => {
 };
 
 // --- Alocacao Service Functions ---
-export const getAlocacoes = (params) => { // Added params argument
+export const getLocacoes = (params) => { // Added params argument
   return apiClient.get('/alocacoes/', { params }); // Pass params to axios
 };
 
-export const getAlocacaoById = (id) => {
+export const getLocacaoById = (id) => {
   return apiClient.get(`/alocacoes/${id}/`);
 };
 
-export const createAlocacao = (alocacaoData) => {
+export const createLocacao = (alocacaoData) => {
   return apiClient.post('/alocacoes/', alocacaoData);
 };
 
-export const updateAlocacao = (id, alocacaoData) => {
+export const updateLocacao = (id, alocacaoData) => {
   return apiClient.put(`/alocacoes/${id}/`, alocacaoData);
 };
 
-export const deleteAlocacao = (id) => {
+export const deleteLocacao = (id) => {
   return apiClient.delete(`/alocacoes/${id}/`);
 };
 

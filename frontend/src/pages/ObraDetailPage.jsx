@@ -9,7 +9,7 @@ import FinancialDashboard from '../components/obra/FinancialDashboard';
 import QuickActionsSection from '../components/obra/QuickActionsSection';
 import CurrentStockTable from '../components/obra/CurrentStockTable';
 import MaterialUsageHistory from '../components/obra/MaterialUsageHistory';
-import AllocatedTeamsList from '../components/obra/AllocatedTeamsList';
+import EquipesLocadasList from '../components/obra/EquipesLocadasList';
 import CostHistoryChart from '../components/obra/CostHistoryChart';
 import TopMaterialsChart from '../components/obra/TopMaterialsChart';
 import ObraPurchasesTabContent from '../components/obra/ObraPurchasesTabContent';
@@ -24,7 +24,7 @@ const ObraDetailPage = () => {
 
   // Instantiate useApiData for each data point
   const { data: obra, isLoading: isLoadingObra, error: errorObra, fetchData: fetchObraDetails, setData: setObra } = useApiData(api.getObraById, obraApiParams, null, true);
-  const { data: alocacoesEquipe, isLoading: isLoadingAlocacoes, error: errorAlocacoes, fetchData: fetchAlocacoes, setData: setAlocacoesEquipe } = useApiData(api.getAlocacoes, obraQueryObjParams, [], true);
+  const { data: locacoesEquipe, isLoading: isLoadingLocacoes, error: errorLocacoes, fetchData: fetchLocacoes, setData: setLocacoesEquipe } = useApiData(api.getLocacoes, obraQueryObjParams, [], true);
   const { data: historicoCustos, isLoading: isLoadingHistoricoCustos, error: errorHistoricoCustos, fetchData: fetchHistoricoCustos } = useApiData(api.getObraHistoricoCustos, obraApiParams, [], true);
 
   // custosCategoria is part of 'obra' object (obra.custos_por_categoria)
@@ -47,8 +47,8 @@ const ObraDetailPage = () => {
   // UI State
   const [showDistribuicaoModal, setShowDistribuicaoModal] = useState(false);
   const [activeTab, setActiveTab] = useState('equipes');
-  const [specificAlocacaoError, setSpecificAlocacaoError] = useState(null);
-  const [removingAlocacaoId, setRemovingAlocacaoId] = useState(null); // For loading state on remove button
+  const [specificLocacaoError, setSpecificLocacaoError] = useState(null);
+  const [removingLocacaoId, setRemovingLocacaoId] = useState(null); // For loading state on remove button
   const [operationStatus, setOperationStatus] = useState({ type: '', message: '' }); // For success/error messages
 
   // Effect to clear operation status messages
@@ -73,24 +73,24 @@ const ObraDetailPage = () => {
      setOperationStatus({ type: 'success', message: 'Uso de material registrado com sucesso!' });
   }, [fetchObraDetails, fetchTodasAsCompras, fetchUsosMaterial, handleCloseDistribuicaoModal, setOperationStatus]);
 
-  const handleRemoverAlocacao = useCallback(async (alocacaoId) => {
-     if (window.confirm('Tem certeza que deseja remover esta alocação de equipe?')) {
-         setRemovingAlocacaoId(alocacaoId);
-         setSpecificAlocacaoError(null);
+  const handleRemoverLocacao = useCallback(async (locacaoId) => {
+     if (window.confirm('Tem certeza que deseja remover esta locação de equipe?')) {
+         setRemovingLocacaoId(locacaoId);
+         setSpecificLocacaoError(null);
          try {
-             await api.deleteAlocacao(alocacaoId);
-             fetchAlocacoes(); // Re-fetch alocacoes
-             setOperationStatus({ type: 'success', message: 'Alocação removida com sucesso!' });
+             await api.deleteLocacao(locacaoId);
+             fetchLocacoes(); // Re-fetch alocacoes
+             setOperationStatus({ type: 'success', message: 'Locação removida com sucesso!' });
          } catch (err) {
-             const errMsg = err.response?.data?.detail || err.message || 'Falha ao remover alocação.';
-             setSpecificAlocacaoError(errMsg); // Keep for specific error if needed at button level
-             setOperationStatus({ type: 'error', message: `Falha ao remover alocação: ${errMsg}` });
-             console.error("Delete Alocacao Error:", errMsg);
+             const errMsg = err.response?.data?.detail || err.message || 'Falha ao remover locação.';
+             setSpecificLocacaoError(errMsg); // Keep for specific error if needed at button level
+             setOperationStatus({ type: 'error', message: `Falha ao remover locação: ${errMsg}` });
+             console.error("Delete Locação Error:", errMsg);
          } finally {
-             setRemovingAlocacaoId(null);
+             setRemovingLocacaoId(null);
          }
      }
-  }, [fetchAlocacoes, setOperationStatus]); // setSpecificAlocacaoError is stable
+  }, [fetchLocacoes, setOperationStatus]); // setSpecificLocacaoError is stable
 
   const formatDate = useCallback((dateString) => {
     if (!dateString) return 'N/A';
@@ -98,7 +98,7 @@ const ObraDetailPage = () => {
   }, []);
 
   // Overall page loading state (optional, can use individual isLoading states in JSX)
-  // const isPageLoading = isLoadingObra || isLoadingAlocacoes || ... ;
+  // const isPageLoading = isLoadingObra || isLoadingLocacoes || ... ;
 
   // Main loading/error display for the core 'obra' data
   if (isLoadingObra) return <div className="p-4 text-center"><p>Carregando detalhes da obra...</p></div>;
@@ -154,7 +154,7 @@ const ObraDetailPage = () => {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                {tabName === 'equipes' ? 'Equipes Alocadas' : tabName === 'compras' ? 'Todas as Compras' : 'Despesas Extras'}
+                {tabName === 'equipes' ? 'Equipes Locadas' : tabName === 'compras' ? 'Todas as Compras' : 'Despesas Extras'}
               </button>
             ))}
           </nav>
@@ -162,15 +162,15 @@ const ObraDetailPage = () => {
 
         <div className="py-6">
           {activeTab === 'equipes' && (
-            <AllocatedTeamsList
-              alocacoesEquipe={alocacoesEquipe}
+            <EquipesLocadasList
+              locacoesEquipe={locacoesEquipe}
               obraId={obra.id}
               obraNome={obra.nome_obra}
-              onRemoverAlocacao={handleRemoverAlocacao}
+              onRemoverLocacao={handleRemoverLocacao}
               formatDate={formatDate}
-              alocacaoError={errorAlocacoes || specificAlocacaoError}
-              isLoading={isLoadingAlocacoes}
-              removingAlocacaoId={removingAlocacaoId} // Pass loading state for specific button
+              locacaoError={errorLocacoes || specificLocacaoError}
+              isLoading={isLoadingLocacoes}
+              removingLocacaoId={removingLocacaoId} // Pass loading state for specific button
             />
           )}
           {activeTab === 'compras' && (

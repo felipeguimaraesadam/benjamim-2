@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
-const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoading }) => {
+const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
     obra: '',
     equipe: '',
-    data_alocacao_inicio: '',
-    data_alocacao_fim: '',
+    data_locacao_inicio: '',
+    data_locacao_fim: '',
     servico_externo: '', // Added servico_externo
   });
   const [formErrors, setFormErrors] = useState({}); // For frontend validation
@@ -16,8 +16,8 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
         obra: initialData.obra || '',
         equipe: initialData.equipe || '',
         servico_externo: initialData.servico_externo || '',
-        data_alocacao_inicio: initialData.data_alocacao_inicio ? new Date(initialData.data_alocacao_inicio).toISOString().split('T')[0] : '',
-        data_alocacao_fim: initialData.data_alocacao_fim ? new Date(initialData.data_alocacao_fim).toISOString().split('T')[0] : '',
+        data_locacao_inicio: initialData.data_locacao_inicio ? new Date(initialData.data_locacao_inicio).toISOString().split('T')[0] : '',
+        data_locacao_fim: initialData.data_locacao_fim ? new Date(initialData.data_locacao_fim).toISOString().split('T')[0] : '',
       });
     } else {
       // Default for new form
@@ -25,8 +25,8 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
         obra: obras && obras.length > 0 ? obras[0].id : '',
         equipe: '', // Default to empty, user must choose or use servico_externo
         servico_externo: '',
-        data_alocacao_inicio: new Date().toISOString().split('T')[0],
-        data_alocacao_fim: '',
+        data_locacao_inicio: new Date().toISOString().split('T')[0],
+        data_locacao_fim: '',
       });
     }
     setFormErrors({}); // Clear errors when initialData changes
@@ -51,7 +51,7 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
   const validateFrontendForm = () => {
     const newErrors = {};
     if (!formData.obra) newErrors.obra = "Obra é obrigatória.";
-    if (!formData.data_alocacao_inicio) newErrors.data_alocacao_inicio = "Data de início é obrigatória.";
+    if (!formData.data_locacao_inicio) newErrors.data_locacao_inicio = "Data de início é obrigatória.";
 
     const equipeSelecionada = formData.equipe && formData.equipe !== '';
     const servicoExternoPreenchido = formData.servico_externo && formData.servico_externo.trim() !== '';
@@ -62,8 +62,8 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
         newErrors.general = "Selecione uma equipe ou informe um serviço externo.";
     }
     // Basic date validation
-    if (formData.data_alocacao_inicio && formData.data_alocacao_fim && formData.data_alocacao_inicio > formData.data_alocacao_fim) {
-        newErrors.data_alocacao_fim = 'Data de fim não pode ser anterior à data de início.';
+    if (formData.data_locacao_inicio && formData.data_locacao_fim && formData.data_locacao_inicio > formData.data_locacao_fim) {
+        newErrors.data_locacao_fim = 'Data de fim não pode ser anterior à data de início.';
     }
 
     setFormErrors(newErrors);
@@ -78,8 +78,8 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
       obra: parseInt(formData.obra, 10),
       equipe: formData.equipe ? parseInt(formData.equipe, 10) : null,
       servico_externo: formData.servico_externo.trim() || null,
-      data_alocacao_inicio: formData.data_alocacao_inicio,
-      data_alocacao_fim: formData.data_alocacao_fim || null,
+      data_locacao_inicio: formData.data_locacao_inicio,
+      data_locacao_fim: formData.data_locacao_fim || null,
     };
     onSubmit(dataToSubmit);
   };
@@ -141,24 +141,24 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="data_alocacao_inicio" className="block text-sm font-medium text-gray-900">Data Início Alocação <span className="text-red-500">*</span></label>
+          <label htmlFor="data_locacao_inicio" className="block text-sm font-medium text-gray-900">Data Início Locação <span className="text-red-500">*</span></label>
           <input
             type="date"
-            name="data_alocacao_inicio"
-            id="data_alocacao_inicio"
-            value={formData.data_alocacao_inicio}
+            name="data_locacao_inicio"
+            id="data_locacao_inicio"
+            value={formData.data_locacao_inicio}
             onChange={handleChange}
             required
             className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
           />
         </div>
         <div>
-          <label htmlFor="data_alocacao_fim" className="block text-sm font-medium text-gray-900">Data Fim Alocação (Opcional)</label>
+          <label htmlFor="data_locacao_fim" className="block text-sm font-medium text-gray-900">Data Fim Locação (Opcional)</label>
           <input
             type="date"
-            name="data_alocacao_fim"
-            id="data_alocacao_fim"
-            value={formData.data_alocacao_fim}
+            name="data_locacao_fim"
+            id="data_locacao_fim"
+            value={formData.data_locacao_fim}
             onChange={handleChange}
             className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
           />
@@ -179,11 +179,11 @@ const AlocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadi
           disabled={isLoading}
           className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300"
         >
-          {isLoading ? 'Salvando...' : (initialData ? 'Atualizar Alocação' : 'Adicionar Alocação')}
+          {isLoading ? 'Salvando...' : (initialData ? 'Atualizar Locação' : 'Adicionar Locação')}
         </button>
       </div>
     </form>
   );
 };
 
-export default AlocacaoForm;
+export default LocacaoForm;
