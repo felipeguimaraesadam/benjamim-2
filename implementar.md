@@ -1,7 +1,8 @@
 Plano de Implementação - SGO
 Este documento organiza as próximas tarefas para o desenvolvimento do sistema, priorizadas por criticidade e impacto.
 🎯 1. Crítico / Bug Urgente
-[ ] (BUG) Corrigir Edição de Obra: O formulário de edição de obra não está carregando os dados existentes, abrindo como um cadastro novo. Isso impede a atualização de informações cruciais.
+[x] (BUG) Corrigir Edição de Obra: O formulário de edição de obra não está carregando os dados existentes, abrindo como um cadastro novo. Isso impede a atualização de informações cruciais.
+  - Corrigido em 29/07/2024
 ⚙️ 2. Mudanças Estruturais e Regras de Negócio
 [ ] (CORE) Reformulação do Módulo de Locação: A funcionalidade de "Alocação" será renomeada para "Locação" e reestruturada.
 [ ] Nomeclatura: Alterar todas as referências de "Alocação" para "Locação" no frontend e, se necessário, no backend.

@@ -24,6 +24,9 @@
 - Replaced previous general startup scripts with a Windows-specific two-script system (`config.bat` for setup, `start.bat` for execution).
 - `README.md` updated to focus entirely on the new Windows-specific `config.bat` and `start.bat` workflow.
 
+### Fixed
+- Corrigido o formulário de edição de obra que não carregava os dados existentes ao ser aberto para um registro existente.
+
 ### Removed
 - Link "Documentos" removido da navegação principal (`Navegacao.jsx`), pois a funcionalidade não será implementada.
 - Deleted `start.sh` (previous Linux/macOS specific startup script).
