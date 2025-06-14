@@ -225,10 +225,9 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
                     f"até {first_conflict.data_locacao_fim.strftime('%d/%m/%Y') if first_conflict.data_locacao_fim else 'data indefinida'}."
                     " Verifique as datas."
                 )
-                raise serializers.ValidationError({
-                    'funcionario_locado': msg, # Field specific error
-                    # General error can also be raised using non_field_errors or detail directly
-                    # 'non_field_errors': [msg],
+
+                conflict_data_for_api = {
+                    'funcionario_locado': msg,
                     'conflict_details': {
                         'obra_id': first_conflict.obra.id if first_conflict.obra else None,
                         'obra_nome': obra_conflito,
@@ -236,7 +235,8 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
                         'data_inicio': first_conflict.data_locacao_inicio.isoformat(),
                         'data_fim': first_conflict.data_locacao_fim.isoformat() if first_conflict.data_locacao_fim else None
                     }
-                })
+                }
+                raise serializers.ValidationError(conflict_data_for_api)
         return data
 
 
