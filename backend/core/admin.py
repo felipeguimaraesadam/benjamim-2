@@ -4,7 +4,7 @@ from .models import (
     Obra,
     Funcionario,
     Equipe,
-    Alocacao_Obras_Equipes,
+    Locacao_Obras_Equipes,
     Material,
     Compra,
     Despesa_Extra,
@@ -15,7 +15,7 @@ admin.site.register(Usuario)
 admin.site.register(Obra)
 admin.site.register(Funcionario)
 admin.site.register(Equipe)
-admin.site.register(Alocacao_Obras_Equipes)
+admin.site.register(Locacao_Obras_Equipes)
 admin.site.register(Material)
 admin.site.register(Compra)
 admin.site.register(Despesa_Extra)

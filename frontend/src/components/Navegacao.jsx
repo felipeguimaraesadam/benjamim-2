@@ -107,7 +107,7 @@ const Navegacao = () => {
           <NavLink to="/despesas" icon={<DespesasIcon />} onClick={closeMobileMenu}>Despesas</NavLink>
 
           <NavGroupHeader title="Operacional" />
-          <NavLink to="/alocacoes" icon={<AlocacoesIcon />} onClick={closeMobileMenu}>Alocações</NavLink>
+          <NavLink to="/locacoes" icon={<AlocacoesIcon />} onClick={closeMobileMenu}>Locações</NavLink>
           <NavLink to="/ocorrencias" icon={<OcorrenciasIcon />} onClick={closeMobileMenu}>Ocorrências</NavLink>
 
           <NavLink to="/relatorios" icon={<RelatoriosIcon />} onClick={closeMobileMenu}>Relatórios</NavLink>

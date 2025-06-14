@@ -1,11 +1,15 @@
 Plano de Implementação - SGO
 Este documento organiza as próximas tarefas para o desenvolvimento do sistema, priorizadas por criticidade e impacto.
 🎯 1. Crítico / Bug Urgente
-[ ] (BUG) Corrigir Edição de Obra: O formulário de edição de obra não está carregando os dados existentes, abrindo como um cadastro novo. Isso impede a atualização de informações cruciais.
+[x] (BUG) Corrigir Edição de Obra: O formulário de edição de obra não está carregando os dados existentes, abrindo como um cadastro novo. Isso impede a atualização de informações cruciais.
+  - Corrigido em 29/07/2024
 ⚙️ 2. Mudanças Estruturais e Regras de Negócio
 [ ] (CORE) Reformulação do Módulo de Locação: A funcionalidade de "Alocação" será renomeada para "Locação" e reestruturada.
-[ ] Nomeclatura: Alterar todas as referências de "Alocação" para "Locação" no frontend e, se necessário, no backend.
-[ ] Locação Individual: Permitir a locação de funcionários individuais, além de equipes, diretamente na tela de locação.
+[x] Nomeclatura: Alterar todas as referências de "Alocação" para "Locação" no frontend e, se necessário, no backend.
+  - [x] Frontend: Terminologia atualizada para "Locação" (Concluído em 29/07/2024).
+  - [x] Backend: Código atualizado para "Locação" (Concluído em 29/07/2024). **Nota:** Requer execução manual de `python manage.py migrate` devido a limitações do ambiente de desenvolvimento.
+[x] Locação Individual: Permitir a locação de funcionários individuais, além de equipes, diretamente na tela de locação.(feita a migração pelo arquivo .bat novo)
+  - Concluído em 29/07/2024. **Nota:** Requer execução manual de `python manage.py migrate` para aplicar as migrações 0007 e 0008 devido a limitações do ambiente de desenvolvimento.
 [ ] Definição de Pagamento: Ao locar um funcionário ou equipe, será obrigatório definir o tipo de pagamento (diária, por metro, empreitada), o valor e, opcionalmente, uma data futura para o pagamento.
 [ ] Validação de Duplicidade: O sistema deve verificar se um funcionário já está locado em outra obra na mesma data.
 [ ] Exibir um alerta informando qual a locação e obra em conflito.
@@ -34,3 +38,5 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [ ] (MELHORIA) Alerta de Estoque Baixo: Criar um sistema de notificação ou alerta visual quando o estoque de um material atingir um nível mínimo pré-definido.
 [ ] (UI) Paginação: Garantir que todas as tabelas com grande volume de dados tenham um sistema de paginação funcional.
 [ ] (UI/UX) Feedback Visual: Continuar aprimorando o feedback para o usuário com toasts para sucesso/erro e spinners durante o carregamento de dados.
+[x] (UTILITÁRIO) Criar script `run_migrations.bat` para facilitar a aplicação de migrações do Django.
+  - Concluído em 29/07/2024.

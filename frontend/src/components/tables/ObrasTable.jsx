@@ -76,7 +76,7 @@ const ObrasTable = ({ obras, onEdit, onDelete }) => { // Removed onView from pro
                   <EyeIcon />
                 </button>
                 <button
-                  onClick={() => onEdit(obra.id)}
+                  onClick={() => onEdit(obra)}
                   className="text-yellow-500 hover:text-yellow-700 transition-colors p-1"
                   title="Editar"
                 >

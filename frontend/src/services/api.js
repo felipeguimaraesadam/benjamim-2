@@ -264,25 +264,25 @@ export const deleteDespesaExtra = (id) => {
   return apiClient.delete(`/despesas/${id}/`);
 };
 
-// --- Alocacao Service Functions ---
-export const getAlocacoes = (params) => { // Added params argument
-  return apiClient.get('/alocacoes/', { params }); // Pass params to axios
+// --- Locacao Service Functions ---
+export const getLocacoes = (params) => { // Added params argument
+  return apiClient.get('/locacoes/', { params }); // Pass params to axios
 };
 
-export const getAlocacaoById = (id) => {
-  return apiClient.get(`/alocacoes/${id}/`);
+export const getLocacaoById = (id) => {
+  return apiClient.get(`/locacoes/${id}/`);
 };
 
-export const createAlocacao = (alocacaoData) => {
-  return apiClient.post('/alocacoes/', alocacaoData);
+export const createLocacao = (alocacaoData) => {
+  return apiClient.post('/locacoes/', alocacaoData);
 };
 
-export const updateAlocacao = (id, alocacaoData) => {
-  return apiClient.put(`/alocacoes/${id}/`, alocacaoData);
+export const updateLocacao = (id, alocacaoData) => {
+  return apiClient.put(`/locacoes/${id}/`, alocacaoData);
 };
 
-export const deleteAlocacao = (id) => {
-  return apiClient.delete(`/alocacoes/${id}/`);
+export const deleteLocacao = (id) => {
+  return apiClient.delete(`/locacoes/${id}/`);
 };
 
 // --- Dashboard Service Functions ---

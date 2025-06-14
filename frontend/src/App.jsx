@@ -19,7 +19,7 @@ import EquipesPage from './pages/EquipesPage';
 import MateriaisPage from './pages/MateriaisPage';
 import RelatoriosPage from './pages/RelatoriosPage';
 import DespesasExtrasPage from './pages/DespesasExtrasPage';
-import AlocacoesPage from './pages/AlocacoesPage';
+import LocacoesPage from './pages/LocacoesPage';
 import ComprasPage from './pages/ComprasPage'; // Import ComprasPage
 import UsuariosPage from './pages/UsuariosPage'; // Import UsuariosPage
 import ObraDetailPage from './pages/ObraDetailPage'; // Import ObraDetailPage
@@ -66,8 +66,8 @@ const router = createBrowserRouter([
             element: <DespesasExtrasPage />,
           },
           {
-            path: 'alocacoes',
-            element: <AlocacoesPage />,
+            path: 'locacoes',
+            element: <LocacoesPage />,
           },
           {
             path: 'compras',

@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     UsuarioViewSet, ObraViewSet, FuncionarioViewSet, EquipeViewSet,
-    AlocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
+    LocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
     DespesaExtraViewSet, OcorrenciaFuncionarioViewSet, UsoMaterialViewSet,
     RelatorioFinanceiroObraView, RelatorioGeralComprasView, DashboardStatsView,
     RelatorioDesempenhoEquipeView, RelatorioCustoGeralView, ObraHistoricoCustosView,
@@ -14,7 +14,7 @@ router.register(r'usuarios', UsuarioViewSet)
 router.register(r'obras', ObraViewSet)
 router.register(r'funcionarios', FuncionarioViewSet)
 router.register(r'equipes', EquipeViewSet)
-router.register(r'alocacoes', AlocacaoObrasEquipesViewSet)
+router.register(r'locacoes', LocacaoObrasEquipesViewSet)
 router.register(r'materiais', MaterialViewSet)
 router.register(r'compras', CompraViewSet, basename='compra')
 router.register(r'despesas', DespesaExtraViewSet, basename='despesaextra')
