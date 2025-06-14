@@ -234,7 +234,7 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
                         'obra_nome': obra_conflito,
                         'locacao_id': first_conflict.id,
                         'data_inicio': first_conflict.data_locacao_inicio.isoformat(),
-                        'data_fim': first_conflict.data_locacao_fim.isoformat() if first_conflict.data_locacao_fim else None,
+                        'data_fim': first_conflict.data_locacao_fim.isoformat() if first_conflict.data_locacao_fim else None
                     }
                 })
         return data
