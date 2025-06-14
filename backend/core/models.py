@@ -94,6 +94,17 @@ class Locacao_Obras_Equipes(models.Model):
     valor_pagamento = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     data_pagamento = models.DateField(null=True, blank=True)
 
+    STATUS_LOCACAO_CHOICES = [
+        ('ativa', 'Ativa'),
+        ('cancelada', 'Cancelada'),
+    ]
+    status_locacao = models.CharField(
+        max_length=20,
+        choices=STATUS_LOCACAO_CHOICES,
+        default='ativa',
+        verbose_name='Status da Locação'
+    )
+
     def __str__(self):
         if self.equipe:
             return f"{self.obra.nome_obra} - Equipe: {self.equipe.nome_equipe}"

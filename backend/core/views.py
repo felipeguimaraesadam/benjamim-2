@@ -1,11 +1,12 @@
 from rest_framework import viewsets, permissions, status, filters # Added filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Q, Sum, F
+from django.db.models import Q, Sum, F, Case, When, Value, IntegerField # Added Case, When, Value, IntegerField
 from decimal import Decimal
-from datetime import datetime, date, timedelta # Added date, timedelta
-from django.db import transaction # Added transaction
-from rest_framework.decorators import action # Added action
+from datetime import datetime, date, timedelta
+from django.db import transaction
+from rest_framework.decorators import action
+from django.utils import timezone # Added timezone
 
 from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra
 from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer
@@ -51,20 +52,32 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows alocacoes to be viewed or edited.
     """
-    queryset = Locacao_Obras_Equipes.objects.all()
+    # queryset = Locacao_Obras_Equipes.objects.all() # Removed class-level queryset
     serializer_class = LocacaoObrasEquipesSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Locacao_Obras_Equipes.objects.all().order_by('-data_locacao_inicio') # Default ordering
+        today = timezone.now().date()
+
+        queryset = Locacao_Obras_Equipes.objects.annotate(
+            status_order_group=Case(
+                When(status_locacao='cancelada', then=Value(3)),
+                When(Q(status_locacao='ativa') &
+                     Q(data_locacao_inicio__lte=today) &
+                     (Q(data_locacao_fim__gte=today) | Q(data_locacao_fim__isnull=True)),
+                     then=Value(0)),
+                When(Q(status_locacao='ativa') & Q(data_locacao_inicio__gt=today),
+                     then=Value(1)),
+                When(Q(status_locacao='ativa') & Q(data_locacao_fim__lt=today),
+                     then=Value(2)),
+                default=Value(2),
+                output_field=IntegerField()
+            )
+        ).order_by('status_order_group', 'data_locacao_inicio')
+
         obra_id = self.request.query_params.get('obra_id')
         if obra_id is not None:
             queryset = queryset.filter(obra_id=obra_id)
-
-        # You could add more filters here, e.g., by equipe_id, date ranges, etc.
-        # equipe_id = self.request.query_params.get('equipe_id')
-        # if equipe_id is not None:
-        #     queryset = queryset.filter(equipe_id=equipe_id)
 
         return queryset
 
@@ -122,6 +135,7 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
                     # Simplified: remove cost from old loc as per "removendo o custo da obra anterior"
                     old_loc.valor_pagamento = Decimal('0.00')
 
+                old_loc.status_locacao = 'cancelada' # <<< ADD THIS LINE
                 old_loc.save()
 
                 # 4. Now, validate and save the new locação.
@@ -138,6 +152,9 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
             # logger.error(f"Erro na transferência de funcionário: {str(e)}")
             return Response({"error": f"Erro interno no servidor: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    # Note: The get_queryset method for LocacaoObrasEquipesViewSet is below the custom action.
+    # This is fine, but for consistency, custom actions are often placed after standard methods.
+    # No change needed for this subtask, just an observation.
 
 class MaterialViewSet(viewsets.ModelViewSet):
     """

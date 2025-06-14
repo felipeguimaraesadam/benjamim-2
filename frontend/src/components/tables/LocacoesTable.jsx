@@ -34,6 +34,40 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
     return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
+  const getLocacaoStatusInfo = (locacao) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const parseDate = (dateString) => {
+      if (!dateString) return null;
+      const parts = dateString.split('-');
+      // Ensure parts are valid before creating date
+      if (parts.length === 3) {
+        return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      }
+      return null;
+    };
+
+    const startDate = parseDate(locacao.data_locacao_inicio);
+    const endDate = parseDate(locacao.data_locacao_fim);
+
+    if (locacao.status_locacao === 'cancelada') {
+      return { text: 'Cancelada', colorClass: 'bg-red-100', textColorClass: 'text-red-700' };
+    }
+
+    if (endDate && endDate < today) {
+      return { text: 'Passada', colorClass: 'bg-yellow-100', textColorClass: 'text-yellow-700' };
+    }
+    if (startDate && startDate > today) {
+      return { text: 'Futura', colorClass: 'bg-blue-100', textColorClass: 'text-blue-700' };
+    }
+    if (startDate && startDate <= today && (!endDate || endDate >= today)) {
+      return { text: 'Hoje', colorClass: 'bg-green-100', textColorClass: 'text-green-700' };
+    }
+
+    return { text: 'Ativa', colorClass: 'bg-gray-100', textColorClass: 'text-gray-700' };
+  };
+
   if (isLoading) {
     return <div className="text-center py-4">Carregando locações...</div>;
   }
@@ -51,14 +85,17 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
             <th scope="col" className="px-6 py-3">Recurso Locado</th>
             <th scope="col" className="px-6 py-3">Data Início</th>
             <th scope="col" className="px-6 py-3">Data Fim</th>
-            <th scope="col" className="px-6 py-3">Tipo Pag.</th> {/* New */}
-            <th scope="col" className="px-6 py-3">Valor Pag.</th> {/* New */}
-            <th scope="col" className="px-6 py-3">Data Pag.</th> {/* New */}
+            <th scope="col" className="px-6 py-3">Tipo Pag.</th>
+            <th scope="col" className="px-6 py-3">Valor Pag.</th>
+            <th scope="col" className="px-6 py-3">Data Pag.</th>
+            <th scope="col" className="px-6 py-3">Status</th> {/* New Header */}
             <th scope="col" className="px-6 py-3">Ações</th>
           </tr>
         </thead>
         <tbody>
-          {locacoes.map((locacao) => (
+          {locacoes.map((locacao) => {
+            const statusInfo = getLocacaoStatusInfo(locacao);
+            return (
             <tr key={locacao.id} className="bg-white border-b hover:bg-gray-50">
               <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{locacao.obra_nome || getObraNome(locacao.obra)}</td>
               <td className="px-6 py-4">
@@ -69,9 +106,14 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
               </td>
               <td className="px-6 py-4">{formatDate(locacao.data_locacao_inicio)}</td>
               <td className="px-6 py-4">{formatDate(locacao.data_locacao_fim)}</td>
-              <td className="px-6 py-4">{formatTipoPagamento(locacao.tipo_pagamento)}</td> {/* New */}
-              <td className="px-6 py-4">{formatCurrency(locacao.valor_pagamento)}</td> {/* New */}
-              <td className="px-6 py-4">{formatDate(locacao.data_pagamento)}</td> {/* New */}
+              <td className="px-6 py-4">{formatTipoPagamento(locacao.tipo_pagamento)}</td>
+              <td className="px-6 py-4">{formatCurrency(locacao.valor_pagamento)}</td>
+              <td className="px-6 py-4">{formatDate(locacao.data_pagamento)}</td>
+              <td className="px-6 py-4">
+                <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${statusInfo.colorClass} ${statusInfo.textColorClass}`}>
+                  {statusInfo.text}
+                </span>
+              </td>
               <td className="px-6 py-4 flex space-x-2">
                 <button
                   onClick={() => onEdit(locacao)}

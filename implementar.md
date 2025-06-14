@@ -33,6 +33,7 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [ ] O relatório deve respeitar as datas de pagamento futuras, não incluindo na cobrança da semana atual o que foi agendado para depois.
 [ ] Antes de gerar, o sistema deve alertar sobre os dias sem locações registradas em cada obra. O usuário pode confirmar e gerar o relatório mesmo assim.
 🚀 4. Melhorias Contínuas e Backlog
+[x] (UI/UX Locação) Adicionar status visual (Hoje, Futura, Passada, Cancelada) com cores e ordenação customizada à lista de locações para melhor clareza. (Concluído em 14/06/2025)
 [ ] (MELHORIA) Filtros na Lista de Compras: Adicionar filtros por intervalo de datas e por fornecedor.
 [ ] (UI) Detalhes da Locação: Adicionar um ícone em cada registro de locação na tabela para abrir um modal com todos os detalhes (obra, funcionário/equipe, tipo de pagamento, valor, data, etc.).
 [ ] (MELHORIA) Alerta de Estoque Baixo: Criar um sistema de notificação ou alerta visual quando o estoque de um material atingir um nível mínimo pré-definido.

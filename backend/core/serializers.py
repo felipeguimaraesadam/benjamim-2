@@ -131,7 +131,8 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Locacao_Obras_Equipes
-        fields = '__all__'
+        fields = '__all__' # Includes status_locacao
+        read_only_fields = ('status_locacao',) # Add status_locacao here
         # If you want these extra fields to always appear, ensure they are listed or __all__ is used.
         # For more complex scenarios, consider depth or explicit field listing.
 

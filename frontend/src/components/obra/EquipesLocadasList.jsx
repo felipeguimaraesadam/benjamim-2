@@ -18,6 +18,39 @@ const formatCurrency = (value) => {
   return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
+const getLocacaoStatusInfo = (locacao) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const parseDate = (dateString) => {
+    if (!dateString) return null;
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+    return null;
+  };
+
+  const startDate = parseDate(locacao.data_locacao_inicio);
+  const endDate = parseDate(locacao.data_locacao_fim);
+
+  if (locacao.status_locacao === 'cancelada') {
+    return { text: 'Cancelada', colorClass: 'bg-red-100', textColorClass: 'text-red-700' };
+  }
+
+  if (endDate && endDate < today) {
+    return { text: 'Passada', colorClass: 'bg-yellow-100', textColorClass: 'text-yellow-700' };
+  }
+  if (startDate && startDate > today) {
+    return { text: 'Futura', colorClass: 'bg-blue-100', textColorClass: 'text-blue-700' };
+  }
+  if (startDate && startDate <= today && (!endDate || endDate >= today)) {
+    return { text: 'Hoje', colorClass: 'bg-green-100', textColorClass: 'text-green-700' };
+  }
+
+  return { text: 'Ativa', colorClass: 'bg-gray-100', textColorClass: 'text-gray-700' };
+};
+
 const EquipesLocadasList = ({ locacoesEquipe, obraId, obraNome, onRemoverLocacao, formatDate, locacaoError, removingLocacaoId, isLoading }) => {
   // Added removingLocacaoId and isLoading to props
   return (
@@ -67,8 +100,14 @@ const EquipesLocadasList = ({ locacoesEquipe, obraId, obraNome, onRemoverLocacao
                   <p><span className="font-medium">Data Pag.:</span> {formatDate(loc.data_pagamento)}</p>
                 )}
               </div>
+              <div className="mt-1"> {/* New div for status, added margin-top */}
+                <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${statusInfo.colorClass} ${statusInfo.textColorClass}`}>
+                  {statusInfo.text}
+                </span>
+              </div>
             </li>
-          ))}
+          );
+        })}
         </ul>
       ) : (<p className="text-gray-500 text-sm">Nenhuma equipe ou serviço externo locado para esta obra.</p>)}
     </div>
