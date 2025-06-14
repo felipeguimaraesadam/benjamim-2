@@ -5,6 +5,7 @@
 ### Added
 - **Definição de Pagamento na Locação**: Ao locar um funcionário, equipe ou serviço externo, agora é obrigatório definir o tipo de pagamento (diária, por metro, empreitada), o valor do pagamento. Opcionalmente, uma data futura para o pagamento pode ser especificada. Isso se aplica tanto ao backend (modelo e API) quanto ao frontend (formulário e tabela de locações).
 - O campo 'Data Pagamento' no formulário de nova locação agora é preenchido automaticamente com a data atual.
+- Validação de Duplicidade de Locação: Implementada validação no backend para impedir que um funcionário seja locado em períodos conflitantes. O frontend agora exibe um alerta detalhado informando a obra e o período do conflito.
 
 ### Fixed
 - Corrigido nome da obra na listagem de obras (exibia ID em vez do nome).

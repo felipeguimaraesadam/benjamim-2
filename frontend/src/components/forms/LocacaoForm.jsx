@@ -113,8 +113,9 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormErrors({}); // Clear previous errors on new submit attempt
     if (!validateFrontendForm()) return;
 
     const dataToSubmit = {
@@ -124,9 +125,9 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
       equipe: null,
       funcionario_locado: null,
       servico_externo: '',
-      tipo_pagamento: formData.tipo_pagamento, // New
-      valor_pagamento: parseFloat(formData.valor_pagamento), // New
-      data_pagamento: formData.data_pagamento || null, // New
+      tipo_pagamento: formData.tipo_pagamento,
+      valor_pagamento: parseFloat(formData.valor_pagamento),
+      data_pagamento: formData.data_pagamento || null,
     };
 
     if (locacaoType === 'equipe') {
@@ -136,7 +137,33 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
     } else if (locacaoType === 'servico_externo') {
       dataToSubmit.servico_externo = formData.servico_externo.trim() || null;
     }
-    onSubmit(dataToSubmit);
+
+    try {
+      await onSubmit(dataToSubmit); // This 'onSubmit' is 'handleApiSubmit' from LocacoesPage
+      // If successful, LocacoesPage handles modal closing & list refresh.
+      // Form will likely unmount or re-initialize, so explicit error clearing might not be needed here.
+    } catch (err) {
+      const backendErrors = err.response?.data;
+      if (backendErrors && typeof backendErrors === 'object') {
+        const newFormErrors = {};
+        for (const key in backendErrors) {
+          if (key === 'conflict_details') { // conflict_details is not a field error itself
+            // The message for 'funcionario_locado' should already contain the user-friendly text.
+            // conflict_details can be stored in a separate state if specific UI handling is needed later.
+            // For example: setConflictDetails(backendErrors.conflict_details);
+            continue;
+          }
+          newFormErrors[key] = Array.isArray(backendErrors[key])
+                             ? backendErrors[key].join('; ')
+                             : (typeof backendErrors[key] === 'string' ? backendErrors[key] : JSON.stringify(backendErrors[key]));
+        }
+        setFormErrors(newFormErrors);
+      } else if (err.message) {
+        setFormErrors({ general: err.message });
+      } else {
+        setFormErrors({ general: 'Ocorreu um erro desconhecido ao submeter o formulário.' });
+      }
+    }
   };
 
   return (

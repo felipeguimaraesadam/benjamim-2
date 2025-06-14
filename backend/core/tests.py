@@ -1,7 +1,10 @@
 from django.test import TestCase
 from decimal import Decimal
-from .models import Obra, Compra, Material, ItemCompra, Usuario # Added Usuario for potential future use or if models require it implicitly
-from django.utils import timezone # For data_compra
+from .models import Obra, Compra, Material, ItemCompra, Usuario, Funcionario, Locacao_Obras_Equipes # Ensure Funcionario and Locacao_Obras_Equipes are here
+from django.utils import timezone
+from datetime import date, timedelta # Added for LocacaoConflictValidationTests
+from rest_framework.exceptions import ValidationError # Ensure this is available for Locacao tests
+# LocacaoObrasEquipesSerializer and ObraSerializer are imported lower down, which is fine.
 
 class ItemCompraModelTest(TestCase):
     @classmethod
@@ -847,3 +850,131 @@ class ObraSerializerTests(TestCase):
         # For this setup, they would be 0.00 unless created in setUp.
         self.assertEqual(custos_categoria.get('materiais', Decimal('0.00')), Decimal('0.00'))
         self.assertEqual(custos_categoria.get('despesas_extras', Decimal('0.00')), Decimal('0.00'))
+
+
+class LocacaoConflictValidationTests(TestCase):
+    def setUp(self):
+        self.obra1 = Obra.objects.create(nome_obra="Obra Alpha", status="Planejada", cidade="A", endereco_completo="Addr A")
+        self.obra2 = Obra.objects.create(nome_obra="Obra Beta", status="Planejada", cidade="B", endereco_completo="Addr B")
+        self.funcionario = Funcionario.objects.create(nome_completo="João Silva", cargo="Pedreiro", salario=Decimal("2000.00"), data_contratacao=date(2023, 1, 1))
+
+        # Existing locacao for João Silva
+        self.existing_locacao = Locacao_Obras_Equipes.objects.create(
+            obra=self.obra1,
+            funcionario_locado=self.funcionario,
+            data_locacao_inicio=date(2024, 1, 10),
+            data_locacao_fim=date(2024, 1, 20),
+            tipo_pagamento='diaria',
+            valor_pagamento=Decimal('100.00')
+        )
+
+    def _get_base_data(self, start_date, end_date=None):
+        # Helper to get common data for serializer
+        return {
+            'obra': self.obra2.id,
+            'funcionario_locado': self.funcionario.id,
+            'data_locacao_inicio': start_date.isoformat() if start_date else None,
+            'data_locacao_fim': end_date.isoformat() if end_date else None,
+            'tipo_pagamento': 'diaria', # Default, can be overridden in specific tests
+            'valor_pagamento': Decimal('120.00') # Default, can be overridden
+            # servico_externo or equipe are not set, focusing on funcionario_locado
+        }
+
+    def test_no_conflict_before_existing(self):
+        data = self._get_base_data(date(2024, 1, 1), date(2024, 1, 9))
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_no_conflict_after_existing(self):
+        data = self._get_base_data(date(2024, 1, 21), date(2024, 1, 30))
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_conflict_starts_during_existing(self):
+        data = self._get_base_data(date(2024, 1, 15), date(2024, 1, 25))
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        with self.assertRaises(ValidationError) as context:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn('funcionario_locado', context.exception.detail)
+        self.assertIn('conflict_details', context.exception.detail)
+        self.assertEqual(context.exception.detail['conflict_details']['locacao_id'], self.existing_locacao.id)
+
+    def test_conflict_ends_during_existing(self):
+        data = self._get_base_data(date(2024, 1, 5), date(2024, 1, 15))
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        with self.assertRaises(ValidationError):
+            serializer.is_valid(raise_exception=True)
+
+    def test_conflict_new_contains_existing(self):
+        data = self._get_base_data(date(2024, 1, 1), date(2024, 1, 30))
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        with self.assertRaises(ValidationError):
+            serializer.is_valid(raise_exception=True)
+
+    def test_conflict_existing_contains_new(self):
+        data = self._get_base_data(date(2024, 1, 12), date(2024, 1, 18))
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        with self.assertRaises(ValidationError):
+            serializer.is_valid(raise_exception=True)
+
+    def test_conflict_exact_same_dates(self):
+        data = self._get_base_data(date(2024, 1, 10), date(2024, 1, 20))
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        with self.assertRaises(ValidationError):
+            serializer.is_valid(raise_exception=True)
+
+    def test_update_no_conflict_own_instance(self):
+        data_for_update = {
+            'valor_pagamento': Decimal('150.00'),
+            'data_locacao_inicio': self.existing_locacao.data_locacao_inicio.isoformat(),
+            'data_locacao_fim': self.existing_locacao.data_locacao_fim.isoformat(),
+            'obra': self.existing_locacao.obra.id,
+            'funcionario_locado': self.existing_locacao.funcionario_locado.id,
+            'tipo_pagamento': self.existing_locacao.tipo_pagamento,
+            # Ensure no other resource type is implicitly set if not part of initial locacao
+            'equipe': None,
+            'servico_externo': ""
+        }
+        serializer = LocacaoObrasEquipesSerializer(instance=self.existing_locacao, data=data_for_update, partial=False) # Use partial=False to mimic full update with all fields
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_conflict_new_open_starts_during_existing_finite(self):
+        data = self._get_base_data(start_date=date(2024, 1, 15), end_date=None)
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        with self.assertRaises(ValidationError):
+            serializer.is_valid(raise_exception=True)
+
+    def test_conflict_new_finite_starts_during_existing_open(self):
+        self.existing_locacao.data_locacao_fim = None
+        self.existing_locacao.save()
+        data = self._get_base_data(date(2024, 1, 15), date(2024, 1, 25))
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        with self.assertRaises(ValidationError):
+            serializer.is_valid(raise_exception=True)
+
+    def test_conflict_both_open_different_start_dates(self):
+        self.existing_locacao.data_locacao_fim = None
+        self.existing_locacao.save()
+        data = self._get_base_data(start_date=date(2024, 1, 1), end_date=None) # Starts before existing open
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        with self.assertRaises(ValidationError):
+            serializer.is_valid(raise_exception=True)
+
+        data_starts_after = self._get_base_data(start_date=date(2024, 1, 15), end_date=None) # Starts after existing open
+        serializer_starts_after = LocacaoObrasEquipesSerializer(data=data_starts_after)
+        with self.assertRaises(ValidationError): # Still a conflict as both are open-ended for same func
+            serializer_starts_after.is_valid(raise_exception=True)
+
+
+    def test_no_conflict_new_open_starts_after_existing_finite_ends(self):
+        data = self._get_base_data(start_date=date(2024, 1, 21), end_date=None)
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_no_conflict_new_finite_ends_before_existing_open_starts(self):
+        self.existing_locacao.data_locacao_fim = None
+        self.existing_locacao.data_locacao_inicio = date(2024, 1, 10)
+        self.existing_locacao.save()
+        data = self._get_base_data(date(2024, 1, 1), date(2024, 1, 9))
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        self.assertTrue(serializer.is_valid(), serializer.errors)

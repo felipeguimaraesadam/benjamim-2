@@ -11,8 +11,8 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [x] Locação Individual: Permitir a locação de funcionários individuais, além de equipes, diretamente na tela de locação.(feita a migração pelo arquivo .bat novo)
   - Concluído em 29/07/2024. **Nota:** Requer execução manual de `python manage.py migrate` para aplicar as migrações 0007 e 0008 devido a limitações do ambiente de desenvolvimento.
 [x] Definição de Pagamento: Ao locar um funcionário ou equipe, será obrigatório definir o tipo de pagamento (diária, por metro, empreitada), o valor e, opcionalmente, uma data futura para o pagamento. (Concluído em 14/06/2025)
-[ ] Validação de Duplicidade: O sistema deve verificar se um funcionário já está locado em outra obra na mesma data.
-[ ] Exibir um alerta informando qual a locação e obra em conflito.
+[x] Validação de Duplicidade: O sistema deve verificar se um funcionário já está locado em outra obra na mesma data. (Concluído em 14/06/2025)
+[x] Exibir um alerta informando qual a locação e obra em conflito. (Concluído em 14/06/2025)
 [ ] Oferecer a opção de transferir o funcionário, removendo a locação e o custo da obra anterior e aplicando na nova para evitar pagamentos duplicados.
 [ ] (CORE) Cadastro de Funcionário com Formas de Pagamento: O cadastro de funcionário deve suportar múltiplos tipos de contrato/pagamento.
 [ ] Adicionar campos para armazenar valores pré-definidos para diária, valor por metro e valor por empreitada. Estes campos são opcionais e servirão como sugestão na tela de locação.
