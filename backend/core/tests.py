@@ -692,3 +692,111 @@ class CompraViewSetAPITest(TestCase):
 
 # To run these tests:
 # python backend/manage.py test core.tests.CompraViewSetAPITest
+
+
+from .models import Locacao_Obras_Equipes, Funcionario # Obra is already imported
+from .serializers import LocacaoObrasEquipesSerializer
+from rest_framework.exceptions import ValidationError
+
+
+class LocacaoModelTests(TestCase):
+    def setUp(self):
+        self.obra = Obra.objects.create(nome_obra="Test Obra", endereco_completo="123 Main St", cidade="Test City", status="Planejada")
+        # Minimal Funcionario for testing locacao if needed, or allow null for funcionario_locado
+        # self.funcionario = Funcionario.objects.create(nome_completo="Test Func", cargo="Tester", salario="1000", data_contratacao=timezone.now().date())
+
+
+    def test_locacao_creation_with_payment_defaults(self):
+        # Test with minimal required fields for Locacao_Obras_Equipes
+        # Assuming servico_externo is one way to create a valid locacao without equipe/funcionario
+        locacao = Locacao_Obras_Equipes.objects.create(
+            obra=self.obra,
+            data_locacao_inicio=timezone.now().date(),
+            servico_externo="External Service Basic"
+            # tipo_pagamento and valor_pagamento should use defaults
+        )
+        self.assertEqual(locacao.tipo_pagamento, 'diaria')
+        self.assertEqual(locacao.valor_pagamento, Decimal('0.00'))
+        self.assertIsNone(locacao.data_pagamento)
+
+    def test_locacao_creation_with_specific_payment_values(self):
+        locacao = Locacao_Obras_Equipes.objects.create(
+            obra=self.obra,
+            data_locacao_inicio=timezone.now().date(),
+            servico_externo="External Service Full Payment",
+            tipo_pagamento='empreitada',
+            valor_pagamento=Decimal('1500.75'),
+            data_pagamento=timezone.now().date()
+        )
+        self.assertEqual(locacao.tipo_pagamento, 'empreitada')
+        self.assertEqual(locacao.valor_pagamento, Decimal('1500.75'))
+        self.assertIsNotNone(locacao.data_pagamento)
+
+
+class LocacaoSerializerTests(TestCase):
+    def setUp(self):
+        self.obra = Obra.objects.create(nome_obra="Serializer Test Obra", endereco_completo="456 Test St", cidade="Serializer City", status="Em Andamento")
+        self.locacao_attributes = {
+            'obra': self.obra.id,
+            'data_locacao_inicio': timezone.now().date().isoformat(),
+            'servico_externo': 'Serializer External Service', # Using servico_externo for simplicity
+            'tipo_pagamento': 'metro',
+            'valor_pagamento': Decimal('120.50'),
+            'data_pagamento': timezone.now().date().isoformat()
+        }
+        self.locacao_invalid_payment_attributes = {
+            'obra': self.obra.id,
+            'data_locacao_inicio': timezone.now().date().isoformat(),
+            'servico_externo': 'Serializer Invalid Payment',
+            'tipo_pagamento': 'diaria',
+            'valor_pagamento': Decimal('-100.00'), # Invalid
+        }
+
+    def test_serializer_valid_data(self):
+        serializer = LocacaoObrasEquipesSerializer(data=self.locacao_attributes)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        locacao = serializer.save()
+        self.assertEqual(locacao.valor_pagamento, Decimal('120.50'))
+        self.assertEqual(locacao.tipo_pagamento, 'metro')
+
+    def test_serializer_invalid_valor_pagamento(self):
+        serializer = LocacaoObrasEquipesSerializer(data=self.locacao_invalid_payment_attributes)
+        with self.assertRaises(ValidationError) as context:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn('valor_pagamento', context.exception.detail)
+        self.assertEqual(str(context.exception.detail['valor_pagamento'][0]), "O valor do pagamento não pode ser negativo.")
+
+    def test_serializer_create_with_optional_data_pagamento_null(self):
+        data = self.locacao_attributes.copy()
+        data.pop('data_pagamento') # Test with data_pagamento not provided
+        serializer = LocacaoObrasEquipesSerializer(data=data)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        locacao = serializer.save()
+        self.assertIsNone(locacao.data_pagamento)
+
+    def test_serializer_update_payment_fields(self):
+        # First, create an instance
+        initial_data = {
+            'obra': self.obra.id,
+            'data_locacao_inicio': timezone.now().date().isoformat(),
+            'servico_externo': 'Initial Service for Update',
+            'tipo_pagamento': 'diaria',
+            'valor_pagamento': Decimal('50.00')
+        }
+        serializer_create = LocacaoObrasEquipesSerializer(data=initial_data)
+        self.assertTrue(serializer_create.is_valid(), serializer_create.errors)
+        locacao_instance = serializer_create.save()
+
+        # Now, update it
+        update_data = {
+            'tipo_pagamento': 'empreitada',
+            'valor_pagamento': Decimal('2000.00'),
+            'data_pagamento': timezone.now().date().isoformat()
+        }
+        serializer_update = LocacaoObrasEquipesSerializer(instance=locacao_instance, data=update_data, partial=True)
+        self.assertTrue(serializer_update.is_valid(), serializer_update.errors)
+        updated_locacao = serializer_update.save()
+
+        self.assertEqual(updated_locacao.tipo_pagamento, 'empreitada')
+        self.assertEqual(updated_locacao.valor_pagamento, Decimal('2000.00'))
+        self.assertIsNotNone(updated_locacao.data_pagamento)

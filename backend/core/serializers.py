@@ -123,6 +123,11 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
         # If you want these extra fields to always appear, ensure they are listed or __all__ is used.
         # For more complex scenarios, consider depth or explicit field listing.
 
+    def validate_valor_pagamento(self, value):
+        if value is not None and value < Decimal('0.00'):
+            raise serializers.ValidationError("O valor do pagamento não pode ser negativo.")
+        return value
+
     def validate(self, data):
         instance_equipe = getattr(self.instance, 'equipe', None)
         instance_funcionario = getattr(self.instance, 'funcionario_locado', None)

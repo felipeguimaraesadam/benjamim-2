@@ -85,6 +85,15 @@ class Locacao_Obras_Equipes(models.Model):
     data_locacao_inicio = models.DateField()
     data_locacao_fim = models.DateField(null=True, blank=True)
 
+    TIPO_PAGAMENTO_CHOICES = [
+        ('diaria', 'Diária'),
+        ('metro', 'Por Metro'),
+        ('empreitada', 'Empreitada'),
+    ]
+    tipo_pagamento = models.CharField(max_length=20, choices=TIPO_PAGAMENTO_CHOICES, default='diaria')
+    valor_pagamento = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    data_pagamento = models.DateField(null=True, blank=True)
+
     def __str__(self):
         if self.equipe:
             return f"{self.obra.nome_obra} - Equipe: {self.equipe.nome_equipe}"

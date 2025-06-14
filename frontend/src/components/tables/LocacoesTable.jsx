@@ -17,6 +17,23 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
     return new Date(dateString).toLocaleDateString();
   };
 
+  const formatTipoPagamento = (tipo) => {
+    if (!tipo) return 'N/A';
+    switch (tipo) {
+      case 'diaria': return 'Diária';
+      case 'metro': return 'Por Metro';
+      case 'empreitada': return 'Empreitada';
+      default: return tipo.charAt(0).toUpperCase() + tipo.slice(1);
+    }
+  };
+
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined) return 'N/A';
+    const number = parseFloat(value);
+    if (isNaN(number)) return 'N/A';
+    return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
   if (isLoading) {
     return <div className="text-center py-4">Carregando locações...</div>;
   }
@@ -34,6 +51,9 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
             <th scope="col" className="px-6 py-3">Recurso Locado</th>
             <th scope="col" className="px-6 py-3">Data Início</th>
             <th scope="col" className="px-6 py-3">Data Fim</th>
+            <th scope="col" className="px-6 py-3">Tipo Pag.</th> {/* New */}
+            <th scope="col" className="px-6 py-3">Valor Pag.</th> {/* New */}
+            <th scope="col" className="px-6 py-3">Data Pag.</th> {/* New */}
             <th scope="col" className="px-6 py-3">Ações</th>
           </tr>
         </thead>
@@ -49,6 +69,9 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
               </td>
               <td className="px-6 py-4">{formatDate(locacao.data_locacao_inicio)}</td>
               <td className="px-6 py-4">{formatDate(locacao.data_locacao_fim)}</td>
+              <td className="px-6 py-4">{formatTipoPagamento(locacao.tipo_pagamento)}</td> {/* New */}
+              <td className="px-6 py-4">{formatCurrency(locacao.valor_pagamento)}</td> {/* New */}
+              <td className="px-6 py-4">{formatDate(locacao.data_pagamento)}</td> {/* New */}
               <td className="px-6 py-4 flex space-x-2">
                 <button
                   onClick={() => onEdit(locacao)}

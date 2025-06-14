@@ -11,6 +11,9 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
     data_locacao_inicio: '',
     data_locacao_fim: '',
     servico_externo: '',
+    tipo_pagamento: 'diaria', // New
+    valor_pagamento: '', // New
+    data_pagamento: '', // New
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -33,6 +36,9 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
         servico_externo: initialData.servico_externo || '',
         data_locacao_inicio: initialData.data_locacao_inicio ? new Date(initialData.data_locacao_inicio).toISOString().split('T')[0] : '',
         data_locacao_fim: initialData.data_locacao_fim ? new Date(initialData.data_locacao_fim).toISOString().split('T')[0] : '',
+        tipo_pagamento: initialData.tipo_pagamento || 'diaria', // New
+        valor_pagamento: initialData.valor_pagamento || '', // New
+        data_pagamento: initialData.data_pagamento ? new Date(initialData.data_pagamento).toISOString().split('T')[0] : '', // New
       });
       if (initialData.equipe) setLocacaoType('equipe');
       else if (initialData.funcionario_locado) setLocacaoType('funcionario');
@@ -46,6 +52,9 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
         servico_externo: '',
         data_locacao_inicio: new Date().toISOString().split('T')[0],
         data_locacao_fim: '',
+        tipo_pagamento: 'diaria', // New
+        valor_pagamento: '', // New
+        data_pagamento: '', // New
       });
       setLocacaoType('equipe'); // Default for new
     }
@@ -89,6 +98,17 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
       newErrors.data_locacao_fim = 'Data de fim não pode ser anterior à data de início.';
     }
 
+    // New validation rules
+    if (!formData.tipo_pagamento) newErrors.tipo_pagamento = "Tipo de pagamento é obrigatório.";
+    if (!formData.valor_pagamento) {
+        newErrors.valor_pagamento = "Valor do pagamento é obrigatório.";
+    } else if (parseFloat(formData.valor_pagamento) <= 0) {
+        newErrors.valor_pagamento = "Valor do pagamento deve ser positivo.";
+    }
+    if (formData.data_pagamento && formData.data_locacao_inicio && formData.data_pagamento < formData.data_locacao_inicio) {
+        newErrors.data_pagamento = "Data de pagamento não pode ser anterior à data de início da locação.";
+    }
+
     setFormErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -104,6 +124,9 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
       equipe: null,
       funcionario_locado: null,
       servico_externo: '',
+      tipo_pagamento: formData.tipo_pagamento, // New
+      valor_pagamento: parseFloat(formData.valor_pagamento), // New
+      data_pagamento: formData.data_pagamento || null, // New
     };
 
     if (locacaoType === 'equipe') {
@@ -230,6 +253,51 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
             onChange={handleChange}
             className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
           />
+        </div>
+      </div>
+
+      {/* Payment Fields Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t">
+        <div>
+          <label htmlFor="tipo_pagamento" className="block text-sm font-medium text-gray-900">Tipo de Pagamento <span className="text-red-500">*</span></label>
+          <select
+            name="tipo_pagamento"
+            id="tipo_pagamento"
+            value={formData.tipo_pagamento}
+            onChange={handleChange}
+            className={`mt-1 block w-full bg-gray-50 border ${formErrors.tipo_pagamento ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2`}
+          >
+            <option value="diaria">Diária</option>
+            <option value="metro">Por Metro</option>
+            <option value="empreitada">Empreitada</option>
+          </select>
+          {formErrors.tipo_pagamento && <p className="mt-1 text-sm text-red-600">{formErrors.tipo_pagamento}</p>}
+        </div>
+        <div>
+          <label htmlFor="valor_pagamento" className="block text-sm font-medium text-gray-900">Valor do Pagamento <span className="text-red-500">*</span></label>
+          <input
+            type="number"
+            name="valor_pagamento"
+            id="valor_pagamento"
+            value={formData.valor_pagamento}
+            onChange={handleChange}
+            className={`mt-1 block w-full bg-gray-50 border ${formErrors.valor_pagamento ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2`}
+            placeholder="Ex: 150.00"
+            step="0.01"
+          />
+          {formErrors.valor_pagamento && <p className="mt-1 text-sm text-red-600">{formErrors.valor_pagamento}</p>}
+        </div>
+        <div>
+          <label htmlFor="data_pagamento" className="block text-sm font-medium text-gray-900">Data Pagamento (Opcional)</label>
+          <input
+            type="date"
+            name="data_pagamento"
+            id="data_pagamento"
+            value={formData.data_pagamento}
+            onChange={handleChange}
+            className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
+          />
+         {formErrors.data_pagamento && <p className="mt-1 text-sm text-red-600">{formErrors.data_pagamento}</p>}
         </div>
       </div>
 

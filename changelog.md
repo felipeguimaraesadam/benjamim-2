@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased] - 2025-06-14
+
+### Added
+- **Definição de Pagamento na Locação**: Ao locar um funcionário, equipe ou serviço externo, agora é obrigatório definir o tipo de pagamento (diária, por metro, empreitada), o valor do pagamento. Opcionalmente, uma data futura para o pagamento pode ser especificada. Isso se aplica tanto ao backend (modelo e API) quanto ao frontend (formulário e tabela de locações).
+
 ## [Unreleased] - 2025-06-10
 
 ### Added
