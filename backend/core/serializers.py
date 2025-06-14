@@ -110,14 +110,14 @@ class EquipeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AlocacaoObrasEquipesSerializer(serializers.ModelSerializer):
+class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
     obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True, allow_null=True)
     equipe_nome = serializers.CharField(source='equipe.nome_equipe', read_only=True, allow_null=True)
     # You could also add lider_nome for the equipe if needed:
     # lider_equipe_nome = serializers.CharField(source='equipe.lider.nome_completo', read_only=True, allow_null=True)
 
     class Meta:
-        model = Alocacao_Obras_Equipes
+        model = Locacao_Obras_Equipes
         fields = '__all__'
         # If you want these extra fields to always appear, ensure they are listed or __all__ is used.
         # For more complex scenarios, consider depth or explicit field listing.

@@ -5,8 +5,8 @@ from django.db.models import Q, Sum, F
 from decimal import Decimal
 from datetime import datetime
 
-from .models import Usuario, Obra, Funcionario, Equipe, Alocacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra
-from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, AlocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer
+from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra
+from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer
 from .permissions import IsNivelAdmin
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -45,16 +45,16 @@ class EquipeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class AlocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
+class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows alocacoes to be viewed or edited.
     """
-    queryset = Alocacao_Obras_Equipes.objects.all()
-    serializer_class = AlocacaoObrasEquipesSerializer
+    queryset = Locacao_Obras_Equipes.objects.all()
+    serializer_class = LocacaoObrasEquipesSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Alocacao_Obras_Equipes.objects.all().order_by('-data_alocacao_inicio') # Default ordering
+        queryset = Locacao_Obras_Equipes.objects.all().order_by('-data_locacao_inicio') # Default ordering
         obra_id = self.request.query_params.get('obra_id')
         if obra_id is not None:
             queryset = queryset.filter(obra_id=obra_id)
@@ -491,7 +491,7 @@ class RelatorioDesempenhoEquipeView(APIView):
         if data_inicio_str:
             try:
                 data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
-                filters &= Q(data_alocacao_inicio__gte=data_inicio)
+                filters &= Q(data_locacao_inicio__gte=data_inicio)
                 applied_filters_echo["data_inicio"] = data_inicio_str
             except ValueError:
                 return Response({"error": "Formato inválido para data_inicio (esperado YYYY-MM-DD)."}, status=status.HTTP_400_BAD_REQUEST)
@@ -499,7 +499,7 @@ class RelatorioDesempenhoEquipeView(APIView):
         if data_fim_str:
             try:
                 data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
-                filters &= Q(Q(data_alocacao_fim__lte=data_fim) | Q(data_alocacao_fim__isnull=True)) # include ongoing if fim is null
+                filters &= Q(Q(data_locacao_fim__lte=data_fim) | Q(data_locacao_fim__isnull=True)) # include ongoing if fim is null
                 applied_filters_echo["data_fim"] = data_fim_str
             except ValueError:
                 return Response({"error": "Formato inválido para data_fim (esperado YYYY-MM-DD)."}, status=status.HTTP_400_BAD_REQUEST)
@@ -510,7 +510,7 @@ class RelatorioDesempenhoEquipeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        alocacoes = Alocacao_Obras_Equipes.objects.filter(filters).select_related('obra').order_by('data_alocacao_inicio')
+        alocacoes = Locacao_Obras_Equipes.objects.filter(filters).select_related('obra').order_by('data_locacao_inicio')
 
         # We need more details in the serializer for this report,
         # specifically obra details. Let's augment the AlocacaoObrasEquipesSerializer
@@ -529,8 +529,8 @@ class RelatorioDesempenhoEquipeView(APIView):
                 "obra_nome": alocacao.obra.nome_obra,
                 "equipe_id": alocacao.equipe.id,
                 "equipe_nome": alocacao.equipe.nome_equipe,
-                "data_alocacao_inicio": alocacao.data_alocacao_inicio,
-                "data_alocacao_fim": alocacao.data_alocacao_fim,
+                "data_locacao_inicio": alocacao.data_locacao_inicio,
+                "data_locacao_fim": alocacao.data_locacao_fim,
             })
 
         return Response({

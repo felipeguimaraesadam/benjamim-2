@@ -18,7 +18,10 @@
 - `start.bat`: Script for starting Django and Vite/React development servers on Windows.
 
 ### Changed
-- (Frontend) Renomeada a terminologia de "Alocação" para "Locação" em todo o código frontend. Isso inclui nomes de arquivos, componentes, variáveis, funções, texto da UI e chamadas de serviço API (nomes das funções no frontend, não os endpoints). As alterações correspondentes no backend estão pendentes.
+- (Full Stack) Renomeada a terminologia de "Alocação" para "Locação".
+  - Frontend: Atualizados nomes de arquivos, componentes, variáveis, funções, texto da UI e nomes de funções de serviço API.
+  - Backend: Atualizados nomes de modelos (Alocacao_Obras_Equipes -> Locacao_Obras_Equipes), campos de modelo (data_alocacao_* -> data_locacao_*), serializers, views e URLs (API de /api/alocacoes/ para /api/locacoes/).
+  - **Nota Importante:** Uma migração de banco de dados (`0007_rename_locacao_model_and_fields.py`) foi criada, mas não pôde ser aplicada devido a limitações do ambiente. O usuário deve executar 'python manage.py migrate' manualmente para que as alterações do backend funcionem.
 - Navegação principal (`Navegacao.jsx`) reorganizada com agrupamentos lógicos ("Cadastros", "Financeiro", "Operacional") e ícones para melhor usabilidade.
 - Botão "Visualizar" na tabela de obras agora direciona para a nova página de Detalhes da Obra.
 - `planejamento.md` atualizado para refletir o progresso atual das funcionalidades e adicionar uma seção de "Próximos Passos".

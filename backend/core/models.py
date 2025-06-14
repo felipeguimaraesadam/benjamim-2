@@ -77,19 +77,19 @@ class Equipe(models.Model):
     def __str__(self):
         return self.nome_equipe
 
-class Alocacao_Obras_Equipes(models.Model):
+class Locacao_Obras_Equipes(models.Model):
     obra = models.ForeignKey(Obra, on_delete=models.CASCADE)
     equipe = models.ForeignKey(Equipe, on_delete=models.CASCADE, null=True, blank=True) # Made nullable
     servico_externo = models.CharField(max_length=255, blank=True, null=True) # New field
-    data_alocacao_inicio = models.DateField()
-    data_alocacao_fim = models.DateField(null=True, blank=True)
+    data_locacao_inicio = models.DateField()
+    data_locacao_fim = models.DateField(null=True, blank=True)
 
     def __str__(self):
         if self.equipe:
             return f"{self.obra.nome_obra} - Equipe: {self.equipe.nome_equipe}"
         elif self.servico_externo:
             return f"{self.obra.nome_obra} - Externo: {self.servico_externo}"
-        return f"Alocação ID {self.id} para {self.obra.nome_obra} (detalhes pendentes)"
+        return f"Locação ID {self.id} para {self.obra.nome_obra} (detalhes pendentes)"
 
 class Material(models.Model):
     nome = models.CharField(max_length=100, unique=True)
