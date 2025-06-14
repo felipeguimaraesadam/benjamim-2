@@ -54,7 +54,7 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
         data_locacao_fim: '',
         tipo_pagamento: 'diaria', // New
         valor_pagamento: '', // New
-        data_pagamento: '', // New
+        data_pagamento: new Date().toISOString().split('T')[0], // <<< CHANGE THIS LINE
       });
       setLocacaoType('equipe'); // Default for new
     }

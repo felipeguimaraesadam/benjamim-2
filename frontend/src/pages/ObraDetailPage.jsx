@@ -80,6 +80,7 @@ const ObraDetailPage = () => {
          try {
              await api.deleteLocacao(locacaoId);
              fetchLocacoes(); // Re-fetch alocacoes
+             fetchObraDetails(); // <<< ADD THIS LINE to re-fetch obra details for financial summary
              setOperationStatus({ type: 'success', message: 'Locação removida com sucesso!' });
          } catch (err) {
              const errMsg = err.response?.data?.detail || err.message || 'Falha ao remover locação.';

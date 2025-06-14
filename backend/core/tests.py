@@ -267,7 +267,7 @@ class CompraModelTest(TestCase):
 # To run these tests:
 # python backend/manage.py test core.tests.CompraModelTest
 
-from .serializers import ItemCompraSerializer
+from .serializers import ItemCompraSerializer, ObraSerializer # Added ObraSerializer
 
 class ItemCompraSerializerTest(TestCase):
     @classmethod
@@ -800,3 +800,50 @@ class LocacaoSerializerTests(TestCase):
         self.assertEqual(updated_locacao.tipo_pagamento, 'empreitada')
         self.assertEqual(updated_locacao.valor_pagamento, Decimal('2000.00'))
         self.assertIsNotNone(updated_locacao.data_pagamento)
+
+
+class ObraSerializerTests(TestCase):
+    def setUp(self):
+        self.obra_test = Obra.objects.create(
+            nome_obra="Obra Teste Custos",
+            endereco_completo="Rua Teste, 123",
+            cidade="Testelândia",
+            status="Em Andamento",
+            orcamento_previsto=Decimal('10000.00')
+        )
+        # Create some locações associated with this obra
+        self.locacao1 = Locacao_Obras_Equipes.objects.create(
+            obra=self.obra_test,
+            servico_externo="Pintura", # Assuming servico_externo for simplicity
+            data_locacao_inicio=timezone.now().date(),
+            tipo_pagamento='empreitada',
+            valor_pagamento=Decimal('500.00')
+        )
+        self.locacao2 = Locacao_Obras_Equipes.objects.create(
+            obra=self.obra_test,
+            servico_externo="Elétrica",
+            data_locacao_inicio=timezone.now().date(),
+            tipo_pagamento='diaria',
+            valor_pagamento=Decimal('150.00')
+        )
+
+    def test_obra_serializer_custo_total_realizado_includes_locacoes(self):
+        serializer = ObraSerializer(instance=self.obra_test)
+        # Expected: 500 (locacao1) + 150 (locacao2) = 650.00
+        # This assumes no other costs (compras, despesas_extras) for this specific test setup.
+        expected_total_locacoes = self.locacao1.valor_pagamento + self.locacao2.valor_pagamento
+        # Since ObraSerializer also sums compras and despesas_extras, we expect them to be 0 here.
+        # So, custo_total_realizado should equal expected_total_locacoes.
+        self.assertEqual(serializer.data['custo_total_realizado'], expected_total_locacoes)
+
+    def test_obra_serializer_custos_por_categoria_includes_locacoes(self):
+        serializer = ObraSerializer(instance=self.obra_test)
+        custos_categoria = serializer.data['custos_por_categoria']
+        expected_total_locacoes = self.locacao1.valor_pagamento + self.locacao2.valor_pagamento
+
+        self.assertIn('locacoes', custos_categoria)
+        self.assertEqual(custos_categoria['locacoes'], expected_total_locacoes)
+        # Check other categories if they are expected (e.g., materials, despesas_extras)
+        # For this setup, they would be 0.00 unless created in setUp.
+        self.assertEqual(custos_categoria.get('materiais', Decimal('0.00')), Decimal('0.00'))
+        self.assertEqual(custos_categoria.get('despesas_extras', Decimal('0.00')), Decimal('0.00'))

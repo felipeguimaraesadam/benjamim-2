@@ -78,8 +78,12 @@ class ObraSerializer(serializers.ModelSerializer):
         # obj is the Obra instance
         total_compras = obj.compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         total_despesas = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
-        # Costs for 'servicos' and 'equipes' are assumed to be 0 as per plan clarification
-        return total_compras + total_despesas
+
+        # Calculate total from Locacoes
+        # Ensure Locacao_Obras_Equipes model is imported
+        total_locacoes = Locacao_Obras_Equipes.objects.filter(obra=obj).aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
+
+        return total_compras + total_despesas + total_locacoes
 
     def get_balanco_financeiro(self, obj):
         custo_realizado = self.get_custo_total_realizado(obj) # Reuse the already calculated value
@@ -89,12 +93,20 @@ class ObraSerializer(serializers.ModelSerializer):
     def get_custos_por_categoria(self, obj):
         total_compras = obj.compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         total_despesas = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
-        # Costs for 'servicos' and 'equipes' are assumed to be 0
+
+        # Calculate total from Locacoes (can reuse logic or recalculate)
+        total_locacoes = Locacao_Obras_Equipes.objects.filter(obra=obj).aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
+
+        # Costs for 'servicos' and 'equipes' were previously assumed to be 0.
+        # 'total_locacoes' now represents the cost for allocated resources.
+        # We can rename 'equipes' to 'locacoes' or add it as a new category.
+        # Let's add it as 'locacoes' for clarity.
         return {
             'materiais': total_compras,
             'despesas_extras': total_despesas,
-            'servicos': Decimal('0.00'),
-            'equipes': Decimal('0.00')
+            'locacoes': total_locacoes, # New category for locação costs
+            'servicos': Decimal('0.00'), # Assuming this is for other types of services not covered by locacao
+            # 'equipes': Decimal('0.00') # This can be removed if 'locacoes' covers all allocated personnel/team costs
         }
 
 

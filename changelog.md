@@ -4,6 +4,13 @@
 
 ### Added
 - **Definição de Pagamento na Locação**: Ao locar um funcionário, equipe ou serviço externo, agora é obrigatório definir o tipo de pagamento (diária, por metro, empreitada), o valor do pagamento. Opcionalmente, uma data futura para o pagamento pode ser especificada. Isso se aplica tanto ao backend (modelo e API) quanto ao frontend (formulário e tabela de locações).
+- O campo 'Data Pagamento' no formulário de nova locação agora é preenchido automaticamente com a data atual.
+
+### Fixed
+- Corrigido nome da obra na listagem de obras (exibia ID em vez do nome).
+- Corrigida a exibição de detalhes da locação na página de detalhes da obra para mostrar corretamente o recurso alocado (equipe, funcionário, serviço externo) e os valores de pagamento.
+- Ajustado cálculo de custo total e custos por categoria na Obra para incluir os custos de locações.
+- Garantido que o painel financeiro na página de detalhes da obra seja atualizado após a remoção de uma locação.
 
 ## [Unreleased] - 2025-06-10
 
