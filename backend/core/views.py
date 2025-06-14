@@ -52,9 +52,9 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows alocacoes to be viewed or edited.
     """
-    # queryset = Locacao_Obras_Equipes.objects.all() # Removed class-level queryset
+    queryset = Locacao_Obras_Equipes.objects.all() # <<< ADD THIS LINE BACK
     serializer_class = LocacaoObrasEquipesSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated] # Or your specific permissions
 
     def get_queryset(self):
         today = timezone.now().date()

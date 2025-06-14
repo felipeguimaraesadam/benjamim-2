@@ -68,7 +68,9 @@ const EquipesLocadasList = ({ locacoesEquipe, obraId, obraNome, onRemoverLocacao
       {locacaoError && <p className="text-red-500 text-sm mb-2">Erro: {locacaoError}</p>}
       {locacoesEquipe && locacoesEquipe.length > 0 ? (
         <ul className="space-y-3">
-          {locacoesEquipe.map(loc => (
+          {locacoesEquipe.map(loc => {
+            // const statusInfo = getLocacaoStatusInfo(loc);
+            return (
             <li key={loc.id} className="p-3 bg-gray-50 rounded-md shadow-sm text-sm">
               <div className="flex justify-between items-start mb-1">
                 <div>
@@ -100,11 +102,13 @@ const EquipesLocadasList = ({ locacoesEquipe, obraId, obraNome, onRemoverLocacao
                   <p><span className="font-medium">Data Pag.:</span> {formatDate(loc.data_pagamento)}</p>
                 )}
               </div>
-              <div className="mt-1"> {/* New div for status, added margin-top */}
+              {/*
+              <div className="mt-1">
                 <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${statusInfo.colorClass} ${statusInfo.textColorClass}`}>
                   {statusInfo.text}
                 </span>
               </div>
+              */}
             </li>
           );
         })}
