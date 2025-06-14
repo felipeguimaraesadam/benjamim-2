@@ -34,6 +34,7 @@
 - `README.md` updated to focus entirely on the new Windows-specific `config.bat` and `start.bat` workflow.
 
 ### Fixed
+- Corrigido `ImportError` em `backend/core/admin.py` que impedia a execução de `manage.py migrate`. A importação do modelo `Alocacao_Obras_Equipes` foi atualizada para `Locacao_Obras_Equipes` e o registro no admin site também foi corrigido.
 - Corrigido o formulário de edição de obra que não carregava os dados existentes ao ser aberto para um registro existente.
 
 ### Removed
