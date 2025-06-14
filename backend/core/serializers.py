@@ -226,17 +226,8 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
                     " Verifique as datas."
                 )
 
-                conflict_data_for_api = {
-                    'funcionario_locado': msg,
-                    'conflict_details': {
-                        'obra_id': first_conflict.obra.id if first_conflict.obra else None,
-                        'obra_nome': obra_conflito,
-                        'locacao_id': first_conflict.id,
-                        'data_inicio': first_conflict.data_locacao_inicio.isoformat(),
-                        'data_fim': first_conflict.data_locacao_fim.isoformat() if first_conflict.data_locacao_fim else None
-                    }
-                }
-                raise serializers.ValidationError(conflict_data_for_api)
+                # SIMPLIFIED RAISE FOR TESTING:
+                raise serializers.ValidationError({'funcionario_locado': "Conflito de locação detectado. Verifique as datas."})
         return data
 
 
