@@ -851,6 +851,135 @@ class ObraSerializerTests(TestCase):
         self.assertEqual(custos_categoria.get('materiais', Decimal('0.00')), Decimal('0.00'))
         self.assertEqual(custos_categoria.get('despesas_extras', Decimal('0.00')), Decimal('0.00'))
 
+# LocacaoObrasEquipesSerializer is imported where it's used by other test classes.
+# We might need it here if we were to prepare data with it, but tests below use direct model creation or raw dicts.
+
+from rest_framework.test import APIClient
+from rest_framework import status
+from django.urls import reverse # If using named URLs, otherwise use path directly
+# Note: 'Usuario' from .models is already imported at the top of the file.
+# Note: 'date', 'timedelta' from datetime are already imported at the top of the file.
+# Note: 'Decimal' from decimal is already imported at the top of the file.
+
+class LocacaoTransferAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        # Create a user for authentication if your endpoint is protected
+        # self.user = Usuario.objects.create_user(login='testuser_transfer_api', password='password123', nome_completo='Test User API', nivel_acesso='admin')
+        # self.client.force_authenticate(user=self.user) # Authenticate if needed
+
+        self.obra_origem = Obra.objects.create(nome_obra="Obra Origem Transfer", status="Em Andamento", cidade="Origem", endereco_completo="Addr O")
+        self.obra_destino = Obra.objects.create(nome_obra="Obra Destino Transfer", status="Planejada", cidade="Destino", endereco_completo="Addr D")
+        self.funcionario = Funcionario.objects.create(nome_completo="Funcionário Transferível", cargo="Mestre", salario=Decimal("3000.00"), data_contratacao=date(2023,1,1))
+
+        self.locacao_original = Locacao_Obras_Equipes.objects.create(
+            obra=self.obra_origem,
+            funcionario_locado=self.funcionario,
+            data_locacao_inicio=date(2024, 2, 1),
+            data_locacao_fim=date(2024, 2, 29),
+            tipo_pagamento='diaria',
+            valor_pagamento=Decimal('2900.00')
+        )
+
+        try:
+            self.transfer_url = reverse('locacao_obras_equipes-transfer-funcionario')
+        except Exception:
+            # Fallback if URL name isn't set up exactly as assumed (common in test environments or if urls.py changes)
+            self.transfer_url = '/api/locacoes/transferir-funcionario/'
+
+
+    def test_transfer_funcionario_success(self):
+        new_locacao_data = {
+            'obra': self.obra_destino.id,
+            'funcionario_locado': self.funcionario.id,
+            'data_locacao_inicio': date(2024, 2, 15).isoformat(),
+            'data_locacao_fim': date(2024, 2, 25).isoformat(),
+            'tipo_pagamento': 'diaria',
+            'valor_pagamento': Decimal('1100.00'),
+            'data_pagamento': date(2024, 2, 28).isoformat()
+        }
+
+        payload = {
+            'conflicting_locacao_id': self.locacao_original.id,
+            'new_locacao_data': new_locacao_data
+        }
+
+        response = self.client.post(self.transfer_url, payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+
+        self.locacao_original.refresh_from_db()
+        self.assertEqual(self.locacao_original.data_locacao_fim, date(2024, 2, 14))
+        self.assertEqual(self.locacao_original.valor_pagamento, Decimal('0.00'))
+
+        new_loc_id = response.data.get('id')
+        self.assertTrue(Locacao_Obras_Equipes.objects.filter(id=new_loc_id).exists())
+        new_loc = Locacao_Obras_Equipes.objects.get(id=new_loc_id)
+        self.assertEqual(new_loc.obra, self.obra_destino)
+        self.assertEqual(new_loc.funcionario_locado, self.funcionario)
+        self.assertEqual(new_loc.data_locacao_inicio, date(2024, 2, 15))
+        self.assertEqual(new_loc.valor_pagamento, Decimal('1100.00'))
+
+    def test_transfer_missing_conflicting_id(self):
+        new_locacao_data = { 'obra': self.obra_destino.id, 'funcionario_locado': self.funcionario.id, 'data_locacao_inicio': date(2024,3,1).isoformat(), 'tipo_pagamento':'diaria', 'valor_pagamento':Decimal('100.00')}
+        payload = { 'new_locacao_data': new_locacao_data }
+        response = self.client.post(self.transfer_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('conflicting_locacao_id e new_locacao_data são obrigatórios', response.data.get('error', ''))
+
+    def test_transfer_missing_new_locacao_data(self):
+        payload = { 'conflicting_locacao_id': self.locacao_original.id }
+        response = self.client.post(self.transfer_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('conflicting_locacao_id e new_locacao_data são obrigatórios', response.data.get('error', ''))
+
+    def test_transfer_conflicting_locacao_not_found(self):
+        new_loc_data = { 'obra': self.obra_destino.id, 'funcionario_locado': self.funcionario.id, 'data_locacao_inicio': date(2024,3,1).isoformat(), 'tipo_pagamento':'diaria', 'valor_pagamento':Decimal('100.00')}
+        payload = { 'conflicting_locacao_id': 99999, 'new_locacao_data': new_loc_data }
+        response = self.client.post(self.transfer_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data.get('error'), "Locação conflitante não encontrada.")
+
+    def test_transfer_new_locacao_data_invalid(self):
+        invalid_new_loc_data = {
+            'obra': self.obra_destino.id,
+            'funcionario_locado': self.funcionario.id,
+            'data_locacao_inicio': date(2024, 2, 15).isoformat(),
+            'valor_pagamento': Decimal('1100.00')
+            # 'tipo_pagamento' is missing
+        }
+        payload = { 'conflicting_locacao_id': self.locacao_original.id, 'new_locacao_data': invalid_new_loc_data }
+        response = self.client.post(self.transfer_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('tipo_pagamento', response.data)
+
+    def test_transfer_old_loc_becomes_superseded(self): # Renamed for clarity
+        # New loc starts *before* old loc's original start, making old loc's new end date before its original start
+        new_start_date = self.locacao_original.data_locacao_inicio - timedelta(days=5) # e.g., 2024-02-01 becomes 2024-01-27
+        new_end_date = self.locacao_original.data_locacao_inicio - timedelta(days=1)   # e.g., 2024-02-01 becomes 2024-01-31
+
+        new_locacao_data = {
+            'obra': self.obra_destino.id,
+            'funcionario_locado': self.funcionario.id,
+            'data_locacao_inicio': new_start_date.isoformat(),
+            'data_locacao_fim': new_end_date.isoformat(),
+            'tipo_pagamento': 'diaria',
+            'valor_pagamento': Decimal('500.00')
+        }
+        payload = {
+            'conflicting_locacao_id': self.locacao_original.id,
+            'new_locacao_data': new_locacao_data
+        }
+        response = self.client.post(self.transfer_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+
+        self.locacao_original.refresh_from_db()
+        expected_old_loc_end = new_start_date - timedelta(days=1)
+        self.assertEqual(self.locacao_original.data_locacao_fim, expected_old_loc_end)
+        self.assertTrue(self.locacao_original.data_locacao_fim < self.locacao_original.data_locacao_inicio,
+                        f"Old loc end {self.locacao_original.data_locacao_fim} should be before original start {self.locacao_original.data_locacao_inicio}")
+        self.assertEqual(self.locacao_original.valor_pagamento, Decimal('0.00'))
+
 
 class LocacaoConflictValidationTests(TestCase):
     def setUp(self):

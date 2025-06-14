@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as api from '../../services/api'; // Import API service
 
-const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoading }) => {
+const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoading, onTransferSuccess }) => {
   const [locacaoType, setLocacaoType] = useState('equipe'); // 'equipe', 'funcionario', 'servico_externo'
   const [funcionarios, setFuncionarios] = useState([]);
   const [formData, setFormData] = useState({
@@ -16,6 +16,9 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
     data_pagamento: '', // New
   });
   const [formErrors, setFormErrors] = useState({});
+  const [showTransferConfirm, setShowTransferConfirm] = useState(false);
+  const [transferDetails, setTransferDetails] = useState(null);
+  const [isTransferring, setIsTransferring] = useState(false);
 
   // Fetch Funcionarios
   useEffect(() => {
@@ -115,16 +118,21 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormErrors({}); // Clear previous errors on new submit attempt
+    setFormErrors({});
+    setShowTransferConfirm(false);
+    setTransferDetails(null);
+
     if (!validateFrontendForm()) return;
 
     const dataToSubmit = {
       obra: parseInt(formData.obra, 10),
       data_locacao_inicio: formData.data_locacao_inicio,
       data_locacao_fim: formData.data_locacao_fim || null,
+      // Initialize resource type fields to null/empty
       equipe: null,
       funcionario_locado: null,
       servico_externo: '',
+      // Payment fields
       tipo_pagamento: formData.tipo_pagamento,
       valor_pagamento: parseFloat(formData.valor_pagamento),
       data_pagamento: formData.data_pagamento || null,
@@ -139,20 +147,24 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
     }
 
     try {
-      await onSubmit(dataToSubmit); // This 'onSubmit' is 'handleApiSubmit' from LocacoesPage
-      // If successful, LocacoesPage handles modal closing & list refresh.
-      // Form will likely unmount or re-initialize, so explicit error clearing might not be needed here.
+      await onSubmit(dataToSubmit);
     } catch (err) {
       const backendErrors = err.response?.data;
-      if (backendErrors && typeof backendErrors === 'object') {
+      if (backendErrors?.conflict_details && backendErrors?.funcionario_locado) {
+        setTransferDetails({
+          conflictingLocacao: backendErrors.conflict_details,
+          newLocacaoData: dataToSubmit,
+          conflictMessage: typeof backendErrors.funcionario_locado === 'string'
+                           ? backendErrors.funcionario_locado
+                           : JSON.stringify(backendErrors.funcionario_locado)
+        });
+        setShowTransferConfirm(true);
+        // Optionally set a specific form error
+        // setFormErrors({ funcionario_locado: "Conflito detectado. Opção de transferência disponível." });
+      } else if (backendErrors && typeof backendErrors === 'object') {
         const newFormErrors = {};
         for (const key in backendErrors) {
-          if (key === 'conflict_details') { // conflict_details is not a field error itself
-            // The message for 'funcionario_locado' should already contain the user-friendly text.
-            // conflict_details can be stored in a separate state if specific UI handling is needed later.
-            // For example: setConflictDetails(backendErrors.conflict_details);
-            continue;
-          }
+          if (key === 'conflict_details') continue;
           newFormErrors[key] = Array.isArray(backendErrors[key])
                              ? backendErrors[key].join('; ')
                              : (typeof backendErrors[key] === 'string' ? backendErrors[key] : JSON.stringify(backendErrors[key]));
@@ -161,12 +173,50 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
       } else if (err.message) {
         setFormErrors({ general: err.message });
       } else {
-        setFormErrors({ general: 'Ocorreu um erro desconhecido ao submeter o formulário.' });
+        setFormErrors({ general: 'Ocorreu um erro desconhecido.' });
       }
     }
   };
 
+  const handleConfirmTransfer = async () => {
+    if (!transferDetails) return;
+    setIsTransferring(true);
+    setFormErrors({});
+    try {
+      await api.transferFuncionarioLocacao({
+        conflicting_locacao_id: transferDetails.conflictingLocacao.locacao_id,
+        new_locacao_data: transferDetails.newLocacaoData
+      });
+      setShowTransferConfirm(false);
+      setTransferDetails(null);
+
+      if (onTransferSuccess) { // Call the new success handler from parent
+        onTransferSuccess();
+      } else { // Fallback if prop not provided (though it should be)
+        onCancel();
+      }
+    } catch (err) {
+      const backendErrors = err.response?.data;
+      if (backendErrors && typeof backendErrors === 'object') {
+        const newFormErrors = {};
+        // Display these errors in the main form area, or a dedicated area in transfer modal
+        for (const key in backendErrors) {
+          newFormErrors[key] = Array.isArray(backendErrors[key]) ? backendErrors[key].join('; ') : backendErrors[key];
+        }
+        setFormErrors(newFormErrors); // These errors will show on the main form after transfer modal closes if not handled there.
+                                      // Or, display them within the transfer modal itself if preferred.
+                                      // For now, setting them on formErrors means they might appear if modal closes on error.
+      } else {
+        // Set general error to be displayed in the transfer modal or main form.
+        setFormErrors({ general: `Falha ao transferir funcionário: ${err.message || 'Erro desconhecido.'}` });
+      }
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
   return (
+    <> {/* Fragment to wrap form and modal */}
     <form onSubmit={handleSubmit} className="space-y-6">
       {formErrors.general && <p className="text-sm text-red-600 bg-red-100 p-2 rounded-md">{formErrors.general}</p>}
 
@@ -346,6 +396,45 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
         </button>
       </div>
     </form>
+
+    {showTransferConfirm && transferDetails && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+        <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
+          <h2 className="text-xl font-semibold mb-4 text-yellow-700">Conflito de Locação Detectado</h2>
+          <p className="mb-2 text-sm text-gray-700">
+            {transferDetails.conflictMessage || "Este funcionário já possui uma locação que conflita com as datas informadas."}
+          </p>
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm">
+            <p><strong>Obra Conflitante:</strong> {transferDetails.conflictingLocacao.obra_nome}</p>
+            <p><strong>Período Conflitante:</strong>
+              {new Date(transferDetails.conflictingLocacao.data_inicio + 'T00:00:00').toLocaleDateString()} -
+              {transferDetails.conflictingLocacao.data_fim ? new Date(transferDetails.conflictingLocacao.data_fim + 'T00:00:00').toLocaleDateString() : 'Indefinido'}
+            </p>
+          </div>
+          <p className="mb-6 text-sm text-gray-700">
+            Deseja transferir o funcionário para esta nova locação? A locação anterior na obra '{transferDetails.conflictingLocacao.obra_nome}' será finalizada em {new Date(new Date(transferDetails.newLocacaoData.data_locacao_inicio).getTime() - 86400000).toLocaleDateString()} (um dia antes) e seu custo será removido da obra anterior.
+          </p>
+          {formErrors.general && <p className="text-red-600 text-sm mb-3">{formErrors.general}</p>} {/* Display general errors from transfer attempt */}
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => { setShowTransferConfirm(false); setTransferDetails(null); setFormErrors({}); }}
+              disabled={isTransferring}
+              className="py-2 px-4 text-sm font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleConfirmTransfer}
+              disabled={isTransferring}
+              className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:bg-primary-300"
+            >
+              {isTransferring ? 'Transferindo...' : 'Sim, Transferir Funcionário'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

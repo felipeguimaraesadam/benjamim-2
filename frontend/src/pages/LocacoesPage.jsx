@@ -139,6 +139,15 @@ const LocacoesPage = () => {
     setError(null); // Clear any errors when form is cancelled
   };
 
+  const handleTransferSuccess = useCallback(async () => {
+    setShowFormModal(false);    // Close the main form modal
+    setCurrentLocacao(null);    // Clear current locacao being edited/created
+    setError(null);           // Clear any top-level errors in LocacoesPage
+    await fetchLocacoes();      // Refresh the main list of locações
+    // Optionally, add a success message here, e.g., using a toast notification library
+    // alert('Funcionário transferido com sucesso!');
+  }, [fetchLocacoes]);
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
@@ -183,9 +192,10 @@ const LocacoesPage = () => {
               initialData={currentLocacao}
               obras={obras}
               equipes={equipes}
-              onSubmit={handleApiSubmit} // Changed prop
+              onSubmit={handleApiSubmit}
               onCancel={handleFormCancel}
               isLoading={isLoadingForm}
+              onTransferSuccess={handleTransferSuccess} // New prop
             />
           </div>
         </div>

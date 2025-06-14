@@ -13,7 +13,7 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [x] Definição de Pagamento: Ao locar um funcionário ou equipe, será obrigatório definir o tipo de pagamento (diária, por metro, empreitada), o valor e, opcionalmente, uma data futura para o pagamento. (Concluído em 14/06/2025)
 [x] Validação de Duplicidade: O sistema deve verificar se um funcionário já está locado em outra obra na mesma data. (Concluído em 14/06/2025)
 [x] Exibir um alerta informando qual a locação e obra em conflito. (Concluído em 14/06/2025)
-[ ] Oferecer a opção de transferir o funcionário, removendo a locação e o custo da obra anterior e aplicando na nova para evitar pagamentos duplicados.
+[x] Oferecer a opção de transferir o funcionário, removendo a locação e o custo da obra anterior e aplicando na nova para evitar pagamentos duplicados. (Concluído em 14/06/2025)
 [ ] (CORE) Cadastro de Funcionário com Formas de Pagamento: O cadastro de funcionário deve suportar múltiplos tipos de contrato/pagamento.
 [ ] Adicionar campos para armazenar valores pré-definidos para diária, valor por metro e valor por empreitada. Estes campos são opcionais e servirão como sugestão na tela de locação.
 [ ] (CORE) Perfis de Usuário e Permissões: Atualizar as regras de acesso.

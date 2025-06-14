@@ -285,6 +285,13 @@ export const deleteLocacao = (id) => {
   return apiClient.delete(`/locacoes/${id}/`);
 };
 
+export const transferFuncionarioLocacao = async (transferData) => {
+  // transferData should contain:
+  // { conflicting_locacao_id: id, new_locacao_data: { ... } }
+  const response = await apiClient.post('/locacoes/transferir-funcionario/', transferData);
+  return response.data; // Or response directly if you need status code etc.
+};
+
 // --- Dashboard Service Functions ---
 export const getDashboardStats = () => {
   return apiClient.get('/dashboard/stats/');
