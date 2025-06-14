@@ -8,7 +8,7 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [x] Nomeclatura: Alterar todas as referências de "Alocação" para "Locação" no frontend e, se necessário, no backend.
   - [x] Frontend: Terminologia atualizada para "Locação" (Concluído em 29/07/2024).
   - [x] Backend: Código atualizado para "Locação" (Concluído em 29/07/2024). **Nota:** Requer execução manual de `python manage.py migrate` devido a limitações do ambiente de desenvolvimento.
-[x] Locação Individual: Permitir a locação de funcionários individuais, além de equipes, diretamente na tela de locação.
+[x] Locação Individual: Permitir a locação de funcionários individuais, além de equipes, diretamente na tela de locação.(feita a migração pelo arquivo .bat novo)
   - Concluído em 29/07/2024. **Nota:** Requer execução manual de `python manage.py migrate` para aplicar as migrações 0007 e 0008 devido a limitações do ambiente de desenvolvimento.
 [ ] Definição de Pagamento: Ao locar um funcionário ou equipe, será obrigatório definir o tipo de pagamento (diária, por metro, empreitada), o valor e, opcionalmente, uma data futura para o pagamento.
 [ ] Validação de Duplicidade: O sistema deve verificar se um funcionário já está locado em outra obra na mesma data.
