@@ -194,27 +194,19 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
             # (its start_date <= new_end_date OR new_end_date IS NULL) AND
             # (its end_date >= new_start_date OR its end_date IS NULL)
 
-            # Condition for finite new locacao (data_locacao_fim is not None)
-            q_conflict_for_finite_new = Q(
-                data_locacao_inicio__lte=data_locacao_fim, # existing starts before or when new one ends
-                # (existing.data_locacao_fim >= data_locacao_inicio OR existing.data_locacao_fim__isnull=True)
-                # This can be written as:
-                # (NOT (existing.data_locacao_fim < data_locacao_inicio AND existing.data_locacao_fim__isnull=False))
-                # Let's use the direct approach:
-                (Q(data_locacao_fim__gte=data_locacao_inicio) | Q(data_locacao_fim__isnull=True))
-            )
-
-            # Condition for open-ended new locacao (data_locacao_fim is None)
-            q_conflict_for_open_new = Q(
-                # existing.data_locacao_inicio <= "infinity" (always true for this part)
-                # existing.data_locacao_fim >= new_start_date OR existing.data_locacao_fim IS NULL
-                (Q(data_locacao_fim__gte=data_locacao_inicio) | Q(data_locacao_fim__isnull=True))
-            )
-
             if data_locacao_fim: # New locacao has an end date
-                conflicting_locacoes_qs = conflicting_locacoes_qs.filter(q_conflict_for_finite_new)
+                # Existing locacao must start before or when new one ends
+                # AND (Existing locacao must end after or when new one starts OR existing locacao is open-ended)
+                q_conditions = Q(data_locacao_inicio__lte=data_locacao_fim) & \
+                               (Q(data_locacao_fim__gte=data_locacao_inicio) | Q(data_locacao_fim__isnull=True))
+                conflicting_locacoes_qs = conflicting_locacoes_qs.filter(q_conditions)
             else: # New locacao is open-ended
-                conflicting_locacoes_qs = conflicting_locacoes_qs.filter(q_conflict_for_open_new)
+                # Existing locacao (finite or open) must end after or when new (open-ended) one starts
+                # OR existing locacao itself is open-ended (which means they will overlap indefinitely if new one starts before existing ends,
+                # but simplified: any other open loc for same func is a conflict if not handled by start date alignment)
+                # A simpler way for new open-ended: conflict if existing_end_date >= new_start_date OR existing_end_date IS NULL
+                q_conditions = Q(data_locacao_fim__gte=data_locacao_inicio) | Q(data_locacao_fim__isnull=True)
+                conflicting_locacoes_qs = conflicting_locacoes_qs.filter(q_conditions)
 
             if conflicting_locacoes_qs.exists():
                 first_conflict = conflicting_locacoes_qs.first()
@@ -226,8 +218,18 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
                     " Verifique as datas."
                 )
 
-                # SIMPLIFIED RAISE FOR TESTING:
-                raise serializers.ValidationError({'funcionario_locado': "Conflito de locação detectado. Verifique as datas."})
+                # Restore the detailed error raising:
+                conflict_data_for_api = {
+                    'funcionario_locado': msg,
+                    'conflict_details': {
+                        'obra_id': first_conflict.obra.id if first_conflict.obra else None,
+                        'obra_nome': obra_conflito,
+                        'locacao_id': first_conflict.id,
+                        'data_inicio': first_conflict.data_locacao_inicio.isoformat(),
+                        'data_fim': first_conflict.data_locacao_fim.isoformat() if first_conflict.data_locacao_fim else None
+                    }
+                }
+                raise serializers.ValidationError(conflict_data_for_api)
         return data
 
 
