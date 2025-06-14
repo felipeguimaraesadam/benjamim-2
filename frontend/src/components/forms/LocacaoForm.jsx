@@ -1,50 +1,74 @@
 import React, { useState, useEffect } from 'react';
+import * as api from '../../services/api'; // Import API service
 
 const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoading }) => {
+  const [locacaoType, setLocacaoType] = useState('equipe'); // 'equipe', 'funcionario', 'servico_externo'
+  const [funcionarios, setFuncionarios] = useState([]);
   const [formData, setFormData] = useState({
     obra: '',
     equipe: '',
+    funcionario_locado: '',
     data_locacao_inicio: '',
     data_locacao_fim: '',
-    servico_externo: '', // Added servico_externo
+    servico_externo: '',
   });
-  const [formErrors, setFormErrors] = useState({}); // For frontend validation
+  const [formErrors, setFormErrors] = useState({});
+
+  // Fetch Funcionarios
+  useEffect(() => {
+    api.getFuncionarios()
+      .then(response => setFuncionarios(response.data || response)) // Adjust based on API response structure
+      .catch(error => {
+        console.error("Erro ao buscar funcionários:", error);
+        setFormErrors(prev => ({ ...prev, funcionarios: "Falha ao carregar funcionários."}));
+      });
+  }, []);
 
   useEffect(() => {
     if (initialData) {
       setFormData({
-        obra: initialData.obra || '',
-        equipe: initialData.equipe || '',
+        obra: initialData.obra?.id || initialData.obra || '', // Handle if obra is object or just ID
+        equipe: initialData.equipe?.id || initialData.equipe || '',
+        funcionario_locado: initialData.funcionario_locado?.id || initialData.funcionario_locado || '',
         servico_externo: initialData.servico_externo || '',
         data_locacao_inicio: initialData.data_locacao_inicio ? new Date(initialData.data_locacao_inicio).toISOString().split('T')[0] : '',
         data_locacao_fim: initialData.data_locacao_fim ? new Date(initialData.data_locacao_fim).toISOString().split('T')[0] : '',
       });
+      if (initialData.equipe) setLocacaoType('equipe');
+      else if (initialData.funcionario_locado) setLocacaoType('funcionario');
+      else if (initialData.servico_externo) setLocacaoType('servico_externo');
+      else setLocacaoType('equipe'); // Default
     } else {
-      // Default for new form
       setFormData({
         obra: obras && obras.length > 0 ? obras[0].id : '',
-        equipe: '', // Default to empty, user must choose or use servico_externo
+        equipe: '',
+        funcionario_locado: '',
         servico_externo: '',
         data_locacao_inicio: new Date().toISOString().split('T')[0],
         data_locacao_fim: '',
       });
+      setLocacaoType('equipe'); // Default for new
     }
-    setFormErrors({}); // Clear errors when initialData changes
-  }, [initialData, obras]); // Removed equipes from deps as it might cause loop if not stable
+    setFormErrors({});
+  }, [initialData, obras]);
+
+  const handleLocacaoTypeChange = (e) => {
+    const newType = e.target.value;
+    setLocacaoType(newType);
+    setFormData(prev => ({
+      ...prev,
+      equipe: newType === 'equipe' ? prev.equipe : '', // Keep existing if switching back, else clear
+      funcionario_locado: newType === 'funcionario' ? prev.funcionario_locado : '',
+      servico_externo: newType === 'servico_externo' ? prev.servico_externo : '',
+    }));
+    setFormErrors(prev => ({...prev, general: null, equipe: null, funcionario_locado: null, servico_externo: null}));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: null }));
-    }
-    // Clear the other field if one is typed into/selected
-    if (name === "equipe" && value) {
-        setFormData(prev => ({ ...prev, servico_externo: '' }));
-        if (formErrors.servico_externo) setFormErrors(prev => ({...prev, servico_externo: null}));
-    } else if (name === "servico_externo" && value) {
-        setFormData(prev => ({ ...prev, equipe: '' }));
-        if (formErrors.equipe) setFormErrors(prev => ({...prev, equipe: null}));
     }
   };
 
@@ -53,17 +77,16 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
     if (!formData.obra) newErrors.obra = "Obra é obrigatória.";
     if (!formData.data_locacao_inicio) newErrors.data_locacao_inicio = "Data de início é obrigatória.";
 
-    const equipeSelecionada = formData.equipe && formData.equipe !== '';
-    const servicoExternoPreenchido = formData.servico_externo && formData.servico_externo.trim() !== '';
-
-    if (equipeSelecionada && servicoExternoPreenchido) {
-        newErrors.general = "Selecione uma equipe OU informe um serviço externo, não ambos.";
-    } else if (!equipeSelecionada && !servicoExternoPreenchido) {
-        newErrors.general = "Selecione uma equipe ou informe um serviço externo.";
+    if (locacaoType === 'equipe' && !formData.equipe) {
+      newErrors.equipe = "Equipe é obrigatória.";
+    } else if (locacaoType === 'funcionario' && !formData.funcionario_locado) {
+      newErrors.funcionario_locado = "Funcionário é obrigatório.";
+    } else if (locacaoType === 'servico_externo' && !formData.servico_externo.trim()) {
+      newErrors.servico_externo = "Serviço externo é obrigatório.";
     }
-    // Basic date validation
+
     if (formData.data_locacao_inicio && formData.data_locacao_fim && formData.data_locacao_inicio > formData.data_locacao_fim) {
-        newErrors.data_locacao_fim = 'Data de fim não pode ser anterior à data de início.';
+      newErrors.data_locacao_fim = 'Data de fim não pode ser anterior à data de início.';
     }
 
     setFormErrors(newErrors);
@@ -76,17 +99,27 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
 
     const dataToSubmit = {
       obra: parseInt(formData.obra, 10),
-      equipe: formData.equipe ? parseInt(formData.equipe, 10) : null,
-      servico_externo: formData.servico_externo.trim() || null,
       data_locacao_inicio: formData.data_locacao_inicio,
       data_locacao_fim: formData.data_locacao_fim || null,
+      equipe: null,
+      funcionario_locado: null,
+      servico_externo: '',
     };
+
+    if (locacaoType === 'equipe') {
+      dataToSubmit.equipe = formData.equipe ? parseInt(formData.equipe, 10) : null;
+    } else if (locacaoType === 'funcionario') {
+      dataToSubmit.funcionario_locado = formData.funcionario_locado ? parseInt(formData.funcionario_locado, 10) : null;
+    } else if (locacaoType === 'servico_externo') {
+      dataToSubmit.servico_externo = formData.servico_externo.trim() || null;
+    }
     onSubmit(dataToSubmit);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {formErrors.general && <p className="text-sm text-red-600 bg-red-100 p-2 rounded-md">{formErrors.general}</p>}
+
       <div>
         <label htmlFor="obra" className="block text-sm font-medium text-gray-900">Obra <span className="text-red-500">*</span></label>
         <select
@@ -104,40 +137,75 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
         {formErrors.obra && <p className="mt-1 text-sm text-red-600">{formErrors.obra}</p>}
       </div>
 
-      <div>
-        <label htmlFor="equipe" className="block text-sm font-medium text-gray-900">Equipe Interna (opcional)</label>
-        <select
-          name="equipe"
-          id="equipe"
-          value={formData.equipe}
-          onChange={handleChange}
-          disabled={!!formData.servico_externo.trim()}
-          className={`mt-1 block w-full bg-gray-50 border ${formErrors.equipe ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2 disabled:bg-gray-200`}
-        >
-          <option value="">Selecione uma Equipe (se não preencher serviço externo)</option>
-          {equipes && equipes.map(equipe => (
-            <option key={equipe.id} value={equipe.id}>{equipe.nome_equipe}</option>
-          ))}
-        </select>
-        {formErrors.equipe && <p className="mt-1 text-sm text-red-600">{formErrors.equipe}</p>}
+      <div className="mb-4">
+        <label className="block mb-2 text-sm font-medium text-gray-900">Tipo de Locação <span className="text-red-500">*</span></label>
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center">
+            <input type="radio" name="locacaoType" value="equipe" checked={locacaoType === 'equipe'} onChange={handleLocacaoTypeChange} className="mr-1 h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"/> Equipe
+          </label>
+          <label className="flex items-center">
+            <input type="radio" name="locacaoType" value="funcionario" checked={locacaoType === 'funcionario'} onChange={handleLocacaoTypeChange} className="mr-1 h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"/> Funcionário
+          </label>
+          <label className="flex items-center">
+            <input type="radio" name="locacaoType" value="servico_externo" checked={locacaoType === 'servico_externo'} onChange={handleLocacaoTypeChange} className="mr-1 h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"/> Serviço Externo
+          </label>
+        </div>
       </div>
 
-      <div className="my-2 text-center text-sm text-gray-500">OU</div>
+      {locacaoType === 'equipe' && (
+        <div>
+          <label htmlFor="equipe" className="block text-sm font-medium text-gray-900">Equipe Interna <span className="text-red-500">*</span></label>
+          <select
+            name="equipe"
+            id="equipe"
+            value={formData.equipe}
+            onChange={handleChange}
+            className={`mt-1 block w-full bg-gray-50 border ${formErrors.equipe ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2`}
+          >
+            <option value="">Selecione uma Equipe</option>
+            {equipes && equipes.map(equipe => (
+              <option key={equipe.id} value={equipe.id}>{equipe.nome_equipe}</option>
+            ))}
+          </select>
+          {formErrors.equipe && <p className="mt-1 text-sm text-red-600">{formErrors.equipe}</p>}
+        </div>
+      )}
 
-      <div>
-        <label htmlFor="servico_externo" className="block text-sm font-medium text-gray-900">Serviço Externo (opcional)</label>
-        <input
-          type="text"
-          name="servico_externo"
-          id="servico_externo"
-          value={formData.servico_externo}
-          onChange={handleChange}
-          disabled={!!formData.equipe}
-          className={`mt-1 block w-full bg-gray-50 border ${formErrors.servico_externo ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2 disabled:bg-gray-200`}
-          maxLength="255"
-        />
-        {formErrors.servico_externo && <p className="mt-1 text-sm text-red-600">{formErrors.servico_externo}</p>}
-      </div>
+      {locacaoType === 'funcionario' && (
+        <div>
+          <label htmlFor="funcionario_locado" className="block text-sm font-medium text-gray-900">Funcionário <span className="text-red-500">*</span></label>
+          <select
+            name="funcionario_locado"
+            id="funcionario_locado"
+            value={formData.funcionario_locado}
+            onChange={handleChange}
+            className={`mt-1 block w-full bg-gray-50 border ${formErrors.funcionario_locado ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2`}
+          >
+            <option value="">Selecione um Funcionário</option>
+            {funcionarios && funcionarios.map(func => (
+              <option key={func.id} value={func.id}>{func.nome_completo}</option>
+            ))}
+          </select>
+          {formErrors.funcionario_locado && <p className="mt-1 text-sm text-red-600">{formErrors.funcionario_locado}</p>}
+          {formErrors.funcionarios && <p className="mt-1 text-sm text-red-600">{formErrors.funcionarios}</p>}
+        </div>
+      )}
+
+      {locacaoType === 'servico_externo' && (
+        <div>
+          <label htmlFor="servico_externo" className="block text-sm font-medium text-gray-900">Serviço Externo <span className="text-red-500">*</span></label>
+          <input
+            type="text"
+            name="servico_externo"
+            id="servico_externo"
+            value={formData.servico_externo}
+            onChange={handleChange}
+            className={`mt-1 block w-full bg-gray-50 border ${formErrors.servico_externo ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2`}
+            maxLength="255"
+          />
+          {formErrors.servico_externo && <p className="mt-1 text-sm text-red-600">{formErrors.servico_externo}</p>}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>

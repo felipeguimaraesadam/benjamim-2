@@ -6,10 +6,11 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
     return obra ? obra.nome_obra : 'N/A';
   };
 
-  const getEquipeNome = (equipeId) => {
-    const equipe = equipes && equipes.find(e => e.id === equipeId);
-    return equipe ? equipe.nome_equipe : 'N/A';
-  };
+  // getEquipeNome can be removed if equipe_nome is always provided by serializer
+  // const getEquipeNome = (equipeId) => {
+  //   const equipe = equipes && equipes.find(e => e.id === equipeId);
+  //   return equipe ? equipe.nome_equipe : 'N/A';
+  // };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -30,7 +31,7 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
         <thead className="text-xs text-gray-700 uppercase bg-gray-100">
           <tr>
             <th scope="col" className="px-6 py-3">Obra</th>
-            <th scope="col" className="px-6 py-3">Locação (Equipe/Serviço Externo)</th>
+            <th scope="col" className="px-6 py-3">Recurso Locado</th>
             <th scope="col" className="px-6 py-3">Data Início</th>
             <th scope="col" className="px-6 py-3">Data Fim</th>
             <th scope="col" className="px-6 py-3">Ações</th>
@@ -41,11 +42,10 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
             <tr key={locacao.id} className="bg-white border-b hover:bg-gray-50">
               <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{locacao.obra_nome || getObraNome(locacao.obra)}</td>
               <td className="px-6 py-4">
-                {locacao.equipe_nome
-                  ? `Equipe: ${locacao.equipe_nome}`
-                  : locacao.servico_externo
-                    ? `Serviço Externo: ${locacao.servico_externo}`
-                    : 'N/A'}
+                {locacao.equipe_nome ? `Equipe: ${locacao.equipe_nome}` :
+                 locacao.funcionario_locado_nome ? `Funcionário: ${locacao.funcionario_locado_nome}` :
+                 locacao.servico_externo ? `Externo: ${locacao.servico_externo}` :
+                 'N/A'}
               </td>
               <td className="px-6 py-4">{formatDate(locacao.data_locacao_inicio)}</td>
               <td className="px-6 py-4">{formatDate(locacao.data_locacao_fim)}</td>

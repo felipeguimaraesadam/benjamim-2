@@ -80,6 +80,7 @@ class Equipe(models.Model):
 class Locacao_Obras_Equipes(models.Model):
     obra = models.ForeignKey(Obra, on_delete=models.CASCADE)
     equipe = models.ForeignKey(Equipe, on_delete=models.CASCADE, null=True, blank=True) # Made nullable
+    funcionario_locado = models.ForeignKey('Funcionario', on_delete=models.CASCADE, null=True, blank=True, related_name='locacoes_individuais')
     servico_externo = models.CharField(max_length=255, blank=True, null=True) # New field
     data_locacao_inicio = models.DateField()
     data_locacao_fim = models.DateField(null=True, blank=True)
@@ -87,6 +88,8 @@ class Locacao_Obras_Equipes(models.Model):
     def __str__(self):
         if self.equipe:
             return f"{self.obra.nome_obra} - Equipe: {self.equipe.nome_equipe}"
+        elif self.funcionario_locado:
+            return f"{self.obra.nome_obra} - Funcionário: {self.funcionario_locado.nome_completo}"
         elif self.servico_externo:
             return f"{self.obra.nome_obra} - Externo: {self.servico_externo}"
         return f"Locação ID {self.id} para {self.obra.nome_obra} (detalhes pendentes)"
