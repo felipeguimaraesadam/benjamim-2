@@ -44,13 +44,18 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
 
   useEffect(() => {
     if (initialData) {
+      const inicio = initialData.data_locacao_inicio ? new Date(initialData.data_locacao_inicio).toISOString().split('T')[0] : '';
+      let fim = initialData.data_locacao_fim ? new Date(initialData.data_locacao_fim).toISOString().split('T')[0] : '';
+      if (inicio && !fim) {
+        fim = inicio;
+      }
       setFormData({
         obra: initialData.obra?.id || initialData.obra || '', // Handle if obra is object or just ID
         equipe: initialData.equipe?.id || initialData.equipe || '',
         funcionario_locado: initialData.funcionario_locado?.id || initialData.funcionario_locado || '',
         servico_externo: initialData.servico_externo || '',
-        data_locacao_inicio: initialData.data_locacao_inicio ? new Date(initialData.data_locacao_inicio).toISOString().split('T')[0] : '',
-        data_locacao_fim: initialData.data_locacao_fim ? new Date(initialData.data_locacao_fim).toISOString().split('T')[0] : '',
+        data_locacao_inicio: inicio,
+        data_locacao_fim: fim,
         tipo_pagamento: initialData.tipo_pagamento || 'diaria', // New
         valor_pagamento: initialData.valor_pagamento || '', // New
         data_pagamento: initialData.data_pagamento ? new Date(initialData.data_pagamento).toISOString().split('T')[0] : '', // New
@@ -75,7 +80,7 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
         funcionario_locado: '',
         servico_externo: '',
         data_locacao_inicio: localToday, // Use local current date
-        data_locacao_fim: '',
+        data_locacao_fim: localToday, // Default data_locacao_fim to data_locacao_inicio for new forms
         tipo_pagamento: 'diaria',
         valor_pagamento: '',
         data_pagamento: localToday, // Use local current date
@@ -194,7 +199,18 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
           newFormData = { ...newFormData, valor_pagamento: '' };
         }
       }
+    } else if (name === "data_locacao_inicio") {
+      const newDataInicio = value; // value is the new data_locacao_inicio
+      const currentDataFim = newFormData.data_locacao_fim;
+      if (!currentDataFim || (newDataInicio && currentDataFim && new Date(currentDataFim) < new Date(newDataInicio))) {
+        newFormData = { ...newFormData, data_locacao_fim: newDataInicio };
+      }
+      // If data_locacao_inicio is cleared, data_locacao_fim should also be cleared or handled as per business rule
+      if (!newDataInicio) {
+        newFormData = { ...newFormData, data_locacao_fim: '' };
+      }
     }
+
 
     setFormData(newFormData);
 

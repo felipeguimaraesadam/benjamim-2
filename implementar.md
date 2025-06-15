@@ -19,6 +19,10 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
   - [x] Implementado autopreenchimento dos valores padrão no formulário de locação ao selecionar funcionário e tipo de pagamento. (Concluído em 15/06/2025)
   - [x] Adicionada opção para atualizar o valor padrão do funcionário (com confirmação) caso o valor seja alterado no formulário de locação. (Concluído em 15/06/2025)
 [x] Adicionar campos para armazenar valores pré-definidos para diária, valor por metro e valor por empreitada. Estes campos são opcionais e servirão como sugestão na tela de locação. (Concluído em 15/06/2025)
+[x] (CORE) Ajuste na Duração da Locação:
+  - Modificado o comportamento da `data_locacao_fim`. Se não fornecida ou anterior à data de início, é automaticamente definida como igual à `data_locacao_inicio`.
+  - Realizada migração de dados para atualizar locações existentes com `data_locacao_fim` nula para refletir esta regra.
+  - O campo `data_locacao_fim` agora é não-nulo no banco de dados. (Concluído em 15/06/2025)
 [ ] (CORE) Perfis de Usuário e Permissões: Atualizar as regras de acesso.
 [ ] Admin: Acesso total (criação, leitura, atualização, exclusão).
 [ ] Gerente: Pode adicionar e visualizar dados, mas não pode remover ou excluir registros.
