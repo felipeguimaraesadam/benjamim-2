@@ -1,5 +1,10 @@
 # Changelog
 
+## [Próxima Versão] - 2025-06-15
+
+### Adicionado
+- Adicionados campos para valores padrão de diária, metro e empreitada no cadastro de funcionários. Estes valores podem ser sugeridos na tela de locação.
+
 ## [Unreleased] - 2025-06-14
 
 ### Added

@@ -113,7 +113,16 @@ class ObraSerializer(serializers.ModelSerializer):
 class FuncionarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Funcionario
-        fields = '__all__'
+        fields = [
+            'id',
+            'nome_completo',
+            'cargo',
+            'salario',
+            'data_contratacao',
+            'valor_diaria_padrao',
+            'valor_metro_padrao',
+            'valor_empreitada_padrao',
+        ]
 
 
 class EquipeSerializer(serializers.ModelSerializer):

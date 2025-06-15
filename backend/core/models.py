@@ -65,6 +65,9 @@ class Funcionario(models.Model):
     cargo = models.CharField(max_length=100)
     salario = models.DecimalField(max_digits=10, decimal_places=2)
     data_contratacao = models.DateField()
+    valor_diaria_padrao = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    valor_metro_padrao = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    valor_empreitada_padrao = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
         return self.nome_completo
