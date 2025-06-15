@@ -88,14 +88,12 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
             <th scope="col" className="px-6 py-3">Tipo Pag.</th>
             <th scope="col" className="px-6 py-3">Valor Pag.</th>
             <th scope="col" className="px-6 py-3">Data Pag.</th>
-            {/* <th scope="col" className="px-6 py-3">Status</th> */} {/* New Header */}
+            <th scope="col" className="px-6 py-3">Status</th> {/* New Header */}
             <th scope="col" className="px-6 py-3">Ações</th>
           </tr>
         </thead>
         <tbody>
-          {locacoes.map((locacao) => {
-            // const statusInfo = getLocacaoStatusInfo(locacao);
-            return (
+          {locacoes.map((locacao) => (
             <tr key={locacao.id} className="bg-white border-b hover:bg-gray-50">
               <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{locacao.obra_nome || getObraNome(locacao.obra)}</td>
               <td className="px-6 py-4">
@@ -109,13 +107,11 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
               <td className="px-6 py-4">{formatTipoPagamento(locacao.tipo_pagamento)}</td>
               <td className="px-6 py-4">{formatCurrency(locacao.valor_pagamento)}</td>
               <td className="px-6 py-4">{formatDate(locacao.data_pagamento)}</td>
-              {/*
               <td className="px-6 py-4">
-                <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${statusInfo.colorClass} ${statusInfo.textColorClass}`}>
-                  {statusInfo.text}
+                <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getLocacaoStatusInfo(locacao).colorClass} ${getLocacaoStatusInfo(locacao).textColorClass}`}>
+                  {getLocacaoStatusInfo(locacao).text}
                 </span>
               </td>
-              */}
               <td className="px-6 py-4 flex space-x-2">
                 <button
                   onClick={() => onEdit(locacao)}
