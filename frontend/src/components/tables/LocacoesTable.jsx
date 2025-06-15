@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDateToDMY } from '../../utils/dateUtils.js';
 
 const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }) => {
   const getObraNome = (obraId) => {
@@ -12,10 +13,10 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
   //   return equipe ? equipe.nome_equipe : 'N/A';
   // };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  };
+  // const formatDate = (dateString) => { // Removed local formatDate
+  //   if (!dateString) return 'N/A';
+  //   return new Date(dateString).toLocaleDateString();
+  // };
 
   const formatTipoPagamento = (tipo) => {
     if (!tipo) return 'N/A';
@@ -102,11 +103,11 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
                  locacao.servico_externo ? `Externo: ${locacao.servico_externo}` :
                  'N/A'}
               </td>
-              <td className="px-6 py-4">{formatDate(locacao.data_locacao_inicio)}</td>
-              <td className="px-6 py-4">{formatDate(locacao.data_locacao_fim)}</td>
+              <td className="px-6 py-4">{formatDateToDMY(locacao.data_locacao_inicio)}</td>
+              <td className="px-6 py-4">{formatDateToDMY(locacao.data_locacao_fim)}</td>
               <td className="px-6 py-4">{formatTipoPagamento(locacao.tipo_pagamento)}</td>
               <td className="px-6 py-4">{formatCurrency(locacao.valor_pagamento)}</td>
-              <td className="px-6 py-4">{formatDate(locacao.data_pagamento)}</td>
+              <td className="px-6 py-4">{formatDateToDMY(locacao.data_pagamento)}</td>
               <td className="px-6 py-4">
                 <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getLocacaoStatusInfo(locacao).colorClass} ${getLocacaoStatusInfo(locacao).textColorClass}`}>
                   {getLocacaoStatusInfo(locacao).text}

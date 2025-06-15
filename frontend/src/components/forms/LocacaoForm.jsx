@@ -48,16 +48,25 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
       else if (initialData.servico_externo) setLocacaoType('servico_externo');
       else setLocacaoType('equipe'); // Default
     } else {
+      const getLocalYYYYMMDD = () => { // Defined here for clarity in this block
+        const todayDate = new Date();
+        const year = todayDate.getFullYear();
+        const month = String(todayDate.getMonth() + 1).padStart(2, '0');
+        const day = String(todayDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      const localToday = getLocalYYYYMMDD();
+
       setFormData({
         obra: obras && obras.length > 0 ? obras[0].id : '',
         equipe: '',
         funcionario_locado: '',
         servico_externo: '',
-        data_locacao_inicio: new Date().toISOString().split('T')[0],
+        data_locacao_inicio: localToday, // Use local current date
         data_locacao_fim: '',
-        tipo_pagamento: 'diaria', // New
-        valor_pagamento: '', // New
-        data_pagamento: new Date().toISOString().split('T')[0], // <<< CHANGE THIS LINE
+        tipo_pagamento: 'diaria',
+        valor_pagamento: '',
+        data_pagamento: localToday, // Use local current date
       });
       setLocacaoType('equipe'); // Default for new
     }

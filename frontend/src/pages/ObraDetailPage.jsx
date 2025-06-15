@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import * as api from '../services/api.js';
+import { formatDateToDMY } from '../utils/dateUtils.js'; // Import the new formatter
 import { useApiData } from '../hooks/useApiData'; // Import the custom hook
 
 import DistribuicaoMaterialForm from '../components/forms/DistribuicaoMaterialForm';
@@ -91,12 +92,7 @@ const ObraDetailPage = () => {
              setRemovingLocacaoId(null);
          }
      }
-  }, [fetchLocacoes, setOperationStatus]); // setSpecificLocacaoError is stable
-
-  const formatDate = useCallback((dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-  }, []);
+  }, [fetchLocacoes, fetchObraDetails, setOperationStatus]); // Added fetchObraDetails to dependency array
 
   // Overall page loading state (optional, can use individual isLoading states in JSX)
   // const isPageLoading = isLoadingObra || isLoadingLocacoes || ... ;
@@ -123,7 +119,7 @@ const ObraDetailPage = () => {
         </div>
       )}
 
-      <ObraDetailHeader obra={obra} formatDate={formatDate} />
+      <ObraDetailHeader obra={obra} formatDate={formatDateToDMY} />
 
       <FinancialDashboard obra={obra} />
 
@@ -131,7 +127,7 @@ const ObraDetailPage = () => {
 
       <CurrentStockTable
         comprasEstoque={comprasEstoque}
-        formatDate={formatDate}
+        formatDate={formatDateToDMY}
         // isLoading={isLoadingTodasAsCompras} // Can add if needed for a specific loader on this table
         // error={errorTodasAsCompras}
       />
@@ -168,7 +164,7 @@ const ObraDetailPage = () => {
               obraId={obra.id}
               obraNome={obra.nome_obra}
               onRemoverLocacao={handleRemoverLocacao}
-              formatDate={formatDate}
+              formatDate={formatDateToDMY}
               locacaoError={errorLocacoes || specificLocacaoError}
               isLoading={isLoadingLocacoes}
               removingLocacaoId={removingLocacaoId} // Pass loading state for specific button

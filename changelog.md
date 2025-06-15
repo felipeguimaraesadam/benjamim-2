@@ -18,6 +18,7 @@
 - Corrigida a exibição de detalhes da locação na página de detalhes da obra para mostrar corretamente o recurso alocado (equipe, funcionário, serviço externo) e os valores de pagamento.
 - Ajustado cálculo de custo total e custos por categoria na Obra para incluir os custos de locações.
 - Garantido que o painel financeiro na página de detalhes da obra seja atualizado após a remoção de uma locação.
+- **Consistência de Datas (Fuso Horário)**: Corrigido um problema onde datas de locação eram exibidas com um dia de diferença entre diferentes telas (e.g., detalhes da obra vs. lista de locações). Ajustadas as configurações de fuso horário do Django para 'America/Sao_Paulo' e padronizada a formatação de datas no frontend para evitar conversões indesejadas baseadas no fuso horário do navegador.
 
 ## [Unreleased] - 2025-06-10
 
