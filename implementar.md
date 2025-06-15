@@ -16,6 +16,7 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [x] Oferecer a opção de transferir o funcionário, removendo a locação e o custo da obra anterior e aplicando na nova para evitar pagamentos duplicados. (Concluído em 14/06/2025)
 [x] (CORE) Cadastro de Funcionário com Formas de Pagamento: O cadastro de funcionário deve suportar múltiplos tipos de contrato/pagamento.
   - [x] Adicionados campos para valores padrão de diária, metro e empreitada no cadastro do funcionário e API. (Concluído em 15/06/2025)
+  - [x] Implementado autopreenchimento dos valores padrão no formulário de locação ao selecionar funcionário e tipo de pagamento. (Concluído em 15/06/2025)
 [x] Adicionar campos para armazenar valores pré-definidos para diária, valor por metro e valor por empreitada. Estes campos são opcionais e servirão como sugestão na tela de locação. (Concluído em 15/06/2025)
 [ ] (CORE) Perfis de Usuário e Permissões: Atualizar as regras de acesso.
 [ ] Admin: Acesso total (criação, leitura, atualização, exclusão).

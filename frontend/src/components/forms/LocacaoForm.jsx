@@ -4,6 +4,7 @@ import * as api from '../../services/api'; // Import API service
 const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoading, onTransferSuccess }) => {
   const [locacaoType, setLocacaoType] = useState('equipe'); // 'equipe', 'funcionario', 'servico_externo'
   const [funcionarios, setFuncionarios] = useState([]);
+  const [selectedFuncionarioObject, setSelectedFuncionarioObject] = useState(null); // New state
   const [formData, setFormData] = useState({
     obra: '',
     equipe: '',
@@ -69,27 +70,129 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
         data_pagamento: localToday, // Use local current date
       });
       setLocacaoType('equipe'); // Default for new
+      setSelectedFuncionarioObject(null); // Reset selected funcionario on form reset
     }
     setFormErrors({});
-  }, [initialData, obras]);
+  }, [initialData, obras]); // Removed 'funcionarios' from dependency array to prevent reset on fetch complete if editing
 
   const handleLocacaoTypeChange = (e) => {
     const newType = e.target.value;
     setLocacaoType(newType);
+
+    let newFuncLocadoId = formData.funcionario_locado; // Preserve current ID by default
+    let newSelectedFuncObj = selectedFuncionarioObject;
+    let newValorPagamento = formData.valor_pagamento;
+
+    if (newType !== 'funcionario') {
+        newFuncLocadoId = ''; // Clear funcionario ID if type is not funcionario
+        newSelectedFuncObj = null;
+        newValorPagamento = ''; // Clear payment value as context is lost
+    } else {
+        // Switching TO 'funcionario' type.
+        // If a funcionario ID already exists in formData (e.g. from initialData, or toggling type),
+        // try to find that funcionario object and prefill payment.
+        if (formData.funcionario_locado) { // formData.funcionario_locado holds the ID
+            const func = funcionarios.find(f => f.id.toString() === formData.funcionario_locado.toString());
+            newSelectedFuncObj = func || null;
+            if (func && formData.tipo_pagamento) { // Use current formData.tipo_pagamento
+                const valorPadraoKey = `valor_${formData.tipo_pagamento}_padrao`;
+                const valorPadrao = func[valorPadraoKey];
+                if (valorPadrao !== null && valorPadrao !== undefined && valorPadrao !== "") {
+                    newValorPagamento = parseFloat(valorPadrao).toFixed(2);
+                } else {
+                    newValorPagamento = ''; // No default for this type
+                }
+            } else {
+                 newValorPagamento = ''; // No func found or no tipo_pagamento, clear payment
+            }
+        } else {
+            // Switching to 'funcionario' but no funcionario_locado ID is set yet in formData,
+            // so clear selected object and payment.
+            newSelectedFuncObj = null;
+            newValorPagamento = '';
+        }
+        // newFuncLocadoId remains as formData.funcionario_locado (which could be '' or an ID)
+    }
+
+    setSelectedFuncionarioObject(newSelectedFuncObj);
     setFormData(prev => ({
-      ...prev,
-      equipe: newType === 'equipe' ? prev.equipe : '', // Keep existing if switching back, else clear
-      funcionario_locado: newType === 'funcionario' ? prev.funcionario_locado : '',
-      servico_externo: newType === 'servico_externo' ? prev.servico_externo : '',
+        ...prev,
+        equipe: newType === 'equipe' ? (prev.equipe || '') : '', // Keep if type is equipe and exists, else clear
+        funcionario_locado: newFuncLocadoId,
+        servico_externo: newType === 'servico_externo' ? (prev.servico_externo || '') : '', // Keep if type is servico_externo and exists, else clear
+        valor_pagamento: newValorPagamento,
     }));
-    setFormErrors(prev => ({...prev, general: null, equipe: null, funcionario_locado: null, servico_externo: null}));
+
+    setFormErrors(prevErrs => ({
+        ...prevErrs,
+        general: null, equipe: null, funcionario_locado: null, servico_externo: null, valor_pagamento: null
+    }));
   };
+
+  // This useEffect is to handle the case where initialData sets a funcionario_locado
+  // and we need to populate selectedFuncionarioObject and potentially valor_pagamento.
+  useEffect(() => {
+    if (initialData?.funcionario_locado && funcionarios.length > 0) {
+      const funcId = initialData.funcionario_locado.id || initialData.funcionario_locado;
+      const func = funcionarios.find(f => f.id.toString() === funcId.toString());
+      if (func) {
+        setSelectedFuncionarioObject(func);
+        // If valor_pagamento was not part of initialData or is empty, try to prefill
+        // Ensure that we also check if formData.tipo_pagamento is already set (it should be by initialData)
+        const tipoPagamento = initialData.tipo_pagamento || formData.tipo_pagamento; // Prefer initialData's type
+        if (!initialData.valor_pagamento && tipoPagamento) {
+          const valorPadraoKey = `valor_${tipoPagamento}_padrao`;
+          const valorPadrao = func[valorPadraoKey];
+          if (valorPadrao !== null && valorPadrao !== undefined && valorPadrao !== "") {
+            setFormData(prev => ({ ...prev, valor_pagamento: parseFloat(valorPadrao).toFixed(2) }));
+          }
+        }
+      }
+    }
+  }, [initialData, funcionarios]); // Trigger when initialData or funcionarios list changes
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    let newFormData = { ...formData, [name]: value };
+
+    if (name === "funcionario_locado") {
+      const selectedFunc = funcionarios.find(f => f.id.toString() === value);
+      setSelectedFuncionarioObject(selectedFunc || null);
+      // Auto-fill payment value if funcionario and type of payment are set
+      if (selectedFunc && newFormData.tipo_pagamento) {
+        const valorPadraoKey = `valor_${newFormData.tipo_pagamento}_padrao`;
+        const valorPadrao = selectedFunc[valorPadraoKey];
+        if (valorPadrao !== null && valorPadrao !== undefined && valorPadrao !== "") {
+          newFormData = { ...newFormData, valor_pagamento: parseFloat(valorPadrao).toFixed(2) };
+        } else {
+          // If no standard value for that type, clear it or set to default
+           newFormData = { ...newFormData, valor_pagamento: '' };
+        }
+      } else if (!selectedFunc) { // Funcionario cleared
+        newFormData = { ...newFormData, valor_pagamento: '' };
+      }
+    } else if (name === "tipo_pagamento") {
+      // Auto-fill payment value if funcionario is already selected and type of payment changes
+      if (selectedFuncionarioObject) {
+        const valorPadraoKey = `valor_${value}_padrao`; // value here is the new tipo_pagamento
+        const valorPadrao = selectedFuncionarioObject[valorPadraoKey];
+        if (valorPadrao !== null && valorPadrao !== undefined && valorPadrao !== "") {
+          newFormData = { ...newFormData, valor_pagamento: parseFloat(valorPadrao).toFixed(2) };
+        } else {
+          newFormData = { ...newFormData, valor_pagamento: '' };
+        }
+      }
+    }
+
+    setFormData(newFormData);
+
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: null }));
+    }
+    // Clear specific errors if related fields change
+    if (name === "funcionario_locado" || name === "tipo_pagamento") {
+        if (formErrors.valor_pagamento) setFormErrors(prev => ({...prev, valor_pagamento: null}));
     }
   };
 
