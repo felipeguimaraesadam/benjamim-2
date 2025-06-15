@@ -21,6 +21,17 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
   const [transferDetails, setTransferDetails] = useState(null);
   const [isTransferring, setIsTransferring] = useState(false);
 
+  // State for the new update default value prompt
+  const [showUpdateDefaultConfirmModal, setShowUpdateDefaultConfirmModal] = useState(false);
+  const [updateDefaultPromptData, setUpdateDefaultPromptData] = useState({
+    formValue: null,
+    defaultValue: null,
+    paymentType: '',
+    // To store user's choice from this modal
+    userChoice: null, // 'update_default_and_save', 'save_without_update', 'cancel_operation'
+  });
+
+
   // Fetch Funcionarios
   useEffect(() => {
     api.getFuncionarios()
@@ -236,11 +247,106 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
 
     if (!validateFrontendForm()) return;
 
+    // Detection logic for differing payment values
+    let shouldPromptUpdateDefault = false;
+    let formValueForPrompt = null;
+    let defaultValueForPrompt = null;
+    let paymentTypeForPrompt = '';
+    const valorPagamentoFloat = parseFloat(formData.valor_pagamento);
+
+    if (locacaoType === 'funcionario' && selectedFuncionarioObject && formData.tipo_pagamento && !isNaN(valorPagamentoFloat)) {
+        let defaultFieldKey = '';
+        let paymentTypeDisplay = ''; // For user-friendly display in prompt
+
+        if (formData.tipo_pagamento === 'diaria') {
+            defaultFieldKey = 'valor_diaria_padrao';
+            paymentTypeDisplay = 'diária';
+        } else if (formData.tipo_pagamento === 'metro') {
+            defaultFieldKey = 'valor_metro_padrao';
+            paymentTypeDisplay = 'metro';
+        } else if (formData.tipo_pagamento === 'empreitada') {
+            defaultFieldKey = 'valor_empreitada_padrao';
+            paymentTypeDisplay = 'empreitada';
+        }
+
+        if (defaultFieldKey) {
+            const currentDefaultValueString = selectedFuncionarioObject[defaultFieldKey];
+            // Ensure currentDefaultValue is treated as null if it's an empty string or null/undefined
+            const currentDefaultValue = (currentDefaultValueString !== null && currentDefaultValueString !== undefined && currentDefaultValueString !== "")
+                                        ? parseFloat(currentDefaultValueString)
+                                        : null;
+
+            // Prompt if:
+            // 1. There was a meaningful default value (not null, not 0).
+            // 2. The current form value is different from this default.
+            if (currentDefaultValue !== null && currentDefaultValue !== 0 && Math.abs(currentDefaultValue - valorPagamentoFloat) > 0.001) {
+                shouldPromptUpdateDefault = true;
+                formValueForPrompt = valorPagamentoFloat;
+                defaultValueForPrompt = currentDefaultValue;
+                paymentTypeForPrompt = paymentTypeDisplay; // Use the display name
+            }
+        }
+    }
+
+    // If shouldPromptUpdateDefault is true, show prompt and pause submission.
+    if (shouldPromptUpdateDefault) {
+        setUpdateDefaultPromptData({
+            formValue: formValueForPrompt,
+            defaultValue: defaultValueForPrompt,
+            paymentType: paymentTypeForPrompt,
+            userChoice: null, // Reset any previous choice
+        });
+        setShowUpdateDefaultConfirmModal(true);
+        return; // Stop handleSubmit execution here; modal actions will continue it
+    }
+
+    // If not prompting, or if continuing after prompt (logic for this will be added in next step),
+    // proceed to prepare data for submission.
+    // For THIS SUBTASK, if prompt isn't shown, we don't proceed to actual onSubmit call yet.
+    // This will be completed in the "Conditional Submission Logic" step.
+    // So, if no prompt, we effectively do nothing further in handleSubmit for now.
+    // The actual call to onSubmit(dataToSubmit) will be handled based on userChoice or if no prompt was needed.
+
+    // If not prompting, call proceedWithSubmission directly.
+    if (!shouldPromptUpdateDefault) {
+        // setLoading(true) should be called before proceedWithSubmission
+        // or handled consistently if proceedWithSubmission is always async.
+        // For now, assuming parent component's isLoading handles this or proceedWithSubmission handles its own loading state.
+        await proceedWithSubmission('save_only_no_prompt');
+    }
+    // If shouldPromptUpdateDefault is true, the modal buttons will call proceedWithSubmission.
+    // setLoading(false) will be handled by proceedWithSubmission.
+};
+
+// New function to handle the actual submission logic
+const proceedWithSubmission = async (userChoice) => {
+    // Ensure isLoading is true at the beginning of submission process
+    // This might be redundant if parent component's isLoading is already true
+    // and passed to this form, but good for self-contained logic if needed.
+    // For now, assuming `onSubmit` (passed from parent) handles overall loading state.
+
+    setFormErrors({}); // Clear previous errors
+
+    if (userChoice === 'cancel_operation') {
+        setShowUpdateDefaultConfirmModal(false); // Should already be false
+        // onCancel(); // Call original form cancel if needed, or just ensure loading is false.
+        // The parent's isLoading state should be managed.
+        // If this component manages its own isLoading for the submit button, set it here.
+        // For now, assuming parent's onCancel handles loading state.
+        if (typeof onCancel === 'function') { // Ensure onCancel is a function before calling
+            onCancel(); // This typically resets parent's form visibility and loading state.
+        } else {
+            // Fallback if onCancel is not provided or not a function.
+            // Manage local loading state if applicable, or log.
+            console.warn("onCancel prop is not a function or not provided.");
+        }
+        return;
+    }
+
     const dataToSubmit = {
       obra: parseInt(formData.obra, 10),
       data_locacao_inicio: formData.data_locacao_inicio,
       data_locacao_fim: formData.data_locacao_fim || null,
-      // Initialize resource type fields to null/empty
       equipe: null,
       funcionario_locado: null,
       servico_externo: '',
@@ -251,46 +357,110 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
     };
 
     if (locacaoType === 'equipe') {
-      dataToSubmit.equipe = formData.equipe ? parseInt(formData.equipe, 10) : null;
+        dataToSubmit.equipe = formData.equipe ? parseInt(formData.equipe, 10) : null;
     } else if (locacaoType === 'funcionario') {
-      dataToSubmit.funcionario_locado = formData.funcionario_locado ? parseInt(formData.funcionario_locado, 10) : null;
+        dataToSubmit.funcionario_locado = formData.funcionario_locado ? parseInt(formData.funcionario_locado, 10) : null;
     } else if (locacaoType === 'servico_externo') {
-      dataToSubmit.servico_externo = formData.servico_externo.trim() || null;
+        dataToSubmit.servico_externo = formData.servico_externo.trim() || null;
     }
 
-    try {
-      await onSubmit(dataToSubmit);
-    } catch (err) {
-      const backendErrors = err.response?.data;
-      if (backendErrors?.conflict_details && backendErrors?.funcionario_locado) {
-        setTransferDetails({
-          conflictingLocacao: backendErrors.conflict_details,
-          newLocacaoData: dataToSubmit,
-          conflictMessage: typeof backendErrors.funcionario_locado === 'string'
-                           ? backendErrors.funcionario_locado
-                           : JSON.stringify(backendErrors.funcionario_locado)
-        });
-        setShowTransferConfirm(true);
-        // Optionally set a specific form error
-        // setFormErrors({ funcionario_locado: "Conflito detectado. Opção de transferência disponível." });
-      } else if (backendErrors && typeof backendErrors === 'object') {
-        const newFormErrors = {};
-        for (const key in backendErrors) {
-          if (key === 'conflict_details') continue;
-          newFormErrors[key] = Array.isArray(backendErrors[key])
-                             ? backendErrors[key].join('; ')
-                             : (typeof backendErrors[key] === 'string' ? backendErrors[key] : JSON.stringify(backendErrors[key]));
+    let funcionarioDefaultUpdated = false;
+
+    if (userChoice === 'update_default_and_save' && selectedFuncionarioObject && updateDefaultPromptData.paymentType) {
+        let fieldToUpdate = '';
+        if (updateDefaultPromptData.paymentType === 'diária') fieldToUpdate = 'valor_diaria_padrao';
+        else if (updateDefaultPromptData.paymentType === 'metro') fieldToUpdate = 'valor_metro_padrao';
+        else if (updateDefaultPromptData.paymentType === 'empreitada') fieldToUpdate = 'valor_empreitada_padrao';
+
+        if (fieldToUpdate) {
+            try {
+                await api.updateFuncionario(selectedFuncionarioObject.id, {
+                    [fieldToUpdate]: updateDefaultPromptData.formValue.toFixed(2)
+                });
+                funcionarioDefaultUpdated = true;
+
+                // Update local selectedFuncionarioObject state
+                const updatedEmployee = {
+                    ...selectedFuncionarioObject,
+                    [fieldToUpdate]: updateDefaultPromptData.formValue.toFixed(2)
+                };
+                setSelectedFuncionarioObject(updatedEmployee);
+
+                // Also update this employee in the main 'funcionarios' list if present
+                setFuncionarios(prevFuncionarios =>
+                    prevFuncionarios.map(func =>
+                        func.id === updatedEmployee.id ? updatedEmployee : func
+                    )
+                );
+
+                // Optionally, show success toast for default value update
+                console.log("Valor padrão do funcionário atualizado com sucesso!");
+
+            } catch (error) {
+                console.error("Falha ao atualizar valor padrão do funcionário:", error);
+                setFormErrors(prev => ({ ...prev, general: `Falha ao atualizar o valor padrão do funcionário: ${error.message}. A locação não foi salva.` }));
+                // If parent component handles isLoading via prop, ensure it's reset
+                if (typeof onCancel === 'function' && isLoading) { // A bit of a hack, better to have explicit setLoading from parent
+                   // onCancel(); // This might be too drastic.
+                }
+                // Decide if we should stop or still try to save the locacao.
+                // For now, if update fails, we stop. User can try again.
+                // Or, ask: "Falha ao atualizar o padrão. Deseja salvar a locação mesmo assim?"
+                const confirmSaveAnyway = window.confirm("Falha ao atualizar o valor padrão do funcionário. Deseja salvar a locação mesmo assim?");
+                if (!confirmSaveAnyway) {
+                    if (typeof onCancel === 'function') onCancel(); // Or a specific setLoading(false)
+                    return;
+                }
+                // If they want to save anyway, proceed as if 'save_only'
+            }
         }
-        setFormErrors(newFormErrors);
-      } else if (err.message) {
-        setFormErrors({ general: err.message });
-      } else {
-        setFormErrors({ general: 'Ocorreu um erro desconhecido.' });
-      }
     }
-  };
 
-  const handleConfirmTransfer = async () => {
+    // Proceed to save the lease if:
+    // - No prompt was needed ('save_only_no_prompt')
+    // - User chose to save without updating ('save_only')
+    // - User chose to update, and update was successful OR they chose to save anyway after update failure.
+    if (userChoice === 'save_only_no_prompt' || userChoice === 'save_only' || funcionarioDefaultUpdated ||
+        (userChoice === 'update_default_and_save' && !funcionarioDefaultUpdated && window.confirm("Falha ao atualizar o valor padrão do funcionário. Deseja salvar a locação mesmo assim?")) ) {
+        try {
+            await onSubmit(dataToSubmit); // onSubmit is the prop from parent, handles actual locacao save
+                                          // and subsequent state changes like closing modal, fetching data.
+        } catch (err) {
+            // Error handling for locacao submission (conflict, validation, etc.)
+            const backendErrors = err.response?.data;
+            if (backendErrors?.conflict_details && backendErrors?.funcionario_locado) {
+                setTransferDetails({
+                    conflictingLocacao: backendErrors.conflict_details,
+                    newLocacaoData: dataToSubmit,
+                    conflictMessage: typeof backendErrors.funcionario_locado === 'string'
+                                     ? backendErrors.funcionario_locado
+                                     : JSON.stringify(backendErrors.funcionario_locado)
+                });
+                setShowTransferConfirm(true);
+            } else if (backendErrors && typeof backendErrors === 'object') {
+                const newFormErrors = {};
+                for (const key in backendErrors) {
+                    if (key === 'conflict_details') continue;
+                    newFormErrors[key] = Array.isArray(backendErrors[key])
+                                       ? backendErrors[key].join('; ')
+                                       : (typeof backendErrors[key] === 'string' ? backendErrors[key] : JSON.stringify(backendErrors[key]));
+                }
+                setFormErrors(newFormErrors);
+            } else if (err.message) {
+                setFormErrors({ general: err.message });
+            } else {
+                setFormErrors({ general: 'Ocorreu um erro desconhecido ao salvar a locação.' });
+            }
+            // If onSubmit itself throws, the parent's isLoading should ideally be handled by the parent.
+            // If this component's submit button has its own isLoading state, reset it here.
+        }
+    }
+    // If we reached here, and not cancelled, the operation is considered complete from this function's perspective.
+    // Parent's onSubmit or onCancel should handle final loading state.
+};
+
+
+const handleConfirmTransfer = async () => {
     if (!transferDetails) return;
     setIsTransferring(true);
     setFormErrors({});
@@ -509,6 +679,50 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
       </div>
     </form>
 
+    {/* Modal para confirmar atualização do valor padrão do funcionário */}
+    {showUpdateDefaultConfirmModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+        <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Atualizar Valor Padrão?</h2>
+          <p className="mb-6 text-sm text-gray-700">
+            O valor da {updateDefaultPromptData.paymentType} (R$ {updateDefaultPromptData.formValue?.toFixed(2)})
+            é diferente do padrão atual do funcionário (R$ {updateDefaultPromptData.defaultValue?.toFixed(2)}).
+            <br />
+            Deseja atualizar o valor padrão do funcionário para R$ {updateDefaultPromptData.formValue?.toFixed(2)}?
+          </p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => {
+                setShowUpdateDefaultConfirmModal(false);
+                proceedWithSubmission('cancel_operation');
+              }}
+              className="py-2 px-4 text-sm font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300"
+            >
+              Cancelar Operação
+            </button>
+            <button
+              onClick={() => {
+                setShowUpdateDefaultConfirmModal(false);
+                proceedWithSubmission('save_only');
+              }}
+              className="py-2 px-4 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+            >
+              Não, salvar locação sem atualizar
+            </button>
+            <button
+              onClick={() => {
+                setShowUpdateDefaultConfirmModal(false);
+                proceedWithSubmission('update_default_and_save');
+              }}
+              className="py-2 px-4 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md"
+            >
+              Sim, atualizar e salvar locação
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
     {showTransferConfirm && transferDetails && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
         <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
@@ -538,7 +752,7 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
             <button
               onClick={handleConfirmTransfer}
               disabled={isTransferring}
-              className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:bg-primary-300"
+              className="py-2 px-4 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300"
             >
               {isTransferring ? 'Transferindo...' : 'Sim, Transferir Funcionário'}
             </button>

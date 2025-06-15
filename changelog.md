@@ -3,7 +3,7 @@
 ## [Próxima Versão] - 2025-06-15
 
 ### Adicionado
-- Adicionados campos para valores padrão de diária, metro e empreitada no cadastro de funcionários. Implementado autopreenchimento destes valores no formulário de locação ao selecionar o funcionário e o tipo de pagamento.
+- Adicionados campos para valores padrão de diária, metro e empreitada no cadastro de funcionários. Implementado autopreenchimento destes valores no formulário de locação. Adicionada funcionalidade para, mediante confirmação do usuário, atualizar o valor padrão do funcionário se este for alterado durante a criação de uma locação.
 
 ## [Unreleased] - 2025-06-14
 
