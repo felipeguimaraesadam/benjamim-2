@@ -1,9 +1,12 @@
 from rest_framework import viewsets, permissions, status, filters # Added filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Q, Sum, F
+from django.db.models import Q, Sum, F, Case, When, Value, IntegerField # Added Case, When, Value, IntegerField
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date, timedelta
+from django.db import transaction
+from rest_framework.decorators import action
+from django.utils import timezone # Added timezone
 
 from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra
 from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer
@@ -49,23 +52,109 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows alocacoes to be viewed or edited.
     """
-    queryset = Locacao_Obras_Equipes.objects.all()
+    queryset = Locacao_Obras_Equipes.objects.all() # <<< ADD THIS LINE BACK
     serializer_class = LocacaoObrasEquipesSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated] # Or your specific permissions
 
     def get_queryset(self):
-        queryset = Locacao_Obras_Equipes.objects.all().order_by('-data_locacao_inicio') # Default ordering
+        today = timezone.now().date()
+
+        queryset = Locacao_Obras_Equipes.objects.annotate(
+            status_order_group=Case(
+                When(status_locacao='cancelada', then=Value(3)),
+                When(Q(status_locacao='ativa') &
+                     Q(data_locacao_inicio__lte=today) &
+                     (Q(data_locacao_fim__gte=today) | Q(data_locacao_fim__isnull=True)),
+                     then=Value(0)),
+                When(Q(status_locacao='ativa') & Q(data_locacao_inicio__gt=today),
+                     then=Value(1)),
+                When(Q(status_locacao='ativa') & Q(data_locacao_fim__lt=today),
+                     then=Value(2)),
+                default=Value(2),
+                output_field=IntegerField()
+            )
+        ).order_by('status_order_group', 'data_locacao_inicio')
+
         obra_id = self.request.query_params.get('obra_id')
         if obra_id is not None:
             queryset = queryset.filter(obra_id=obra_id)
 
-        # You could add more filters here, e.g., by equipe_id, date ranges, etc.
-        # equipe_id = self.request.query_params.get('equipe_id')
-        # if equipe_id is not None:
-        #     queryset = queryset.filter(equipe_id=equipe_id)
-
         return queryset
 
+    @action(detail=False, methods=['post'], url_path='transferir-funcionario')
+    def transfer_funcionario(self, request):
+        conflicting_locacao_id = request.data.get('conflicting_locacao_id')
+        new_locacao_data = request.data.get('new_locacao_data')
+
+        if not conflicting_locacao_id or not new_locacao_data:
+            return Response(
+                {"error": "Dados insuficientes para transferência (conflicting_locacao_id e new_locacao_data são obrigatórios)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            with transaction.atomic():
+                # 1. Retrieve and validate old locação
+                try:
+                    old_loc = Locacao_Obras_Equipes.objects.get(pk=conflicting_locacao_id)
+                except Locacao_Obras_Equipes.DoesNotExist:
+                    return Response({"error": "Locação conflitante não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+                # 2. Prepare new locação data
+                # Ensure 'funcionario_locado' ID is an integer
+                if 'funcionario_locado' in new_locacao_data and isinstance(new_locacao_data['funcionario_locado'], str):
+                    try:
+                        new_locacao_data['funcionario_locado'] = int(new_locacao_data['funcionario_locado'])
+                    except ValueError:
+                        return Response({"error": "ID de funcionário inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+                # Ensure 'obra' ID is an integer
+                if 'obra' in new_locacao_data and isinstance(new_locacao_data['obra'], str):
+                    try:
+                        new_locacao_data['obra'] = int(new_locacao_data['obra'])
+                    except ValueError:
+                            return Response({"error": "ID de obra inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+                # 3. Determine new end date for old locação
+                new_loc_start_date_str = new_locacao_data.get('data_locacao_inicio')
+                if not new_loc_start_date_str:
+                    return Response({"error": "Data de início da nova locação é obrigatória."}, status=status.HTTP_400_BAD_REQUEST)
+
+                try:
+                    new_loc_start_date = date.fromisoformat(new_loc_start_date_str)
+                except ValueError:
+                    return Response({"error": "Formato de data de início da nova locação inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+                old_loc_new_end_date = new_loc_start_date - timedelta(days=1)
+
+                if old_loc_new_end_date < old_loc.data_locacao_inicio:
+                    old_loc.data_locacao_fim = old_loc_new_end_date
+                    old_loc.valor_pagamento = Decimal('0.00')
+                else:
+                    old_loc.data_locacao_fim = old_loc_new_end_date
+                    # Simplified: remove cost from old loc as per "removendo o custo da obra anterior"
+                    old_loc.valor_pagamento = Decimal('0.00')
+
+                old_loc.status_locacao = 'cancelada' # <<< ADD THIS LINE
+                old_loc.save()
+
+                # 4. Now, validate and save the new locação.
+                # The conflict with old_loc should now be resolved.
+                new_loc_serializer = self.get_serializer(data=new_locacao_data)
+                if not new_loc_serializer.is_valid():
+                        return Response(new_loc_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+                new_loc = new_loc_serializer.save()
+                return Response(self.get_serializer(new_loc).data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            # Log the exception e here for debugging
+            # logger.error(f"Erro na transferência de funcionário: {str(e)}")
+            return Response({"error": f"Erro interno no servidor: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # Note: The get_queryset method for LocacaoObrasEquipesViewSet is below the custom action.
+    # This is fine, but for consistency, custom actions are often placed after standard methods.
+    # No change needed for this subtask, just an observation.
 
 class MaterialViewSet(viewsets.ModelViewSet):
     """

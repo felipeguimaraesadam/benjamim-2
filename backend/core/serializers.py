@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from decimal import Decimal
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -78,8 +78,12 @@ class ObraSerializer(serializers.ModelSerializer):
         # obj is the Obra instance
         total_compras = obj.compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         total_despesas = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
-        # Costs for 'servicos' and 'equipes' are assumed to be 0 as per plan clarification
-        return total_compras + total_despesas
+
+        # Calculate total from Locacoes
+        # Ensure Locacao_Obras_Equipes model is imported
+        total_locacoes = Locacao_Obras_Equipes.objects.filter(obra=obj).aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
+
+        return total_compras + total_despesas + total_locacoes
 
     def get_balanco_financeiro(self, obj):
         custo_realizado = self.get_custo_total_realizado(obj) # Reuse the already calculated value
@@ -89,12 +93,20 @@ class ObraSerializer(serializers.ModelSerializer):
     def get_custos_por_categoria(self, obj):
         total_compras = obj.compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         total_despesas = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
-        # Costs for 'servicos' and 'equipes' are assumed to be 0
+
+        # Calculate total from Locacoes (can reuse logic or recalculate)
+        total_locacoes = Locacao_Obras_Equipes.objects.filter(obra=obj).aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
+
+        # Costs for 'servicos' and 'equipes' were previously assumed to be 0.
+        # 'total_locacoes' now represents the cost for allocated resources.
+        # We can rename 'equipes' to 'locacoes' or add it as a new category.
+        # Let's add it as 'locacoes' for clarity.
         return {
             'materiais': total_compras,
             'despesas_extras': total_despesas,
-            'servicos': Decimal('0.00'),
-            'equipes': Decimal('0.00')
+            'locacoes': total_locacoes, # New category for locação costs
+            'servicos': Decimal('0.00'), # Assuming this is for other types of services not covered by locacao
+            # 'equipes': Decimal('0.00') # This can be removed if 'locacoes' covers all allocated personnel/team costs
         }
 
 
@@ -119,53 +131,34 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Locacao_Obras_Equipes
-        fields = '__all__'
+        fields = '__all__' # Includes status_locacao
+        read_only_fields = ('status_locacao',) # Add status_locacao here
         # If you want these extra fields to always appear, ensure they are listed or __all__ is used.
         # For more complex scenarios, consider depth or explicit field listing.
 
+    def validate_valor_pagamento(self, value):
+        if value is not None and value < Decimal('0.00'):
+            raise serializers.ValidationError("O valor do pagamento não pode ser negativo.")
+        return value
+
     def validate(self, data):
-        instance_equipe = getattr(self.instance, 'equipe', None)
-        instance_funcionario = getattr(self.instance, 'funcionario_locado', None)
-        instance_servico = getattr(self.instance, 'servico_externo', None)
+        # Get the values for equipe, funcionario_locado, servico_externo
+        # Prefer values from 'data' (incoming) falling back to 'self.instance' (existing)
+        # This is crucial for partial updates (PATCH)
 
-        equipe = data.get('equipe', instance_equipe)
-        funcionario_locado = data.get('funcionario_locado', instance_funcionario)
-        servico_externo_from_data = data.get('servico_externo', instance_servico)
+        equipe = data.get('equipe', getattr(self.instance, 'equipe', None))
+        funcionario_locado = data.get('funcionario_locado', getattr(self.instance, 'funcionario_locado', None))
+        servico_externo_str = data.get('servico_externo', getattr(self.instance, 'servico_externo', None))
 
-        # Normalize servico_externo: treat empty string as None
+        # Normalize servico_externo: treat empty string as None for validation count
         servico_externo = None
-        if isinstance(servico_externo_from_data, str) and servico_externo_from_data.strip():
-            servico_externo = servico_externo_from_data.strip()
-        elif servico_externo_from_data and not isinstance(servico_externo_from_data, str) : # Should not happen if model field is CharField
-            servico_externo = servico_externo_from_data
+        if isinstance(servico_externo_str, str) and servico_externo_str.strip():
+            servico_externo = servico_externo_str.strip()
+        elif servico_externo_str and not isinstance(servico_externo_str, str): # Should ideally not happen with CharField
+            servico_externo = servico_externo_str
 
-
-        provided_fields = []
-        if 'equipe' in data: provided_fields.append(data.get('equipe'))
-        elif equipe: provided_fields.append(equipe)
-
-        if 'funcionario_locado' in data: provided_fields.append(data.get('funcionario_locado'))
-        elif funcionario_locado: provided_fields.append(funcionario_locado)
-
-        # For servico_externo, consider it "provided" if it's in data and not empty, or if instance had it and not in data
-        if 'servico_externo' in data:
-            if data.get('servico_externo', '').strip():
-                 provided_fields.append(data.get('servico_externo').strip())
-        elif servico_externo: # from instance
-            provided_fields.append(servico_externo)
-
-
-        # Filter out None values that might have been added if fields were not in `data` and instance also didn't have them.
-        # The goal is to count how many distinct resource types are being *actively* set or maintained.
-
-        current_equipe = data.get('equipe', instance_equipe)
-        current_funcionario = data.get('funcionario_locado', instance_funcionario)
-        current_servico_externo_str = data.get('servico_externo', instance_servico)
-        current_servico = None
-        if isinstance(current_servico_externo_str, str) and current_servico_externo_str.strip():
-            current_servico = current_servico_externo_str.strip()
-
-        active_fields_count = sum(1 for field_val in [current_equipe, current_funcionario, current_servico] if field_val)
+        # Validation for one-of-three (equipe, funcionario, servico_externo)
+        active_fields_count = sum(1 for field_val in [equipe, funcionario_locado, servico_externo] if field_val)
 
         if active_fields_count == 0:
             raise serializers.ValidationError(
@@ -177,6 +170,67 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
                 "Não é possível definir uma equipe, um funcionário E um serviço externo ao mesmo tempo. Escolha apenas um."
             )
 
+        # Now, proceed with funcionario conflict validation if a funcionario is involved
+        data_locacao_inicio = data.get('data_locacao_inicio', getattr(self.instance, 'data_locacao_inicio', None))
+        data_locacao_fim = data.get('data_locacao_fim', getattr(self.instance, 'data_locacao_fim', None)) # May be None
+
+        # Ensure data_locacao_inicio is present if we are creating or it's part of validated_data
+        # This field is non-nullable in the model, so DRF should enforce its presence on create.
+        # On update, it might not be in 'data' if not being changed.
+        if not data_locacao_inicio and not (self.instance and self.instance.data_locacao_inicio):
+             # This case should ideally be caught by field-level validation if 'required=True'
+             pass # Or raise error if it's possible to reach here without it.
+
+        if funcionario_locado and data_locacao_inicio:
+            # Query for existing locações for this funcionário
+            conflicting_locacoes_qs = Locacao_Obras_Equipes.objects.filter(
+                funcionario_locado=funcionario_locado
+            )
+
+            if self.instance and self.instance.pk:
+                conflicting_locacoes_qs = conflicting_locacoes_qs.exclude(pk=self.instance.pk)
+
+            # Overlap conditions:
+            # An existing locacao conflicts if:
+            # (its start_date <= new_end_date OR new_end_date IS NULL) AND
+            # (its end_date >= new_start_date OR its end_date IS NULL)
+
+            if data_locacao_fim: # New locacao has an end date
+                # Existing locacao must start before or when new one ends
+                # AND (Existing locacao must end after or when new one starts OR existing locacao is open-ended)
+                q_conditions = Q(data_locacao_inicio__lte=data_locacao_fim) & \
+                               (Q(data_locacao_fim__gte=data_locacao_inicio) | Q(data_locacao_fim__isnull=True))
+                conflicting_locacoes_qs = conflicting_locacoes_qs.filter(q_conditions)
+            else: # New locacao is open-ended
+                # Existing locacao (finite or open) must end after or when new (open-ended) one starts
+                # OR existing locacao itself is open-ended (which means they will overlap indefinitely if new one starts before existing ends,
+                # but simplified: any other open loc for same func is a conflict if not handled by start date alignment)
+                # A simpler way for new open-ended: conflict if existing_end_date >= new_start_date OR existing_end_date IS NULL
+                q_conditions = Q(data_locacao_fim__gte=data_locacao_inicio) | Q(data_locacao_fim__isnull=True)
+                conflicting_locacoes_qs = conflicting_locacoes_qs.filter(q_conditions)
+
+            if conflicting_locacoes_qs.exists():
+                first_conflict = conflicting_locacoes_qs.first()
+                obra_conflito = first_conflict.obra.nome_obra if first_conflict.obra else "Obra Desconhecida"
+                msg = (
+                    f"Este funcionário já está locado na obra '{obra_conflito}' "
+                    f"de {first_conflict.data_locacao_inicio.strftime('%d/%m/%Y')} "
+                    f"até {first_conflict.data_locacao_fim.strftime('%d/%m/%Y') if first_conflict.data_locacao_fim else 'data indefinida'}."
+                    " Verifique as datas."
+                )
+
+                # Restore the detailed error raising:
+                conflict_data_for_api = {
+                    'funcionario_locado': msg,
+                    'conflict_details': {
+                        'obra_id': first_conflict.obra.id if first_conflict.obra else None,
+                        'obra_nome': obra_conflito,
+                        'locacao_id': first_conflict.id,
+                        'data_inicio': first_conflict.data_locacao_inicio.isoformat(),
+                        'data_fim': first_conflict.data_locacao_fim.isoformat() if first_conflict.data_locacao_fim else None
+                    }
+                }
+                raise serializers.ValidationError(conflict_data_for_api)
         return data
 
 

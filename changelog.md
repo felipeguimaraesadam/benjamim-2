@@ -1,5 +1,25 @@
 # Changelog
 
+## [Unreleased] - 2025-06-14
+
+### Added
+- **Definição de Pagamento na Locação**: Ao locar um funcionário, equipe ou serviço externo, agora é obrigatório definir o tipo de pagamento (diária, por metro, empreitada), o valor do pagamento. Opcionalmente, uma data futura para o pagamento pode ser especificada. Isso se aplica tanto ao backend (modelo e API) quanto ao frontend (formulário e tabela de locações).
+- O campo 'Data Pagamento' no formulário de nova locação agora é preenchido automaticamente com a data atual.
+- Validação de Duplicidade de Locação: Implementada validação no backend para impedir que um funcionário seja locado em períodos conflitantes. O frontend agora exibe um alerta detalhado informando a obra e o período do conflito.
+- Implementada funcionalidade de Transferência de Funcionário: Ao tentar locar um funcionário que já possui uma locação conflitante, o sistema agora oferece a opção de transferi-lo. Se confirmado, a locação anterior é finalizada (com ajuste de custo, zerando o valor da locação anterior na obra de origem) e a nova locação é criada na obra de destino.
+- **Status e Ordenação de Locações**:
+    - Adicionado campo `status_locacao` ('ativa', 'cancelada') ao modelo de Locação.
+    - Locações transferidas são agora marcadas como 'cancelada'.
+    - A lista de locações agora é ordenada por status dinâmico (Hoje, Futura, Passada) e depois por 'Cancelada', com ordenação secundária por data de início.
+    - Interface exibe o status da locação com cores distintivas (Azul: Futura, Verde: Hoje, Amarelo: Passada, Vermelho: Cancelada) nas tabelas e listas de locação.
+
+### Fixed
+- Corrigido nome da obra na listagem de obras (exibia ID em vez do nome).
+- Corrigida a exibição de detalhes da locação na página de detalhes da obra para mostrar corretamente o recurso alocado (equipe, funcionário, serviço externo) e os valores de pagamento.
+- Ajustado cálculo de custo total e custos por categoria na Obra para incluir os custos de locações.
+- Garantido que o painel financeiro na página de detalhes da obra seja atualizado após a remoção de uma locação.
+- **Consistência de Datas (Fuso Horário)**: Corrigido um problema onde datas de locação eram exibidas com um dia de diferença entre diferentes telas (e.g., detalhes da obra vs. lista de locações). Ajustadas as configurações de fuso horário do Django para 'America/Sao_Paulo' e padronizada a formatação de datas no frontend para evitar conversões indesejadas baseadas no fuso horário do navegador.
+
 ## [Unreleased] - 2025-06-10
 
 ### Added

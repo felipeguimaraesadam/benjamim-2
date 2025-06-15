@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom'; // Added useLocation and useNavigate
+import { useLocation, useNavigate } from 'react-router-dom';
 import * as api from '../services/api';
 import LocacoesTable from '../components/tables/LocacoesTable';
 import LocacaoForm from '../components/forms/LocacaoForm';
 
 const LocacoesPage = () => {
-  const location = useLocation(); // Hook to access location state
-  const navigate = useNavigate(); // Hook to navigate and modify state
+  const location = useLocation();
+  const navigate = useNavigate();
   const [locacoes, setLocacoes] = useState([]);
   const [obras, setObras] = useState([]);
   const [equipes, setEquipes] = useState([]);
@@ -22,7 +22,7 @@ const LocacoesPage = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.getLocacoes(); // To be created in api.js
+      const response = await api.getLocacoes();
       setLocacoes(response.data);
     } catch (err) {
       setError(err.message || 'Falha ao buscar locações.');
@@ -38,7 +38,6 @@ const LocacoesPage = () => {
       setObras(response.data);
     } catch (err) {
       console.error("Fetch Obras for LocacaoForm Error:", err);
-      // Potentially set a specific error for obras loading if critical for the page
     }
   }, []);
 
@@ -48,7 +47,6 @@ const LocacoesPage = () => {
       setEquipes(response.data);
     } catch (err) {
       console.error("Fetch Equipes for LocacaoForm Error:", err);
-      // Potentially set a specific error for equipes loading
     }
   }, []);
 
@@ -60,11 +58,9 @@ const LocacoesPage = () => {
 
   const handleAddNew = () => {
     const obraIdFromState = location.state?.obraIdParaNovaAlocacao;
-    // Assuming LocacaoForm expects the obra ID as 'obra' in initialData
     setCurrentLocacao(obraIdFromState ? { obra: obraIdFromState } : null);
-    setError(null); // Clear previous errors
+    setError(null);
     setShowFormModal(true);
-    // Clear location state after using it
     if (obraIdFromState) {
         navigate(location.pathname, { replace: true, state: {} });
     }
@@ -72,6 +68,7 @@ const LocacoesPage = () => {
 
   const handleEdit = (locacao) => {
     setCurrentLocacao(locacao);
+    setError(null); // Clear previous errors when opening for edit
     setShowFormModal(true);
   };
 
@@ -82,36 +79,55 @@ const LocacoesPage = () => {
 
   const confirmDelete = async () => {
     if (!locacaoToDeleteId) return;
-    setIsLoading(true);
+    setIsLoading(true); // Consider a specific loading state for delete if it interferes elsewhere
     setError(null);
     try {
-      await api.deleteLocacao(locacaoToDeleteId); // To be created in api.js
+      await api.deleteLocacao(locacaoToDeleteId);
       setLocacaoToDeleteId(null);
       setShowDeleteConfirm(false);
       await fetchLocacoes();
     } catch (err) {
       setError(err.message || 'Falha ao excluir locação.');
       console.error("Delete Locação Error:", err);
-      setIsLoading(false);
+    } finally {
+      setIsLoading(false); // Reset general loading state
     }
   };
 
-  const handleFormSubmit = async (formData) => {
+  const handleApiSubmit = async (formData) => {
     setIsLoadingForm(true);
     setError(null);
     try {
       if (currentLocacao && currentLocacao.id) {
-        await api.updateLocacao(currentLocacao.id, formData); // To be created
+        await api.updateLocacao(currentLocacao.id, formData);
       } else {
-        await api.createLocacao(formData); // To be created
+        await api.createLocacao(formData);
       }
       setShowFormModal(false);
       setCurrentLocacao(null);
       await fetchLocacoes();
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || err.message || (currentLocacao ? 'Falha ao atualizar locação.' : 'Falha ao criar locação.');
-      setError(errorMessage);
-      console.error("Form Submit Locação Error:", err.response?.data || err.message);
+      const backendErrors = err.response?.data;
+      let generalMessage = err.message || (currentLocacao ? 'Falha ao atualizar locação.' : 'Falha ao criar locação.');
+
+      if (backendErrors && typeof backendErrors === 'object') {
+        if (backendErrors.funcionario_locado && backendErrors.conflict_details) {
+            generalMessage = typeof backendErrors.funcionario_locado === 'string'
+                           ? backendErrors.funcionario_locado
+                           : (Array.isArray(backendErrors.funcionario_locado) ? backendErrors.funcionario_locado.join('; ') : "Conflito de locação detectado para funcionário.");
+        } else {
+            const messages = Object.values(backendErrors).flat().join('; ');
+            if (messages) generalMessage = messages;
+        }
+      }
+
+      setError(generalMessage);
+      console.error("API Submit Locação Error:", err.response?.data || err.message);
+
+      if (backendErrors && typeof backendErrors === 'object') {
+        throw { response: { data: backendErrors } };
+      }
+      throw err;
     } finally {
       setIsLoadingForm(false);
     }
@@ -120,13 +136,22 @@ const LocacoesPage = () => {
   const handleFormCancel = () => {
     setShowFormModal(false);
     setCurrentLocacao(null);
-    setError(null);
+    setError(null); // Clear any errors when form is cancelled
   };
+
+  const handleTransferSuccess = useCallback(async () => {
+    setShowFormModal(false);    // Close the main form modal
+    setCurrentLocacao(null);    // Clear current locacao being edited/created
+    setError(null);           // Clear any top-level errors in LocacoesPage
+    await fetchLocacoes();      // Refresh the main list of locações
+    // Optionally, add a success message here, e.g., using a toast notification library
+    // alert('Funcionário transferido com sucesso!');
+  }, [fetchLocacoes]);
 
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Gestão de Locações de Equipes</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Gestão de Locações</h1>
         <button
           onClick={handleAddNew}
           className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:bg-primary-300"
@@ -135,7 +160,7 @@ const LocacoesPage = () => {
         </button>
       </div>
 
-      {error && !showFormModal && (
+      {error && !showFormModal && ( // Only show general page error if modal is not open
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
           <strong className="font-bold">Erro: </strong>
           <span className="block sm:inline">{error}</span>
@@ -155,9 +180,9 @@ const LocacoesPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-semibold mb-4 text-gray-800">
-              {currentLocacao ? 'Editar Locação' : 'Adicionar Nova Locação'}
+              {currentLocacao && currentLocacao.id ? 'Editar Locação' : 'Adicionar Nova Locação'}
             </h2>
-            {error && (
+            {error && ( // Error display specific to the modal
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
                     <strong className="font-bold">Erro no formulário: </strong>
                     <span className="block sm:inline">{error}</span>
@@ -167,9 +192,10 @@ const LocacoesPage = () => {
               initialData={currentLocacao}
               obras={obras}
               equipes={equipes}
-              onSubmit={handleFormSubmit}
+              onSubmit={handleApiSubmit}
               onCancel={handleFormCancel}
               isLoading={isLoadingForm}
+              onTransferSuccess={handleTransferSuccess} // New prop
             />
           </div>
         </div>
