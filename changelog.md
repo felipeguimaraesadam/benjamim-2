@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.3] - 2024-08-02
+### Fixed
+- **Frontend Build/Runtime Errors**:
+    - Resolvido erro de importação `Failed to resolve import "react-toastify"` (e o CSS relacionado `react-toastify/dist/ReactToastify.css`) em `frontend/src/main.jsx` adicionando `react-toastify` às dependências em `frontend/package.json`. Isso garante que a biblioteca de notificações toast seja corretamente instalada e empacotada. (Requer `npm install` ou `yarn install` no diretório `frontend` para aplicar a correção em ambientes locais).
+    - Corrigido erro de sintaxe JSX ("Unexpected token, expected ','") em `frontend/src/pages/MateriaisPage.jsx` pela remoção de um bloco de props de paginação que estava duplicado e mal posicionado dentro de uma condicional de renderização do modal de formulário.
+- **Backend Database Migration**:
+    - Criada nova migração (`0016_material_add_stock_fields.py`) para a aplicação `core` para adicionar os campos `quantidade_em_estoque` e `nivel_minimo_estoque` ao modelo `Material`. Esta migração é necessária para refletir as alterações do modelo no esquema do banco de dados e previne potenciais erros de `OperationalError` (no such column) ou avisos de `makemigrations` sobre alterações não migradas.
+
 ## [0.6.2] - 2024-08-02
 ### Fixed
 - **Correção no Script de Migração (`run_migrations.bat`)**:

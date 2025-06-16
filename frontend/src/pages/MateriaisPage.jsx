@@ -234,15 +234,8 @@ const MateriaisPage = () => {
 
 
       {/* Form Modal */}
-      {showFormModal && (
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        totalItems={totalItems}
-        itemsPerPage={PAGE_SIZE}
-      />
-
-      {/* Form Modal */}
+      {/* This duplicated block of props was causing the syntax error. It's removed. */}
+      {/* The actual Form Modal is rendered below. PaginationControls are rendered with the table. */}
       {showFormModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
