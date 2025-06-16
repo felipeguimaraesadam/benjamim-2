@@ -13,6 +13,7 @@
 - Adicionada a dependência `Pillow` ao `backend/requirements.txt`. Esta biblioteca é necessária para a funcionalidade de upload de imagens da galeria de fotos e não estava sendo instalada automaticamente, causando erro nas migrações em ambientes limpos.
 - Corrigidos os caminhos de importação para os componentes `ObraFotosUpload` and `ObraGaleria` na página `ObraDetailPage.jsx`, resolvendo um erro de build no frontend.
 - Corrigida a importação do módulo da API nos componentes `ObraFotosUpload.jsx` e `ObraGaleria.jsx`. Estavam tentando importar uma exportação padrão inexistente, agora usam a exportação nomeada `apiClient` corretamente.
+- Corrigido o envio de dados no formulário de criação/edição de usuários (`UsuarioForm.jsx`). O campo de senha agora é enviado como `password` para o backend, resolvendo o erro 400 (Bad Request).
 
 ### Added
 - **Sistema de Permissões por Nível de Acesso**:
