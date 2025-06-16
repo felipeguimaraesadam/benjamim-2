@@ -42,7 +42,7 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 🚀 4. Melhorias Contínuas e Backlog
 [x] (UI/UX Locação) Adicionar status visual (Hoje, Futura, Passada, Cancelada) com cores e ordenação customizada à lista de locações para melhor clareza. (Concluído em 14/06/2025)
 [x] (FIX) Corrigida inconsistência na exibição de datas entre diferentes telas (problema de fuso horário), garantindo que `TIME_ZONE` no backend seja 'America/Sao_Paulo' e que a formatação de datas no frontend (para DD/MM/YYYY) não seja afetada pelo fuso horário do navegador. (Concluído em 15/06/2025)
-[ ] (MELHORIA) Filtros na Lista de Compras: Adicionar filtros por intervalo de datas e por fornecedor.
+[x] (MELHORIA) Filtros na Lista de Compras: Adicionar filtros por intervalo de datas e por fornecedor. (Concluído em 30/07/2024)
 [ ] (UI) Detalhes da Locação: Adicionar um ícone em cada registro de locação na tabela para abrir um modal com todos os detalhes (obra, funcionário/equipe, tipo de pagamento, valor, data, etc.).
 [ ] (MELHORIA) Alerta de Estoque Baixo: Criar um sistema de notificação ou alerta visual quando o estoque de um material atingir um nível mínimo pré-definido.
 [ ] (UI) Paginação: Garantir que todas as tabelas com grande volume de dados tenham um sistema de paginação funcional.

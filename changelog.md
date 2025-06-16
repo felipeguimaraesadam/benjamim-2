@@ -9,6 +9,11 @@
   - **Gerente**: Usuários com `nivel_acesso='gerente'` podem visualizar e adicionar dados na maioria das seções (Obras, Funcionários, Locações, Materiais, Compras, Despesas, Ocorrências, etc.), mas não podem modificar ou excluir registros existentes. O acesso a relatórios e ao dashboard é permitido (somente leitura).
   - Outros níveis de acesso (e usuários não autenticados) têm acesso restrito conforme as permissões aplicadas.
   - Testes automatizados foram adicionados para verificar as regras de permissão para os diferentes níveis de acesso.
+- **Filtros na Lista de Compras e Relatório Geral de Compras**:
+  - Adicionados filtros por intervalo de datas (`data_inicio`, `data_fim`) e por nome do fornecedor (`fornecedor__icontains`) na API e interface da lista de compras.
+  - Backend: `CompraViewSet` e `RelatorioGeralComprasView` atualizados para suportar os novos parâmetros de consulta.
+  - Frontend: Página de Compras (`ComprasPage.jsx`) atualizada com campos de entrada para data de início, data de fim e nome do fornecedor, além de botões para aplicar e limpar os filtros.
+  - Testes de backend foram adicionados para validar a lógica de filtragem.
 
 ## [Próxima Versão] - 2025-06-15
 

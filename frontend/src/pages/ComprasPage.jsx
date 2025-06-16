@@ -33,24 +33,40 @@ const ComprasPage = () => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [compraToDeleteId, setCompraToDeleteId] = useState(null);
 
-    const fetchCompras = useCallback(async () => {
+    // State for filters
+    const [dataInicio, setDataInicio] = useState('');
+    const [dataFim, setDataFim] = useState('');
+    const [fornecedor, setFornecedor] = useState('');
+
+    const fetchCompras = useCallback(async (currentFilters = {}) => {
         setIsLoading(true);
+        setError(null); // Clear previous errors
+
+        const params = {};
+        if (currentFilters.dataInicio) params.data_inicio = currentFilters.dataInicio;
+        if (currentFilters.dataFim) params.data_fim = currentFilters.dataFim;
+        if (currentFilters.fornecedor && currentFilters.fornecedor.trim() !== '') {
+            params.fornecedor = currentFilters.fornecedor.trim();
+        }
+        // Note: obra_id filter is not globally applied on this page for listing all compras,
+        // but if it were, it would be added here.
+
         try {
-            const response = await api.getCompras();
-            setCompras(response.data || response);
+            const response = await api.getCompras(params);
+            setCompras(response.data || response); // Assuming response.data is the array
         } catch (err) {
             setError(err.message || 'Falha ao buscar compras. Tente novamente.');
             console.error("Fetch Compras Error:", err);
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, []); // Dependencies: only setters and api, so empty array is fine.
 
     useEffect(() => {
         if (!currentCompra && !isAddingNew) {
-            fetchCompras();
+            fetchCompras({ dataInicio, dataFim, fornecedor });
         }
-    }, [fetchCompras, currentCompra, isAddingNew]);
+    }, [fetchCompras, currentCompra, isAddingNew, dataInicio, dataFim, fornecedor]);
 
     useEffect(() => {
         const obraIdFromState = location.state?.obraIdParaNovaCompra;
@@ -156,6 +172,17 @@ const ComprasPage = () => {
         setCurrentCompra(null); setIsAddingNew(false); setError(null); setSuccessMessage('');
     };
 
+    const handleApplyFilters = () => {
+        fetchCompras({ dataInicio, dataFim, fornecedor });
+    };
+
+    const handleClearFilters = () => {
+        setDataInicio('');
+        setDataFim('');
+        setFornecedor('');
+        // fetchCompras({}); // useEffect will trigger this due to state changes
+    };
+
     let formInitialData = null;
     if (isAddingNew) formInitialData = currentCompra;
     else if (currentCompra) formInitialData = currentCompra;
@@ -195,6 +222,59 @@ const ComprasPage = () => {
                             Adicionar Compra
                         </button>
                     </div>
+
+                    {/* Filter Section */}
+                    <div className="my-4 p-4 border rounded-md bg-gray-50 shadow">
+                        <h2 className="text-lg font-semibold text-gray-800 mb-3">Filtrar Compras</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                            <div>
+                                <label htmlFor="dataInicio" className="block text-sm font-medium text-gray-700">Data Início</label>
+                                <input
+                                    type="date"
+                                    id="dataInicio"
+                                    value={dataInicio}
+                                    onChange={(e) => setDataInicio(e.target.value)}
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="dataFim" className="block text-sm font-medium text-gray-700">Data Fim</label>
+                                <input
+                                    type="date"
+                                    id="dataFim"
+                                    value={dataFim}
+                                    onChange={(e) => setDataFim(e.target.value)}
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="fornecedor" className="block text-sm font-medium text-gray-700">Fornecedor</label>
+                                <input
+                                    type="text"
+                                    id="fornecedor"
+                                    value={fornecedor}
+                                    onChange={(e) => setFornecedor(e.target.value)}
+                                    placeholder="Nome do fornecedor"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                />
+                            </div>
+                            <div className="flex space-x-2 sm:pt-5"> {/* sm:pt-5 to align with labels on larger screens */}
+                                <button
+                                    onClick={handleApplyFilters}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors w-full sm:w-auto"
+                                >
+                                    Filtrar
+                                </button>
+                                <button
+                                    onClick={handleClearFilters}
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors w-full sm:w-auto"
+                                >
+                                    Limpar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {successMessage && (
                         <div className="bg-green-100 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-md relative mb-5 flex items-center" role="alert">
                             <AlertIcon type="success" />

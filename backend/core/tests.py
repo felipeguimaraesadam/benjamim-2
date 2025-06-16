@@ -2,7 +2,7 @@ from django.test import TestCase
 from decimal import Decimal
 from .models import Obra, Compra, Material, ItemCompra, Usuario, Funcionario, Locacao_Obras_Equipes
 from django.utils import timezone
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime # Added datetime explicitly for strptime
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
@@ -528,56 +528,152 @@ class DashboardStatsPermissionsTests(PermissionsTestBase):
         response = self.client.get(self.dashboard_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-# Ensure all necessary model imports are at the top if not already there.
-# from .models import Usuario, Obra # Already imported at the top
-# from django.urls import reverse # Already imported
-# from rest_framework import status # Already imported
-# from rest_framework.test import APIClient, APITestCase # Already imported
 
-# Note: The LocacaoOrderingTests had an issue with admin_user not being part of self.
-# Corrected it by authenticating with self.admin_user in its test method,
-# and ensuring self.admin_user is created in its setUp or setUpClass if needed.
-# For this specific case, I added self.admin_user creation in LocacaoOrderingTests setUp for clarity for that class.
-# My new tests use self.admin_user from PermissionsTestBase.
+# --- New Compra Filter Tests Start Here ---
 
-# Corrected LocacaoOrderingTests to ensure proper user setup for authentication
-# This part is tricky as it's modifying existing test code slightly for robustness.
-# The original LocacaoOrderingTests did not show self.admin_user creation nor authentication.
-# Added it to ensure tests can run if authentication is globally applied.
-# If the endpoint /api/locacoes/ is public, then authentication is not needed.
-# Assuming it might require authentication similar to other endpoints.
-# The provided snippet for LocacaoOrderingTests had a commented out auth line.
+class CompraFilterTests(PermissionsTestBase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.obra_for_compra_filters = Obra.objects.create(
+            nome_obra="Obra Compra Filters",
+            endereco_completo="Addr CF",
+            cidade="Filtertown",
+            status="Planejada",
+            orcamento_previsto=Decimal("1000")
+        )
+        cls.compra1 = Compra.objects.create(obra=cls.obra_for_compra_filters, data_compra=date(2023, 1, 10), fornecedor="Fornecedor Alpha", valor_total_bruto=Decimal("100"), desconto=Decimal("0"))
+        cls.compra2 = Compra.objects.create(obra=cls.obra_for_compra_filters, data_compra=date(2023, 1, 20), fornecedor="Fornecedor Beta", valor_total_bruto=Decimal("200"), desconto=Decimal("0"))
+        cls.compra3 = Compra.objects.create(obra=cls.obra_for_compra_filters, data_compra=date(2023, 2, 10), fornecedor="alpha store", valor_total_bruto=Decimal("300"), desconto=Decimal("0"))
+        cls.compra4 = Compra.objects.create(obra=cls.obra_for_compra_filters, data_compra=date(2023, 2, 20), fornecedor="Gama LTDA", valor_total_bruto=Decimal("400"), desconto=Decimal("0"))
 
-# The change in LocacaoOrderingTests:
-# Added:
-# self.admin_user = Usuario.objects.create_user(login='testorderuser', password='password', nome_completo='Order User', nivel_acesso='admin', is_staff=True, is_superuser=True)
-# self.client.force_authenticate(user=self.admin_user)
-# This was based on the structure seen in other tests like CompraViewSetAPITest.
-# The provided code already had a similar user creation in LocacaoOrderingTests.setUp(), so it should be fine.
-# It seems the original file already had self.admin_user = Usuario.objects.create_user(...) in LocacaoOrderingTests.setUp()
-# I ensured it's used for authentication.
+        try:
+            cls.list_url = reverse('compra-list')
+        except Exception as e:
+            # Fallback if reverse fails during test collection (e.g. URLs not fully loaded)
+            # This should ideally not happen in a well-configured Django test environment.
+            print(f"Warning: reverse('compra-list') failed in setUpClass: {e}")
+            cls.list_url = '/api/compras/'
 
-# The user logins in my new tests are e.g. 'testadmin_perm' to avoid collision with 'testadmin' if any other test creates it.
-# The obra_instance in setUpClass should be fine, as it's read-only for most tests, and delete tests should target other instances.
-# Added a specific temp_obra for deletion test to ensure self.obra_instance is not deleted.
-# URLs are defined in setUpClass as they don't change per instance.
-# Minimal payloads for create/update are defined in setUp for clarity.
 
-# Small correction to LocacaoOrderingTests:
-# It seems the provided test file already had a user creation for 'testorderuser'.
-# I will ensure that user is used for authentication.
-# The existing LocacaoOrderingTests.setUp has:
-# # self.user = Usuario.objects.create_user(login='testorderuser', password='password', nome_completo='Order User', nivel_acesso='admin')
-# # self.client.force_authenticate(user=self.user)
-# The new test file has this uncommented, which is good.
-# My change to that class was to ensure self.client.force_authenticate(user=self.admin_user) is called.
-# The provided code has this line: self.admin_user = Usuario.objects.create_user(login='testorderuser', ...)
-# And in the test method: self.client.force_authenticate(user=self.admin_user)
-# This is correct.
+    def setUp(self):
+        super().setUp() # This calls APIClient() and user creation from PermissionsTestBase
+        self.client.force_authenticate(user=self.admin_user)
+
+    def _get_response_ids(self, response):
+        response_data = response.data
+        if isinstance(response_data, dict) and 'results' in response_data: # Handle pagination
+            response_data = response_data['results']
+        return {item['id'] for item in response_data}
+
+    def test_filter_by_data_inicio(self):
+        params = {'data_inicio': '2023-01-15', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra2.id, self.compra3.id, self.compra4.id}
+        self.assertEqual(len(returned_ids), 3)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_by_data_fim(self):
+        params = {'data_fim': '2023-02-15', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra1.id, self.compra2.id, self.compra3.id}
+        self.assertEqual(len(returned_ids), 3)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_by_data_range(self):
+        params = {'data_inicio': '2023-01-15', 'data_fim': '2023-02-15', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra2.id, self.compra3.id}
+        self.assertEqual(len(returned_ids), 2)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_by_fornecedor_icontains(self):
+        params = {'fornecedor': 'Alpha', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra1.id, self.compra3.id} # "Fornecedor Alpha" and "alpha store"
+        self.assertEqual(len(returned_ids), 2)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_by_fornecedor_exact_match_param(self): # Testing the behavior of icontains with a more specific param
+        params = {'fornecedor': 'Fornecedor Beta', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra2.id}
+        self.assertEqual(len(returned_ids), 1)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_by_fornecedor_no_match(self):
+        params = {'fornecedor': 'Omega', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        self.assertEqual(len(returned_ids), 0)
+
+    def test_filter_combined_date_and_fornecedor(self):
+        params = {'data_inicio': '2023-01-01', 'data_fim': '2023-01-31', 'fornecedor': 'Alpha', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra1.id}
+        self.assertEqual(len(returned_ids), 1)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_invalid_date_format_ignored(self):
+        # Assuming an invalid date format is ignored by the view's get_queryset logic (passes on ValueError)
+        params = {'data_inicio': 'invalid-date', 'fornecedor': 'Alpha', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        # Since data_inicio is ignored, it should filter only by 'fornecedor=Alpha' for this obra
+        expected_ids = {self.compra1.id, self.compra3.id}
+        self.assertEqual(len(returned_ids), 2)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_no_filters_returns_all_for_obra(self):
+        params = {'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra1.id, self.compra2.id, self.compra3.id, self.compra4.id}
+        self.assertEqual(len(returned_ids), 4)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_all_filters_combined(self):
+        params = {
+            'obra_id': self.obra_for_compra_filters.id,
+            'data_inicio': '2023-01-01',
+            'data_fim': '2023-02-28', # Includes all compras by date
+            'fornecedor': 'alpha' # compra1 and compra3
+        }
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra1.id, self.compra3.id}
+        self.assertEqual(len(returned_ids), 2)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_fornecedor_case_insensitivity(self):
+        params = {'fornecedor': 'gAmA', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra4.id} # "Gama LTDA"
+        self.assertEqual(len(returned_ids), 1)
+        self.assertEqual(returned_ids, expected_ids)
 
 # Final check of the imports at the top:
+# from datetime import date, datetime - Added datetime to existing import
+# .models.Usuario, Obra, Compra - Already imported
 # django.urls.reverse - present
 # rest_framework.status - present
 # rest_framework.test.APIClient, APITestCase - present
-# .models.Usuario, Obra - present
 # Looks good.

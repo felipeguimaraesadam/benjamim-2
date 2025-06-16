@@ -182,6 +182,26 @@ class CompraViewSet(viewsets.ModelViewSet):
         if obra_id:
             queryset = queryset.filter(obra_id=obra_id)
 
+        data_inicio_str = self.request.query_params.get('data_inicio')
+        if data_inicio_str:
+            try:
+                data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
+                queryset = queryset.filter(data_compra__gte=data_inicio)
+            except ValueError:
+                pass # Silently ignore invalid date format for data_inicio
+
+        data_fim_str = self.request.query_params.get('data_fim')
+        if data_fim_str:
+            try:
+                data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
+                queryset = queryset.filter(data_compra__lte=data_fim)
+            except ValueError:
+                pass # Silently ignore invalid date format for data_fim
+
+        fornecedor = self.request.query_params.get('fornecedor')
+        if fornecedor:
+            queryset = queryset.filter(fornecedor__icontains=fornecedor)
+
         return queryset
 
     def update(self, request, *args, **kwargs):
@@ -471,8 +491,13 @@ class RelatorioGeralComprasView(APIView):
                 applied_filters_echo["obra_id"] = obra_id
             except ValueError:
                 return Response({"error": "obra_id deve ser um número inteiro."}, status=status.HTTP_400_BAD_REQUEST)
-            except Obra.DoesNotExist: # Check if obra exists
-                return Response({"error": f"Obra com id {obra_id_str} não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+            # Not using Obra.objects.get(pk=obra_id) here, so DoesNotExist is less direct.
+            # If obra_id is an int but doesn't exist, filter will just not match.
+
+        fornecedor_param = request.query_params.get('fornecedor')
+        if fornecedor_param:
+            filters &= Q(fornecedor__icontains=fornecedor_param)
+            applied_filters_echo["fornecedor"] = fornecedor_param
 
         # Filtering by material_id directly on Compra is no longer straightforward
         # as Compra does not have a direct material field.
