@@ -2,12 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
 import MateriaisTable from '../components/tables/MateriaisTable';
 import MaterialForm from '../components/forms/MaterialForm';
+import PaginationControls from '../components/utils/PaginationControls'; // Import PaginationControls
 
 const MateriaisPage = () => {
-  const [materiais, setMateriais] = useState([]);
+  const [materiais, setMateriais] = useState([]); // Will store results
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingForm, setIsLoadingForm] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(null); // General page error
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const PAGE_SIZE = 10; // Should match backend PAGE_SIZE
 
   const [showFormModal, setShowFormModal] = useState(false);
   const [currentMaterial, setCurrentMaterial] = useState(null);
@@ -20,19 +27,22 @@ const MateriaisPage = () => {
   const [isLoadingLowStockAlerts, setIsLoadingLowStockAlerts] = useState(false);
   const [lowStockAlertsError, setLowStockAlertsError] = useState(null);
 
-  const fetchMateriais = useCallback(async () => {
+  const fetchMateriais = useCallback(async (page = 1) => {
     setIsLoading(true);
-    setError(null); // General error for material list
+    setError(null);
     try {
-      const response = await api.getMateriais();
-      setMateriais(response.data);
+      const response = await api.getMateriais({ page });
+      setMateriais(response.data.results);
+      setTotalItems(response.data.count);
+      setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
+      setCurrentPage(page);
     } catch (err) {
       setError(err.message || 'Falha ao buscar materiais. Tente novamente.');
       console.error("Fetch Materiais Error:", err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [PAGE_SIZE]);
 
   const fetchLowStockAlerts = useCallback(async () => {
     setIsLoadingLowStockAlerts(true);
@@ -49,9 +59,18 @@ const MateriaisPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchMateriais();
-    fetchLowStockAlerts(); // Fetch alerts when component mounts
-  }, [fetchMateriais, fetchLowStockAlerts]);
+    fetchMateriais(currentPage);
+    fetchLowStockAlerts();
+  }, [currentPage, fetchMateriais, fetchLowStockAlerts]);
+  // Note: fetchMateriais and fetchLowStockAlerts are memoized by useCallback.
+  // currentPage change will trigger this useEffect.
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      // fetchMateriais will be called by the useEffect above when currentPage changes
+      setCurrentPage(newPage);
+    }
+  };
 
   const handleAddNew = () => {
     setCurrentMaterial(null);
@@ -159,11 +178,19 @@ const MateriaisPage = () => {
       )}
 
       <MateriaisTable
-        materiais={materiais}
+        materiais={materiais} // Now receives paginated data
         onEdit={handleEdit}
         onDelete={handleDelete}
-        isLoading={isLoading}
-        lowStockAlerts={lowStockAlerts} // Pass alerts to table for potential highlighting
+        isLoading={isLoading && materiais.length === 0} // Show table loading only if initial load
+        lowStockAlerts={lowStockAlerts}
+      />
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        totalItems={totalItems}
+        itemsPerPage={PAGE_SIZE}
       />
 
       {/* Form Modal */}

@@ -5,14 +5,20 @@ import * as api from '../services/api';
 import LocacoesTable from '../components/tables/LocacoesTable';
 import LocacaoForm from '../components/forms/LocacaoForm';
 import LocacaoDetailModal from '../components/modals/LocacaoDetailModal';
+import PaginationControls from '../components/utils/PaginationControls'; // Import PaginationControls
 
 const LocacoesPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [locacoes, setLocacoes] = useState([]);
+  const [locacoes, setLocacoes] = useState([]); // Will store results
   const [obras, setObras] = useState([]);
   const [equipes, setEquipes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const PAGE_SIZE = 10; // As defined in backend settings
   const [isLoadingForm, setIsLoadingForm] = useState(false);
   const [error, setError] = useState(null);
   const [showFormModal, setShowFormModal] = useState(false);
@@ -23,37 +29,45 @@ const LocacoesPage = () => {
   const [selectedLocacaoId, setSelectedLocacaoId] = useState(null);
 
   // State for chart
-  const [chartData, setChartData] = useState([]);
+  const [chartData, setChartData] = useState([]); // Assuming this is still needed
   const [selectedObraIdForChart, setSelectedObraIdForChart] = useState(''); // Empty string for "All Obras"
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [chartError, setChartError] = useState(null);
 
 
-  const fetchLocacoes = useCallback(async () => {
+  const fetchLocacoes = useCallback(async (page = 1) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.getLocacoes();
-      setLocacoes(response.data);
+      // Pass the page to the API call
+      const response = await api.getLocacoes({ page: page });
+      setLocacoes(response.data.results);
+      setTotalItems(response.data.count);
+      setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
+      setCurrentPage(page);
     } catch (err) {
       setError(err.message || 'Falha ao buscar locações.');
       console.error("Fetch Locações Error:", err);
+      // Reset pagination on error? Or leave as is?
+      // setLocacoes([]); setTotalItems(0); setTotalPages(0);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [PAGE_SIZE]); // PAGE_SIZE is a constant, so it's fine in deps
 
-  const fetchObras = useCallback(async () => { // This fetches obras for the form, might be reused or separated
+  const fetchObras = useCallback(async () => {
     try {
+      // For simplicity, assuming obras list for dropdowns doesn't need pagination itself.
+      // If it does, it would need a similar pagination logic.
       const response = await api.getObras();
-      setObras(response.data); // Assuming 'obras' state is already used for forms
+      setObras(response.data);
     } catch (err) {
       console.error("Fetch Obras for LocacaoForm/Chart Filter Error:", err);
-      // Potentially set an error state for the filter if it fails to load
     }
   }, []);
 
-  const fetchChartData = useCallback(async (obraId) => {
+
+  const fetchChartData = useCallback(async (obraId) => { // Assuming chart data is not paginated or handled separately
     setIsLoadingChart(true);
     setChartError(null);
     try {
@@ -84,15 +98,30 @@ const LocacoesPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchLocacoes();
-    fetchObras(); // Fetches obras for forms and potentially for chart filter
-    fetchEquipes();
-    fetchChartData(selectedObraIdForChart || null); // Initial chart data load
-  }, [fetchLocacoes, fetchObras, fetchEquipes, fetchChartData, selectedObraIdForChart]);
+    fetchLocacoes(currentPage); // Fetch locações for the current page
+    fetchObras();
+    fetchEquipes(); // Assuming equipes also doesn't need pagination for dropdowns
+    fetchChartData(selectedObraIdForChart || null);
+  }, [fetchObras, fetchEquipes, fetchChartData, selectedObraIdForChart, currentPage, fetchLocacoes]);
+  // Removed fetchLocacoes from here and added currentPage to trigger refetchLocacoes directly in its own useEffect or on page change.
+  // Re-added fetchLocacoes to ensure it's called when other dependencies change if needed, will be memoized by useCallback.
+
+  // useEffect for initial load and when currentPage changes for locacoes
+  useEffect(() => {
+    fetchLocacoes(currentPage);
+  }, [currentPage, fetchLocacoes]);
+
 
   const handleObraFilterChange = (event) => {
     setSelectedObraIdForChart(event.target.value);
-    // Data will be refetched by useEffect due to selectedObraIdForChart dependency change
+    // Chart data will be refetched by its own useEffect dependency.
+    // Locacoes list is independent of this filter for now.
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage); // This will trigger the useEffect for fetchLocacoes
+    }
   };
 
   const handleAddNew = () => {
@@ -546,13 +575,21 @@ const LocacoesPage = () => {
       )}
 
       <LocacoesTable
-        locacoes={locacoes}
-        obras={obras} // obras state is used by LocacoesTable and Form
+        locacoes={locacoes} // Now receives paginated data
+        obras={obras}
         equipes={equipes}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        onViewDetails={handleViewDetails} // Pass the handler
-        isLoading={isLoading}
+        onViewDetails={handleViewDetails}
+        isLoading={isLoading && locacoes.length === 0} // Show table loading only if it's initial load or page change with no data yet
+      />
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        totalItems={totalItems}
+        itemsPerPage={PAGE_SIZE}
       />
 
       {selectedLocacaoId && (

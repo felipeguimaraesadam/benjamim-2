@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.6.0] - 2024-08-02
+### Added
+- **Paginação Implementada em Tabelas Principais**:
+    - Adicionado sistema de paginação (10 itens por página por padrão) nas listagens das seguintes áreas para melhorar a performance e usabilidade com grandes volumes de dados:
+        - Locações (`LocacoesPage.jsx`)
+        - Materiais (`MateriaisPage.jsx`)
+        - Funcionários (`FuncionariosPage.jsx`)
+        - Obras (`ObrasPage.jsx`)
+        - Equipes (`EquipesPage.jsx`)
+        - Compras (`ComprasPage.jsx`)
+        - Despesas Extras (`DespesasExtrasPage.jsx`)
+        - Ocorrências (`OcorrenciasPage.jsx`)
+    - Inclui controles de navegação "Anterior"/"Próxima", exibição de "Página X de Y" e "Total de itens".
+    - Backend APIs atualizadas para suportar paginação (configuração global no DRF e adaptação das funções de serviço no frontend API).
+    - Criado componente reutilizável `PaginationControls.jsx` para uma interface de paginação consistente.
+
 ## [0.5.1] - 2024-08-02
 ### Added
 - **Alerta de Estoque Baixo para Materiais**:

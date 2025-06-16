@@ -46,7 +46,7 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [x] (UI) Detalhes da Locação: Adicionar um ícone em cada registro de locação na tabela para abrir um modal com todos os detalhes (obra, funcionário/equipe, tipo de pagamento, valor, data, etc.). (Concluído em 30/07/2024)
   - [x] Adicionado campo "Observações" ao formulário de criação/edição de locação. (Concluído em 30/07/2024)
 [x] (MELHORIA) Alerta de Estoque Baixo: Criar um sistema de notificação ou alerta visual quando o estoque de um material atingir um nível mínimo pré-definido. (Concluído em 2024-08-02)
-[ ] (UI) Paginação: Garantir que todas as tabelas com grande volume de dados tenham um sistema de paginação funcional.
+[x] (UI) Paginação: Garantir que todas as tabelas com grande volume de dados tenham um sistema de paginação funcional. (Concluído em 2024-08-02)
 [ ] (UI/UX) Feedback Visual: Continuar aprimorando o feedback para o usuário com toasts para sucesso/erro e spinners durante o carregamento de dados.
 [x] (UTILITÁRIO) Criar script `run_migrations.bat` para facilitar a aplicação de migrações do Django.
   - Concluído em 29/07/2024.

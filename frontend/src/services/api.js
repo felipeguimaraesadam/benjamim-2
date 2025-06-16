@@ -118,8 +118,8 @@ apiClient.interceptors.response.use(
 );
 
 // --- Obra Service Functions ---
-export const getObras = () => {
-  return apiClient.get('/obras/');
+export const getObras = (params) => { // Modified to accept params
+  return apiClient.get('/obras/', { params });
 };
 
 export const getObraById = (id) => {
@@ -151,8 +151,8 @@ export const getObraCustosPorMaterial = (obraId) => { // New function
 };
 
 // --- Funcionario Service Functions ---
-export const getFuncionarios = () => {
-  return apiClient.get('/funcionarios/');
+export const getFuncionarios = (params) => { // Modified to accept params
+  return apiClient.get('/funcionarios/', { params });
 };
 
 export const getFuncionarioById = (id) => {
@@ -172,8 +172,8 @@ export const deleteFuncionario = (id) => {
 };
 
 // --- Equipe Service Functions ---
-export const getEquipes = () => {
-  return apiClient.get('/equipes/');
+export const getEquipes = (params) => { // Modified to accept params
+  return apiClient.get('/equipes/', { params });
 };
 
 export const getEquipeById = (id) => {
@@ -193,8 +193,8 @@ export const deleteEquipe = (id) => {
 };
 
 // --- Material Service Functions ---
-export const getMateriais = (params) => { // Accept params
-  return apiClient.get('/materiais/', { params }); // Pass params to axios config
+export const getMateriais = (params) => { // Already supports params
+  return apiClient.get('/materiais/', { params });
 };
 
 export const getMaterialById = (id) => {
@@ -248,8 +248,8 @@ export { apiClient }; // Keep this if other parts of app use apiClient directly
 // The above named exports for functions are more typical for a service file.
 
 // --- Despesa Extra Service Functions ---
-export const getDespesasExtras = (params) => { // Accept a params object
-  return apiClient.get('/despesas/', { params }); // Pass params to axios config
+export const getDespesasExtras = (params) => { // Already supports params
+  return apiClient.get('/despesas/', { params });
 };
 
 export const getDespesaExtraById = (id) => {
@@ -269,8 +269,8 @@ export const deleteDespesaExtra = (id) => {
 };
 
 // --- Locacao Service Functions ---
-export const getLocacoes = (params) => { // Added params argument
-  return apiClient.get('/locacoes/', { params }); // Pass params to axios
+export const getLocacoes = (params) => { // Already supports params
+  return apiClient.get('/locacoes/', { params });
 };
 
 export const getLocacaoById = (id) => {
@@ -322,8 +322,8 @@ export const getDashboardStats = () => {
 };
 
 // --- Compra Service Functions ---
-export const getCompras = (params) => { // Accept a params object
-  return apiClient.get('/compras/', { params }); // Pass params to axios config
+export const getCompras = (params) => { // Already supports params
+  return apiClient.get('/compras/', { params });
 };
 
 export const createCompra = (compraData) => {
@@ -348,8 +348,8 @@ export const getUsosMaterial = (obraId) => {
 };
 
 // --- Ocorrencia Service Functions ---
-export const getOcorrencias = (params) => { // Added params argument
-  return apiClient.get('/ocorrencias/', { params }); // Pass params to axios
+export const getOcorrencias = (params) => { // Already supports params
+  return apiClient.get('/ocorrencias/', { params });
 };
 
 export const createOcorrencia = (ocorrenciaData) => {
@@ -365,8 +365,8 @@ export const deleteOcorrencia = (id) => {
 };
 
 // --- Usuario Service Functions ---
-export const getUsuarios = () => {
-  return apiClient.get('/usuarios/');
+export const getUsuarios = (params) => { // Modified to accept params
+  return apiClient.get('/usuarios/', { params });
 };
 
 export const createUsuario = (userData) => {
