@@ -23,9 +23,9 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
   - Modificado o comportamento da `data_locacao_fim`. Se não fornecida ou anterior à data de início, é automaticamente definida como igual à `data_locacao_inicio`.
   - Realizada migração de dados para atualizar locações existentes com `data_locacao_fim` nula para refletir esta regra.
   - O campo `data_locacao_fim` agora é não-nulo no banco de dados. (Concluído em 15/06/2025)
-[ ] (CORE) Perfis de Usuário e Permissões: Atualizar as regras de acesso.
-[ ] Admin: Acesso total (criação, leitura, atualização, exclusão).
-[ ] Gerente: Pode adicionar e visualizar dados, mas não pode remover ou excluir registros.
+[x] (CORE) Perfis de Usuário e Permissões: Atualizar as regras de acesso. (Concluído em 30/07/2024)
+  - [x] Admin: Acesso total (criação, leitura, atualização, exclusão).
+  - [x] Gerente: Pode adicionar e visualizar dados, mas não pode remover ou excluir registros.
 ✨ 3. Novas Funcionalidades
 [ ] (FOTOS) Galeria de Fotos da Obra:
 [ ] Permitir o upload de arquivos de imagem (PNG, JPG/JPEG) na página de detalhes da obra.

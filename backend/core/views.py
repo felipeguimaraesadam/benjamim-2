@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, status, filters # Added filters
+from rest_framework import viewsets, status, filters # Added filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db.models import Q, Sum, F, Case, When, Value, IntegerField # Added Case, When, Value, IntegerField
@@ -10,7 +10,7 @@ from django.utils import timezone # Added timezone
 
 from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra
 from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer
-from .permissions import IsNivelAdmin
+from .permissions import IsNivelAdmin, IsNivelGerente
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     """
@@ -27,7 +27,7 @@ class ObraViewSet(viewsets.ModelViewSet):
     """
     queryset = Obra.objects.all()
     serializer_class = ObraSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
@@ -36,7 +36,7 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
     """
     queryset = Funcionario.objects.all()
     serializer_class = FuncionarioSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
 
 class EquipeViewSet(viewsets.ModelViewSet):
@@ -45,7 +45,7 @@ class EquipeViewSet(viewsets.ModelViewSet):
     """
     queryset = Equipe.objects.all()
     serializer_class = EquipeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
 
 class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
@@ -54,7 +54,7 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     """
     queryset = Locacao_Obras_Equipes.objects.all() # <<< ADD THIS LINE BACK
     serializer_class = LocacaoObrasEquipesSerializer
-    permission_classes = [permissions.IsAuthenticated] # Or your specific permissions
+    permission_classes = [IsNivelAdmin | IsNivelGerente] # Or your specific permissions
 
     def get_queryset(self):
         today = timezone.now().date()
@@ -162,7 +162,7 @@ class MaterialViewSet(viewsets.ModelViewSet):
     """
     queryset = Material.objects.all().order_by('nome') # Added default ordering
     serializer_class = MaterialSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nome'] # Search by material name
 
@@ -173,7 +173,7 @@ class CompraViewSet(viewsets.ModelViewSet):
     """
     # queryset = Compra.objects.all() # Replaced by get_queryset
     serializer_class = CompraSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get_queryset(self):
         queryset = Compra.objects.all().select_related('obra').order_by('-data_compra')
@@ -269,7 +269,7 @@ class DespesaExtraViewSet(viewsets.ModelViewSet):
     """
     # queryset = Despesa_Extra.objects.all() # Replaced by get_queryset
     serializer_class = DespesaExtraSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get_queryset(self):
         queryset = Despesa_Extra.objects.all().order_by('-data') # Default ordering by most recent
@@ -294,7 +294,7 @@ class DespesaExtraViewSet(viewsets.ModelViewSet):
 
 class UsoMaterialViewSet(viewsets.ModelViewSet):
     serializer_class = UsoMaterialSerializer
-    permission_classes = [permissions.IsAuthenticated] # Or your specific project permissions
+    permission_classes = [IsNivelAdmin | IsNivelGerente] # Or your specific project permissions
 
     def get_queryset(self):
         queryset = UsoMaterial.objects.select_related(
@@ -322,7 +322,7 @@ class OcorrenciaFuncionarioViewSet(viewsets.ModelViewSet):
     """
     queryset = Ocorrencia_Funcionario.objects.all() # Base queryset
     serializer_class = OcorrenciaFuncionarioSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get_queryset(self):
         queryset = Ocorrencia_Funcionario.objects.all().select_related('funcionario').order_by('-data')
@@ -365,7 +365,7 @@ class OcorrenciaFuncionarioViewSet(viewsets.ModelViewSet):
 # Reports Views
 
 class RelatorioFinanceiroObraView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get(self, request, *args, **kwargs):
         obra_id = request.query_params.get('obra_id')
@@ -429,7 +429,7 @@ class RelatorioFinanceiroObraView(APIView):
 
 
 class RelatorioGeralComprasView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get(self, request, *args, **kwargs):
         data_inicio_str = request.query_params.get('data_inicio')
@@ -511,7 +511,7 @@ from django.db.models import Sum, Count, F, DecimalField
 # Ensure other necessary imports like APIView, Response, permissions, Obra, Funcionario, Compra, Despesa_Extra are present
 
 class DashboardStatsView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get(self, request, *args, **kwargs):
         # 1. Obras em andamento
@@ -545,7 +545,7 @@ class DashboardStatsView(APIView):
 
 
 class RelatorioDesempenhoEquipeView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get(self, request, *args, **kwargs):
         equipe_id_str = request.query_params.get('equipe_id')
@@ -630,7 +630,7 @@ class RelatorioDesempenhoEquipeView(APIView):
 
 
 class RelatorioCustoGeralView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get(self, request, *args, **kwargs):
         data_inicio_str = request.query_params.get('data_inicio')
@@ -691,7 +691,7 @@ class RelatorioCustoGeralView(APIView):
 from django.db.models.functions import TruncMonth
 
 class ObraHistoricoCustosView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get(self, request, pk, format=None): # pk será o ID da obra
         try:
@@ -747,7 +747,7 @@ class ObraHistoricoCustosView(APIView):
 
 
 class ObraCustosPorCategoriaView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get(self, request, pk, format=None): # pk é o ID da obra
         try:
@@ -766,7 +766,7 @@ class ObraCustosPorCategoriaView(APIView):
         return Response(resultado_formatado)
 
 class ObraCustosPorMaterialView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get(self, request, pk, format=None): # pk é o ID da obra
         try:

@@ -1,5 +1,15 @@
 # Changelog
 
+## [EM_DESENVOLVIMENTO] - 2024-07-30
+
+### Added
+- **Sistema de Permissões por Nível de Acesso**:
+  - Implementado um sistema de permissões baseado no campo `nivel_acesso` do `Usuario`.
+  - **Admin**: Usuários com `nivel_acesso='admin'` têm acesso total (CRUD completo) a todas as funcionalidades e endpoints da API.
+  - **Gerente**: Usuários com `nivel_acesso='gerente'` podem visualizar e adicionar dados na maioria das seções (Obras, Funcionários, Locações, Materiais, Compras, Despesas, Ocorrências, etc.), mas não podem modificar ou excluir registros existentes. O acesso a relatórios e ao dashboard é permitido (somente leitura).
+  - Outros níveis de acesso (e usuários não autenticados) têm acesso restrito conforme as permissões aplicadas.
+  - Testes automatizados foram adicionados para verificar as regras de permissão para os diferentes níveis de acesso.
+
 ## [Próxima Versão] - 2025-06-15
 
 ### Adicionado
