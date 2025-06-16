@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import api from '../../services/api';
+import { apiClient } from '../../services/api';
 
 function ObraFotosUpload({ obraId, onUploadSuccess }) {
     const [imagem, setImagem] = useState(null);
@@ -40,7 +40,7 @@ function ObraFotosUpload({ obraId, onUploadSuccess }) {
         setSuccessMessage('');
 
         try {
-            const response = await api.post('/fotosobras/', formData, {
+            const response = await apiClient.post('/fotosobras/', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

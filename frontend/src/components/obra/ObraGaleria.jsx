@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import { apiClient } from '../../services/api';
 
 function ObraGaleria({ obraId, newFoto }) {
     const [fotos, setFotos] = useState([]);
@@ -12,7 +12,7 @@ function ObraGaleria({ obraId, newFoto }) {
         setIsLoading(true);
         setError('');
         try {
-            const response = await api.get(`/fotosobras/?obra_id=${obraId}`);
+            const response = await apiClient.get(`/fotosobras/?obra_id=${obraId}`);
             setFotos(response.data || []);
         } catch (err) {
             console.error('Erro ao buscar fotos:', err.response ? err.response.data : err.message);
