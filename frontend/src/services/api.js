@@ -213,6 +213,10 @@ export const deleteMaterial = (id) => {
   return apiClient.delete(`/materiais/${id}/`);
 };
 
+export const getMateriaisAlertaEstoqueBaixo = () => {
+  return apiClient.get('/materiais/alertas-estoque-baixo/');
+};
+
 // --- Report Service Functions ---
 export const getRelatorioFinanceiroObra = (params) => {
   // params: { obra_id, data_inicio, data_fim }

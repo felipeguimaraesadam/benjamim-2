@@ -8,12 +8,12 @@ from datetime import datetime, date, timedelta
 from django.db import transaction
 from rest_framework.decorators import action
 from django.utils import timezone
-from datetime import date, timedelta # Added timedelta
+from datetime import date, timedelta
 
-from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra, FotoObra # Added FotoObra
-from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer, FotoObraSerializer # Added FotoObraSerializer
+from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra, FotoObra
+from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer, FotoObraSerializer
 from .permissions import IsNivelAdmin, IsNivelGerente
-from django.db.models import Sum, Count # Added Sum, Count
+from django.db.models import Sum, Count, F # Added F
 from decimal import Decimal # Added Decimal
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -218,6 +218,18 @@ class MaterialViewSet(viewsets.ModelViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nome'] # Search by material name
+
+    @action(detail=False, methods=['get'], url_path='alertas-estoque-baixo')
+    def alertas_estoque_baixo(self, request):
+        # Assuming 'quantidade_em_estoque' is a field on the Material model
+        # And 'nivel_minimo_estoque' is the new field
+        low_stock_materials = Material.objects.filter(
+            nivel_minimo_estoque__gt=0,  # Only consider materials where a minimum is set
+            quantidade_em_estoque__lte=F('nivel_minimo_estoque') # Compare field with another field
+        )
+        # Use the viewset's default serializer, which is MaterialSerializer
+        serializer = self.get_serializer(low_stock_materials, many=True)
+        return Response(serializer.data)
 
 
 class CompraViewSet(viewsets.ModelViewSet):

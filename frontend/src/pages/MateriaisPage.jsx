@@ -15,9 +15,14 @@ const MateriaisPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [materialToDeleteId, setMaterialToDeleteId] = useState(null);
 
+  // State for low stock alerts
+  const [lowStockAlerts, setLowStockAlerts] = useState([]);
+  const [isLoadingLowStockAlerts, setIsLoadingLowStockAlerts] = useState(false);
+  const [lowStockAlertsError, setLowStockAlertsError] = useState(null);
+
   const fetchMateriais = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
+    setError(null); // General error for material list
     try {
       const response = await api.getMateriais();
       setMateriais(response.data);
@@ -29,9 +34,24 @@ const MateriaisPage = () => {
     }
   }, []);
 
+  const fetchLowStockAlerts = useCallback(async () => {
+    setIsLoadingLowStockAlerts(true);
+    setLowStockAlertsError(null);
+    try {
+      const response = await api.getMateriaisAlertaEstoqueBaixo();
+      setLowStockAlerts(response.data || []);
+    } catch (err) {
+      setLowStockAlertsError(err.message || 'Falha ao buscar alertas de estoque baixo.');
+      console.error("Fetch Low Stock Alerts Error:", err);
+    } finally {
+      setIsLoadingLowStockAlerts(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchMateriais();
-  }, [fetchMateriais]);
+    fetchLowStockAlerts(); // Fetch alerts when component mounts
+  }, [fetchMateriais, fetchLowStockAlerts]);
 
   const handleAddNew = () => {
     setCurrentMaterial(null);
@@ -109,7 +129,29 @@ const MateriaisPage = () => {
         </button>
       </div>
 
-      {error && !showFormModal && (
+      {/* Low Stock Alerts Display */}
+      {isLoadingLowStockAlerts && <p className="text-center text-gray-500 my-4">Carregando alertas de estoque...</p>}
+      {lowStockAlertsError && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4" role="alert">
+          <p className="font-bold">Erro ao Carregar Alertas de Estoque:</p>
+          <p>{lowStockAlertsError}</p>
+        </div>
+      )}
+      {lowStockAlerts.length > 0 && !isLoadingLowStockAlerts && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4" role="alert">
+          <p className="font-bold">Alerta de Estoque Baixo!</p>
+          <p>Os seguintes materiais atingiram ou estão abaixo do nível mínimo de estoque:</p>
+          <ul className="list-disc ml-5 mt-2">
+            {lowStockAlerts.map(material => (
+              <li key={material.id}>
+                {material.nome} (Estoque Atual: {material.quantidade_em_estoque}, Mínimo Definido: {material.nivel_minimo_estoque})
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {error && !showFormModal && ( // General error for material list/ CRUD operations
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
           <strong className="font-bold">Erro: </strong>
           <span className="block sm:inline">{error}</span>
@@ -121,6 +163,7 @@ const MateriaisPage = () => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         isLoading={isLoading}
+        lowStockAlerts={lowStockAlerts} // Pass alerts to table for potential highlighting
       />
 
       {/* Form Modal */}

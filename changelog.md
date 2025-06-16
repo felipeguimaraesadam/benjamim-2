@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.1] - 2024-08-02
+### Added
+- **Alerta de Estoque Baixo para Materiais**:
+    - Adicionado campo `nivel_minimo_estoque` e `quantidade_em_estoque` ao modelo `Material` no backend. (Nota: `quantidade_em_estoque` adicionada para funcionalidade do alerta, sua gestão completa de entradas/saídas de estoque é uma tarefa futura).
+    - Formulário de material (criação/edição) atualizado para incluir campos para definir o "Nível Mínimo de Estoque para Alerta" e a "Quantidade em Estoque" inicial.
+    - Implementado novo endpoint na API (`/api/materiais/alertas-estoque-baixo/`) que retorna materiais cujo `quantidade_em_estoque` é menor ou igual ao `nivel_minimo_estoque` (e `nivel_minimo_estoque > 0`).
+    - Na página de listagem de materiais no frontend:
+        - Exibição de um banner de alerta no topo da página quando existem materiais com estoque baixo, listando os nomes, quantidade atual e nível mínimo definido.
+        - Adicionadas novas colunas na tabela de materiais: "Estoque Atual" e "Nível Mínimo", exibindo os respectivos valores.
+        - Destaque visual (fundo amarelo) para as linhas na tabela que correspondem a materiais com estoque baixo.
+        - Destaque visual adicional (texto em vermelho e negrito) para o valor do "Estoque Atual" na tabela quando este estiver abaixo ou igual ao nível mínimo.
+### Changed
+- O script `run_migrations.bat` foi verificado e já inclui o comando `python backend/manage.py migrate`, que aplicará as novas migrações do modelo `Material` necessárias para esta funcionalidade.
+
 ## [0.5.0] - 2024-08-02
 ### Added
 - **(RELATÓRIO) Folha de Pagamento Semanal**:
@@ -92,7 +106,7 @@
   - Backend: Adicionado campo `funcionario_locado` ao modelo `Locacao_Obras_Equipes`. Serializer atualizado para incluir `funcionario_locado_nome` e validar a exclusividade mútua entre `equipe`, `funcionario_locado` e `servico_externo`. Migração `0008_add_funcionario_locado_to_locacao.py` criada.
   - Frontend: Formulário `LocacaoForm.jsx` atualizado para permitir a seleção do tipo de locação (Equipe, Funcionário, Serviço Externo) e os campos de entrada correspondentes. Tabela `LocacoesTable.jsx` atualizada para exibir o tipo de recurso locado.
   - **Nota Importante:** As migrações de banco de dados (`0007` e `0008`) não puderam ser aplicadas devido a limitações do ambiente. O usuário deve executar 'python manage.py migrate' manualmente.
-- Adicionado script `run_migrations.bat` na raiz do projeto para facilitar a execução do comando `python manage.py migrate` do Django.
+- Adicionado script `run_migrations.bat` na raiz do projeto para facilitar a execution do comando `python manage.py migrate` do Django.
 - Implementada a funcionalidade de visualização de Detalhes da Obra (`/obras/:id`), exibindo informações principais da obra e seções para dados relacionados (compras, despesas, equipes).
 - Nova seção "Acesso Rápido" no Dashboard (`/`) com atalhos para Obras, Funcionários e Relatórios.
 - Múltiplos novos links de navegação no menu lateral (`Navegacao.jsx`) para todas as seções principais do sistema (Dashboard, Obras, Funcionários, Equipes, Materiais, Compras, Despesas, Alocações, Ocorrências, Relatórios).
