@@ -33,6 +33,9 @@ const FuncionariosTable = ({ funcionarios, onEdit, onDelete, isLoading }) => {
             <th scope="col" className="px-6 py-3">Cargo</th>
             <th scope="col" className="px-6 py-3">Salário</th>
             <th scope="col" className="px-6 py-3">Data Contratação</th>
+            <th scope="col" className="px-6 py-3">Diária (R$)</th>
+            <th scope="col" className="px-6 py-3">Metro (R$)</th>
+            <th scope="col" className="px-6 py-3">Empreitada (R$)</th>
             <th scope="col" className="px-6 py-3 text-center">Ações</th>
           </tr>
         </thead>
@@ -45,6 +48,9 @@ const FuncionariosTable = ({ funcionarios, onEdit, onDelete, isLoading }) => {
               <td className="px-6 py-4">{funcionario.cargo}</td>
               <td className="px-6 py-4">{formatCurrency(funcionario.salario)}</td>
               <td className="px-6 py-4">{formatDate(funcionario.data_contratacao)}</td>
+              <td className="px-6 py-4">{formatCurrency(funcionario.valor_diaria_padrao)}</td>
+              <td className="px-6 py-4">{formatCurrency(funcionario.valor_metro_padrao)}</td>
+              <td className="px-6 py-4">{formatCurrency(funcionario.valor_empreitada_padrao)}</td>
               <td className="px-6 py-4 text-center space-x-2">
                 <button
                   onClick={() => onEdit(funcionario)}

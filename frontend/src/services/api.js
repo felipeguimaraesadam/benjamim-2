@@ -164,7 +164,7 @@ export const createFuncionario = (funcionarioData) => {
 };
 
 export const updateFuncionario = (id, funcionarioData) => {
-  return apiClient.put(`/funcionarios/${id}/`, funcionarioData);
+  return apiClient.patch(`/funcionarios/${id}/`, funcionarioData); // Changed put to patch
 };
 
 export const deleteFuncionario = (id) => {

@@ -1,5 +1,13 @@
 # Changelog
 
+## [Próxima Versão] - 2025-06-15
+
+### Adicionado
+- Adicionados campos para valores padrão de diária, metro e empreitada no cadastro de funcionários. Implementado autopreenchimento destes valores no formulário de locação. Adicionada funcionalidade para, mediante confirmação do usuário, atualizar o valor padrão do funcionário se este for alterado durante a criação de uma locação.
+
+### Modificado
+- A `data_locacao_fim` em Locações agora é definida automaticamente como a `data_locacao_inicio` se não for especificada ou se for anterior à data de início. Locações existentes com data de fim nula foram atualizadas para seguir esta regra. O campo `data_locacao_fim` não permite mais valores nulos no banco de dados.
+
 ## [Unreleased] - 2025-06-14
 
 ### Added

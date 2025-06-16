@@ -113,7 +113,16 @@ class ObraSerializer(serializers.ModelSerializer):
 class FuncionarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Funcionario
-        fields = '__all__'
+        fields = [
+            'id',
+            'nome_completo',
+            'cargo',
+            'salario',
+            'data_contratacao',
+            'valor_diaria_padrao',
+            'valor_metro_padrao',
+            'valor_empreitada_padrao',
+        ]
 
 
 class EquipeSerializer(serializers.ModelSerializer):
@@ -195,19 +204,27 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
             # (its start_date <= new_end_date OR new_end_date IS NULL) AND
             # (its end_date >= new_start_date OR its end_date IS NULL)
 
-            if data_locacao_fim: # New locacao has an end date
-                # Existing locacao must start before or when new one ends
-                # AND (Existing locacao must end after or when new one starts OR existing locacao is open-ended)
-                q_conditions = Q(data_locacao_inicio__lte=data_locacao_fim) & \
-                               (Q(data_locacao_fim__gte=data_locacao_inicio) | Q(data_locacao_fim__isnull=True))
+            # Determine effective data_locacao_fim for validation, considering model's save() behavior
+            # data_locacao_inicio is from validated_data or instance (it's required)
+            # data_locacao_fim is from validated_data or instance (could be None if not yet processed by model's save)
+
+            effective_data_locacao_fim = data_locacao_fim
+            if effective_data_locacao_fim is None or (data_locacao_inicio and effective_data_locacao_fim < data_locacao_inicio):
+                effective_data_locacao_fim = data_locacao_inicio
+
+            # All existing locações in the DB are assumed to have non-null data_locacao_fim
+            # due to model's save() and previous data migration.
+            # Thus, Q(data_locacao_fim__isnull=True) is no longer needed for existing records.
+            # The new locação (being validated) will also have a non-null data_locacao_fim after save.
+
+            # Simplified overlap condition:
+            # new_start <= existing_end AND new_end >= existing_start
+            if effective_data_locacao_fim: # Should always be true given the logic above
+                q_conditions = Q(data_locacao_inicio__lte=effective_data_locacao_fim) & \
+                               Q(data_locacao_fim__gte=data_locacao_inicio)
                 conflicting_locacoes_qs = conflicting_locacoes_qs.filter(q_conditions)
-            else: # New locacao is open-ended
-                # Existing locacao (finite or open) must end after or when new (open-ended) one starts
-                # OR existing locacao itself is open-ended (which means they will overlap indefinitely if new one starts before existing ends,
-                # but simplified: any other open loc for same func is a conflict if not handled by start date alignment)
-                # A simpler way for new open-ended: conflict if existing_end_date >= new_start_date OR existing_end_date IS NULL
-                q_conditions = Q(data_locacao_fim__gte=data_locacao_inicio) | Q(data_locacao_fim__isnull=True)
-                conflicting_locacoes_qs = conflicting_locacoes_qs.filter(q_conditions)
+            # The case where effective_data_locacao_fim is None should ideally not happen if data_locacao_inicio is present.
+            # If data_locacao_inicio is None (which shouldn't pass field validation), this whole block is skipped.
 
             if conflicting_locacoes_qs.exists():
                 first_conflict = conflicting_locacoes_qs.first()

@@ -65,6 +65,9 @@ class Funcionario(models.Model):
     cargo = models.CharField(max_length=100)
     salario = models.DecimalField(max_digits=10, decimal_places=2)
     data_contratacao = models.DateField()
+    valor_diaria_padrao = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    valor_metro_padrao = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    valor_empreitada_padrao = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
         return self.nome_completo
@@ -83,7 +86,7 @@ class Locacao_Obras_Equipes(models.Model):
     funcionario_locado = models.ForeignKey('Funcionario', on_delete=models.CASCADE, null=True, blank=True, related_name='locacoes_individuais')
     servico_externo = models.CharField(max_length=255, blank=True, null=True) # New field
     data_locacao_inicio = models.DateField()
-    data_locacao_fim = models.DateField(null=True, blank=True)
+    data_locacao_fim = models.DateField(null=False, blank=True) # Removed temporary default
 
     TIPO_PAGAMENTO_CHOICES = [
         ('diaria', 'Diária'),
@@ -104,6 +107,12 @@ class Locacao_Obras_Equipes(models.Model):
         default='ativa',
         verbose_name='Status da Locação'
     )
+
+    def save(self, *args, **kwargs):
+        if self.data_locacao_inicio:  # data_locacao_inicio is non-nullable
+            if self.data_locacao_fim is None or self.data_locacao_fim < self.data_locacao_inicio:
+                self.data_locacao_fim = self.data_locacao_inicio
+        super().save(*args, **kwargs)
 
     def __str__(self):
         if self.equipe:

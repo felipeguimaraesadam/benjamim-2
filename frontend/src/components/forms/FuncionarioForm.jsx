@@ -13,6 +13,9 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     cargo: '',
     salario: '',
     data_contratacao: '',
+    valor_diaria_padrao: '',
+    valor_metro_padrao: '',
+    valor_empreitada_padrao: '',
   });
   const [errors, setErrors] = useState({});
 
@@ -23,6 +26,9 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         cargo: initialData.cargo || '',
         salario: initialData.salario || '',
         data_contratacao: initialData.data_contratacao ? initialData.data_contratacao.split('T')[0] : '',
+        valor_diaria_padrao: initialData.valor_diaria_padrao || '',
+        valor_metro_padrao: initialData.valor_metro_padrao || '',
+        valor_empreitada_padrao: initialData.valor_empreitada_padrao || '',
       });
     } else {
       // Reset form for new entry
@@ -31,6 +37,9 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         cargo: '',
         salario: '',
         data_contratacao: '',
+        valor_diaria_padrao: '',
+        valor_metro_padrao: '',
+        valor_empreitada_padrao: '',
       });
     }
   }, [initialData]);
@@ -53,6 +62,16 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         newErrors.salario = 'Salário deve ser um número válido.';
     }
     if (!formData.data_contratacao) newErrors.data_contratacao = 'Data de contratação é obrigatória.';
+    // Optional fields, so no specific validation unless they have values
+    if (formData.valor_diaria_padrao && (isNaN(parseFloat(formData.valor_diaria_padrao)) || parseFloat(formData.valor_diaria_padrao) < 0)) {
+      newErrors.valor_diaria_padrao = 'Valor da diária deve ser um número positivo.';
+    }
+    if (formData.valor_metro_padrao && (isNaN(parseFloat(formData.valor_metro_padrao)) || parseFloat(formData.valor_metro_padrao) < 0)) {
+      newErrors.valor_metro_padrao = 'Valor do metro deve ser um número positivo.';
+    }
+    if (formData.valor_empreitada_padrao && (isNaN(parseFloat(formData.valor_empreitada_padrao)) || parseFloat(formData.valor_empreitada_padrao) < 0)) {
+      newErrors.valor_empreitada_padrao = 'Valor da empreitada deve ser um número positivo.';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -63,8 +82,11 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     if (validateForm()) {
       const dataToSubmit = {
         ...formData,
-        salario: parseFloat(formData.salario).toFixed(2), // Ensure two decimal places for currency
+        salario: parseFloat(formData.salario).toFixed(2),
         data_contratacao: formData.data_contratacao || null,
+        valor_diaria_padrao: formData.valor_diaria_padrao ? parseFloat(formData.valor_diaria_padrao).toFixed(2) : null,
+        valor_metro_padrao: formData.valor_metro_padrao ? parseFloat(formData.valor_metro_padrao).toFixed(2) : null,
+        valor_empreitada_padrao: formData.valor_empreitada_padrao ? parseFloat(formData.valor_empreitada_padrao).toFixed(2) : null,
       };
       onSubmit(dataToSubmit);
     }
@@ -97,7 +119,31 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         {errors.data_contratacao && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.data_contratacao}</p>}
       </div>
 
-      <div className="flex items-center justify-end space-x-3 pt-2">
+      <div className="pt-4">
+        <h3 className="mb-3 text-md font-medium text-gray-800">Valores Padrão de Pagamento (Opcional)</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="valor_diaria_padrao" className="block mb-2 text-sm font-medium text-gray-900">Valor Diária Padrão (R$)</label>
+            <input type="number" name="valor_diaria_padrao" id="valor_diaria_padrao" value={formData.valor_diaria_padrao} onChange={handleChange} step="0.01"
+                   className={`bg-gray-50 border ${errors.valor_diaria_padrao ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`} />
+            {errors.valor_diaria_padrao && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.valor_diaria_padrao}</p>}
+          </div>
+          <div>
+            <label htmlFor="valor_metro_padrao" className="block mb-2 text-sm font-medium text-gray-900">Valor Metro Padrão (R$)</label>
+            <input type="number" name="valor_metro_padrao" id="valor_metro_padrao" value={formData.valor_metro_padrao} onChange={handleChange} step="0.01"
+                   className={`bg-gray-50 border ${errors.valor_metro_padrao ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`} />
+            {errors.valor_metro_padrao && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.valor_metro_padrao}</p>}
+          </div>
+          <div>
+            <label htmlFor="valor_empreitada_padrao" className="block mb-2 text-sm font-medium text-gray-900">Valor Empreitada Padrão (R$)</label>
+            <input type="number" name="valor_empreitada_padrao" id="valor_empreitada_padrao" value={formData.valor_empreitada_padrao} onChange={handleChange} step="0.01"
+                   className={`bg-gray-50 border ${errors.valor_empreitada_padrao ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`} />
+            {errors.valor_empreitada_padrao && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.valor_empreitada_padrao}</p>}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end space-x-3 pt-6">
         <button type="button" onClick={onCancel} disabled={isLoading}
                 className="py-2 px-4 text-sm font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50">
           Cancelar
