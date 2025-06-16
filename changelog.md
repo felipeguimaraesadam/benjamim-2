@@ -9,6 +9,9 @@
   - Inclui campo de descrição opcional para cada foto.
   - A galeria é atualizada automaticamente após o upload de uma nova foto.
 
+### 🐛 Corrigido (em 2024-08-01)
+- Adicionada a dependência `Pillow` ao `backend/requirements.txt`. Esta biblioteca é necessária para a funcionalidade de upload de imagens da galeria de fotos e não estava sendo instalada automaticamente, causando erro nas migrações em ambientes limpos.
+
 ### Added
 - **Sistema de Permissões por Nível de Acesso**:
   - Implementado um sistema de permissões baseado no campo `nivel_acesso` do `Usuario`.
