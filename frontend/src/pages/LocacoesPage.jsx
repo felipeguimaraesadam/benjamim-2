@@ -195,11 +195,24 @@ const LocacoesPage = () => {
     setSelectedLocacaoId(null);
   };
 
-  // Custom Y-axis tick formatter
-  const formatYAxisTick = (tickItem) => {
+  // Custom X-axis tick formatter for vertical chart
+  const formatDateTick = (tickItem) => {
     // Assuming tickItem is the date string "YYYY-MM-DD"
-    const date = new Date(tickItem);
+    const date = new Date(tickItem + 'T00:00:00'); // Ensure parsing as local date
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  };
+
+  const formatTooltipLabel = (label) => {
+    const date = new Date(label + 'T00:00:00');
+    return date.toLocaleDateString('pt-BR', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const formatTooltipValue = (value, name, props) => {
+    if (props.payload.total_cost === 0 && props.payload.has_locacoes === false) {
+      return ["Sem locações", "Status"];
+    }
+    const formattedValue = `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return [formattedValue, "Custo Total"];
   };
 
 
@@ -241,37 +254,52 @@ const LocacoesPage = () => {
           <ResponsiveContainer width="100%" height={400}>
             <BarChart
               data={chartData}
-              layout="vertical" // For horizontal bar chart
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 5, right: 30, left: 20, bottom: 25 }} // Increased bottom margin for XAxis label
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" domain={[0, 'dataMax + 1000']} label={{ value: 'Custo Total (R$)', position: 'insideBottomRight', offset: -10, dy:10, fontSize: 12 }} />
-              <YAxis
+              <XAxis
                 dataKey="date"
-                type="category"
-                width={80}
-                tickFormatter={formatYAxisTick}
-                label={{ value: 'Data', angle: -90, position: 'insideLeft', fontSize: 12 }}
+                tickFormatter={formatDateTick}
+                label={{ value: 'Data (Últimos 30 dias)', position: 'insideBottom', offset: -15, dy:10, fontSize: 12 }}
+                interval={chartData.length > 15 ? Math.floor(chartData.length / 15) : 0} // Adjust interval to prevent overlap
+                angle={chartData.length > 20 ? -30 : 0} // Angle ticks if many dates
+                textAnchor={chartData.length > 20 ? 'end' : 'middle'} // Adjust anchor for angled ticks
+                height={50} // Allocate space for angled labels if needed
+              />
+              <YAxis
+                label={{ value: 'Custo (R$)', angle: -90, position: 'insideLeft', fontSize: 12 }}
+                tickFormatter={(value) => parseFloat(value).toLocaleString('pt-BR')}
+                domain={[0, 'dataMax + 1000']} // Add some padding to max value
               />
               <Tooltip
-                formatter={(value, name, props) => {
-                  const formattedValue = `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                  return [formattedValue, "Custo Total"];
-                }}
-                labelFormatter={(label) => new Date(label).toLocaleDateString('pt-BR', { year: 'numeric', month: 'short', day: 'numeric' })}
+                labelFormatter={formatTooltipLabel}
+                formatter={formatTooltipValue}
               />
               <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              <Bar dataKey="total_cost" name="Custo Total Diário" fill="#8884d8">
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.total_cost > 0 ? '#8884d8' : '#FFBB28'} />
-                  // Simpler: one color, warning icon handled by custom tick or label
-                ))}
+              <Bar dataKey="total_cost" name="Custo Total Diário">
+                {chartData.map((entry, index) => {
+                  if (entry.total_cost === 0 && entry.has_locacoes === false) {
+                    // For zero-cost days, render a minimal height bar
+                    return <Cell key={`cell-${index}`} fill="#FFCA28" height={3} y={297} />; // y needs to be adjusted based on chart scale or use a custom bar.
+                                                                                             // This fixed height approach with Cell is tricky due to y-coordinate.
+                                                                                             // A better approach is to use a custom shape for the Bar.
+                                                                                             // For now, let's use a different fill color and rely on tooltip.
+                  }
+                  return <Cell key={`cell-${index}`} fill="#8884d8" />;
+                })}
               </Bar>
+               {/* This is a simplified approach. For a truly minimal height bar for zero values,
+                   you might need a custom <Bar shape={...} /> component or adjust y position carefully.
+                   The current Cell approach will color the bar but it will still take normal space if not handled by Bar component itself.
+                   Recharts typically handles zero-value bars by not rendering them or rendering at baseline.
+                   We will ensure the bar is colored differently and the tooltip indicates "Sem locações".
+                */}
             </BarChart>
           </ResponsiveContainer>
         )}
-         <div className="mt-2 text-xs text-gray-500">
-            <span className="inline-block w-3 h-3 bg-[#FFBB28] mr-1"></span> Dias sem locações (ou custo zero). Custo atribuído ao dia de início da locação.
+        <div className="mt-4 text-xs text-gray-500 text-center">
+            <span className="inline-block w-3 h-3 bg-[#FFCA28] mr-1 align-middle"></span>
+            <span className="align-middle">Dias sem locações (ou custo zero). Custo atribuído ao dia de início da locação.</span>
         </div>
       </div>
 

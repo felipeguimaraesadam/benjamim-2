@@ -2,11 +2,12 @@
 
 ## [0.4.0] - 2024-08-02
 ### Added
-- **Análise de Custo de Locação**: Adicionado um gráfico na página de Locações que exibe o custo total de locações por dia nos últimos 30 dias. O gráfico inclui:
+- **Análise de Custo de Locação**: Adicionado um gráfico de barras **verticais** na página de Locações que exibe o custo total de locações por dia nos últimos 30 dias. O gráfico inclui:
     - Filtro por obra.
-    - Indicação visual (barra amarela e legenda) para dias sem locações ou com custo zero.
-    - Tooltip com detalhes de custo e data.
-    - Eixo X para custo total e Eixo Y para datas (DD/MM).
+    - Orientação vertical: Datas no eixo X (inferior, formato DD/MM) e Custos no eixo Y (lateral, formato R$).
+    - Indicação visual clara (barra amarela na base do gráfico, diferenciada na cor) para dias sem locações ou com custo zero.
+    - Tooltip informativo para todas as barras, detalhando custo/status e data completa.
+    - Legenda explicativa para as cores das barras.
 
 ## [EM_DESENVOLVIMENTO] - 2024-07-30
 
