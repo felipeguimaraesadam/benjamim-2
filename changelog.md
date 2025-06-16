@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0] - 2024-08-02
+### Added
+- **(RELATÓRIO) Folha de Pagamento Semanal**:
+    - Adicionado botão "Gerar Relatório de Pagamento" na página de Locações, abrindo um modal de múltiplos passos para configuração e visualização do relatório.
+    - Permite seleção de período (data de início e fim) para o qual o relatório será gerado.
+    - **Pré-verificação de Dias**: Antes de gerar o relatório final, o sistema realiza uma verificação e alerta o usuário sobre quaisquer dias dentro do período selecionado que não possuem locações ativas registradas. O usuário pode optar por continuar a geração do relatório ou cancelar para ajustar o período.
+    - **Consolidação de Pagamentos por Funcionário**: O relatório gerado consolida todas as locações ativas do período selecionado, agrupadas e totalizadas por funcionário.
+    - **Respeito à Data de Pagamento Programada**: Locações cuja `data_pagamento` está explicitamente definida para uma data futura (posterior à data de fim do período do relatório) não são incluídas na totalização do período corrente, garantindo que apenas pagamentos devidos sejam listados.
+    - **Exibição Detalhada**: Para cada funcionário listado, o relatório exibe as locações individuais (incluindo nome da obra, data de início da locação, tipo de pagamento e valor do pagamento) e o valor total a ser pago ao funcionário referente ao período selecionado.
+
 ## [0.4.0] - 2024-08-02
 ### Added
 - **Análise de Custo de Locação**: Adicionado um gráfico de barras **verticais** na página de Locações que exibe o custo total de locações por dia nos últimos 30 dias. O gráfico inclui:

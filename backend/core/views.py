@@ -844,6 +844,117 @@ class ObraCustosPorCategoriaView(APIView):
         return Response(resultado_formatado)
 
 
+from collections import defaultdict
+
+class RelatorioFolhaPagamentoViewSet(viewsets.ViewSet):
+    permission_classes = [IsNivelAdmin | IsNivelGerente] # Or your specific permissions
+
+    @action(detail=False, methods=['get'], url_path='pre_check_dias_sem_locacoes')
+    def pre_check_dias_sem_locacoes(self, request):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        if not start_date_str or not end_date_str:
+            return Response({"error": "Parâmetros start_date e end_date são obrigatórios."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            start_date = date.fromisoformat(start_date_str)
+            end_date = date.fromisoformat(end_date_str)
+        except ValueError:
+            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if start_date > end_date:
+            return Response({"error": "start_date não pode ser posterior a end_date."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        all_dates_in_range = set()
+        current_date = start_date
+        while current_date <= end_date:
+            all_dates_in_range.add(current_date)
+            current_date += timedelta(days=1)
+
+        locacoes_dates_qs = Locacao_Obras_Equipes.objects.filter(
+            data_locacao_inicio__gte=start_date,
+            data_locacao_inicio__lte=end_date,
+            status_locacao='ativa' # Consider active locações
+        ).values_list('data_locacao_inicio', flat=True).distinct()
+
+        locacoes_dates_set = set(locacoes_dates_qs)
+
+        dias_sem_locacoes = sorted([dt.isoformat() for dt in (all_dates_in_range - locacoes_dates_set)])
+
+        return Response({'dias_sem_locacoes': dias_sem_locacoes})
+
+    @action(detail=False, methods=['get'], url_path='generate_report')
+    def generate_report(self, request):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        if not start_date_str or not end_date_str:
+            return Response({"error": "Parâmetros start_date e end_date são obrigatórios."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            start_date = date.fromisoformat(start_date_str)
+            end_date = date.fromisoformat(end_date_str)
+        except ValueError:
+            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if start_date > end_date:
+            return Response({"error": "start_date não pode ser posterior a end_date."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter locações:
+        # - Within the date range for data_locacao_inicio
+        # - Payable in the period (data_pagamento is null OR data_pagamento <= end_date)
+        # - Must be linked to a funcionario_locado (not equipe or servico_externo alone)
+        # - Status must be 'ativa'
+        locacoes_periodo = Locacao_Obras_Equipes.objects.filter(
+            Q(data_locacao_inicio__gte=start_date) &
+            Q(data_locacao_inicio__lte=end_date) &
+            (Q(data_pagamento__isnull=True) | Q(data_pagamento__lte=end_date)) &
+            Q(funcionario_locado__isnull=False) &
+            Q(status_locacao='ativa')
+        ).select_related('funcionario_locado', 'obra').order_by('funcionario_locado__nome_completo', 'data_locacao_inicio')
+
+        report_data = defaultdict(lambda: {"funcionario_id": None, "funcionario_nome": "", "locacoes": [], "total_a_pagar_periodo": Decimal('0.00')})
+
+        for locacao in locacoes_periodo:
+            func = locacao.funcionario_locado # Should not be None due to filter
+            if func is None: # Should not happen with Q(funcionario_locado__isnull=False)
+                continue
+
+            func_key = func.id
+
+            if report_data[func_key]["funcionario_id"] is None:
+                report_data[func_key]["funcionario_id"] = func.id
+                report_data[func_key]["funcionario_nome"] = func.nome_completo
+
+            report_data[func_key]["locacoes"].append({
+                "locacao_id": locacao.id, # Added for potential detail linking on frontend
+                "obra_id": locacao.obra.id,
+                "obra_nome": locacao.obra.nome_obra,
+                "data_locacao_inicio": locacao.data_locacao_inicio.isoformat(),
+                "data_locacao_fim": locacao.data_locacao_fim.isoformat(),
+                "tipo_pagamento": locacao.get_tipo_pagamento_display(), # Get human-readable choice
+                "valor_pagamento": str(locacao.valor_pagamento), # Convert Decimal to string
+                "data_pagamento": locacao.data_pagamento.isoformat() if locacao.data_pagamento else None,
+                "status_locacao": locacao.get_status_locacao_display()
+            })
+            report_data[func_key]["total_a_pagar_periodo"] += locacao.valor_pagamento
+
+        # Convert defaultdict to list and Decimal to string for total
+        final_report = []
+        for key in sorted(report_data.keys(), key=lambda k: report_data[k]["funcionario_nome"]): # Sort by funcionario_nome
+            data = report_data[key]
+            data["total_a_pagar_periodo"] = str(data["total_a_pagar_periodo"])
+            final_report.append(data)
+
+        return Response(final_report)
+
+
 class FotoObraViewSet(viewsets.ModelViewSet):
     queryset = FotoObra.objects.all().order_by('-uploaded_at')
     serializer_class = FotoObraSerializer

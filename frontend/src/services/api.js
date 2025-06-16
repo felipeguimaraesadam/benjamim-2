@@ -300,6 +300,18 @@ export const getLocacaoCustoDiarioChart = (obraId = null) => {
   return apiClient.get(url);
 };
 
+export const getRelatorioFolhaPagamentoPreCheck = (startDate, endDate) => {
+  return apiClient.get('/relatorios/folha-pagamento/pre_check_dias_sem_locacoes/', {
+    params: { start_date: startDate, end_date: endDate },
+  });
+};
+
+export const generateRelatorioFolhaPagamento = (startDate, endDate) => {
+  return apiClient.get('/relatorios/folha-pagamento/generate_report/', {
+    params: { start_date: startDate, end_date: endDate },
+  });
+};
+
 // --- Dashboard Service Functions ---
 export const getDashboardStats = () => {
   return apiClient.get('/dashboard/stats/');

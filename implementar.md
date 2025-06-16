@@ -34,11 +34,11 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [x] Na página de listagem de locações, exibir um gráfico de barras horizontais com o custo total de locações por dia (últimos 30 dias).
 [x] Implementar um filtro por obra para o gráfico (padrão: mostrar dados de todas as obras).
 [x] Adicionar um ícone de alerta (⚠️) nos dias do gráfico que não possuem nenhuma locação registrada (inclusive domingos), para sinalizar possíveis esquecimentos. (Nota: Implementado com barra amarela e legenda)
-[ ] (RELATÓRIO) Folha de Pagamento Semanal:
-[ ] Na página de locação, adicionar um botão "Gerar Relatório de Pagamento".
-[ ] O relatório deve consolidar todas as locações da semana (ou período selecionado), de todas as obras, organizadas por funcionário.
-[ ] O relatório deve respeitar as datas de pagamento futuras, não incluindo na cobrança da semana atual o que foi agendado para depois.
-[ ] Antes de gerar, o sistema deve alertar sobre os dias sem locações registradas em cada obra. O usuário pode confirmar e gerar o relatório mesmo assim.
+[x] (RELATÓRIO) Folha de Pagamento Semanal: (Concluído em 2024-08-02)
+[x] Na página de locação, adicionar um botão "Gerar Relatório de Pagamento".
+[x] O relatório deve consolidar todas as locações da semana (ou período selecionado), de todas as obras, organizadas por funcionário.
+[x] O relatório deve respeitar as datas de pagamento futuras, não incluindo na cobrança da semana atual o que foi agendado para depois.
+[x] Antes de gerar, o sistema deve alertar sobre os dias sem locações registradas em cada obra. O usuário pode confirmar e gerar o relatório mesmo assim.
 🚀 4. Melhorias Contínuas e Backlog
 [x] (UI/UX Locação) Adicionar status visual (Hoje, Futura, Passada, Cancelada) com cores e ordenação customizada à lista de locações para melhor clareza. (Concluído em 14/06/2025)
 [x] (FIX) Corrigida inconsistência na exibição de datas entre diferentes telas (problema de fuso horário), garantindo que `TIME_ZONE` no backend seja 'America/Sao_Paulo' e que a formatação de datas no frontend (para DD/MM/YYYY) não seja afetada pelo fuso horário do navegador. (Concluído em 15/06/2025)
