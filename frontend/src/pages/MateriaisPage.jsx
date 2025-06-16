@@ -3,8 +3,8 @@ import * as api from '../services/api';
 import MateriaisTable from '../components/tables/MateriaisTable';
 import MaterialForm from '../components/forms/MaterialForm';
 import PaginationControls from '../components/utils/PaginationControls';
-import { showSuccessToast, showErrorToast } from '../../utils/toastUtils'; // Import toast utilities
-import SpinnerIcon from '../components/utils/SpinnerIcon'; // Import SpinnerIcon for delete button
+import { showSuccessToast, showErrorToast } from '../utils/toastUtils.js'; // Corrected import path
+import SpinnerIcon from '../components/utils/SpinnerIcon';
 
 const MateriaisPage = () => {
   const [materiais, setMateriais] = useState([]);

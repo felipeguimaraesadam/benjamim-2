@@ -66,7 +66,7 @@ const MateriaisTable = ({ materiais, onEdit, onDelete, isLoading, lowStockAlerts
                 </button>
               </td>
             </tr>
-          ))}
+          )})};
         </tbody>
       </table>
     </div>
