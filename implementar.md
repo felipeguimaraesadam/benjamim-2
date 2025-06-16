@@ -47,6 +47,6 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
   - [x] Adicionado campo "Observações" ao formulário de criação/edição de locação. (Concluído em 30/07/2024)
 [x] (MELHORIA) Alerta de Estoque Baixo: Criar um sistema de notificação ou alerta visual quando o estoque de um material atingir um nível mínimo pré-definido. (Concluído em 2024-08-02)
 [x] (UI) Paginação: Garantir que todas as tabelas com grande volume de dados tenham um sistema de paginação funcional. (Concluído em 2024-08-02)
-[ ] (UI/UX) Feedback Visual: Continuar aprimorando o feedback para o usuário com toasts para sucesso/erro e spinners durante o carregamento de dados.
+[x] (UI/UX) Feedback Visual: Continuar aprimorando o feedback para o usuário com toasts para sucesso/erro e spinners durante o carregamento de dados. (Concluído em 2024-08-02)
 [x] (UTILITÁRIO) Criar script `run_migrations.bat` para facilitar a aplicação de migrações do Django.
   - Concluído em 29/07/2024.

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.1] - 2024-08-02
+### Added
+- **Melhorias no Feedback Visual (UI/UX) em Módulos Chave**:
+    - Implementado sistema de notificações toast (`react-toastify`) para fornecer feedback claro de sucesso e erro em operações de Criação, Leitura (apenas erros), Atualização e Exclusão (CRUD) nos principais módulos, incluindo Materiais, Locações, Funcionários, Obras, Equipes, Compras, Despesas Extras e Ocorrências.
+    - Adicionados spinners de carregamento (`SpinnerIcon.jsx`) em botões de ação (ex: Salvar, Excluir, Gerar Relatório) durante o processamento de requisições assíncronas, melhorando a percepção do usuário sobre o estado da aplicação.
+    - Introduzidos spinners de carregamento em nível de página para indicar o carregamento inicial de listas de dados.
+    - Criado o utilitário `frontend/src/utils/toastUtils.js` para padronizar e simplificar a exibição de notificações toast.
+    - Criado o componente `frontend/src/components/utils/SpinnerIcon.jsx` para ícones de carregamento consistentes em botões.
+
 ## [0.6.0] - 2024-08-02
 ### Added
 - **Paginação Implementada em Tabelas Principais**:

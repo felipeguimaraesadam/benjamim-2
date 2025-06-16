@@ -7,6 +7,10 @@ const WarningIcon = ({ className = "w-4 h-4 inline mr-1" }) => ( // Added classN
   </svg>
 );
 
+// Note: isLoading prop is passed from MateriaisPage (as isLoadingForm)
+// We can rename it to isSubmitting internally or use it as is.
+// For consistency with the subtask, let's assume MaterialForm itself doesn't define a new 'isSubmitting'
+// but relies on the 'isLoading' prop passed from the parent page which indicates submission state.
 const MaterialForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
     nome: '',
@@ -157,8 +161,9 @@ const MaterialForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 className="py-2 px-4 text-sm font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50">
           Cancelar
         </button>
-        <button type="button" onClick={handleSubmit} disabled={isLoading} // Changed type to "button", added onClick
-                className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300">
+        <button type="button" onClick={handleSubmit} disabled={isLoading}
+                className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300 flex items-center justify-center">
+          {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
           {isLoading ? 'Salvando...' : (initialData && initialData.id ? 'Atualizar Material' : 'Salvar Material')}
         </button>
       </div>
