@@ -16,6 +16,10 @@ import TopMaterialsChart from '../components/obra/TopMaterialsChart';
 import ObraPurchasesTabContent from '../components/obra/ObraPurchasesTabContent';
 import ObraExpensesTabContent from '../components/obra/ObraExpensesTabContent';
 
+// NEW IMPORTS for Photo components
+import ObraFotosUpload from '../../components/obra/ObraFotosUpload';
+import ObraGaleria from '../../components/obra/ObraGaleria';
+
 const ObraDetailPage = () => {
   const { id } = useParams();
 
@@ -47,10 +51,13 @@ const ObraDetailPage = () => {
 
   // UI State
   const [showDistribuicaoModal, setShowDistribuicaoModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('equipes');
+  const [activeTab, setActiveTab] = useState('equipes'); // Default tab
   const [specificLocacaoError, setSpecificLocacaoError] = useState(null);
   const [removingLocacaoId, setRemovingLocacaoId] = useState(null); // For loading state on remove button
   const [operationStatus, setOperationStatus] = useState({ type: '', message: '' }); // For success/error messages
+
+  // NEW STATE for handling photo uploads
+  const [latestUploadedFoto, setLatestUploadedFoto] = useState(null);
 
   // Effect to clear operation status messages
   useEffect(() => {
@@ -93,6 +100,13 @@ const ObraDetailPage = () => {
          }
      }
   }, [fetchLocacoes, fetchObraDetails, setOperationStatus]); // Added fetchObraDetails to dependency array
+
+  // NEW CALLBACK for photo upload
+  const handlePhotoUploaded = (newFotoData) => {
+      setLatestUploadedFoto(newFotoData);
+      // Optionally, display a success message using operationStatus
+      setOperationStatus({ type: 'success', message: 'Foto enviada com sucesso!' });
+  };
 
   // Overall page loading state (optional, can use individual isLoading states in JSX)
   // const isPageLoading = isLoadingObra || isLoadingLocacoes || ... ;
@@ -140,18 +154,21 @@ const ObraDetailPage = () => {
 
       <div className="mb-8">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-            {['equipes', 'compras', 'despesas'].map(tabName => (
+          <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs"> {/* Added overflow-x-auto for smaller screens */}
+            {['equipes', 'compras', 'despesas', 'fotos'].map(tabName => ( // Added 'fotos' tab
               <button
                 key={tabName}
                 onClick={() => setActiveTab(tabName)}
-                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`whitespace-nowrap py-4 px-3 md:px-4 border-b-2 font-medium text-sm ${ // Adjusted padding
                   activeTab === tabName
                     ? 'border-indigo-500 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                {tabName === 'equipes' ? 'Equipes Locadas' : tabName === 'compras' ? 'Todas as Compras' : 'Despesas Extras'}
+                {tabName === 'equipes' ? 'Equipes Locadas' :
+                 tabName === 'compras' ? 'Todas as Compras' :
+                 tabName === 'despesas' ? 'Despesas Extras' :
+                 'Fotos da Obra'} {/* Label for 'fotos' tab */}
               </button>
             ))}
           </nav>
@@ -187,6 +204,12 @@ const ObraDetailPage = () => {
               obraId={obra.id}
               obraNome={obra.nome_obra}
             />
+          )}
+          {activeTab === 'fotos' && (
+            <div>
+              <ObraFotosUpload obraId={id} onUploadSuccess={handlePhotoUploaded} />
+              <ObraGaleria obraId={id} newFoto={latestUploadedFoto} />
+            </div>
           )}
         </div>
       </div>

@@ -2,6 +2,13 @@
 
 ## [EM_DESENVOLVIMENTO] - 2024-07-30
 
+### ✨ Adicionado (em 2024-08-01)
+- **Galeria de Fotos da Obra**:
+  - Usuários agora podem fazer upload de imagens (PNG, JPG/JPEG) para obras específicas na página de detalhes da obra.
+  - As imagens são exibidas em uma galeria com visualização em miniatura e modal para imagem ampliada.
+  - Inclui campo de descrição opcional para cada foto.
+  - A galeria é atualizada automaticamente após o upload de uma nova foto.
+
 ### Added
 - **Sistema de Permissões por Nível de Acesso**:
   - Implementado um sistema de permissões baseado no campo `nivel_acesso` do `Usuario`.
