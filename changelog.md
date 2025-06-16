@@ -8,6 +8,8 @@
     - Introduzidos spinners de carregamento em nível de página para indicar o carregamento inicial de listas de dados.
     - Criado o utilitário `frontend/src/utils/toastUtils.js` para padronizar e simplificar a exibição de notificações toast.
     - Criado o componente `frontend/src/components/utils/SpinnerIcon.jsx` para ícones de carregamento consistentes em botões.
+### Changed
+- **Status de Implementação**: Todas as tarefas principais e pendentes listadas no `implementar.md` (conforme revisão de 2024-08-02) foram concluídas ou marcadas como tal. Isso inclui a reformulação geral do módulo de Locação (cujas sub-tarefas específicas foram finalizadas anteriormente) e as melhorias de UI/UX como Paginação e Feedback Visual (Toasts/Spinners) aplicadas globalmente. O backlog em `implementar.md` agora reflete apenas futuras melhorias não escopadas para esta fase.
 
 ## [0.6.0] - 2024-08-02
 ### Added

@@ -4,7 +4,7 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [x] (BUG) Corrigir Edição de Obra: O formulário de edição de obra não está carregando os dados existentes, abrindo como um cadastro novo. Isso impede a atualização de informações cruciais.
   - Corrigido em 29/07/2024
 ⚙️ 2. Mudanças Estruturais e Regras de Negócio
-[ ] (CORE) Reformulação do Módulo de Locação: A funcionalidade de "Alocação" será renomeada para "Locação" e reestruturada.
+[x] (CORE) Reformulação do Módulo de Locação: A funcionalidade de "Alocação" será renomeada para "Locação" e reestruturada. (Concluído em 2024-08-02 - Sub-tarefas finalizadas anteriormente)
 [x] Nomeclatura: Alterar todas as referências de "Alocação" para "Locação" no frontend e, se necessário, no backend.
   - [x] Frontend: Terminologia atualizada para "Locação" (Concluído em 29/07/2024).
   - [x] Backend: Código atualizado para "Locação" (Concluído em 29/07/2024). **Nota:** Requer execução manual de `python manage.py migrate` devido a limitações do ambiente de desenvolvimento.
