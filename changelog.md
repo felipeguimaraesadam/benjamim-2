@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2] - 2024-08-02
+### Fixed
+- **Correção no Script de Migração (`run_migrations.bat`)**:
+    - Modificado o script `run_migrations.bat` para garantir a instalação das dependências listadas em `backend/requirements.txt` (incluindo `Pillow`, essencial para `ImageField`) após a ativação do ambiente virtual e antes da execução das migrações do Django.
+    - Esta correção visa prevenir erros como `SystemCheckError` relacionados à ausência de `Pillow` ao executar o script em um ambiente limpo ou onde as dependências não estão completamente instaladas.
+    - Adicionada verificação de erro após cada etapa crítica no script (ativação do venv, instalação de dependências, execução de migrações) para fornecer feedback mais claro e interromper a execução em caso de falha.
+
 ## [0.6.1] - 2024-08-02
 ### Added
 - **Melhorias no Feedback Visual (UI/UX) em Módulos Chave**:
