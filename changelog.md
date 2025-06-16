@@ -1,5 +1,28 @@
 # Changelog
 
+## [EM_DESENVOLVIMENTO] - 2024-07-30
+
+### Added
+- **Sistema de Permissões por Nível de Acesso**:
+  - Implementado um sistema de permissões baseado no campo `nivel_acesso` do `Usuario`.
+  - **Admin**: Usuários com `nivel_acesso='admin'` têm acesso total (CRUD completo) a todas as funcionalidades e endpoints da API.
+  - **Gerente**: Usuários com `nivel_acesso='gerente'` podem visualizar e adicionar dados na maioria das seções (Obras, Funcionários, Locações, Materiais, Compras, Despesas, Ocorrências, etc.), mas não podem modificar ou excluir registros existentes. O acesso a relatórios e ao dashboard é permitido (somente leitura).
+  - Outros níveis de acesso (e usuários não autenticados) têm acesso restrito conforme as permissões aplicadas.
+  - Testes automatizados foram adicionados para verificar as regras de permissão para os diferentes níveis de acesso.
+- **Filtros na Lista de Compras e Relatório Geral de Compras**:
+  - Adicionados filtros por intervalo de datas (`data_inicio`, `data_fim`) e por nome do fornecedor (`fornecedor__icontains`) na API e interface da lista de compras.
+  - Backend: `CompraViewSet` e `RelatorioGeralComprasView` atualizados para suportar os novos parâmetros de consulta.
+  - Frontend: Página de Compras (`ComprasPage.jsx`) atualizada com campos de entrada para data de início, data de fim e nome do fornecedor, além de botões para aplicar e limpar os filtros.
+  - Testes de backend foram adicionados para validar a lógica de filtragem.
+- **Modal de Detalhes da Locação**:
+  - Adicionado um ícone de "visualizar detalhes" (olho) em cada linha da tabela de locações.
+  - Ao clicar no ícone, um modal é exibido com informações completas da locação selecionada, como obra, recurso locado (funcionário, equipe ou serviço externo), datas, tipo de pagamento, valor, status e observações.
+  - Frontend: Criado o componente `LocacaoDetailModal.jsx` e integrado à página `LocacoesPage.jsx` para gerenciamento de estado e exibição.
+- **Campo de Observações no Formulário de Locação**:
+  - Adicionado campo `observacoes` (TextField) ao modelo `Locacao_Obras_Equipes` no backend.
+  - Criada migração de banco de dados (`0014_locacao_obras_equipes_observacoes.py`) para aplicar a alteração no esquema.
+  - Frontend: Formulário de criação/edição de locação (`LocacaoForm.jsx`) atualizado para incluir um campo `textarea` para o preenchimento das observações.
+
 ## [Próxima Versão] - 2025-06-15
 
 ### Adicionado

@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatDateToDMY } from '../../utils/dateUtils.js';
 
-const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }) => {
+const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, onViewDetails, isLoading }) => {
   const getObraNome = (obraId) => {
     const obra = obras && obras.find(o => o.id === obraId);
     return obra ? obra.nome_obra : 'N/A';
@@ -90,6 +90,7 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
             <th scope="col" className="px-6 py-3">Valor Pag.</th>
             <th scope="col" className="px-6 py-3">Data Pag.</th>
             <th scope="col" className="px-6 py-3">Status</th> {/* New Header */}
+            <th scope="col" className="px-6 py-3">Detalhes</th>
             <th scope="col" className="px-6 py-3">Ações</th>
           </tr>
         </thead>
@@ -112,6 +113,18 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, isLoading }
                 <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getLocacaoStatusInfo(locacao).colorClass} ${getLocacaoStatusInfo(locacao).textColorClass}`}>
                   {getLocacaoStatusInfo(locacao).text}
                 </span>
+              </td>
+              <td className="px-6 py-4">
+                <button
+                  onClick={() => onViewDetails(locacao.id)}
+                  className="font-medium text-gray-600 hover:text-gray-900 hover:underline"
+                  title="Ver Detalhes"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
               </td>
               <td className="px-6 py-4 flex space-x-2">
                 <button

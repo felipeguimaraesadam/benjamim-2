@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import * as api from '../services/api';
 import LocacoesTable from '../components/tables/LocacoesTable';
 import LocacaoForm from '../components/forms/LocacaoForm';
+import LocacaoDetailModal from '../components/modals/LocacaoDetailModal';
 
 const LocacoesPage = () => {
   const location = useLocation();
@@ -17,6 +18,8 @@ const LocacoesPage = () => {
   const [currentLocacao, setCurrentLocacao] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [locacaoToDeleteId, setLocacaoToDeleteId] = useState(null);
+
+  const [selectedLocacaoId, setSelectedLocacaoId] = useState(null);
 
   const fetchLocacoes = useCallback(async () => {
     setIsLoading(true);
@@ -148,6 +151,14 @@ const LocacoesPage = () => {
     // alert('Funcionário transferido com sucesso!');
   }, [fetchLocacoes]);
 
+  const handleViewDetails = (locacaoId) => {
+    setSelectedLocacaoId(locacaoId);
+  };
+
+  const handleCloseDetailModal = () => {
+    setSelectedLocacaoId(null);
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
@@ -160,7 +171,7 @@ const LocacoesPage = () => {
         </button>
       </div>
 
-      {error && !showFormModal && ( // Only show general page error if modal is not open
+      {error && !showFormModal && !selectedLocacaoId && ( // Only show general page error if no modal is open
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
           <strong className="font-bold">Erro: </strong>
           <span className="block sm:inline">{error}</span>
@@ -173,8 +184,16 @@ const LocacoesPage = () => {
         equipes={equipes}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onViewDetails={handleViewDetails} // Pass the handler
         isLoading={isLoading}
       />
+
+      {selectedLocacaoId && (
+        <LocacaoDetailModal
+          locacaoId={selectedLocacaoId}
+          onClose={handleCloseDetailModal}
+        />
+      )}
 
       {showFormModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">

@@ -2,7 +2,7 @@ from django.test import TestCase
 from decimal import Decimal
 from .models import Obra, Compra, Material, ItemCompra, Usuario, Funcionario, Locacao_Obras_Equipes
 from django.utils import timezone
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime # Added datetime explicitly for strptime
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
@@ -68,7 +68,7 @@ class ItemCompraSerializerTest(TestCase):
         cls.compra_header = Compra.objects.create(obra=cls.obra, data_compra=timezone.now().date())
         cls.material1 = Material.objects.create(nome="Material Alpha", unidade_medida="kg")
         cls.material2 = Material.objects.create(nome="Material Beta", unidade_medida="un")
-        cls.item_compra_instance = ItemCompra.objects.create(compra=cls.compra_header, material=cls.material1, quantidade=Decimal('15.500'), valor_unitario=Decimal('10.00'))
+        cls.item_compra_instance = ItemCompra.objects.create(compra=cls.compra_header, material=self.material1, quantidade=Decimal('15.500'), valor_unitario=Decimal('10.00'))
         cls.item_compra_instance.refresh_from_db()
 
     def test_item_compra_serialization(self):
@@ -295,27 +295,385 @@ class LocacaoOrderingTests(APITestCase):
             self.list_url = reverse('locacao_obras_equipes-list')
         except: # Fallback for environments where named URLs might not be immediately available/resolved
             self.list_url = '/api/locacoes/'
+         # For these tests, ensure admin user is available and authenticated if endpoints require it.
+        self.admin_user = Usuario.objects.create_user(login='testorderuser', password='password', nome_completo='Order User', nivel_acesso='admin', is_staff=True, is_superuser=True)
+
 
     def test_locacao_custom_ordering(self):
-        # If authentication is active for this endpoint:
-        # self.user = Usuario.objects.create_user(login='testorderuser', password='password', nome_completo='Order User', nivel_acesso='admin')
-        # self.client.force_authenticate(user=self.user)
+        self.client.force_authenticate(user=self.admin_user) # Authenticate as admin
 
         response = self.client.get(self.list_url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
 
         locacoes_data = response.data
-        if isinstance(response.data, dict) and 'results' in response.data:
+        if isinstance(response.data, dict) and 'results' in response.data: # Handle paginated response
             locacoes_data = response.data['results']
 
         self.assertEqual(len(locacoes_data), 7)
 
+        # Expected order based on status_order_group and then data_locacao_inicio
         expected_ids_order = [
-            self.loc_hoje_ends_today.id, self.loc_hoje_ongoing.id,
-            self.loc_futura.id, self.loc_futura_later.id,
-            self.loc_passada_earlier.id, self.loc_passada.id,
-            self.loc_cancelada.id
+            self.loc_hoje_ends_today.id, self.loc_hoje_ongoing.id, # Group 0 (Active, current)
+            self.loc_futura.id, self.loc_futura_later.id,          # Group 1 (Active, future)
+            self.loc_passada_earlier.id, self.loc_passada.id,      # Group 2 (Active, past)
+            self.loc_cancelada.id                                  # Group 3 (Cancelled)
         ]
+        # If there's secondary ordering by 'data_locacao_inicio' within groups:
+        # loc_hoje_ongoing should be before loc_hoje_ends_today if start date is the same or later
+        # Ensure this matches the actual implementation.
+        # Current implementation: order_by('status_order_group', 'data_locacao_inicio')
+        # So loc_hoje_ends_today (starts earlier) comes before loc_hoje_ongoing (starts today) if both are group 0.
 
         returned_ids_order = [item['id'] for item in locacoes_data]
         self.assertEqual(returned_ids_order, expected_ids_order)
+
+# --- New Permission Tests Start Here ---
+
+class PermissionsTestBase(APITestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.obra_instance = Obra.objects.create(
+            nome_obra="Obra Teste Perm",
+            endereco_completo="Rua Teste Perm, 123",
+            cidade="Permtown",
+            status="Em Andamento",
+            orcamento_previsto="10000.00"
+        )
+        # URLs that are fixed can be defined at class level too
+        cls.obra_list_create_url = reverse('obra-list')
+        cls.obra_detail_url = reverse('obra-detail', kwargs={'pk': cls.obra_instance.pk})
+        cls.dashboard_url = reverse('dashboard-stats')
+
+    def create_admin_user(self):
+        return Usuario.objects.create_user(
+            login='testadmin_perm',
+            password='password',
+            nome_completo='Admin User Perm',
+            nivel_acesso='admin',
+            is_staff=True, is_superuser=True
+        )
+
+    def create_gerente_user(self):
+        return Usuario.objects.create_user(
+            login='testgerente_perm',
+            password='password',
+            nome_completo='Gerente User Perm',
+            nivel_acesso='gerente'
+        )
+
+    def create_operador_user(self):
+        return Usuario.objects.create_user(
+            login='testoperador_perm',
+            password='password',
+            nome_completo='Operador User Perm',
+            nivel_acesso='operador'
+        )
+
+    def setUp(self):
+        self.client = APIClient()
+        self.admin_user = self.create_admin_user()
+        self.gerente_user = self.create_gerente_user()
+        self.operador_user = self.create_operador_user()
+
+        self.obra_create_data = {
+            'nome_obra': 'Nova Obra From Test',
+            'endereco_completo': 'Rua Nova, 456',
+            'cidade': 'Novacidade',
+            'status': 'Planejada',
+            'orcamento_previsto': '5000.00'
+        }
+        self.obra_update_data = {
+            'nome_obra': 'Obra Teste Perm Atualizada',
+            'endereco_completo': 'Rua Teste Perm, 789',
+            'cidade': 'Permtown Updated',
+            'status': 'Concluída',
+            'orcamento_previsto': '12000.00'
+        }
+
+
+class ObraPermissionsTests(PermissionsTestBase):
+
+    # Admin Tests
+    def test_admin_can_list_obras(self):
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(self.obra_list_create_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_admin_can_create_obras(self):
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.post(self.obra_list_create_url, self.obra_create_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_admin_can_retrieve_obras(self):
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(self.obra_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_admin_can_update_obras(self):
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.put(self.obra_detail_url, self.obra_update_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_admin_can_delete_obras(self):
+        self.client.force_authenticate(user=self.admin_user)
+        # Create a new obra to delete to avoid affecting other tests if run in parallel or if self.obra_instance is reused
+        temp_obra = Obra.objects.create(nome_obra="Temp Obra for Deletion", endereco_completo=".", cidade=".", status="Planejada", orcamento_previsto="1")
+        detail_url_temp = reverse('obra-detail', kwargs={'pk': temp_obra.pk})
+        response = self.client.delete(detail_url_temp)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    # Gerente Tests
+    def test_gerente_can_list_obras(self):
+        self.client.force_authenticate(user=self.gerente_user)
+        response = self.client.get(self.obra_list_create_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_gerente_can_create_obras(self):
+        self.client.force_authenticate(user=self.gerente_user)
+        response = self.client.post(self.obra_list_create_url, self.obra_create_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_gerente_can_retrieve_obras(self):
+        self.client.force_authenticate(user=self.gerente_user)
+        response = self.client.get(self.obra_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_gerente_cannot_update_obras(self):
+        self.client.force_authenticate(user=self.gerente_user)
+        response = self.client.put(self.obra_detail_url, self.obra_update_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_gerente_cannot_delete_obras(self):
+        self.client.force_authenticate(user=self.gerente_user)
+        response = self.client.delete(self.obra_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # Operador (Other User) Tests
+    def test_operador_cannot_list_obras(self):
+        self.client.force_authenticate(user=self.operador_user)
+        response = self.client.get(self.obra_list_create_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_operador_cannot_create_obras(self):
+        self.client.force_authenticate(user=self.operador_user)
+        response = self.client.post(self.obra_list_create_url, self.obra_create_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_operador_cannot_retrieve_obras(self):
+        self.client.force_authenticate(user=self.operador_user)
+        response = self.client.get(self.obra_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_operador_cannot_update_obras(self):
+        self.client.force_authenticate(user=self.operador_user)
+        response = self.client.put(self.obra_detail_url, self.obra_update_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_operador_cannot_delete_obras(self):
+        self.client.force_authenticate(user=self.operador_user)
+        response = self.client.delete(self.obra_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # Unauthenticated Tests
+    def test_unauthenticated_cannot_list_obras(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get(self.obra_list_create_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_unauthenticated_cannot_create_obras(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.post(self.obra_list_create_url, self.obra_create_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_unauthenticated_cannot_retrieve_obras(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get(self.obra_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_unauthenticated_cannot_update_obras(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.put(self.obra_detail_url, self.obra_update_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_unauthenticated_cannot_delete_obras(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.delete(self.obra_detail_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class DashboardStatsPermissionsTests(PermissionsTestBase):
+
+    # Admin Test
+    def test_admin_can_access_dashboard(self):
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(self.dashboard_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # Gerente Test
+    def test_gerente_can_access_dashboard(self):
+        self.client.force_authenticate(user=self.gerente_user)
+        response = self.client.get(self.dashboard_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # Operador Test
+    def test_operador_cannot_access_dashboard(self):
+        self.client.force_authenticate(user=self.operador_user)
+        response = self.client.get(self.dashboard_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # Unauthenticated Test
+    def test_unauthenticated_cannot_access_dashboard(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get(self.dashboard_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+# --- New Compra Filter Tests Start Here ---
+
+class CompraFilterTests(PermissionsTestBase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.obra_for_compra_filters = Obra.objects.create(
+            nome_obra="Obra Compra Filters",
+            endereco_completo="Addr CF",
+            cidade="Filtertown",
+            status="Planejada",
+            orcamento_previsto=Decimal("1000")
+        )
+        cls.compra1 = Compra.objects.create(obra=cls.obra_for_compra_filters, data_compra=date(2023, 1, 10), fornecedor="Fornecedor Alpha", valor_total_bruto=Decimal("100"), desconto=Decimal("0"))
+        cls.compra2 = Compra.objects.create(obra=cls.obra_for_compra_filters, data_compra=date(2023, 1, 20), fornecedor="Fornecedor Beta", valor_total_bruto=Decimal("200"), desconto=Decimal("0"))
+        cls.compra3 = Compra.objects.create(obra=cls.obra_for_compra_filters, data_compra=date(2023, 2, 10), fornecedor="alpha store", valor_total_bruto=Decimal("300"), desconto=Decimal("0"))
+        cls.compra4 = Compra.objects.create(obra=cls.obra_for_compra_filters, data_compra=date(2023, 2, 20), fornecedor="Gama LTDA", valor_total_bruto=Decimal("400"), desconto=Decimal("0"))
+
+        try:
+            cls.list_url = reverse('compra-list')
+        except Exception as e:
+            # Fallback if reverse fails during test collection (e.g. URLs not fully loaded)
+            # This should ideally not happen in a well-configured Django test environment.
+            print(f"Warning: reverse('compra-list') failed in setUpClass: {e}")
+            cls.list_url = '/api/compras/'
+
+
+    def setUp(self):
+        super().setUp() # This calls APIClient() and user creation from PermissionsTestBase
+        self.client.force_authenticate(user=self.admin_user)
+
+    def _get_response_ids(self, response):
+        response_data = response.data
+        if isinstance(response_data, dict) and 'results' in response_data: # Handle pagination
+            response_data = response_data['results']
+        return {item['id'] for item in response_data}
+
+    def test_filter_by_data_inicio(self):
+        params = {'data_inicio': '2023-01-15', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra2.id, self.compra3.id, self.compra4.id}
+        self.assertEqual(len(returned_ids), 3)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_by_data_fim(self):
+        params = {'data_fim': '2023-02-15', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra1.id, self.compra2.id, self.compra3.id}
+        self.assertEqual(len(returned_ids), 3)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_by_data_range(self):
+        params = {'data_inicio': '2023-01-15', 'data_fim': '2023-02-15', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra2.id, self.compra3.id}
+        self.assertEqual(len(returned_ids), 2)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_by_fornecedor_icontains(self):
+        params = {'fornecedor': 'Alpha', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra1.id, self.compra3.id} # "Fornecedor Alpha" and "alpha store"
+        self.assertEqual(len(returned_ids), 2)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_by_fornecedor_exact_match_param(self): # Testing the behavior of icontains with a more specific param
+        params = {'fornecedor': 'Fornecedor Beta', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra2.id}
+        self.assertEqual(len(returned_ids), 1)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_by_fornecedor_no_match(self):
+        params = {'fornecedor': 'Omega', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        self.assertEqual(len(returned_ids), 0)
+
+    def test_filter_combined_date_and_fornecedor(self):
+        params = {'data_inicio': '2023-01-01', 'data_fim': '2023-01-31', 'fornecedor': 'Alpha', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra1.id}
+        self.assertEqual(len(returned_ids), 1)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_invalid_date_format_ignored(self):
+        # Assuming an invalid date format is ignored by the view's get_queryset logic (passes on ValueError)
+        params = {'data_inicio': 'invalid-date', 'fornecedor': 'Alpha', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        # Since data_inicio is ignored, it should filter only by 'fornecedor=Alpha' for this obra
+        expected_ids = {self.compra1.id, self.compra3.id}
+        self.assertEqual(len(returned_ids), 2)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_no_filters_returns_all_for_obra(self):
+        params = {'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra1.id, self.compra2.id, self.compra3.id, self.compra4.id}
+        self.assertEqual(len(returned_ids), 4)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_all_filters_combined(self):
+        params = {
+            'obra_id': self.obra_for_compra_filters.id,
+            'data_inicio': '2023-01-01',
+            'data_fim': '2023-02-28', # Includes all compras by date
+            'fornecedor': 'alpha' # compra1 and compra3
+        }
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra1.id, self.compra3.id}
+        self.assertEqual(len(returned_ids), 2)
+        self.assertEqual(returned_ids, expected_ids)
+
+    def test_filter_fornecedor_case_insensitivity(self):
+        params = {'fornecedor': 'gAmA', 'obra_id': self.obra_for_compra_filters.id}
+        response = self.client.get(self.list_url, params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = self._get_response_ids(response)
+        expected_ids = {self.compra4.id} # "Gama LTDA"
+        self.assertEqual(len(returned_ids), 1)
+        self.assertEqual(returned_ids, expected_ids)
+
+# Final check of the imports at the top:
+# from datetime import date, datetime - Added datetime to existing import
+# .models.Usuario, Obra, Compra - Already imported
+# django.urls.reverse - present
+# rest_framework.status - present
+# rest_framework.test.APIClient, APITestCase - present
+# Looks good.

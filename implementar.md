@@ -23,9 +23,9 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
   - Modificado o comportamento da `data_locacao_fim`. Se não fornecida ou anterior à data de início, é automaticamente definida como igual à `data_locacao_inicio`.
   - Realizada migração de dados para atualizar locações existentes com `data_locacao_fim` nula para refletir esta regra.
   - O campo `data_locacao_fim` agora é não-nulo no banco de dados. (Concluído em 15/06/2025)
-[ ] (CORE) Perfis de Usuário e Permissões: Atualizar as regras de acesso.
-[ ] Admin: Acesso total (criação, leitura, atualização, exclusão).
-[ ] Gerente: Pode adicionar e visualizar dados, mas não pode remover ou excluir registros.
+[x] (CORE) Perfis de Usuário e Permissões: Atualizar as regras de acesso. (Concluído em 30/07/2024)
+  - [x] Admin: Acesso total (criação, leitura, atualização, exclusão).
+  - [x] Gerente: Pode adicionar e visualizar dados, mas não pode remover ou excluir registros.
 ✨ 3. Novas Funcionalidades
 [ ] (FOTOS) Galeria de Fotos da Obra:
 [ ] Permitir o upload de arquivos de imagem (PNG, JPG/JPEG) na página de detalhes da obra.
@@ -42,8 +42,9 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 🚀 4. Melhorias Contínuas e Backlog
 [x] (UI/UX Locação) Adicionar status visual (Hoje, Futura, Passada, Cancelada) com cores e ordenação customizada à lista de locações para melhor clareza. (Concluído em 14/06/2025)
 [x] (FIX) Corrigida inconsistência na exibição de datas entre diferentes telas (problema de fuso horário), garantindo que `TIME_ZONE` no backend seja 'America/Sao_Paulo' e que a formatação de datas no frontend (para DD/MM/YYYY) não seja afetada pelo fuso horário do navegador. (Concluído em 15/06/2025)
-[ ] (MELHORIA) Filtros na Lista de Compras: Adicionar filtros por intervalo de datas e por fornecedor.
-[ ] (UI) Detalhes da Locação: Adicionar um ícone em cada registro de locação na tabela para abrir um modal com todos os detalhes (obra, funcionário/equipe, tipo de pagamento, valor, data, etc.).
+[x] (MELHORIA) Filtros na Lista de Compras: Adicionar filtros por intervalo de datas e por fornecedor. (Concluído em 30/07/2024)
+[x] (UI) Detalhes da Locação: Adicionar um ícone em cada registro de locação na tabela para abrir um modal com todos os detalhes (obra, funcionário/equipe, tipo de pagamento, valor, data, etc.). (Concluído em 30/07/2024)
+  - [x] Adicionado campo "Observações" ao formulário de criação/edição de locação. (Concluído em 30/07/2024)
 [ ] (MELHORIA) Alerta de Estoque Baixo: Criar um sistema de notificação ou alerta visual quando o estoque de um material atingir um nível mínimo pré-definido.
 [ ] (UI) Paginação: Garantir que todas as tabelas com grande volume de dados tenham um sistema de paginação funcional.
 [ ] (UI/UX) Feedback Visual: Continuar aprimorando o feedback para o usuário com toasts para sucesso/erro e spinners durante o carregamento de dados.
