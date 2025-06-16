@@ -205,3 +205,13 @@ class UsoMaterial(models.Model):
                 material_display_name = first_item.material.nome
 
         return f"Uso de {self.quantidade_usada} de '{material_display_name}' (Obra: {self.obra.nome_obra}, Compra ID: {self.compra.id}) em {self.data_uso}"
+
+
+class FotoObra(models.Model):
+    obra = models.ForeignKey(Obra, related_name='fotos', on_delete=models.CASCADE)
+    imagem = models.ImageField(upload_to='fotos_obras/')
+    descricao = models.CharField(max_length=255, blank=True, null=True) # Optional description
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Foto de {self.obra.nome_obra} ({self.id})"

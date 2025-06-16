@@ -4,6 +4,7 @@ from .views import (
     UsuarioViewSet, ObraViewSet, FuncionarioViewSet, EquipeViewSet,
     LocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
     DespesaExtraViewSet, OcorrenciaFuncionarioViewSet, UsoMaterialViewSet,
+    FotoObraViewSet, # Added FotoObraViewSet
     RelatorioFinanceiroObraView, RelatorioGeralComprasView, DashboardStatsView,
     RelatorioDesempenhoEquipeView, RelatorioCustoGeralView, ObraHistoricoCustosView,
     ObraCustosPorCategoriaView, ObraCustosPorMaterialView # Added new views
@@ -20,6 +21,7 @@ router.register(r'compras', CompraViewSet, basename='compra')
 router.register(r'despesas', DespesaExtraViewSet, basename='despesaextra')
 router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
 router.register(r'usomateriais', UsoMaterialViewSet, basename='usomaterial')
+router.register(r'fotosobras', FotoObraViewSet, basename='fotoobra') # Add this line
 
 urlpatterns = [
     path('', include(router.urls)),

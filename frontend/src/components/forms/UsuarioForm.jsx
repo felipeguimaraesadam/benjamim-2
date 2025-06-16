@@ -74,12 +74,17 @@ const UsuarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      const dataToSubmit = { ...formData };
-      // If password field is empty during an update, don't send it
-      // The backend should be designed to ignore empty/null password fields on update
-      if (initialData && !dataToSubmit.senha) {
-        delete dataToSubmit.senha;
+      const { senha, ...otherData } = formData; // Destructure senha from formData
+      const dataToSubmit = { ...otherData }; // Spread other data
+
+      if (senha) { // If a new password is provided (for create or update)
+        dataToSubmit.password = senha;
       }
+      // If it's a new user (!initialData), validateForm already ensures 'senha' is not empty.
+      // So, 'password' will be included.
+      // If it's an update (initialData exists) and 'senha' is empty,
+      // 'password' will not be added to dataToSubmit, so password remains unchanged.
+
       onSubmit(dataToSubmit);
     }
   };

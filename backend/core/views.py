@@ -1,4 +1,5 @@
-from rest_framework import viewsets, status, filters # Added filters
+from rest_framework import viewsets, status, filters, permissions # Added filters and permissions
+from rest_framework.parsers import MultiPartParser, FormParser # Added parsers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db.models import Q, Sum, F, Case, When, Value, IntegerField # Added Case, When, Value, IntegerField
@@ -8,8 +9,8 @@ from django.db import transaction
 from rest_framework.decorators import action
 from django.utils import timezone # Added timezone
 
-from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra
-from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer
+from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra, FotoObra # Added FotoObra
+from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer, FotoObraSerializer # Added FotoObraSerializer
 from .permissions import IsNivelAdmin, IsNivelGerente
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -789,6 +790,61 @@ class ObraCustosPorCategoriaView(APIView):
         resultado_formatado = [{'name': item['categoria'], 'value': item['total_valor'] or Decimal('0.00')} for item in custos_por_categoria if item['total_valor'] is not None]
 
         return Response(resultado_formatado)
+
+
+class FotoObraViewSet(viewsets.ModelViewSet):
+    queryset = FotoObra.objects.all().order_by('-uploaded_at')
+    serializer_class = FotoObraSerializer
+    permission_classes = [permissions.IsAuthenticated] # Or your project's default
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self):
+        # Filter photos by obra_id if provided in query_params
+        obra_id = self.request.query_params.get('obra_id')
+        if obra_id:
+            return self.queryset.filter(obra__id=obra_id)
+        # Potentially, you might not want to return all photos if no obra_id is specified.
+        # Depending on requirements, you could return an empty queryset or raise an error.
+        # For now, returning photos for the specified obra, or all if no obra_id.
+        return self.queryset
+
+
+    def create(self, request, *args, **kwargs):
+        # Data for the serializer, mutable if needed
+        # request.data will contain regular form fields.
+        # request.FILES will contain file fields.
+        # The serializer handles both when passed request.data.
+
+        # Create a mutable dictionary from request.data if you need to modify it.
+        # For simple cases like renaming 'obra_id', it's often cleaner to handle
+        # this by ensuring the frontend sends the correct field name ('obra')
+        # or by handling it within the serializer's validation or to_internal_value.
+
+        # However, to keep the existing logic of handling 'obra_id' or 'obra':
+        # We can create a new dict for the serializer.
+
+        # The original problem was `request.data.copy()` when request.data includes file objects.
+        # `request.POST.copy()` would copy non-file data. `request.FILES` contains files.
+
+        final_data = request.POST.copy() # Copies querydict of POST data, not files
+        if 'obra_id' in final_data and 'obra' not in final_data:
+            final_data['obra'] = final_data.pop('obra_id')
+
+        # Add files to this dictionary for the serializer.
+        # The serializer expects the file objects to be part of the data dictionary it receives.
+        for key, file_obj in request.FILES.items():
+            final_data[key] = file_obj
+
+        serializer = self.get_serializer(data=final_data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        # The serializer's 'obra' field should handle associating with the Obra instance.
+        # If 'obra' is a PK, ModelSerializer handles fetching the instance.
+        serializer.save()
 
 class ObraCustosPorMaterialView(APIView):
     permission_classes = [IsNivelAdmin | IsNivelGerente]

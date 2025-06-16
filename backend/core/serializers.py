@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra
+from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra, FotoObra
 from django.db.models import Sum, Q
 from decimal import Decimal
 
@@ -249,6 +249,25 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
                 }
                 raise serializers.ValidationError(conflict_data_for_api)
         return data
+
+
+class FotoObraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FotoObra
+        fields = ['id', 'obra', 'imagem', 'descricao', 'uploaded_at']
+        read_only_fields = ['uploaded_at']
+
+    def validate_obra(self, value):
+        # Ensure the obra exists
+        if not Obra.objects.filter(pk=value.id).exists():
+            raise serializers.ValidationError("Obra specified does not exist.")
+        return value
+
+    def create(self, validated_data):
+        # Ensure 'imagem' is present in the validated_data
+        if 'imagem' not in validated_data:
+            raise serializers.ValidationError({'imagem': 'No file was submitted.'})
+        return FotoObra.objects.create(**validated_data)
 
 
 class MaterialSerializer(serializers.ModelSerializer):

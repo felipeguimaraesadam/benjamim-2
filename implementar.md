@@ -27,9 +27,9 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
   - [x] Admin: Acesso total (criação, leitura, atualização, exclusão).
   - [x] Gerente: Pode adicionar e visualizar dados, mas não pode remover ou excluir registros.
 ✨ 3. Novas Funcionalidades
-[ ] (FOTOS) Galeria de Fotos da Obra:
-[ ] Permitir o upload de arquivos de imagem (PNG, JPG/JPEG) na página de detalhes da obra.
-[ ] Criar uma seção de galeria para exibir as fotos de forma organizada e esteticamente agradável.
+[x] (FOTOS) Galeria de Fotos da Obra: (Concluído em 2024-08-01)
+[x] Permitir o upload de arquivos de imagem (PNG, JPG/JPEG) na página de detalhes da obra.
+[x] Criar uma seção de galeria para exibir as fotos de forma organizada e esteticamente agradável.
 [ ] (GRÁFICO) Análise de Custo de Locação:
 [ ] Na página de listagem de locações, exibir um gráfico de barras horizontais com o custo total de locações por dia (últimos 30 dias).
 [ ] Implementar um filtro por obra para o gráfico (padrão: mostrar dados de todas as obras).
