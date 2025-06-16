@@ -1,38 +1,58 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import * as api from '../services/api'; // Import all functions from api.js
+import * as api from '../services/api';
 import ObrasTable from '../components/tables/ObrasTable';
 import ObraForm from '../components/forms/ObraForm';
-// Consider a generic Button component later if needed: import Button from '../components/ui/Button';
+import PaginationControls from '../components/utils/PaginationControls';
+import { showSuccessToast, showErrorToast } from '../utils/toastUtils';
+import SpinnerIcon from '../components/utils/SpinnerIcon';
 
 const ObrasPage = () => {
-  const [obras, setObras] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingForm, setIsLoadingForm] = useState(false); // Separate loading for form submission
-  const [error, setError] = useState(null);
+  const [obras, setObras] = useState([]); // Will store results from API
+  const [isLoading, setIsLoading] = useState(false); // For table data loading
+  const [isLoadingForm, setIsLoadingForm] = useState(false); // For form submission (create/update)
+  const [isDeleting, setIsDeleting] = useState(false); // For delete operation
+  const [error, setError] = useState(null); // For general page errors or form errors in modal
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const PAGE_SIZE = 10; // Should match backend PAGE_SIZE
 
   const [showFormModal, setShowFormModal] = useState(false);
-  const [currentObra, setCurrentObra] = useState(null); // For editing or null for new
+  const [currentObra, setCurrentObra] = useState(null);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [obraToDeleteId, setObraToDeleteId] = useState(null);
 
-  const fetchObras = useCallback(async () => {
+  const fetchObras = useCallback(async (page = 1) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.getObras();
-      setObras(response.data);
+      const response = await api.getObras({ page }); // Pass page to API
+      setObras(response.data.results);
+      setTotalItems(response.data.count);
+      setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
+      setCurrentPage(page);
     } catch (err) {
-      setError(err.message || 'Falha ao buscar obras. Tente novamente.');
+      const errorMsg = err.message || 'Falha ao buscar obras. Tente novamente.';
+      setError(errorMsg);
+      showErrorToast(errorMsg);
       console.error("Fetch Obras Error:", err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [PAGE_SIZE]);
 
   useEffect(() => {
-    fetchObras();
-  }, [fetchObras]);
+    fetchObras(currentPage);
+  }, [currentPage, fetchObras]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   const handleAddNew = () => {
     setCurrentObra(null);
@@ -51,37 +71,50 @@ const ObrasPage = () => {
 
   const confirmDelete = async () => {
     if (!obraToDeleteId) return;
-    setIsLoading(true); // Use main loading for table refresh
+    setIsDeleting(true);
     setError(null);
     try {
       await api.deleteObra(obraToDeleteId);
+      showSuccessToast('Obra excluída com sucesso!');
       setObraToDeleteId(null);
       setShowDeleteConfirm(false);
-      await fetchObras(); // Re-fetch
+      // Refetch obras, considering pagination (e.g., stay on current page or adjust if last item deleted)
+      // A simple refetch of the current page is often sufficient.
+      // If it was the last item on the page, and page > 1, fetch previous page.
+      if (obras.length === 1 && currentPage > 1) {
+        fetchObras(currentPage - 1);
+      } else {
+        fetchObras(currentPage);
+      }
     } catch (err) {
-      setError(err.message || 'Falha ao excluir obra.');
+      const errorMsg = err.message || 'Falha ao excluir obra.';
+      setError(errorMsg); // Show error in modal or page if appropriate
+      showErrorToast(errorMsg);
       console.error("Delete Obra Error:", err);
-      setIsLoading(false); // Stop loading if delete failed before fetchObras
+    } finally {
+      setIsDeleting(false);
     }
-    // setIsLoading(false) will be called by fetchObras if successful
   };
 
   const handleFormSubmit = async (formData) => {
     setIsLoadingForm(true);
-    setError(null);
+    setError(null); // Clear previous form errors
     try {
       if (currentObra && currentObra.id) {
         await api.updateObra(currentObra.id, formData);
+        showSuccessToast('Obra atualizada com sucesso!');
       } else {
         await api.createObra(formData);
+        showSuccessToast('Obra criada com sucesso!');
       }
       setShowFormModal(false);
       setCurrentObra(null);
-      await fetchObras(); // Re-fetch
+      fetchObras(currentObra ? currentPage : 1); // Refetch current page on update, or first page on create
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || (currentObra ? 'Falha ao atualizar obra.' : 'Falha ao criar obra.'));
+      const errorMsg = err.response?.data?.detail || err.response?.data?.nome_obra?.[0] || err.message || (currentObra ? 'Falha ao atualizar obra.' : 'Falha ao criar obra.');
+      setError(errorMsg); // Show error in the modal
+      showErrorToast(errorMsg);
       console.error("Form Submit Obra Error:", err.response?.data || err.message);
-      // Keep form open on error so user can see/correct
     } finally {
       setIsLoadingForm(false);
     }
@@ -105,19 +138,41 @@ const ObrasPage = () => {
         </button>
       </div>
 
-      {error && !showFormModal && ( // Display general errors here, form errors are in ObraForm or handled below
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <strong className="font-bold">Erro: </strong>
-          <span className="block sm:inline">{error}</span>
+      {/* Page level error display (for fetch errors mainly) */}
+      {error && !isLoading && !showFormModal && obras.length === 0 && (
+         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4 text-center" role="alert">
+          <p className="font-bold">Falha ao Carregar Dados</p>
+          <p>{error}</p>
         </div>
       )}
 
-      <ObrasTable
-        obras={obras}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        isLoading={isLoading}
-      />
+      {/* Loading spinner for initial page load */}
+      {isLoading && obras.length === 0 && (
+        <div className="flex justify-center items-center min-h-[300px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+        </div>
+      )}
+
+      {/* Table and Pagination - only show if not initial loading or if there's data */}
+      {(!isLoading || obras.length > 0) && !error && (
+        <>
+          <ObrasTable
+            obras={obras} // Now receives paginated data
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            // isLoading prop for table can be used for row-specific loading if needed
+          />
+          {totalPages > 0 && (
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={totalItems}
+              itemsPerPage={PAGE_SIZE}
+            />
+          )}
+        </>
+      )}
 
       {/* Form Modal */}
       {showFormModal && (
@@ -151,17 +206,18 @@ const ObrasPage = () => {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                disabled={isLoading}
+                disabled={isDeleting}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmDelete}
-                disabled={isLoading}
-                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50"
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50 flex items-center justify-center"
               >
-                {isLoading ? 'Excluindo...' : 'Excluir'}
+                {isDeleting ? <SpinnerIcon className="w-5 h-5 mr-2"/> : null}
+                {isDeleting ? 'Excluindo...' : 'Excluir'}
               </button>
             </div>
           </div>

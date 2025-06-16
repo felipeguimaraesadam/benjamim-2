@@ -1,32 +1,37 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import * as api from '../services/api';
 import LocacoesTable from '../components/tables/LocacoesTable';
 import LocacaoForm from '../components/forms/LocacaoForm';
 import LocacaoDetailModal from '../components/modals/LocacaoDetailModal';
-import PaginationControls from '../components/utils/PaginationControls'; // Import PaginationControls
+import PaginationControls from '../components/utils/PaginationControls';
+import { showSuccessToast, showErrorToast } from '../utils/toastUtils.js'; // Import toast utilities
+import SpinnerIcon from '../components/utils/SpinnerIcon'; // Import SpinnerIcon
 
 const LocacoesPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [locacoes, setLocacoes] = useState([]); // Will store results
+  const [locacoes, setLocacoes] = useState([]);
   const [obras, setObras] = useState([]);
   const [equipes, setEquipes] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Page data loading
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-  const PAGE_SIZE = 10; // As defined in backend settings
-  const [isLoadingForm, setIsLoadingForm] = useState(false);
-  const [error, setError] = useState(null);
+  const PAGE_SIZE = 10;
+  const [isLoadingForm, setIsLoadingForm] = useState(false); // Form submission
+  const [isDeleting, setIsDeleting] = useState(false); // Delete operation
+  const [error, setError] = useState(null); // General page/form errors
   const [showFormModal, setShowFormModal] = useState(false);
   const [currentLocacao, setCurrentLocacao] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [locacaoToDeleteId, setLocacaoToDeleteId] = useState(null);
 
-  const [selectedLocacaoId, setSelectedLocacaoId] = useState(null);
+  const [selectedLocacaoId, setSelectedLocacaoId] = useState(null); // For detail modal
 
   // State for chart
   const [chartData, setChartData] = useState([]); // Assuming this is still needed
@@ -46,14 +51,14 @@ const LocacoesPage = () => {
       setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
       setCurrentPage(page);
     } catch (err) {
-      setError(err.message || 'Falha ao buscar locações.');
+      const errorMsg = err.message || 'Falha ao buscar locações.';
+      setError(errorMsg);
+      showErrorToast(errorMsg);
       console.error("Fetch Locações Error:", err);
-      // Reset pagination on error? Or leave as is?
-      // setLocacoes([]); setTotalItems(0); setTotalPages(0);
     } finally {
       setIsLoading(false);
     }
-  }, [PAGE_SIZE]); // PAGE_SIZE is a constant, so it's fine in deps
+  }, [PAGE_SIZE]);
 
   const fetchObras = useCallback(async () => {
     try {
@@ -147,36 +152,47 @@ const LocacoesPage = () => {
 
   const confirmDelete = async () => {
     if (!locacaoToDeleteId) return;
-    setIsLoading(true); // Consider a specific loading state for delete if it interferes elsewhere
-    setError(null);
+    setIsDeleting(true);
+    setError(null); // Clear general errors
     try {
       await api.deleteLocacao(locacaoToDeleteId);
+      showSuccessToast('Locação excluída com sucesso!');
       setLocacaoToDeleteId(null);
       setShowDeleteConfirm(false);
-      await fetchLocacoes();
+      // Refetch locacoes, adjust page if last item on a page was deleted
+      if (locacoes.length === 1 && currentPage > 1) {
+        fetchLocacoes(currentPage - 1);
+      } else {
+        fetchLocacoes(currentPage);
+      }
     } catch (err) {
-      setError(err.message || 'Falha ao excluir locação.');
+      const errorMsg = err.message || 'Falha ao excluir locação.';
+      setError(errorMsg); // Can be shown in a general error display area if needed
+      showErrorToast(errorMsg);
       console.error("Delete Locação Error:", err);
     } finally {
-      setIsLoading(false); // Reset general loading state
+      setIsDeleting(false);
     }
   };
 
   const handleApiSubmit = async (formData) => {
     setIsLoadingForm(true);
-    setError(null);
+    setError(null); // Clear previous form-specific errors shown in modal
+    const isEditing = currentLocacao && currentLocacao.id;
     try {
-      if (currentLocacao && currentLocacao.id) {
+      if (isEditing) {
         await api.updateLocacao(currentLocacao.id, formData);
+        showSuccessToast('Locação atualizada com sucesso!');
       } else {
         await api.createLocacao(formData);
+        showSuccessToast('Locação criada com sucesso!');
       }
       setShowFormModal(false);
       setCurrentLocacao(null);
-      await fetchLocacoes();
+      fetchLocacoes(isEditing ? currentPage : 1); // Refetch current page on update, or first page on create
     } catch (err) {
       const backendErrors = err.response?.data;
-      let generalMessage = err.message || (currentLocacao ? 'Falha ao atualizar locação.' : 'Falha ao criar locação.');
+      let generalMessage = err.message || (isEditing ? 'Falha ao atualizar locação.' : 'Falha ao criar locação.');
 
       if (backendErrors && typeof backendErrors === 'object') {
         if (backendErrors.funcionario_locado && backendErrors.conflict_details) {
@@ -189,13 +205,16 @@ const LocacoesPage = () => {
         }
       }
 
-      setError(generalMessage);
+      setError(generalMessage); // This error will be displayed in the modal
+      showErrorToast(isEditing ? 'Erro ao atualizar locação.' : 'Erro ao criar locação.'); // General toast
       console.error("API Submit Locação Error:", err.response?.data || err.message);
 
+      // Propagate for LocacaoForm to handle specific field errors if it's designed to
       if (backendErrors && typeof backendErrors === 'object') {
         throw { response: { data: backendErrors } };
       }
-      throw err;
+      // If not handled by LocacaoForm's internal error display, the setError above will show in modal
+      // throw err; // Re-throwing might be redundant if setError and showErrorToast cover feedback
     } finally {
       setIsLoadingForm(false);
     }
@@ -210,11 +229,11 @@ const LocacoesPage = () => {
   const handleTransferSuccess = useCallback(async () => {
     setShowFormModal(false);    // Close the main form modal
     setCurrentLocacao(null);    // Clear current locacao being edited/created
-    setError(null);           // Clear any top-level errors in LocacoesPage
-    await fetchLocacoes();      // Refresh the main list of locações
-    // Optionally, add a success message here, e.g., using a toast notification library
-    // alert('Funcionário transferido com sucesso!');
-  }, [fetchLocacoes]);
+    setError(null);
+    // Consider showing a success toast for transfer if desired
+    showSuccessToast('Funcionário transferido com sucesso!'); // Added toast
+    fetchLocacoes(currentPage); // Refresh current page
+  }, [fetchLocacoes, currentPage]); // Added currentPage
 
   const handleViewDetails = (locacaoId) => {
     setSelectedLocacaoId(locacaoId);
@@ -435,6 +454,14 @@ const LocacoesPage = () => {
         </div>
       </div>
 
+      {/* Page level error, if not related to form/modal context */}
+      {error && !isLoading && !showFormModal && !showDeleteConfirm && locacoes.length === 0 && (
+         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4 text-center" role="alert">
+          <p className="font-bold">Falha ao Carregar Dados</p>
+          <p>{error}</p>
+        </div>
+      )}
+
       {/* Payroll Report Modal */}
       {showReportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out">
@@ -473,8 +500,9 @@ const LocacoesPage = () => {
                 <button
                   onClick={handlePreCheck}
                   disabled={isPreChecking || !reportStartDate || !reportEndDate}
-                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:opacity-50"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:opacity-50 flex items-center justify-center"
                 >
+                  {isPreChecking ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
                   {isPreChecking ? 'Verificando...' : 'Verificar Disponibilidade de Dias'}
                 </button>
               </div>
@@ -639,10 +667,11 @@ const LocacoesPage = () => {
               </button>
               <button
                 onClick={confirmDelete}
-                disabled={isLoading}
-                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50"
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50 flex items-center justify-center"
               >
-                {isLoading ? 'Excluindo...' : 'Excluir'}
+                {isDeleting ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
+                {isDeleting ? 'Excluindo...' : 'Excluir'}
               </button>
             </div>
           </div>
