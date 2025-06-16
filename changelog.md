@@ -14,6 +14,10 @@
   - Backend: `CompraViewSet` e `RelatorioGeralComprasView` atualizados para suportar os novos parâmetros de consulta.
   - Frontend: Página de Compras (`ComprasPage.jsx`) atualizada com campos de entrada para data de início, data de fim e nome do fornecedor, além de botões para aplicar e limpar os filtros.
   - Testes de backend foram adicionados para validar a lógica de filtragem.
+- **Modal de Detalhes da Locação**:
+  - Adicionado um ícone de "visualizar detalhes" (olho) em cada linha da tabela de locações.
+  - Ao clicar no ícone, um modal é exibido com informações completas da locação selecionada, como obra, recurso locado (funcionário, equipe ou serviço externo), datas, tipo de pagamento, valor, status e observações.
+  - Frontend: Criado o componente `LocacaoDetailModal.jsx` e integrado à página `LocacoesPage.jsx` para gerenciamento de estado e exibição.
 
 ## [Próxima Versão] - 2025-06-15
 
