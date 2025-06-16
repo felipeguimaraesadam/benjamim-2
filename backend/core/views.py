@@ -7,11 +7,14 @@ from decimal import Decimal
 from datetime import datetime, date, timedelta
 from django.db import transaction
 from rest_framework.decorators import action
-from django.utils import timezone # Added timezone
+from django.utils import timezone
+from datetime import date, timedelta # Added timedelta
 
 from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra, FotoObra # Added FotoObra
 from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer, FotoObraSerializer # Added FotoObraSerializer
 from .permissions import IsNivelAdmin, IsNivelGerente
+from django.db.models import Sum, Count # Added Sum, Count
+from decimal import Decimal # Added Decimal
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     """
@@ -156,6 +159,55 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     # Note: The get_queryset method for LocacaoObrasEquipesViewSet is below the custom action.
     # This is fine, but for consistency, custom actions are often placed after standard methods.
     # No change needed for this subtask, just an observation.
+
+    @action(detail=False, methods=['get'], url_path='custo_diario_chart')
+    def custo_diario_chart(self, request):
+        today = timezone.now().date()
+        start_date = today - timedelta(days=29) # 30 days including today
+
+        obra_id_str = request.query_params.get('obra_id')
+
+        locacoes_qs = Locacao_Obras_Equipes.objects.filter(
+            data_locacao_inicio__gte=start_date,
+            data_locacao_inicio__lte=today,
+            status_locacao='ativa' # Consider only active locações for cost
+        )
+
+        if obra_id_str:
+            try:
+                obra_id = int(obra_id_str)
+                locacoes_qs = locacoes_qs.filter(obra_id=obra_id)
+            except ValueError:
+                return Response({"error": "ID de obra inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Group by date and sum 'valor_pagamento'
+        # We are interested in the cost *initiated* on a certain day.
+        # If a locacao spans multiple days, its full 'valor_pagamento' is attributed to 'data_locacao_inicio'.
+        # This matches the requirement "Group the filtered locações by data_locacao_inicio ... and sum the valor_total_locacao"
+        daily_costs_db = locacoes_qs.values('data_locacao_inicio').annotate(
+            total_cost_for_day=Sum('valor_pagamento')
+        ).order_by('data_locacao_inicio')
+
+        # Prepare a dictionary for quick lookup
+        costs_by_date_map = {
+            item['data_locacao_inicio']: item['total_cost_for_day']
+            for item in daily_costs_db
+        }
+
+        # Generate the full list of dates for the 30-day period
+        result_data = []
+        current_date = start_date
+        while current_date <= today:
+            cost = costs_by_date_map.get(current_date, Decimal('0.00'))
+            result_data.append({
+                "date": current_date.isoformat(),
+                "total_cost": cost,
+                "has_locacoes": cost > 0
+            })
+            current_date += timedelta(days=1)
+
+        return Response(result_data)
+
 
 class MaterialViewSet(viewsets.ModelViewSet):
     """

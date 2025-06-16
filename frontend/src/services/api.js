@@ -292,6 +292,14 @@ export const transferFuncionarioLocacao = async (transferData) => {
   return response.data; // Or response directly if you need status code etc.
 };
 
+export const getLocacaoCustoDiarioChart = (obraId = null) => {
+  let url = '/locacoes/custo_diario_chart/';
+  if (obraId) {
+    url += `?obra_id=${obraId}`;
+  }
+  return apiClient.get(url);
+};
+
 // --- Dashboard Service Functions ---
 export const getDashboardStats = () => {
   return apiClient.get('/dashboard/stats/');

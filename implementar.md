@@ -30,10 +30,10 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [x] (FOTOS) Galeria de Fotos da Obra: (Concluído em 2024-08-01)
 [x] Permitir o upload de arquivos de imagem (PNG, JPG/JPEG) na página de detalhes da obra.
 [x] Criar uma seção de galeria para exibir as fotos de forma organizada e esteticamente agradável.
-[ ] (GRÁFICO) Análise de Custo de Locação:
-[ ] Na página de listagem de locações, exibir um gráfico de barras horizontais com o custo total de locações por dia (últimos 30 dias).
-[ ] Implementar um filtro por obra para o gráfico (padrão: mostrar dados de todas as obras).
-[ ] Adicionar um ícone de alerta (⚠️) nos dias do gráfico que não possuem nenhuma locação registrada (inclusive domingos), para sinalizar possíveis esquecimentos.
+[x] (GRÁFICO) Análise de Custo de Locação: (Concluído em 2024-08-02)
+[x] Na página de listagem de locações, exibir um gráfico de barras horizontais com o custo total de locações por dia (últimos 30 dias).
+[x] Implementar um filtro por obra para o gráfico (padrão: mostrar dados de todas as obras).
+[x] Adicionar um ícone de alerta (⚠️) nos dias do gráfico que não possuem nenhuma locação registrada (inclusive domingos), para sinalizar possíveis esquecimentos. (Nota: Implementado com barra amarela e legenda)
 [ ] (RELATÓRIO) Folha de Pagamento Semanal:
 [ ] Na página de locação, adicionar um botão "Gerar Relatório de Pagamento".
 [ ] O relatório deve consolidar todas as locações da semana (ou período selecionado), de todas as obras, organizadas por funcionário.

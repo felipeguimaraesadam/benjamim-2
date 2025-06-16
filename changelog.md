@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0] - 2024-08-02
+### Added
+- **Análise de Custo de Locação**: Adicionado um gráfico na página de Locações que exibe o custo total de locações por dia nos últimos 30 dias. O gráfico inclui:
+    - Filtro por obra.
+    - Indicação visual (barra amarela e legenda) para dias sem locações ou com custo zero.
+    - Tooltip com detalhes de custo e data.
+    - Eixo X para custo total e Eixo Y para datas (DD/MM).
+
 ## [EM_DESENVOLVIMENTO] - 2024-07-30
 
 ### ✨ Adicionado (em 2024-08-01)
