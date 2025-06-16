@@ -15,6 +15,7 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
     tipo_pagamento: 'diaria', // New
     valor_pagamento: '', // New
     data_pagamento: '', // New
+    observacoes: '', // New field
   });
   const [formErrors, setFormErrors] = useState({});
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
@@ -59,6 +60,7 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
         tipo_pagamento: initialData.tipo_pagamento || 'diaria', // New
         valor_pagamento: initialData.valor_pagamento || '', // New
         data_pagamento: initialData.data_pagamento ? new Date(initialData.data_pagamento).toISOString().split('T')[0] : '', // New
+        observacoes: initialData.observacoes || '', // New field
       });
       if (initialData.equipe) setLocacaoType('equipe');
       else if (initialData.funcionario_locado) setLocacaoType('funcionario');
@@ -84,6 +86,7 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
         tipo_pagamento: 'diaria',
         valor_pagamento: '',
         data_pagamento: localToday, // Use local current date
+        observacoes: '', // New field
       });
       setLocacaoType('equipe'); // Default for new
       setSelectedFuncionarioObject(null); // Reset selected funcionario on form reset
@@ -370,6 +373,7 @@ const proceedWithSubmission = async (userChoice) => {
       tipo_pagamento: formData.tipo_pagamento,
       valor_pagamento: parseFloat(formData.valor_pagamento),
       data_pagamento: formData.data_pagamento || null,
+      observacoes: formData.observacoes.trim() || null,
     };
 
     if (locacaoType === 'equipe') {
@@ -674,6 +678,21 @@ const handleConfirmTransfer = async () => {
           />
          {formErrors.data_pagamento && <p className="mt-1 text-sm text-red-600">{formErrors.data_pagamento}</p>}
         </div>
+      </div>
+
+      {/* Observacoes Field Section */}
+      <div className="mt-6 pt-6 border-t">
+        <label htmlFor="observacoes" className="block text-sm font-medium text-gray-900">Observações</label>
+        <textarea
+          name="observacoes"
+          id="observacoes"
+          value={formData.observacoes}
+          onChange={handleChange}
+          rows="3"
+          className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
+          placeholder="Adicione observações relevantes sobre a locação..."
+        ></textarea>
+        {/* {formErrors.observacoes && <p className="mt-1 text-sm text-red-600">{formErrors.observacoes}</p>} */}
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">

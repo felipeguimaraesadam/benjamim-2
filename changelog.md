@@ -18,6 +18,10 @@
   - Adicionado um ícone de "visualizar detalhes" (olho) em cada linha da tabela de locações.
   - Ao clicar no ícone, um modal é exibido com informações completas da locação selecionada, como obra, recurso locado (funcionário, equipe ou serviço externo), datas, tipo de pagamento, valor, status e observações.
   - Frontend: Criado o componente `LocacaoDetailModal.jsx` e integrado à página `LocacoesPage.jsx` para gerenciamento de estado e exibição.
+- **Campo de Observações no Formulário de Locação**:
+  - Adicionado campo `observacoes` (TextField) ao modelo `Locacao_Obras_Equipes` no backend.
+  - Criada migração de banco de dados (`0014_locacao_obras_equipes_observacoes.py`) para aplicar a alteração no esquema.
+  - Frontend: Formulário de criação/edição de locação (`LocacaoForm.jsx`) atualizado para incluir um campo `textarea` para o preenchimento das observações.
 
 ## [Próxima Versão] - 2025-06-15
 

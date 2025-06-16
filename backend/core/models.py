@@ -107,6 +107,7 @@ class Locacao_Obras_Equipes(models.Model):
         default='ativa',
         verbose_name='Status da Locação'
     )
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações")
 
     def save(self, *args, **kwargs):
         if self.data_locacao_inicio:  # data_locacao_inicio is non-nullable
