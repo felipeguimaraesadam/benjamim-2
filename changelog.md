@@ -11,6 +11,7 @@
 
 ### 🐛 Corrigido (em 2024-08-01)
 - Adicionada a dependência `Pillow` ao `backend/requirements.txt`. Esta biblioteca é necessária para a funcionalidade de upload de imagens da galeria de fotos e não estava sendo instalada automaticamente, causando erro nas migrações em ambientes limpos.
+- Corrigidos os caminhos de importação para os componentes `ObraFotosUpload` and `ObraGaleria` na página `ObraDetailPage.jsx`, resolvendo um erro de build no frontend.
 
 ### Added
 - **Sistema de Permissões por Nível de Acesso**:

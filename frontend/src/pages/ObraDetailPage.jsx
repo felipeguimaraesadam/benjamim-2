@@ -17,8 +17,8 @@ import ObraPurchasesTabContent from '../components/obra/ObraPurchasesTabContent'
 import ObraExpensesTabContent from '../components/obra/ObraExpensesTabContent';
 
 // NEW IMPORTS for Photo components
-import ObraFotosUpload from '../../components/obra/ObraFotosUpload';
-import ObraGaleria from '../../components/obra/ObraGaleria';
+import ObraFotosUpload from '../components/obra/ObraFotosUpload';
+import ObraGaleria from '../components/obra/ObraGaleria';
 
 const ObraDetailPage = () => {
   const { id } = useParams();
