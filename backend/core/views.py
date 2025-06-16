@@ -810,18 +810,32 @@ class FotoObraViewSet(viewsets.ModelViewSet):
 
 
     def create(self, request, *args, **kwargs):
-        # Ensure 'obra' is provided in the request data for creating a new photo
-        # The 'obra' field in the serializer expects an Obra instance or PK.
-        # The request.data might contain 'obra' as a PK (e.g., obra_id from a form).
+        # Data for the serializer, mutable if needed
+        # request.data will contain regular form fields.
+        # request.FILES will contain file fields.
+        # The serializer handles both when passed request.data.
 
-        # Make a mutable copy of request.data to modify it
-        data = request.data.copy()
+        # Create a mutable dictionary from request.data if you need to modify it.
+        # For simple cases like renaming 'obra_id', it's often cleaner to handle
+        # this by ensuring the frontend sends the correct field name ('obra')
+        # or by handling it within the serializer's validation or to_internal_value.
 
-        # If 'obra_id' is passed instead of 'obra', rename it for the serializer
-        if 'obra_id' in data and 'obra' not in data:
-            data['obra'] = data['obra_id']
+        # However, to keep the existing logic of handling 'obra_id' or 'obra':
+        # We can create a new dict for the serializer.
 
-        serializer = self.get_serializer(data=data)
+        # The original problem was `request.data.copy()` when request.data includes file objects.
+        # `request.POST.copy()` would copy non-file data. `request.FILES` contains files.
+
+        final_data = request.POST.copy() # Copies querydict of POST data, not files
+        if 'obra_id' in final_data and 'obra' not in final_data:
+            final_data['obra'] = final_data.pop('obra_id')
+
+        # Add files to this dictionary for the serializer.
+        # The serializer expects the file objects to be part of the data dictionary it receives.
+        for key, file_obj in request.FILES.items():
+            final_data[key] = file_obj
+
+        serializer = self.get_serializer(data=final_data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)

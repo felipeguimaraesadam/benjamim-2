@@ -14,6 +14,8 @@
 - Corrigidos os caminhos de importação para os componentes `ObraFotosUpload` and `ObraGaleria` na página `ObraDetailPage.jsx`, resolvendo um erro de build no frontend.
 - Corrigida a importação do módulo da API nos componentes `ObraFotosUpload.jsx` e `ObraGaleria.jsx`. Estavam tentando importar uma exportação padrão inexistente, agora usam a exportação nomeada `apiClient` corretamente.
 - Corrigido o envio de dados no formulário de criação/edição de usuários (`UsuarioForm.jsx`). O campo de senha agora é enviado como `password` para o backend, resolvendo o erro 400 (Bad Request).
+- Corrigido um `TypeError` no backend (`FotoObraViewSet`) que ocorria durante o upload de fotos devido à tentativa de copiar objetos de arquivo. A manipulação de dados de formulário e arquivos foi refatorada.
+- Configurado o servidor de desenvolvimento Django para servir arquivos de mídia (`MEDIA_URL` e `MEDIA_ROOT`), permitindo a visualização de imagens carregadas.
 
 ### Added
 - **Sistema de Permissões por Nível de Acesso**:
