@@ -3,13 +3,23 @@ import OcorrenciasTable from '../components/tables/OcorrenciasTable';
 import OcorrenciaForm from '../components/forms/OcorrenciaForm';
 import * as api from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import PaginationControls from '../components/utils/PaginationControls';
+import { showSuccessToast, showErrorToast } from '../utils/toastUtils';
+import SpinnerIcon from '../components/utils/SpinnerIcon';
 
 const OcorrenciasPage = () => {
     const [ocorrencias, setOcorrencias] = useState([]);
-    const [funcionarios, setFuncionarios] = useState([]); // Still needed for the form's dropdown
-    const [isLoading, setIsLoading] = useState(false);
-    const [isLoadingForm, setIsLoadingForm] = useState(false);
-    const [error, setError] = useState(null);
+    const [funcionarios, setFuncionarios] = useState([]);
+    const [isLoading, setIsLoading] = useState(false); // For page data
+    const [isLoadingForm, setIsLoadingForm] = useState(false); // For form submission
+    const [isDeleting, setIsDeleting] = useState(false); // For delete operation
+    const [error, setError] = useState(null); // General page/form errors
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalItems, setTotalItems] = useState(0);
+    const PAGE_SIZE = 10;
 
     const [showFormModal, setShowFormModal] = useState(false);
     const [currentOcorrencia, setCurrentOcorrencia] = useState(null);
@@ -23,30 +33,41 @@ const OcorrenciasPage = () => {
         funcionario_id: '',
         tipo: '',
     });
-    const [ocorrenciasGrafico, setOcorrenciasGrafico] = useState([]); // Renamed from ocorrenciasFiltradas for clarity
+    const [ocorrenciasGrafico, setOcorrenciasGrafico] = useState([]);
 
-    const fetchAllData = useCallback(async (currentFilters) => {
+    const fetchPageData = useCallback(async (page = 1, currentFilters = {}) => {
         setIsLoading(true);
         setError(null);
         try {
-            const queryParams = {};
+            const queryParams = { page };
             if (currentFilters.data_inicio) queryParams.data_inicio = currentFilters.data_inicio;
             if (currentFilters.data_fim) queryParams.data_fim = currentFilters.data_fim;
             if (currentFilters.funcionario_id) queryParams.funcionario_id = currentFilters.funcionario_id;
             if (currentFilters.tipo) queryParams.tipo = currentFilters.tipo;
 
-            const [ocorrenciasResponse, funcionariosResponse] = await Promise.all([
-                api.getOcorrencias(queryParams),
-                api.getFuncionarios() // Funcionarios list for dropdowns in forms/filters
-            ]);
-
-            const fetchedOcorrencias = ocorrenciasResponse.data || ocorrenciasResponse || [];
+            // Fetch paginated ocorrencias
+            const ocorrenciasResponse = await api.getOcorrencias(queryParams);
+            const fetchedOcorrencias = ocorrenciasResponse.data.results || [];
             setOcorrencias(fetchedOcorrencias);
-            setFuncionarios(funcionariosResponse.data || funcionariosResponse || []);
+            setTotalItems(ocorrenciasResponse.data.count || 0);
+            setTotalPages(Math.ceil((ocorrenciasResponse.data.count || 0) / PAGE_SIZE));
+            setCurrentPage(page);
 
-            // Prepare data for the chart: count of occurrences by type
+            // Fetch funcionarios (assuming this list isn't huge and doesn't need its own pagination for dropdowns)
+            // This might be fetched only once if funcionarios list is stable
+            if (funcionarios.length === 0) { // Fetch only if not already populated
+                const funcionariosResponse = await api.getFuncionarios(); // Assuming this fetches all
+                setFuncionarios(funcionariosResponse.data.results || funcionariosResponse.data || []);
+            }
+
+            // Prepare data for the chart based on current page's ocorrencias
             const contagemPorTipo = fetchedOcorrencias.reduce((acc, ocorr) => {
                 const tipoLabel = ocorr.tipo || "Não Especificado"; // Handle null/undefined tipo
+                acc[tipoLabel] = (acc[tipoLabel] || 0) + 1;
+                return acc;
+            }, {});
+            const contagemPorTipo = fetchedOcorrencias.reduce((acc, ocorr) => {
+                const tipoLabel = ocorr.tipo || "Não Especificado";
                 acc[tipoLabel] = (acc[tipoLabel] || 0) + 1;
                 return acc;
             }, {});
@@ -57,19 +78,26 @@ const OcorrenciasPage = () => {
             setOcorrenciasGrafico(dadosGrafico);
 
         } catch (err) {
-            const errorMessage = err.message || 'Falha ao buscar dados. Tente novamente.';
-            setError(errorMessage);
+            const errorMsg = err.message || 'Falha ao buscar dados. Tente novamente.';
+            setError(errorMsg);
+            showErrorToast(errorMsg);
             console.error("Fetch Data Error:", err);
-            setOcorrencias([]); // Clear data on error
-            setOcorrenciasGrafico([]); // Clear chart data on error
+            setOcorrencias([]);
+            setOcorrenciasGrafico([]);
         } finally {
             setIsLoading(false);
         }
-    }, []); // Removed fetchAllData from its own dependency array
+    }, [PAGE_SIZE, funcionarios.length]); // Add funcionarios.length to re-fetch funcionarios if it was empty
 
     useEffect(() => {
-        fetchAllData(filtros);
-    }, [fetchAllData, filtros]);
+        fetchPageData(currentPage, filtros);
+    }, [currentPage, filtros, fetchPageData]);
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
 
     const handleFiltroChange = (e) => {
         const { name, value } = e.target;
@@ -77,13 +105,15 @@ const OcorrenciasPage = () => {
     };
 
     const aplicarFiltros = () => {
-        fetchAllData(filtros);
+        setCurrentPage(1); // Reset to page 1 when applying new filters
+        fetchPageData(1, filtros);
     };
 
     const limparFiltros = () => {
         const filtrosVazios = { data_inicio: '', data_fim: '', funcionario_id: '', tipo: '' };
         setFiltros(filtrosVazios);
-        // fetchAllData will be called by useEffect due to filtros change
+        setCurrentPage(1); // Reset to page 1
+        // fetchPageData will be called by useEffect due to filtros or currentPage change
     };
 
     const handleAddNew = () => {
@@ -105,41 +135,60 @@ const OcorrenciasPage = () => {
 
     const confirmDelete = async () => {
         if (!ocorrenciaToDeleteId) return;
-        setIsLoading(true); // Or setIsLoadingForm if preferred for delete action affecting main content
+        setIsDeleting(true);
         setError(null);
         try {
             await api.deleteOcorrencia(ocorrenciaToDeleteId);
+            showSuccessToast('Ocorrência excluída com sucesso!');
             setOcorrenciaToDeleteId(null);
             setShowDeleteConfirm(false);
-            await fetchAllData(); // Re-fetch all data, or just ocorrencias if funcionarios don't change
+            if (ocorrencias.length === 1 && currentPage > 1) {
+                fetchPageData(currentPage - 1, filtros);
+            } else {
+                fetchPageData(currentPage, filtros);
+            }
         } catch (err) {
-            const errorMessage = err.response?.data?.detail || err.message || 'Falha ao excluir ocorrência.';
-            setError(errorMessage);
+            const errorMsg = err.response?.data?.detail || err.message || 'Falha ao excluir ocorrência.';
+            setError(errorMsg);
+            showErrorToast(errorMsg);
             console.error("Delete Ocorrencia Error:", err.response?.data || err.message);
-            if (!showFormModal) setIsLoading(false); // Ensure loading stops if not in form context
+        } finally {
+            setIsDeleting(false);
         }
-        // setIsLoading(false) will be called by fetchAllData if successful
     };
 
     const handleFormSubmit = async (formData) => {
         setIsLoadingForm(true);
-        setError(null);
+        setError(null); // Clear previous modal errors
+        const isEditing = currentOcorrencia && currentOcorrencia.id;
         try {
-            if (currentOcorrencia && currentOcorrencia.id) {
+            if (isEditing) {
                 await api.updateOcorrencia(currentOcorrencia.id, formData);
+                showSuccessToast('Ocorrência atualizada com sucesso!');
             } else {
                 await api.createOcorrencia(formData);
+                showSuccessToast('Ocorrência criada com sucesso!');
             }
             setShowFormModal(false);
             setCurrentOcorrencia(null);
-            fetchAllData(filtros); // Re-fetch data with current filters
+            fetchPageData(isEditing ? currentPage : 1, filtros); // Refetch with current filters
         } catch (err) {
-            const errorMessage = err.response?.data?.detail ||
-                               (Array.isArray(err.response?.data) && err.response?.data.map(e => e.msg).join(', ')) || // FastAPI validation errors
-                               err.message ||
-                               (currentOcorrencia ? 'Falha ao atualizar ocorrência.' : 'Falha ao criar ocorrência.');
-            setError(errorMessage);
-            console.error("Form Submit Ocorrencia Error:", err.response?.data || err.message);
+            const errorData = err.response?.data;
+            let errorMessage = 'Ocorreu um erro desconhecido.';
+            if (typeof errorData === 'string') {
+                errorMessage = errorData;
+            } else if (typeof errorData === 'object' && errorData !== null) {
+                errorMessage = Object.entries(errorData)
+                  .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                  .join('; ');
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+            errorMessage = errorMessage || (isEditing ? 'Falha ao atualizar ocorrência.' : 'Falha ao criar ocorrência.');
+
+            setError(errorMessage); // For display in modal
+            showErrorToast(errorMessage); // General toast
+            console.error("Form Submit Ocorrencia Error:", errorData || err.message);
         } finally {
             setIsLoadingForm(false);
         }
@@ -186,7 +235,6 @@ const OcorrenciasPage = () => {
                   <label htmlFor="filtro_tipo" className="block text-sm font-medium text-gray-700">Tipo</label>
                   <select name="tipo" id="filtro_tipo" value={filtros.tipo} onChange={handleFiltroChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     <option value="">Todos</option>
-                    {/* Values should match those in backend Ocorrencia_Funcionario.tipo choices */}
                     <option value="Atraso">Atraso</option>
                     <option value="Falta Justificada">Falta Justificada</option>
                     <option value="Falta não Justificada">Falta não Justificada</option>
@@ -199,21 +247,38 @@ const OcorrenciasPage = () => {
               </div>
             </div>
 
-
-            {error && !showFormModal && ( // Global error display (for fetch, delete, etc.)
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <strong className="font-bold">Erro: </strong>
-                    <span className="block sm:inline">{error}</span>
+            {error && !isLoading && !showFormModal && !showDeleteConfirm && ocorrencias.length === 0 && (
+                 <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4 text-center" role="alert">
+                  <p className="font-bold">Falha ao Carregar Dados</p>
+                  <p>{error}</p>
                 </div>
             )}
 
-            <OcorrenciasTable
-                ocorrencias={ocorrencias} // This is now the filtered list from state
-                funcionarios={funcionarios}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                isLoading={isLoading}
-            />
+            {isLoading && ocorrencias.length === 0 && (
+                <div className="flex justify-center items-center min-h-[300px]">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+                </div>
+            )}
+
+            {(!isLoading || ocorrencias.length > 0) && !error && (
+              <>
+                <OcorrenciasTable
+                    ocorrencias={ocorrencias}
+                    funcionarios={funcionarios}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
+                {totalPages > 0 && (
+                    <PaginationControls
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        totalItems={totalItems}
+                        itemsPerPage={PAGE_SIZE}
+                    />
+                )}
+              </>
+            )}
 
             {/* Gráfico de Ocorrências */}
             <div className="bg-white shadow-lg rounded-lg p-6 mt-6">
@@ -267,17 +332,18 @@ const OcorrenciasPage = () => {
                         <div className="flex justify-end space-x-3">
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
-                                disabled={isLoading}
+                                disabled={isDeleting}
                                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={confirmDelete}
-                                disabled={isLoading}
-                                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50"
+                                disabled={isDeleting}
+                                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50 flex items-center justify-center"
                             >
-                                {isLoading ? 'Excluindo...' : 'Excluir'}
+                                {isDeleting ? <SpinnerIcon className="w-5 h-5 mr-2"/> : null}
+                                {isDeleting ? 'Excluindo...' : 'Excluir'}
                             </button>
                         </div>
                     </div>

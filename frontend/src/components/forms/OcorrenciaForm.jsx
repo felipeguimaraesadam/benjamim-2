@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import SpinnerIcon from '../utils/SpinnerIcon'; // Import SpinnerIcon
 
 // Warning Icon for validation errors
-const WarningIcon = ({ className = "w-4 h-4 inline mr-1" }) => ( // Added className prop with default
+const WarningIcon = ({ className = "w-4 h-4 inline mr-1" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.216 3.031-1.742 3.031H4.42c-1.526 0-2.492-1.697-1.742-3.031l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1.75-4.5a1.75 1.75 0 00-3.5 0v.25h3.5v-.25z" clipRule="evenodd" />
   </svg>
@@ -152,8 +153,9 @@ const OcorrenciaForm = ({ initialData, funcionarios, onSubmit, onCancel, isLoadi
                     Cancelar
                 </button>
                 <button type="submit" disabled={isLoading}
-                        className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300">
-                    {isLoading ? 'Salvando...' : 'Salvar'}
+                        className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300 flex items-center justify-center">
+                    {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2"/> : null}
+                    {isLoading ? 'Salvando...' : (initialData ? 'Atualizar Ocorrência' : 'Salvar Ocorrência')}
                 </button>
             </div>
         </form>
