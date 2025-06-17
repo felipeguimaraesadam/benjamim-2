@@ -2,11 +2,11 @@ Plano de Implementação - SGO
 Este documento organiza as próximas tarefas para o desenvolvimento do sistema, priorizadas por criticidade e impacto.
 Este documento serve como um checklist para as próximas tarefas de desenvolvimento. Marque cada item como concluído (- [x]) ao finalizar a implementação.
 🎯 1. Novas Funcionalidades (Páginas de Detalhes)
-[ ] Página de Detalhes do Funcionário
-[ ] Backend: Criar endpoint /api/funcionarios/<id>/details/ que retorna o histórico completo do funcionário.
-[ ] Frontend: Criar a página FuncionarioDetailPage.jsx.
-[ ] Frontend: Adicionar a rota /funcionarios/:id no App.jsx.
-[ ] Frontend: Exibir os dados do funcionário (obras, pagamentos, ocorrências) em seções claras.
+[x] Página de Detalhes do Funcionário
+- [x] Backend: Criar endpoint /api/funcionarios/<id>/details/ que retorna o histórico completo do funcionário.
+- [x] Frontend: Criar a página FuncionarioDetailPage.jsx.
+- [x] Frontend: Adicionar a rota /funcionarios/:id no App.jsx.
+- [x] Frontend: Exibir os dados do funcionário (obras, pagamentos, ocorrências) em seções claras.
 [ ] Página de Detalhes da Equipe
 [ ] Backend: Criar endpoint /api/equipes/<id>/details/ que retorna o histórico completo da equipe.
 [ ] Frontend: Criar a página EquipeDetailPage.jsx.
@@ -20,7 +20,7 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 ✨ 2. Melhorias de UI/UX e Consistência
 [ ] Padronização de Ações em Tabelas
 - [x] Substituir texto por ícones (editar, excluir) em FuncionariosPage.jsx, EquipesPage.jsx, MateriaisPage.jsx e ComprasPage.jsx.
-[ ] Adicionar ícone de olho (visualizar) para navegar para as novas páginas de detalhes.
+- [x] Adicionar ícone de olho (visualizar) para navegar para as novas páginas de detalhes. (Implementado para Funcionários)
 [ ] Consistência Terminológica: "Locação"
 - [x] Realizar busca e substituição global de "Localização" para "Locação" ou "Locações" em todo o frontend.
 [ ] Melhorias no Formulário de Locação (LocacaoForm.jsx)

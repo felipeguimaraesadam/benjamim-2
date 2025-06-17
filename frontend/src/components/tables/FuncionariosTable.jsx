@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Eye } from 'lucide-react'; // Added Eye icon
+import { Link } from 'react-router-dom'; // Added Link
 
 const FuncionariosTable = ({ funcionarios, onEdit, onDelete, isLoading }) => {
 
@@ -53,6 +54,15 @@ const FuncionariosTable = ({ funcionarios, onEdit, onDelete, isLoading }) => {
               <td className="px-6 py-4">{formatCurrency(funcionario.valor_metro_padrao)}</td>
               <td className="px-6 py-4">{formatCurrency(funcionario.valor_empreitada_padrao)}</td>
               <td className="px-6 py-4 text-center space-x-2">
+                <Link
+                  to={`/funcionarios/${funcionario.id}`}
+                  title="Visualizar Detalhes"
+                  aria-label="Visualizar Detalhes"
+                  className="text-green-600 hover:text-green-800 disabled:text-gray-400 inline-block"
+                  // Add disabled={isLoading} if Link can take it, or wrap in a conditional rendering
+                >
+                  <Eye size={18} />
+                </Link>
                 <button
                   onClick={() => onEdit(funcionario)}
                   className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"

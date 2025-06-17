@@ -155,6 +155,10 @@ export const getFuncionarios = (params) => { // Modified to accept params
   return apiClient.get('/funcionarios/', { params });
 };
 
+export const getFuncionarioDetailsById = (id) => {
+  return apiClient.get(`/funcionarios/${id}/details/`);
+};
+
 export const getFuncionarioById = (id) => {
   return apiClient.get(`/funcionarios/${id}/`);
 };

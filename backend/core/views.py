@@ -11,7 +11,12 @@ from django.utils import timezone
 from datetime import date, timedelta
 
 from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra, FotoObra
-from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer, FotoObraSerializer
+from .serializers import (
+    UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer,
+    LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer,
+    DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer,
+    ItemCompraSerializer, FotoObraSerializer, FuncionarioDetailSerializer # Added FuncionarioDetailSerializer
+)
 from .permissions import IsNivelAdmin, IsNivelGerente
 from django.db.models import Sum, Count, F # Added F
 from decimal import Decimal # Added Decimal
@@ -41,6 +46,20 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
     queryset = Funcionario.objects.all()
     serializer_class = FuncionarioSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+
+# New FuncionarioDetailView
+class FuncionarioDetailView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente] # Or more specific permissions
+
+    def get(self, request, pk, format=None):
+        try:
+            funcionario = Funcionario.objects.get(pk=pk)
+        except Funcionario.DoesNotExist:
+            return Response({"error": "Funcionário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = FuncionarioDetailSerializer(funcionario, context={'request': request})
+        return Response(serializer.data)
 
 
 class EquipeViewSet(viewsets.ModelViewSet):

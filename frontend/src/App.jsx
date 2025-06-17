@@ -23,6 +23,7 @@ import LocacoesPage from './pages/LocacoesPage';
 import ComprasPage from './pages/ComprasPage'; // Import ComprasPage
 import UsuariosPage from './pages/UsuariosPage'; // Import UsuariosPage
 import ObraDetailPage from './pages/ObraDetailPage'; // Import ObraDetailPage
+import FuncionarioDetailPage from './pages/FuncionarioDetailPage'; // Import FuncionarioDetailPage
 
 const router = createBrowserRouter([
   {
@@ -76,6 +77,10 @@ const router = createBrowserRouter([
           {
             path: 'obras/:id', // Dynamic route for work ID
             element: <ObraDetailPage />,
+          },
+          {
+            path: 'funcionarios/:id', // Dynamic route for funcionario ID
+            element: <FuncionarioDetailPage />,
           }
         ],
       }

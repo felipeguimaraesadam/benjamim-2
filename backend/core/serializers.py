@@ -331,6 +331,68 @@ class OcorrenciaFuncionarioSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+# New Serializer for Obras Participadas by Funcionario
+class FuncionarioObraParticipadaSerializer(serializers.ModelSerializer):
+    nome_obra = serializers.CharField(source='obra.nome_obra', read_only=True)
+    data_locacao_inicio = serializers.DateField(source='data_locacao_inicio')
+    data_locacao_fim = serializers.DateField(source='data_locacao_fim')
+
+    class Meta:
+        model = Locacao_Obras_Equipes
+        fields = ['id', 'nome_obra', 'data_locacao_inicio', 'data_locacao_fim']
+
+
+# New Serializer for Pagamentos Recebidos by Funcionario
+class FuncionarioPagamentoRecebidoSerializer(serializers.ModelSerializer):
+    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)
+    data_pagamento = serializers.DateField() # Assuming Locacao_Obras_Equipes has data_pagamento
+    valor_pagamento = serializers.DecimalField(max_digits=10, decimal_places=2) # And valor_pagamento
+
+    class Meta:
+        model = Locacao_Obras_Equipes
+        fields = ['id', 'obra_nome', 'data_pagamento', 'valor_pagamento']
+
+
+# FuncionarioDetailSerializer
+class FuncionarioDetailSerializer(FuncionarioSerializer): # Inherits from FuncionarioSerializer
+    obras_participadas = serializers.SerializerMethodField()
+    pagamentos_recebidos = serializers.SerializerMethodField()
+    ocorrencias_registradas = OcorrenciaFuncionarioSerializer(many=True, read_only=True, source='ocorrencias')
+
+    class Meta(FuncionarioSerializer.Meta): # Inherit Meta to keep fields from FuncionarioSerializer
+        fields = FuncionarioSerializer.Meta.fields + [
+            'obras_participadas',
+            'pagamentos_recebidos',
+            'ocorrencias_registradas'
+        ]
+
+    def get_obras_participadas(self, obj):
+        # obj is the Funcionario instance
+        locacoes = Locacao_Obras_Equipes.objects.filter(
+            funcionario_locado=obj
+        ).select_related('obra').only(
+            'id', 'obra__nome_obra', 'data_locacao_inicio', 'data_locacao_fim'
+        )
+        # Filter out locacoes where obra is None, if that's possible and not desired
+        locacoes = [loc for loc in locacoes if loc.obra is not None]
+        return FuncionarioObraParticipadaSerializer(locacoes, many=True).data
+
+    def get_pagamentos_recebidos(self, obj):
+        # obj is the Funcionario instance
+        # Assuming payments are recorded in Locacao_Obras_Equipes
+        # and we only want entries where a payment has been made (valor_pagamento > 0 and data_pagamento is not null)
+        pagamentos = Locacao_Obras_Equipes.objects.filter(
+            funcionario_locado=obj,
+            valor_pagamento__isnull=False, # Or valor_pagamento__gt=0 if that's the criteria
+            data_pagamento__isnull=False
+        ).select_related('obra').only(
+            'id', 'obra__nome_obra', 'data_pagamento', 'valor_pagamento'
+        )
+        # Filter out locacoes where obra is None, if that's possible and not desired
+        pagamentos = [loc for loc in pagamentos if loc.obra is not None]
+        return FuncionarioPagamentoRecebidoSerializer(pagamentos, many=True).data
+
+
 class UsoMaterialSerializer(serializers.ModelSerializer):
     obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True, allow_null=True)
     material_nome = serializers.SerializerMethodField() # CHANGED

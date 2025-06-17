@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.15] - YYYY-MM-DD
+### Adicionado
+- **Página de Detalhes do Funcionário**:
+  - Criado endpoint no backend (`/api/funcionarios/<id>/details/`) que fornece um histórico completo do funcionário, incluindo obras participadas, pagamentos recebidos e ocorrências registradas.
+  - Desenvolvida nova página no frontend (`FuncionarioDetailPage.jsx`) para exibir os detalhes do funcionário, acessível através da rota `/funcionarios/:id`.
+  - A página apresenta os dados do funcionário em seções organizadas: "Dados Pessoais", "Obras Participadas", "Histórico de Pagamentos" e "Ocorrências Registradas".
+  - Adicionado um ícone de "visualizar" (olho) na tabela da página de listagem de funcionários (`FuncionariosTable.jsx`) para facilitar o acesso direto à nova página de detalhes.
+
 ## [v0.6.14] - YYYY-MM-DD
 ### Corrigido
 - **Página de Detalhes da Obra (`ObraDetailPage.jsx`):** Corrigido um erro (`TypeError: todasAsComprasBruto.filter is not a function`) que ocorria ao processar a lista de compras da obra. Ajustada a lógica para garantir que a variável `todasAsComprasBruto` (ou uma derivada dela, `actualTodasAsCompras`) seja tratada como um array antes de aplicar métodos como `.filter()` ou ao ser passada para componentes filhos, especialmente ao lidar com respostas paginadas da API.
