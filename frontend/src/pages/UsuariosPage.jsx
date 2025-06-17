@@ -21,9 +21,13 @@ const UsuariosPage = () => {
     setError(null);
     try {
       const response = await api.getUsuarios();
-      setUsers(response.data || response); // Adapt based on API response structure
+      // Ensure users is always an array. Adapt based on expected API response structure.
+      // Common patterns: response.data.results, response.data, or just response
+      const usersData = response.data?.results || response.data || (Array.isArray(response) ? response : []);
+      setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       setError(err.message || 'Falha ao buscar usuários. Tente novamente.');
+      setUsers([]); // Ensure users is an empty array on error
       console.error("Fetch Usuarios Error:", err);
     } finally {
       setIsLoading(false);

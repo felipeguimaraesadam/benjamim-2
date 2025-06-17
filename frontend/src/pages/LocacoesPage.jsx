@@ -61,11 +61,13 @@ const LocacoesPage = () => {
   const fetchObras = useCallback(async () => {
     try {
       // For simplicity, assuming obras list for dropdowns doesn't need pagination itself.
-      // If it does, it would need a similar pagination logic.
       const response = await api.getObras();
-      setObras(response.data);
+      // Ensure obrasData is always an array.
+      const obrasData = response?.data?.results || response?.data || (Array.isArray(response) ? response : []);
+      setObras(Array.isArray(obrasData) ? obrasData : []);
     } catch (err) {
       console.error("Fetch Obras for LocacaoForm/Chart Filter Error:", err);
+      setObras([]); // Set to empty array on error
     }
   }, []);
 
@@ -94,9 +96,12 @@ const LocacoesPage = () => {
   const fetchEquipes = useCallback(async () => {
     try {
       const response = await api.getEquipes();
-      setEquipes(response.data);
+      // Ensure equipesData is always an array.
+      const equipesData = response?.data?.results || response?.data || (Array.isArray(response) ? response : []);
+      setEquipes(Array.isArray(equipesData) ? equipesData : []);
     } catch (err) {
       console.error("Fetch Equipes for LocacaoForm Error:", err);
+      setEquipes([]); // Set to empty array on error
     }
   }, []);
 
