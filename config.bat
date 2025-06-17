@@ -14,7 +14,6 @@ IF %ERRORLEVEL% NEQ 0 (
     echo ERRO: Python nao encontrado. Por favor, instale Python e adicione ao PATH.
     echo.
     pause
-    exit /b 1
 )
 echo Python encontrado.
 echo.
@@ -26,7 +25,6 @@ IF %ERRORLEVEL% NEQ 0 (
     echo ERRO: Node.js nao encontrado. Por favor, instale Node.js e adicione ao PATH.
     echo.
     pause
-    exit /b 1
 )
 echo Node.js encontrado.
 echo.
@@ -38,7 +36,6 @@ IF %ERRORLEVEL% NEQ 0 (
     echo ERRO: NPM nao encontrado. Por favor, instale NPM (geralmente vem com Node.js).
     echo.
     pause
-    exit /b 1
 )
 echo NPM encontrado.
 echo.
