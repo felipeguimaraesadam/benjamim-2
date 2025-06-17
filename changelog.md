@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.10] - YYYY-MM-DD
+### Corrigido
+- **Página de Despesas Extras:** Tentativa adicional para corrigir o erro ("Element type is invalid... got: undefined") que ocorre após salvar uma despesa. Adicionados comentários aos arquivos `DespesasExtrasPage.jsx`, `DespesasExtrasTable.jsx`, e `PaginationControls.jsx` para forçar o reprocessamento pelo sistema de build. Esta medida visa resolver problemas de cache ou HMR que podem afetar a renderização de componentes após a submissão do formulário, complementando a verificação anterior no `DespesaExtraForm.jsx`.
+
 ## [v0.6.9] - YYYY-MM-DD
 ### Corrigido
 - **Formulário de Despesa Extra:** Tentativa de correção para um erro ("Element type is invalid... got: undefined") que ocorria ao salvar uma nova despesa. Verificadas as importações e exportações de componentes (especialmente `SpinnerIcon`) que parecem corretas. Adicionado um comentário ao arquivo `DespesaExtraForm.jsx` para forçar o reprocessamento pelo sistema de build, o que pode resolver problemas de cache ou HMR.

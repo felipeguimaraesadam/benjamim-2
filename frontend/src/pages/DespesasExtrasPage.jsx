@@ -1,3 +1,4 @@
+// Re-processing trigger for DespesasExtrasPage and its imports
 import React, { useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
 import DespesasExtrasTable from '../components/tables/DespesasExtrasTable';
