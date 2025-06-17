@@ -144,6 +144,9 @@ class Compra(models.Model):
     desconto = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     valor_total_liquido = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     observacoes = models.TextField(blank=True, null=True)
+    data_pagamento = models.DateField(null=True, blank=True, verbose_name="Data de Pagamento")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
 
     def __str__(self):
         return f"Compra para {self.obra.nome_obra} em {self.data_compra}"
@@ -151,6 +154,8 @@ class Compra(models.Model):
     def save(self, *args, **kwargs):
         # Lógica para calcular o valor líquido antes de salvar
         self.valor_total_liquido = self.valor_total_bruto - self.desconto
+        if self.data_compra and not self.data_pagamento:
+            self.data_pagamento = self.data_compra
         super().save(*args, **kwargs)
 
 class ItemCompra(models.Model):

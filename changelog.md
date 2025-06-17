@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.6.6] - YYYY-MM-DD
+### Adicionado
+- **Modelo de Compra (Backend):** Adicionados campos `data_pagamento`, `created_at`, e `updated_at` ao modelo `Compra`. `data_pagamento` agora é preenchida automaticamente com `data_compra` se não especificada.
+- **Formulário de Compra (Frontend):** Incluído campo 'Data de Pagamento', que por padrão reflete a 'Data da Compra' mas pode ser alterado pelo usuário.
+- **Detalhes da Compra (Frontend):** A lista de compras e o modal de detalhes da compra agora exibem informações mais completas.
+  - Lista de Compras: Coluna 'Obra' confirmada (já existia, mas relevância destacada).
+  - Modal de Detalhes da Compra: Exibe nome da Obra, Fornecedor, Nota Fiscal, Data da Compra, Data de Pagamento, Data do Registro, Subtotal, Desconto, Valor Total e Observações.
+
+### Modificado
+- Serializer `CompraSerializer` (Backend) atualizado para incluir os novos campos do modelo (`data_pagamento`, `created_at`, `updated_at`) e marcar os campos de timestamp como read-only.
+- Componente `CompraItensModal.jsx` (Frontend) refatorado para aceitar o objeto de compra completo (`compra`) e exibir os detalhes adicionais formatados.
+- Componente `ComprasPage.jsx` (Frontend) atualizado para gerenciar e passar o objeto de compra completo para o modal de detalhes.
+
 ## [v0.6.5] - YYYY-MM-DD
 ### Corrigido
 - **Formulário de Compra:** Corrigida a listagem de obras que não estavam aparecendo no formulário de nova compra. O formulário agora lida corretamente com respostas paginadas da API de obras e solicita uma quantidade maior de registros (`page_size: 500`).

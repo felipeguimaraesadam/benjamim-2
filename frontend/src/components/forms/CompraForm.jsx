@@ -147,6 +147,7 @@ const ItemRow = React.memo(ItemRowInternal);
 const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     const [obraId, setObraId] = useState('');
     const [dataCompra, setDataCompra] = useState('');
+    const [dataPagamento, setDataPagamento] = useState(''); // Added state for payment date
     const [fornecedor, setFornecedor] = useState('');
     const [notaFiscal, setNotaFiscal] = useState('');
     const [observacoes, setObservacoes] = useState('');
@@ -158,6 +159,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     const [itemToFocusId, setItemToFocusId] = useState(null);
 
     const itemFieldRefs = useRef([]);
+    const prevDataCompraRef = useRef(); // Added ref for previous dataCompra
 
     // Function to get field error (can be defined outside or memoized if complex)
     // For simplicity, defined here. If it used CompraForm state/props not passed as args, it would need useCallback.
@@ -254,7 +256,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         itemUniqueIdCounter = 0; setErrors({});
         if (initialData && initialData.id) {
             setObraId(initialData.obra?.id?.toString() || initialData.obra?.toString() || '');
-            setDataCompra(initialData.data_compra ? new Date(initialData.data_compra).toISOString().split('T')[0] : '');
+            const initialDataCompra = initialData.data_compra ? new Date(initialData.data_compra).toISOString().split('T')[0] : '';
+            setDataCompra(initialDataCompra);
+            setDataPagamento(initialData.data_pagamento ? new Date(initialData.data_pagamento).toISOString().split('T')[0] : initialDataCompra); // Set dataPagamento from initialData or default to data_compra
             setFornecedor(initialData.fornecedor || '');
             setNotaFiscal(initialData.nota_fiscal || '');
             setObservacoes(initialData.observacoes || '');
@@ -287,11 +291,21 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             }
         } else {
             setObraId(initialData?.obra?.toString() || initialData?.obra_id?.toString() || '');
-            setDataCompra(new Date().toISOString().split('T')[0]);
+            const today = new Date().toISOString().split('T')[0];
+            setDataCompra(today);
+            setDataPagamento(today); // Default dataPagamento to today for new entries
             setFornecedor(''); setNotaFiscal(''); setObservacoes(''); setDesconto('0.00');
             dispatchItems({ type: ITEM_ACTION_TYPES.SET_ITEMS, payload: [createNewEmptyItem()] });
         }
     }, [initialData]);
+
+    // Synchronize dataPagamento with dataCompra if dataPagamento is not manually set
+    useEffect(() => {
+        if (prevDataCompraRef.current === dataPagamento || !dataPagamento) {
+            setDataPagamento(dataCompra);
+        }
+        prevDataCompraRef.current = dataCompra;
+    }, [dataCompra]);
 
     const handleHeaderChange = (e) => {
         const { name, value } = e.target;
@@ -415,8 +429,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                  setErrors(prev => ({...prev, form: "Adicione pelo menos um item válido à compra."})); return;
             }
             const compraData = {
-                obra: parseInt(obraId, 10), data_compra: dataCompra, fornecedor: fornecedor,
-                nota_fiscal: notaFiscal || null, desconto: finalDesconto, observacoes: observacoes || null, itens: itemsToSubmit
+                obra: parseInt(obraId, 10), data_compra: dataCompra, data_pagamento: dataPagamento || null,
+                fornecedor: fornecedor, nota_fiscal: notaFiscal || null, desconto: finalDesconto,
+                observacoes: observacoes || null, itens: itemsToSubmit
             };
             onSubmit(compraData);
         }
@@ -431,13 +446,20 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b border-slate-300 pb-3">Informações da Compra</h2>
 
             {/* Header Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5"> {/* Increased gap */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5"> {/* Adjusted to md:grid-cols-3 and gap-x-6 */}
                 <div>
                     <label htmlFor="dataCompra" className="block mb-1.5 text-sm font-medium text-gray-700">Data da Compra <span className="text-red-500">*</span></label>
                     <input type="date" name="dataCompra" id="dataCompra" value={dataCompra} onChange={handleHeaderChange}
                            onBlur={(e) => handleFieldBlur(e.target.name, e.target.value)}
                            className={`w-full px-3 py-2.5 border ${errors.dataCompra ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`} />
                     {errors.dataCompra && <p className="mt-1.5 text-xs text-red-600 flex items-center"><WarningIcon /> {errors.dataCompra}</p>}
+                </div>
+                <div>
+                    <label htmlFor="dataPagamento" className="block mb-1.5 text-sm font-medium text-gray-700">Data de Pagamento</label>
+                    <input type="date" name="dataPagamento" id="dataPagamento" value={dataPagamento}
+                           onChange={(e) => setDataPagamento(e.target.value)}
+                           className={`w-full px-3 py-2.5 border ${errors.dataPagamento ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`} />
+                    {/* Optional: {errors.dataPagamento && <p className="mt-1.5 text-xs text-red-600 flex items-center"><WarningIcon /> {errors.dataPagamento}</p>} */}
                 </div>
                 <div>
                     <label htmlFor="obraId" className="block mb-1.5 text-sm font-medium text-gray-700">Obra <span className="text-red-500">*</span></label>

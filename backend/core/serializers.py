@@ -291,9 +291,14 @@ class CompraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Compra
         fields = [
-            'id', 'obra', 'obra_nome', 'fornecedor', 'data_compra', 'nota_fiscal',
-            'valor_total_bruto', 'desconto', 'valor_total_liquido', 'observacoes', 'itens'
+            'id', 'obra', 'obra_nome', 'fornecedor', 'data_compra', 'data_pagamento',
+            'nota_fiscal', 'valor_total_bruto', 'desconto', 'valor_total_liquido',
+            'observacoes', 'itens', 'created_at', 'updated_at'
         ]
+        extra_kwargs = {
+            'created_at': {'read_only': True},
+            'updated_at': {'read_only': True}
+        }
 
     def create(self, validated_data):
         itens_data = validated_data.pop('itens')

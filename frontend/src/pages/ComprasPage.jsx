@@ -47,7 +47,7 @@ const ComprasPage = () => {
 
     // State for Itens Modal
     const [isItensModalOpen, setIsItensModalOpen] = useState(false);
-    const [selectedCompraItens, setSelectedCompraItens] = useState([]);
+    const [selectedCompraParaModal, setSelectedCompraParaModal] = useState(null); // Renamed and initialized to null
 
     // State for filters
     const [dataInicio, setDataInicio] = useState('');
@@ -228,13 +228,13 @@ const ComprasPage = () => {
     };
 
     const handleViewCompraItens = (compra) => {
-        setSelectedCompraItens(compra.itens || []);
+        setSelectedCompraParaModal(compra); // Store the whole compra object
         setIsItensModalOpen(true);
     };
 
     const handleCloseItensModal = () => {
         setIsItensModalOpen(false);
-        setSelectedCompraItens([]); // Optional: clear items on close
+        setSelectedCompraParaModal(null); // Clear the selected compra object
     };
 
     let formInitialData = null;
@@ -400,7 +400,7 @@ const ComprasPage = () => {
             <CompraItensModal
                 isOpen={isItensModalOpen}
                 onClose={handleCloseItensModal}
-                itens={selectedCompraItens}
+                compra={selectedCompraParaModal} // Pass the whole compra object
             />
         </div>
     );
