@@ -115,16 +115,19 @@ IF %ERRORLEVEL% NEQ 0 (
 echo.
 echo Instalando dependencias Node.js se node_modules nao existir...
 IF NOT EXIST node_modules (
-    echo Instalando dependencias npm...
-    npm install
+    echo Running npm install in frontend. This may take a while...
+    call npm install > npm_install_log.txt 2>&1
     IF %ERRORLEVEL% NEQ 0 (
-        echo ERRO: Falha ao instalar dependencias Node.js. Verifique package.json e a saida do npm.
+        echo.
+        echo ERRO CRITICO: Falha ao instalar dependencias Node.js com 'npm install'.
+        echo Verifique o 'package.json', a saida do npm em npm_install_log.txt e se o Node.js/npm estao instalados corretamente.
+        echo.
         pause
         exit /b %ERRORLEVEL%
     )
-    echo Dependencias npm instaladas.
+    echo npm install completed successfully. Log: npm_install_log.txt
 ) ELSE (
-    echo Pasta node_modules ja existe, pulando npm install.
+    echo Pasta node_modules ja existe, pulando npm install. Log de instalacao anterior (se houver): npm_install_log.txt
 )
 echo.
 echo Frontend configurado com sucesso.
