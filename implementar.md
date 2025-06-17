@@ -30,15 +30,21 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Corrigida a abertura automática do navegador para apontar para a URL do frontend (5173) em vez do backend (8000) ao iniciar a aplicação. (backend/manage.py)
 - [x] Robustecida a instalação de dependências do frontend no `config.bat` para garantir a instalação incondicional de todos os pacotes.
 [ ] Correção na Listagem de Compras (ComprasPage.jsx)
-[ ] Backend: Ajustar o CompraSerializer para aninhar e serializar os ItemCompra corretamente.
-[ ] Frontend: Refatorar ComprasTable.jsx para lidar com a nova estrutura de dados.
-[ ] Frontend: Implementar um modal de detalhes para exibir todos os itens de uma compra.
-[ ] Erro na Página de Despesas (DespesasExtrasPage.jsx)
-[ ] Corrigir a passagem de props para DespesaExtraForm, garantindo que obras seja sempre um array (response.data.results).
-[ ] Erro na Página de Relatórios (RelatoriosPage.jsx)
-[ ] Atribuir uma key estática e única para cada componente de formulário renderizado condicionalmente para evitar o erro de removeChild.
-[ ] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx)
-[ ] Garantir que a prop usosMaterial passada para HistoricoUsoTable.jsx seja sempre um array, tratando casos de resposta nula da API com um array vazio [].
+- [x] Backend: Ajustar o CompraSerializer para aninhar e serializar os ItemCompra corretamente.
+- [x] Frontend: Refatorar ComprasTable.jsx para lidar com a nova estrutura de dados.
+- [x] Frontend: Implementar um modal de detalhes para exibir todos os itens de uma compra.
+- [x] Erro na Página de Despesas (DespesasExtrasPage.jsx)
+- [x] Corrigir a passagem de props para DespesaExtraForm, garantindo que obras seja sempre um array (response.data.results).
+- [x] Erro na Página de Relatórios (RelatoriosPage.jsx)
+- [x] Atribuir uma key estática e única para cada componente de formulário renderizado condicionalmente para evitar o erro de removeChild.
+[ ] Erro de Tela em Branco ao Salvar Despesa (DespesasExtrasPage.jsx)
+[ ] Investigar erro "Element type is invalid... got: undefined" que ocorre após salvar uma despesa com sucesso. A tela fica em branco, exigindo atualização manual. O problema persiste apesar de tentativas de correção focadas em `react-toastify` e `SpinnerIcon`.
+- [x] Erro no Formulário de Obra (ObraForm.jsx)
+- [x] Corrigir `TypeError: funcionarios.map is not a function` garantindo que a lista de funcionários seja sempre um array.
+- [x] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx)
+- [x] Garantir que a prop usosMaterial passada para HistoricoUsoTable.jsx seja sempre um array, tratando casos de resposta nula da API com um array vazio [].
+- [x] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx) - Compras
+- [x] Corrigir `TypeError: todasAsComprasBruto.filter is not a function` garantindo que a lista de compras seja sempre um array antes de ser filtrada ou passada para componentes filhos.
 📅 4. Funcionalidades de Relatório (Pendentes)
 [ ] Relatório de Pagamento de Locação (Semanal)
 [ ] UI: Adicionar botão "Gerar Relatório de Pagamento" na LocacoesPage.jsx.

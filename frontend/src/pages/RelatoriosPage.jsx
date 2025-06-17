@@ -169,7 +169,7 @@ const RelatoriosPage = () => {
     switch (reportType) {
       case 'financeiroObra':
         return (
-          <form onSubmit={(e) => { e.preventDefault(); handleSubmitReport('financeiroObra'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+          <form key="form-financeiro-obra" onSubmit={(e) => { e.preventDefault(); handleSubmitReport('financeiroObra'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório Financeiro da Obra</h2>
             <div>
               <label htmlFor="obra_id_fin" className="block text-sm font-medium text-gray-700">Obra <span className="text-red-500">*</span></label>
@@ -202,7 +202,7 @@ const RelatoriosPage = () => {
         );
       case 'geralCompras':
          return (
-            <form onSubmit={(e) => { e.preventDefault(); handleSubmitReport('geralCompras'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+            <form key="form-geral-compras" onSubmit={(e) => { e.preventDefault(); handleSubmitReport('geralCompras'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório Geral de Compras</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -244,7 +244,7 @@ const RelatoriosPage = () => {
          );
       case 'desempenhoEquipe':
         return (
-            <form onSubmit={(e) => { e.preventDefault(); handleSubmitReport('desempenhoEquipe'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+            <form key="form-desempenho-equipe" onSubmit={(e) => { e.preventDefault(); handleSubmitReport('desempenhoEquipe'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório de Desempenho de Equipes</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <div>
@@ -277,7 +277,7 @@ const RelatoriosPage = () => {
         );
     case 'custoGeral':
         return (
-            <form onSubmit={(e) => { e.preventDefault(); handleSubmitReport('custoGeral'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+            <form key="form-custo-geral" onSubmit={(e) => { e.preventDefault(); handleSubmitReport('custoGeral'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório Geral de Custos do Sistema</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>

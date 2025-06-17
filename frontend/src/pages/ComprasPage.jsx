@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ComprasTable from '../components/tables/ComprasTable';
 import CompraForm from '../components/forms/CompraForm';
+import CompraItensModal from '../components/modals/CompraItensModal'; // Import the modal
 import * as api from '../services/api';
 import PaginationControls from '../components/utils/PaginationControls';
 import { showSuccessToast, showErrorToast } from '../utils/toastUtils';
@@ -43,6 +44,10 @@ const ComprasPage = () => {
 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [compraToDeleteId, setCompraToDeleteId] = useState(null);
+
+    // State for Itens Modal
+    const [isItensModalOpen, setIsItensModalOpen] = useState(false);
+    const [selectedCompraParaModal, setSelectedCompraParaModal] = useState(null); // Renamed and initialized to null
 
     // State for filters
     const [dataInicio, setDataInicio] = useState('');
@@ -222,6 +227,16 @@ const ComprasPage = () => {
                                 // Actually, useEffect depends on filter states, so it will refetch.
     };
 
+    const handleViewCompraItens = (compra) => {
+        setSelectedCompraParaModal(compra); // Store the whole compra object
+        setIsItensModalOpen(true);
+    };
+
+    const handleCloseItensModal = () => {
+        setIsItensModalOpen(false);
+        setSelectedCompraParaModal(null); // Clear the selected compra object
+    };
+
     let formInitialData = null;
     if (isAddingNew) formInitialData = currentCompra;
     else if (currentCompra) formInitialData = currentCompra;
@@ -339,6 +354,7 @@ const ComprasPage = () => {
                         compras={compras} // Now receives paginated data
                         onEdit={handleEditCompra}
                         onDelete={handleDeleteCompra}
+                        onViewDetails={handleViewCompraItens} // Pass the new handler
                         // isLoading can be passed if table has its own internal loading indicators for actions
                     />
                     {totalPages > 0 && (
@@ -380,6 +396,12 @@ const ComprasPage = () => {
                     </div>
                 </div>
             )}
+
+            <CompraItensModal
+                isOpen={isItensModalOpen}
+                onClose={handleCloseItensModal}
+                compra={selectedCompraParaModal} // Pass the whole compra object
+            />
         </div>
     );
 };

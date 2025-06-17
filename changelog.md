@@ -1,5 +1,59 @@
 # Changelog
 
+## [v0.6.14] - YYYY-MM-DD
+### Corrigido
+- **Página de Detalhes da Obra (`ObraDetailPage.jsx`):** Corrigido um erro (`TypeError: todasAsComprasBruto.filter is not a function`) que ocorria ao processar a lista de compras da obra. Ajustada a lógica para garantir que a variável `todasAsComprasBruto` (ou uma derivada dela, `actualTodasAsCompras`) seja tratada como um array antes de aplicar métodos como `.filter()` ou ao ser passada para componentes filhos, especialmente ao lidar com respostas paginadas da API.
+
+## [v0.6.13] - YYYY-MM-DD
+### Corrigido
+- **Formulário de Obra (`ObraForm.jsx`):** Corrigido um erro (`TypeError: funcionarios.map is not a function`) que ocorria ao tentar listar os funcionários no dropdown de 'Responsável pela Obra'. A função que busca os funcionários (`fetchFuncionarios`) foi ajustada para lidar corretamente com respostas paginadas da API (buscando `response.data?.results`) e para solicitar uma lista mais completa de funcionários (`page_size: 500`). Adicionalmente, uma verificação `Array.isArray(funcionarios)` foi adicionada antes do `.map()` como medida de segurança.
+
+## [v0.6.12] - YYYY-MM-DD
+### Corrigido
+- **Página de Relatórios:** Corrigido um erro (`removeChild` error) que podia ocorrer ao alternar entre diferentes tipos de formulários de relatório. Adicionadas `key` props estáticas e únicas aos formulários renderizados condicionalmente para garantir a correta reconciliação pelo React.
+
+## [v0.6.11] - YYYY-MM-DD
+### Corrigido
+- **Notificações (Toast):** Corrigido um erro ("Element type is invalid... got: undefined") que causava uma tela em branco após salvar uma nova despesa. O erro originava-se na biblioteca `react-toastify` ao tentar renderizar o toast de sucesso. A correção envolve desabilitar o ícone padrão para toasts de sucesso (`icon: false` em `frontend/src/utils/toastUtils.js`), o que evita a renderização do componente problemático.
+
+## [v0.6.10] - YYYY-MM-DD
+### Corrigido
+- **Página de Despesas Extras:** Tentativa adicional para corrigir o erro ("Element type is invalid... got: undefined") que ocorre após salvar uma despesa. Adicionados comentários aos arquivos `DespesasExtrasPage.jsx`, `DespesasExtrasTable.jsx`, e `PaginationControls.jsx` para forçar o reprocessamento pelo sistema de build. Esta medida visa resolver problemas de cache ou HMR que podem afetar a renderização de componentes após a submissão do formulário, complementando a verificação anterior no `DespesaExtraForm.jsx`.
+
+## [v0.6.9] - YYYY-MM-DD
+### Corrigido
+- **Formulário de Despesa Extra:** Tentativa de correção para um erro ("Element type is invalid... got: undefined") que ocorria ao salvar uma nova despesa. Verificadas as importações e exportações de componentes (especialmente `SpinnerIcon`) que parecem corretas. Adicionado um comentário ao arquivo `DespesaExtraForm.jsx` para forçar o reprocessamento pelo sistema de build, o que pode resolver problemas de cache ou HMR.
+
+## [v0.6.8] - YYYY-MM-DD
+### Corrigido
+- **Formulário de Despesa Extra:** Corrigido um erro que impedia a listagem correta de obras no formulário de despesas extras (`DespesasExtrasPage.jsx`). A busca de obras (`fetchObrasForForm`) agora solicita um número maior de registros (`page_size: 500`) e lida corretamente com respostas paginadas da API, garantindo que a lista de obras (`obras`) seja sempre um array.
+
+## [v0.6.7] - YYYY-MM-DD
+### Corrigido
+- **Edição de Compra:** Corrigido um erro (`TypeError: api.getCompraById is not a function`) que impedia a edição de compras. A função `getCompraById` foi adicionada ao serviço da API (`frontend/src/services/api.js`).
+
+## [v0.6.6] - YYYY-MM-DD
+### Adicionado
+- **Modelo de Compra (Backend):** Adicionados campos `data_pagamento`, `created_at`, e `updated_at` ao modelo `Compra`. `data_pagamento` agora é preenchida automaticamente com `data_compra` se não especificada.
+- **Formulário de Compra (Frontend):** Incluído campo 'Data de Pagamento', que por padrão reflete a 'Data da Compra' mas pode ser alterado pelo usuário.
+- **Detalhes da Compra (Frontend):** A lista de compras e o modal de detalhes da compra agora exibem informações mais completas.
+  - Lista de Compras: Coluna 'Obra' confirmada (já existia, mas relevância destacada).
+  - Modal de Detalhes da Compra: Exibe nome da Obra, Fornecedor, Nota Fiscal, Data da Compra, Data de Pagamento, Data do Registro, Subtotal, Desconto, Valor Total e Observações.
+
+### Modificado
+- Serializer `CompraSerializer` (Backend) atualizado para incluir os novos campos do modelo (`data_pagamento`, `created_at`, `updated_at`) e marcar os campos de timestamp como read-only.
+- Componente `CompraItensModal.jsx` (Frontend) refatorado para aceitar o objeto de compra completo (`compra`) e exibir os detalhes adicionais formatados.
+- Componente `ComprasPage.jsx` (Frontend) atualizado para gerenciar e passar o objeto de compra completo para o modal de detalhes.
+
+## [v0.6.5] - YYYY-MM-DD
+### Corrigido
+- **Formulário de Compra:** Corrigida a listagem de obras que não estavam aparecendo no formulário de nova compra. O formulário agora lida corretamente com respostas paginadas da API de obras e solicita uma quantidade maior de registros (`page_size: 500`).
+- **Detalhes da Obra:** Corrigido um erro (`TypeError: dataToDisplay.map is not a function` ou similar) na tabela de histórico de uso de materiais (em `MaterialUsageHistory.jsx`) que ocorria quando a lista de usos de material (`usosMaterial`) era indefinida ou não era um array. A passagem da prop foi ajustada para `usosMaterial={usosMaterial?.results || []}`, garantindo que um array seja sempre fornecido.
+
+## [v0.6.4] - YYYY-MM-DD
+### Corrigido
+- **Listagem de Compras:** Ajustada a exibição de compras para suportar múltiplos itens. Implementado um modal para detalhar os itens de cada compra, melhorando a clareza e usabilidade da página de compras. O backend serializer (`ItemCompraSerializer`) foi ajustado para prover o campo `material_nome`, facilitando a exibição dos nomes dos materiais no frontend.
+
 ## [0.6.3] - 2024-08-02
 ### Fixed
 - **Frontend Build/Runtime Errors**:
@@ -188,3 +242,5 @@
 
 ---
 Formato do Changelog baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
+
+[end of changelog.md]

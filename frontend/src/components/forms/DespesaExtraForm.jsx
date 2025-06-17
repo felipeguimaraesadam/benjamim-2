@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import SpinnerIcon from '../utils/SpinnerIcon'; // Import SpinnerIcon
+// Explicitly importing SpinnerIcon for clarity and to ensure re-processing
+import SpinnerIcon from '../utils/SpinnerIcon';
 
 const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({

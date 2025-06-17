@@ -326,6 +326,10 @@ export const getCompras = (params) => { // Already supports params
   return apiClient.get('/compras/', { params });
 };
 
+export const getCompraById = (id) => {
+  return apiClient.get(`/compras/${id}/`);
+};
+
 export const createCompra = (compraData) => {
   return apiClient.post('/compras/', compraData);
 };

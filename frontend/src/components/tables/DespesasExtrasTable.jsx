@@ -1,3 +1,4 @@
+// Re-processing trigger for DespesasExtrasTable
 import React from 'react';
 
 const DespesasExtrasTable = ({ despesas, obras, onEdit, onDelete, isLoading }) => {

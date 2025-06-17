@@ -277,9 +277,11 @@ class MaterialSerializer(serializers.ModelSerializer):
 
 
 class ItemCompraSerializer(serializers.ModelSerializer):
+    material_nome = serializers.CharField(source='material.nome', read_only=True)
+
     class Meta:
         model = ItemCompra
-        fields = ['id', 'material', 'quantidade', 'valor_unitario', 'valor_total_item']
+        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item']
 
 
 class CompraSerializer(serializers.ModelSerializer):
@@ -289,9 +291,14 @@ class CompraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Compra
         fields = [
-            'id', 'obra', 'obra_nome', 'fornecedor', 'data_compra', 'nota_fiscal',
-            'valor_total_bruto', 'desconto', 'valor_total_liquido', 'observacoes', 'itens'
+            'id', 'obra', 'obra_nome', 'fornecedor', 'data_compra', 'data_pagamento',
+            'nota_fiscal', 'valor_total_bruto', 'desconto', 'valor_total_liquido',
+            'observacoes', 'itens', 'created_at', 'updated_at'
         ]
+        extra_kwargs = {
+            'created_at': {'read_only': True},
+            'updated_at': {'read_only': True}
+        }
 
     def create(self, validated_data):
         itens_data = validated_data.pop('itens')
