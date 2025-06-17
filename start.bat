@@ -25,6 +25,11 @@ IF ERRORLEVEL 1 (
     GOTO:END
 )
 
+ECHO [INFO] Aguardando alguns segundos para o servidor frontend iniciar antes de abrir o navegador...
+timeout /t 5 /nobreak > NUL
+ECHO [INFO] Abrindo o frontend (http://localhost:5173) no navegador...
+start http://localhost:5173
+
 ECHO.
 ECHO [SUCESSO] Servidores estao sendo iniciados em janelas separadas.
 ECHO          - Backend: http://localhost:8000

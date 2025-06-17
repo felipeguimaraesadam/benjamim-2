@@ -7,7 +7,7 @@ import threading
 import time
 
 # Define the URL to open (adjust if your server runs on a different port/host)
-BROWSER_URL = 'http://127.0.0.1:8000'
+BROWSER_URL = 'http://localhost:5173'
 
 def open_browser_after_delay():
     """Waits for a few seconds then opens the web browser."""

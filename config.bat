@@ -81,11 +81,6 @@ REM --- ETAPA 3: CONFIGURANDO FRONTEND ---
 ECHO [ETAPA 3/4] Configurando o frontend React...
 cd frontend
 
-IF NOT EXIST node_modules GOTO INSTALL_NPM_DEPS
-ECHO    - Pasta node_modules ja existe. Pulando 'npm install'.
-GOTO NPM_DEPS_CHECKED
-
-:INSTALL_NPM_DEPS
 ECHO    - Instalando dependencias do frontend (npm install)...
 npm install
 IF ERRORLEVEL 1 GOTO NPM_INSTALL_ERROR

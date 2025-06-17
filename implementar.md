@@ -27,6 +27,8 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Implementar o preenchimento automático da "Data Pagamento" com base na "Data de Início da Locação".
 - [x] Corrigir o label "Dados Início Localização" para "Data de Início da Locação".
 🐛 3. Correção de Bugs e Erros
+- [x] Corrigida a abertura automática do navegador para apontar para a URL do frontend (5173) em vez do backend (8000) ao iniciar a aplicação. (backend/manage.py)
+- [x] Robustecida a instalação de dependências do frontend no `config.bat` para garantir a instalação incondicional de todos os pacotes.
 [ ] Correção na Listagem de Compras (ComprasPage.jsx)
 [ ] Backend: Ajustar o CompraSerializer para aninhar e serializar os ItemCompra corretamente.
 [ ] Frontend: Refatorar ComprasTable.jsx para lidar com a nova estrutura de dados.
