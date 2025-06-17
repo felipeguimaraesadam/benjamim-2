@@ -43,6 +43,8 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Corrigir `TypeError: funcionarios.map is not a function` garantindo que a lista de funcionários seja sempre um array.
 - [x] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx)
 - [x] Garantir que a prop usosMaterial passada para HistoricoUsoTable.jsx seja sempre um array, tratando casos de resposta nula da API com um array vazio [].
+- [x] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx) - Compras
+- [x] Corrigir `TypeError: todasAsComprasBruto.filter is not a function` garantindo que a lista de compras seja sempre um array antes de ser filtrada ou passada para componentes filhos.
 📅 4. Funcionalidades de Relatório (Pendentes)
 [ ] Relatório de Pagamento de Locação (Semanal)
 [ ] UI: Adicionar botão "Gerar Relatório de Pagamento" na LocacoesPage.jsx.

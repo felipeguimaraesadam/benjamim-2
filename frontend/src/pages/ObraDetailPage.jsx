@@ -43,11 +43,15 @@ const ObraDetailPage = () => {
   const { data: usosMaterial, isLoading: isLoadingUsosMaterial, error: errorUsosMaterial, fetchData: fetchUsosMaterial } = useApiData(api.getUsosMaterial, obraApiParams, [], true);
   const { data: despesasExtrasObra, isLoading: isLoadingDespesasExtras, error: errorDespesasExtras, fetchData: fetchDespesasExtras } = useApiData(api.getDespesasExtras, obraQueryObjParams, [], true);
 
+  const actualTodasAsCompras = useMemo(() => {
+      return todasAsComprasBruto?.results || (Array.isArray(todasAsComprasBruto) ? todasAsComprasBruto : []);
+  }, [todasAsComprasBruto]);
+
   // Derived state for comprasEstoque
   const comprasEstoque = useMemo(() => {
-      if (!todasAsComprasBruto) return [];
-      return todasAsComprasBruto.filter(compra => parseFloat(compra.quantidade_disponivel) > 0);
-  }, [todasAsComprasBruto]);
+      if (!Array.isArray(actualTodasAsCompras)) return [];
+      return actualTodasAsCompras.filter(compra => parseFloat(compra.quantidade_disponivel) > 0);
+  }, [actualTodasAsCompras]);
 
   // UI State
   const [showDistribuicaoModal, setShowDistribuicaoModal] = useState(false);
@@ -189,7 +193,7 @@ const ObraDetailPage = () => {
           )}
           {activeTab === 'compras' && (
             <ObraPurchasesTabContent
-              todasCompras={todasAsComprasBruto}
+              todasCompras={actualTodasAsCompras}
               isLoading={isLoadingTodasAsCompras}
               todasComprasError={errorTodasAsCompras}
               obraId={obra.id}

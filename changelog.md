@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.14] - YYYY-MM-DD
+### Corrigido
+- **Página de Detalhes da Obra (`ObraDetailPage.jsx`):** Corrigido um erro (`TypeError: todasAsComprasBruto.filter is not a function`) que ocorria ao processar a lista de compras da obra. Ajustada a lógica para garantir que a variável `todasAsComprasBruto` (ou uma derivada dela, `actualTodasAsCompras`) seja tratada como um array antes de aplicar métodos como `.filter()` ou ao ser passada para componentes filhos, especialmente ao lidar com respostas paginadas da API.
+
 ## [v0.6.13] - YYYY-MM-DD
 ### Corrigido
 - **Formulário de Obra (`ObraForm.jsx`):** Corrigido um erro (`TypeError: funcionarios.map is not a function`) que ocorria ao tentar listar os funcionários no dropdown de 'Responsável pela Obra'. A função que busca os funcionários (`fetchFuncionarios`) foi ajustada para lidar corretamente com respostas paginadas da API (buscando `response.data?.results`) e para solicitar uma lista mais completa de funcionários (`page_size: 500`). Adicionalmente, uma verificação `Array.isArray(funcionarios)` foi adicionada antes do `.map()` como medida de segurança.
