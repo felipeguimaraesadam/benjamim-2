@@ -1,25 +1,36 @@
 @echo off
-echo ==========================================================
-echo [SGO] INICIANDO APLICACAO
-echo ==========================================================
-echo.
+ECHO =======================================================
+ECHO INICIANDO SERVIDORES DO PROJETO SGO...
+ECHO =======================================================
+ECHO.
 
-echo [1/3] Iniciando servidor do Backend (Django) em uma nova janela...
-start "Backend Server" cmd /k "cd backend && call venv\Scripts\activate.bat && python manage.py runserver || pause"
+ECHO [INFO] Iniciando servidor do Backend (Django)...
+ECHO        Aguarde, uma nova janela sera aberta e minimizada.
 
-echo [2/3] Iniciando servidor do Frontend (React) em uma nova janela...
-start "Frontend Server" cmd /k "cd frontend && npm run dev || pause"
+start "SGO Backend" /min cmd /c "cd backend && .venv\Scripts\activate.bat && python manage.py runserver && pause"
+IF ERRORLEVEL 1 (
+    ECHO [ERRO] Nao foi possivel iniciar o servidor do backend.
+    ECHO Verifique se o ambiente virtual '.venv' existe em 'backend/' e se as dependencias estao instaladas.
+    GOTO:END
+)
 
-echo.
-echo Aguardando 8 segundos para os servidores inicializarem...
-timeout /t 8 /nobreak > nul
+ECHO.
+ECHO [INFO] Iniciando servidor do Frontend (Vite/React)...
+ECHO        Aguarde, uma nova janela sera aberta e o navegador devera iniciar automaticamente.
 
-echo [3/3] Abrindo a aplicacao no seu navegador...
-start http://localhost:5173
+start "SGO Frontend" /min cmd /c "cd frontend && npm run dev && pause"
+IF ERRORLEVEL 1 (
+    ECHO [ERRO] Nao foi possivel iniciar o servidor do frontend.
+    ECHO Verifique se a pasta 'node_modules' existe em 'frontend/'.
+    GOTO:END
+)
 
-echo.
-echo ==========================================================
-echo    Servidores iniciados. Verifique as janelas do terminal
-echo    para logs e status.
-echo ==========================================================
-pause
+ECHO.
+ECHO [SUCESSO] Servidores estao sendo iniciados em janelas separadas.
+ECHO          - Backend: http://localhost:8000
+ECHO          - Frontend: http://localhost:5173
+ECHO.
+
+:END
+ECHO Pressione qualquer tecla para fechar esta janela principal.
+PAUSE >NUL
