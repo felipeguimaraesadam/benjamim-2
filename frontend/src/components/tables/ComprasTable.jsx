@@ -1,4 +1,5 @@
 import React from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 
 const ComprasTable = ({ compras, onEdit, onDelete, isLoading }) => {
 
@@ -54,18 +55,21 @@ const ComprasTable = ({ compras, onEdit, onDelete, isLoading }) => {
                             <td className="px-6 py-4 text-center space-x-2">
                                 <button
                                     onClick={() => onEdit(compra)}
-                                    className="font-medium text-blue-600 hover:underline disabled:text-gray-400"
+                                    className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
                                     disabled={isLoading}
+                                    aria-label="Editar Compra"
+                                    title="Editar Compra"
                                 >
-                                    Editar
+                                    <Pencil size={18} />
                                 </button>
                                 <button
                                     onClick={() => onDelete(compra.id)}
-                                    className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 disabled:text-gray-400 disabled:hover:bg-transparent"
+                                    className="text-red-600 hover:text-red-800 disabled:text-gray-400"
                                     disabled={isLoading}
+                                    aria-label="Excluir Compra"
                                     title="Excluir Compra"
                                 >
-                                    <span className="font-bold text-lg leading-none">&times;</span>
+                                    <Trash2 size={18} />
                                 </button>
                             </td>
                         </tr>

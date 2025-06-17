@@ -95,6 +95,23 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
     setFormErrors({});
   }, [initialData, obras]); // Removed 'funcionarios' from dependency array to prevent reset on fetch complete if editing
 
+  // Helper function to get the next Friday
+  function getNextFriday(dateString) {
+    if (!dateString) return '';
+    // Adjust dateString to be local timezone by default for 'new Date()'
+    // Splitting and rejoining ensures that if dateString is 'YYYY-MM-DD', it's treated as local.
+    const parts = dateString.split('-');
+    const localDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
+    const dayOfWeek = localDate.getDay(); // Sunday = 0, ..., Friday = 5, Saturday = 6
+    let daysUntilFriday = 5 - dayOfWeek;
+    if (daysUntilFriday < 0) { // If dayOfWeek is Saturday (6), daysUntilFriday is -1. Next Friday is in 6 days.
+      daysUntilFriday += 7;
+    }
+    localDate.setDate(localDate.getDate() + daysUntilFriday);
+    return localDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+  }
+
   const handleLocacaoTypeChange = (e) => {
     const newType = e.target.value;
     setLocacaoType(newType);
@@ -211,7 +228,11 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
       }
       // If data_locacao_inicio is cleared, data_locacao_fim should also be cleared or handled as per business rule
       if (!newDataInicio) {
-        newFormData = { ...newFormData, data_locacao_fim: '' };
+        newFormData = { ...newFormData, data_locacao_fim: '', data_pagamento: '' }; // Clear payment date if start date is cleared
+      } else {
+        // Auto-fill payment date
+        const nextFriday = getNextFriday(newDataInicio);
+        newFormData = { ...newFormData, data_pagamento: nextFriday };
       }
     }
 
@@ -612,7 +633,7 @@ const handleConfirmTransfer = async () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="data_locacao_inicio" className="block text-sm font-medium text-gray-900">Data Início Locação <span className="text-red-500">*</span></label>
+          <label htmlFor="data_locacao_inicio" className="block text-sm font-medium text-gray-900">Data de Início da Locação <span className="text-red-500">*</span></label>
           <input
             type="date"
             name="data_locacao_inicio"

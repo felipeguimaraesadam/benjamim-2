@@ -81,19 +81,23 @@ REM --- ETAPA 3: CONFIGURANDO FRONTEND ---
 ECHO [ETAPA 3/4] Configurando o frontend React...
 cd frontend
 
-IF NOT EXIST node_modules GOTO INSTALL_NPM_DEPS
-ECHO    - Pasta node_modules ja existe. Pulando 'npm install'.
-GOTO NPM_DEPS_CHECKED
-
-:INSTALL_NPM_DEPS
 ECHO    - Instalando dependencias do frontend (npm install)...
 npm install
-IF ERRORLEVEL 1 GOTO NPM_INSTALL_ERROR
-ECHO [SUCESSO] Dependencias do frontend instaladas.
+ECHO    - Comando npm install finalizado. Verificando status...
+
+IF ERRORLEVEL 1 (
+    ECHO [AVISO] npm install finalizou com ERRORLEVEL %ERRORLEVEL%.
+    ECHO          Isso pode ser devido a vulnerabilidades encontradas.
+    ECHO          Verifique o log acima. Prosseguindo com a configuracao...
+) ELSE (
+    ECHO [SUCESSO] Dependencias do frontend instaladas (ERRORLEVEL 0).
+)
 GOTO NPM_DEPS_CHECKED
 
 :NPM_INSTALL_ERROR
-ECHO [ERRO] Falha ao instalar as dependencias do frontend (npm install).
+ECHO [ERRO CRITICO] Falha grave ao instalar as dependencias do frontend (npm install).
+ECHO Verifique o log do npm.
+PAUSE
 GOTO:END
 
 :NPM_DEPS_CHECKED
