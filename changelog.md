@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.7] - YYYY-MM-DD
+### Corrigido
+- **Edição de Compra:** Corrigido um erro (`TypeError: api.getCompraById is not a function`) que impedia a edição de compras. A função `getCompraById` foi adicionada ao serviço da API (`frontend/src/services/api.js`).
+
 ## [v0.6.6] - YYYY-MM-DD
 ### Adicionado
 - **Modelo de Compra (Backend):** Adicionados campos `data_pagamento`, `created_at`, e `updated_at` ao modelo `Compra`. `data_pagamento` agora é preenchida automaticamente com `data_compra` se não especificada.
@@ -210,3 +214,5 @@
 
 ---
 Formato do Changelog baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
+
+[end of changelog.md]
