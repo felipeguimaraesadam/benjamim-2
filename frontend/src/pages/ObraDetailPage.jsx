@@ -147,7 +147,7 @@ const ObraDetailPage = () => {
       />
 
       <MaterialUsageHistory
-        usosMaterial={usosMaterial}
+        usosMaterial={usosMaterial?.results || []}
         isLoading={isLoadingUsosMaterial}
         error={errorUsosMaterial}
       />

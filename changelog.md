@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.6.5] - YYYY-MM-DD
+### Corrigido
+- **Formulário de Compra:** Corrigida a listagem de obras que não estavam aparecendo no formulário de nova compra. O formulário agora lida corretamente com respostas paginadas da API de obras e solicita uma quantidade maior de registros (`page_size: 500`).
+- **Detalhes da Obra:** Corrigido um erro (`TypeError: dataToDisplay.map is not a function` ou similar) na tabela de histórico de uso de materiais (em `MaterialUsageHistory.jsx`) que ocorria quando a lista de usos de material (`usosMaterial`) era indefinida ou não era um array. A passagem da prop foi ajustada para `usosMaterial={usosMaterial?.results || []}`, garantindo que um array seja sempre fornecido.
+
 ## [v0.6.4] - YYYY-MM-DD
 ### Corrigido
 - **Listagem de Compras:** Ajustada a exibição de compras para suportar múltiplos itens. Implementado um modal para detalhar os itens de cada compra, melhorando a clareza e usabilidade da página de compras. O backend serializer (`ItemCompraSerializer`) foi ajustado para prover o campo `material_nome`, facilitando a exibição dos nomes dos materiais no frontend.

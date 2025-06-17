@@ -37,8 +37,8 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 [ ] Corrigir a passagem de props para DespesaExtraForm, garantindo que obras seja sempre um array (response.data.results).
 [ ] Erro na Página de Relatórios (RelatoriosPage.jsx)
 [ ] Atribuir uma key estática e única para cada componente de formulário renderizado condicionalmente para evitar o erro de removeChild.
-[ ] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx)
-[ ] Garantir que a prop usosMaterial passada para HistoricoUsoTable.jsx seja sempre um array, tratando casos de resposta nula da API com um array vazio [].
+- [x] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx)
+- [x] Garantir que a prop usosMaterial passada para HistoricoUsoTable.jsx seja sempre um array, tratando casos de resposta nula da API com um array vazio [].
 📅 4. Funcionalidades de Relatório (Pendentes)
 [ ] Relatório de Pagamento de Locação (Semanal)
 [ ] UI: Adicionar botão "Gerar Relatório de Pagamento" na LocacoesPage.jsx.

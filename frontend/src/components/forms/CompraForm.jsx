@@ -238,8 +238,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     useEffect(() => {
         const fetchObras = async () => {
             try {
-                const response = await api.getObras();
-                setObras(response.data || response || []);
+                const response = await api.getObras({ page_size: 500 });
+                setObras(response.data && Array.isArray(response.data.results) ? response.data.results : (Array.isArray(response.data) ? response.data : []));
             } catch (error) { console.error('Error fetching obras:', error); setObras([]); }
         };
         fetchObras();
