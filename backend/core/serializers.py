@@ -334,8 +334,8 @@ class OcorrenciaFuncionarioSerializer(serializers.ModelSerializer):
 # New Serializer for Obras Participadas by Funcionario
 class FuncionarioObraParticipadaSerializer(serializers.ModelSerializer):
     nome_obra = serializers.CharField(source='obra.nome_obra', read_only=True)
-    data_locacao_inicio = serializers.DateField(source='data_locacao_inicio')
-    data_locacao_fim = serializers.DateField(source='data_locacao_fim')
+    data_locacao_inicio = serializers.DateField()
+    data_locacao_fim = serializers.DateField()
 
     class Meta:
         model = Locacao_Obras_Equipes

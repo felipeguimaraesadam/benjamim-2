@@ -9,7 +9,7 @@
   - Adicionado um ícone de "visualizar" (olho) na tabela da página de listagem de funcionários (`FuncionariosTable.jsx`) para facilitar o acesso direto à nova página de detalhes.
 
 ### Corrigido
-- **API de Detalhes do Funcionário**: Corrigido um erro 500 (Internal Server Error) no endpoint `/api/funcionarios/<id>/details/`. A correção envolveu tornar as consultas de dados relacionados (obras participadas, pagamentos) no `FuncionarioDetailSerializer` mais robustas, especificamente garantindo que obras associadas existam (`obra__isnull=False`) e removendo temporariamente o uso de `.only()` para evitar problemas com carregamento deferido de campos durante a serialização.
+- **API de Detalhes do Funcionário**: Corrigido um erro 500 (Internal Server Error) no endpoint `/api/funcionarios/<id>/details/` que era causado por uma `AssertionError` no backend. A falha ocorria devido à especificação redundante do argumento `source` em campos do `FuncionarioObraParticipadaSerializer` (ex: `data_locacao_inicio = serializers.DateField(source='data_locacao_inicio')`). A correção envolveu remover esses argumentos `source` redundantes. As modificações anteriores para robustez da consulta (como `obra__isnull=False` e remoção de `.only()`) foram mantidas.
 
 ## [v0.6.14] - YYYY-MM-DD
 ### Corrigido
