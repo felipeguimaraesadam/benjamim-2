@@ -1,18 +1,18 @@
 @echo off
+pause
 echo ==========================================================
 echo [SGO] SCRIPT DE CONFIGURACAO DO AMBIENTE DE DESENVOLVIMENTO
 echo ==========================================================
 echo Este script ira configurar o ambiente e instalar todas as
 echo dependencias necessarias para o backend e frontend.
 echo.
-echo Pressione qualquer tecla para iniciar a configuracao...
-pause >nul
-echo.
 
 echo Verificando Python...
 python --version >nul 2>&1
 IF %ERRORLEVEL% NEQ 0 (
+    echo.
     echo ERRO: Python nao encontrado. Por favor, instale Python e adicione ao PATH.
+    echo.
     pause
     exit /b 1
 )
@@ -22,7 +22,9 @@ echo.
 echo Verificando Node.js...
 node --version >nul 2>&1
 IF %ERRORLEVEL% NEQ 0 (
+    echo.
     echo ERRO: Node.js nao encontrado. Por favor, instale Node.js e adicione ao PATH.
+    echo.
     pause
     exit /b 1
 )
@@ -32,7 +34,9 @@ echo.
 echo Verificando NPM...
 npm --version >nul 2>&1
 IF %ERRORLEVEL% NEQ 0 (
+    echo.
     echo ERRO: NPM nao encontrado. Por favor, instale NPM (geralmente vem com Node.js).
+    echo.
     pause
     exit /b 1
 )
