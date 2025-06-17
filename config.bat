@@ -1,128 +1,113 @@
 @echo off
-echo ==========================================================
-echo [SGO] SCRIPT DE CONFIGURACAO DO AMBIENTE
-echo ==========================================================
-echo Este script ira instalar todas as dependencias.
-echo Certifique-se de que Python e Node.js estao instalados.
-echo.
-pause
-echo.
+ECHO =======================================================
+ECHO CONFIGURANDO AMBIENTE DO PROJETO SGO...
+ECHO =======================================================
+ECHO.
 
-echo [PASSO 1 de 2] - Configurando o Backend (Python/Django)...
+REM --- ETAPA 1: VERIFICANDO FERRAMENTAS ---
+ECHO [ETAPA 1/4] Verificando Python e Node.js...
+
+REM Check Python
+python --version >NUL 2>&1
+IF ERRORLEVEL 1 GOTO PYTHON_ERROR
+GOTO PYTHON_OK
+:PYTHON_ERROR
+ECHO [ERRO] Python nao encontrado no PATH. Instale o Python e adicione-o ao PATH.
+GOTO:END
+:PYTHON_OK
+ECHO [INFO] Python verificado.
+
+REM Check Node.js
+node --version >NUL 2>&1
+IF ERRORLEVEL 1 GOTO NODE_ERROR
+GOTO NODE_OK
+:NODE_ERROR
+ECHO [ERRO] Node.js nao encontrado no PATH. Instale o Node.js (que inclui o npm).
+GOTO:END
+:NODE_OK
+ECHO [INFO] Node.js verificado.
+
+ECHO [SUCESSO] Python e Node.js encontrados.
+ECHO.
+PAUSE
+
+
+REM --- ETAPA 2: CONFIGURANDO BACKEND ---
+ECHO [ETAPA 2/4] Configurando o backend Django...
 cd backend
-IF ERRORLEVEL 1 (
-    echo Erro ao acessar a pasta backend.
-    pause
-    exit /b %ERRORLEVEL%
-)
 
-echo    - Criando ambiente virtual 'venv'...
-python -m venv venv
-echo Exit code from venv creation: %ERRORLEVEL%
-IF %ERRORLEVEL% NEQ 0 (
-    echo.
-    ECHO ERRO: Falha ao criar ambiente virtual.
-    echo.
-    pause
-    exit /b %ERRORLEVEL%
-)
-ECHO Ambiente virtual criado.
-ECHO.
-PAUSE
+IF NOT EXIST .venv GOTO CREATE_VENV
+GOTO VENV_EXISTS
+:CREATE_VENV
+ECHO    - Criando ambiente virtual (.venv)...
+python -m venv .venv
+IF ERRORLEVEL 1 GOTO VENV_CREATE_ERROR
+GOTO VENV_EXISTS
+:VENV_CREATE_ERROR
+ECHO [ERRO] Falha ao criar o ambiente virtual.
+GOTO:END
+:VENV_EXISTS
+ECHO    - Ambiente virtual (.venv) verificado/criado.
 
-echo    - Ativando ambiente virtual...
-call venv\Scripts\activate.bat
-echo Exit code from venv activation: %ERRORLEVEL%
-IF %ERRORLEVEL% NEQ 0 (
-    echo.
-    ECHO ERRO: Falha ao ativar ambiente virtual.
-    echo.
-    pause
-    exit /b %ERRORLEVEL%
-)
-ECHO Ambiente virtual ativado.
-echo VENV Python:
-where python
-echo VENV Pip:
-where pip
-ECHO.
-PAUSE
+ECHO    - Ativando o ambiente virtual e instalando dependencias...
+call .venv\Scripts\activate.bat
+pip install -r requirements.txt
+IF ERRORLEVEL 1 GOTO PIP_INSTALL_ERROR
+GOTO PIP_INSTALL_OK
+:PIP_INSTALL_ERROR
+ECHO [ERRO] Falha ao instalar as dependencias do backend (requirements.txt).
+ECHO Verifique se a biblioteca 'Pillow' pode ser instalada ou se ha outros erros.
+GOTO:END
+:PIP_INSTALL_OK
+ECHO    - Dependencias do backend instaladas.
 
-echo    - Instalando dependencias Python (requirements.txt)...
-call venv\Scripts\pip.exe install -r requirements.txt
-echo Exit code from pip install: %ERRORLEVEL%
-IF %ERRORLEVEL% NEQ 0 (
-    echo.
-    ECHO ERRO: Falha ao instalar dependencias Python. Verifique o requirements.txt e a saida do pip.
-    echo.
-    pause
-    exit /b %ERRORLEVEL%
-)
-ECHO Instalacao de dependencias Python concluida.
 ECHO.
-PAUSE
-
-echo    - Executando migracoes do banco de dados...
-call venv\Scripts\python.exe manage.py migrate
-echo Exit code from migrate: %ERRORLEVEL%
-IF %ERRORLEVEL% NEQ 0 (
-    echo.
-    ECHO ERRO: Falha ao executar migracoes do banco de dados.
-    echo.
-    pause
-    exit /b %ERRORLEVEL%
-)
-ECHO Migracoes do banco de dados concluidas.
+ECHO    - Executando migracoes do banco de dados...
+python manage.py migrate
+IF ERRORLEVEL 1 GOTO MIGRATE_ERROR
+GOTO MIGRATE_OK
+:MIGRATE_ERROR
+ECHO [ERRO] Falha ao executar as migracoes do Django.
+ECHO Verifique os modelos e as configuracoes do banco de dados.
+GOTO:END
+:MIGRATE_OK
+ECHO [SUCESSO] Backend configurado.
 ECHO.
-PAUSE
-
-echo Backend configurado com sucesso!
-ECHO.
-pause
 cd ..
-echo.
+PAUSE
 
-echo [PASSO 2 de 2] - Configurando o Frontend (React/Vite)...
+
+REM --- ETAPA 3: CONFIGURANDO FRONTEND ---
+ECHO [ETAPA 3/4] Configurando o frontend React...
 cd frontend
-IF ERRORLEVEL 1 (
-    echo Erro ao acessar a pasta frontend.
-    pause
-    exit /b %ERRORLEVEL%
-)
 
-echo    - Instalando dependencias (npm install)...
-call npm install
-echo Exit code from npm install: %ERRORLEVEL%
-IF ERRORLEVEL 1 (
-    echo Erro ao instalar dependencias Node.js.
-    echo.
-    pause
-    exit /b %ERRORLEVEL%
-)
-ECHO Instalacao de dependencias Node.js concluida.
+IF NOT EXIST node_modules GOTO INSTALL_NPM_DEPS
+ECHO    - Pasta node_modules ja existe. Pulando 'npm install'.
+GOTO NPM_DEPS_CHECKED
+
+:INSTALL_NPM_DEPS
+ECHO    - Instalando dependencias do frontend (npm install)...
+npm install
+IF ERRORLEVEL 1 GOTO NPM_INSTALL_ERROR
+ECHO [SUCESSO] Dependencias do frontend instaladas.
+GOTO NPM_DEPS_CHECKED
+
+:NPM_INSTALL_ERROR
+ECHO [ERRO] Falha ao instalar as dependencias do frontend (npm install).
+GOTO:END
+
+:NPM_DEPS_CHECKED
+ECHO    - Verificacao de dependencias do frontend concluida.
+cd ..
+ECHO [SUCESSO] Frontend configurado.
 ECHO.
 PAUSE
 
-echo    - Verificando instalacao do @tailwindcss/postcss...
-IF NOT EXIST "node_modules\@tailwindcss\postcss\package.json" (
-    echo ATENCAO: @tailwindcss/postcss nao foi encontrado em node_modules.
-    echo Verifique o log do 'npm install' acima para erros.
-    ECHO.
-    pause
-) ELSE (
-    echo @tailwindcss/postcss encontrado em node_modules.
-    ECHO.
-    PAUSE
-)
 
-echo Frontend configurado com sucesso!
+REM --- ETAPA 4: FINALIZACAO ---
+ECHO [ETAPA 4/4] Configuracao do ambiente concluida com sucesso!
 ECHO.
-pause
-cd ..
-echo.
 
-echo ==========================================================
-echo    CONFIGURACAO CONCLUIDA!
-echo    Execute 'start.bat' para iniciar a aplicacao.
-echo ==========================================================
-pause
+:END
+ECHO Pressione qualquer tecla para fechar esta janela.
+PAUSE

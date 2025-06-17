@@ -27,12 +27,25 @@ const RelatoriosPage = () => {
         api.getMateriais(),
         api.getEquipes(),
       ]);
-      setObras(obrasRes.data);
-      setMateriais(materiaisRes.data);
-      setEquipes(equipesRes.data);
+
+      // Ensure data is always an array, defaulting to empty array if not.
+      // Assumes typical API response structure like { data: [...] } or { data: { results: [...] } }
+      // Or the response itself is an array.
+      const getSafeData = (response) => {
+        const data = response?.data?.results || response?.data || (Array.isArray(response) ? response : []);
+        return Array.isArray(data) ? data : [];
+      };
+
+      setObras(getSafeData(obrasRes));
+      setMateriais(getSafeData(materiaisRes));
+      setEquipes(getSafeData(equipesRes));
+
     } catch (err) {
       console.error("Failed to fetch dropdown data:", err);
       setError('Falha ao carregar dados para filtros.');
+      setObras([]); // Set to empty array on error
+      setMateriais([]); // Set to empty array on error
+      setEquipes([]); // Set to empty array on error
     } finally {
       setIsInitialLoading(false);
     }

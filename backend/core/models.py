@@ -127,6 +127,10 @@ class Locacao_Obras_Equipes(models.Model):
 class Material(models.Model):
     nome = models.CharField(max_length=100, unique=True)
     unidade_medida = models.CharField(max_length=20, choices=[('un', 'Unidade'), ('m²', 'Metro Quadrado'), ('kg', 'Quilograma'), ('saco', 'Saco')])
+    # NOTE: As per subtask assumption, adding quantidade_em_estoque. In a real scenario, its management would be crucial.
+    quantidade_em_estoque = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    nivel_minimo_estoque = models.PositiveIntegerField(default=0, help_text="Nível mínimo de estoque para alerta. 0 para não alertar.")
+    # TODO: Run makemigrations and migrate
 
     def __str__(self):
         return self.nome

@@ -138,8 +138,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # Add any other DRF settings here if needed
-    # For example, permission classes, pagination, etc.
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    # Ensure other existing settings like DEFAULT_PERMISSION_CLASSES are preserved if they exist
     # 'DEFAULT_PERMISSION_CLASSES': [
     # 'rest_framework.permissions.IsAuthenticated',
     # ]

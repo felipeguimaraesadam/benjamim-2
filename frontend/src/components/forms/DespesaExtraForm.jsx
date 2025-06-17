@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SpinnerIcon from '../utils/SpinnerIcon'; // Import SpinnerIcon
 
 const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -138,8 +139,9 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
         <button
           type="submit"
           disabled={isLoading}
-          className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300"
+          className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300 flex items-center justify-center"
         >
+          {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2"/> : null}
           {isLoading ? 'Salvando...' : (initialData ? 'Atualizar Despesa' : 'Adicionar Despesa')}
         </button>
       </div>

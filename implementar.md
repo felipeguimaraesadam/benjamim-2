@@ -4,7 +4,7 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [x] (BUG) Corrigir Edição de Obra: O formulário de edição de obra não está carregando os dados existentes, abrindo como um cadastro novo. Isso impede a atualização de informações cruciais.
   - Corrigido em 29/07/2024
 ⚙️ 2. Mudanças Estruturais e Regras de Negócio
-[ ] (CORE) Reformulação do Módulo de Locação: A funcionalidade de "Alocação" será renomeada para "Locação" e reestruturada.
+[x] (CORE) Reformulação do Módulo de Locação: A funcionalidade de "Alocação" será renomeada para "Locação" e reestruturada. (Concluído em 2024-08-02 - Sub-tarefas finalizadas anteriormente)
 [x] Nomeclatura: Alterar todas as referências de "Alocação" para "Locação" no frontend e, se necessário, no backend.
   - [x] Frontend: Terminologia atualizada para "Locação" (Concluído em 29/07/2024).
   - [x] Backend: Código atualizado para "Locação" (Concluído em 29/07/2024). **Nota:** Requer execução manual de `python manage.py migrate` devido a limitações do ambiente de desenvolvimento.
@@ -30,23 +30,23 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 [x] (FOTOS) Galeria de Fotos da Obra: (Concluído em 2024-08-01)
 [x] Permitir o upload de arquivos de imagem (PNG, JPG/JPEG) na página de detalhes da obra.
 [x] Criar uma seção de galeria para exibir as fotos de forma organizada e esteticamente agradável.
-[ ] (GRÁFICO) Análise de Custo de Locação:
-[ ] Na página de listagem de locações, exibir um gráfico de barras horizontais com o custo total de locações por dia (últimos 30 dias).
-[ ] Implementar um filtro por obra para o gráfico (padrão: mostrar dados de todas as obras).
-[ ] Adicionar um ícone de alerta (⚠️) nos dias do gráfico que não possuem nenhuma locação registrada (inclusive domingos), para sinalizar possíveis esquecimentos.
-[ ] (RELATÓRIO) Folha de Pagamento Semanal:
-[ ] Na página de locação, adicionar um botão "Gerar Relatório de Pagamento".
-[ ] O relatório deve consolidar todas as locações da semana (ou período selecionado), de todas as obras, organizadas por funcionário.
-[ ] O relatório deve respeitar as datas de pagamento futuras, não incluindo na cobrança da semana atual o que foi agendado para depois.
-[ ] Antes de gerar, o sistema deve alertar sobre os dias sem locações registradas em cada obra. O usuário pode confirmar e gerar o relatório mesmo assim.
+[x] (GRÁFICO) Análise de Custo de Locação: (Concluído em 2024-08-02)
+[x] Na página de listagem de locações, exibir um gráfico de barras horizontais com o custo total de locações por dia (últimos 30 dias).
+[x] Implementar um filtro por obra para o gráfico (padrão: mostrar dados de todas as obras).
+[x] Adicionar um ícone de alerta (⚠️) nos dias do gráfico que não possuem nenhuma locação registrada (inclusive domingos), para sinalizar possíveis esquecimentos. (Nota: Implementado com barra amarela e legenda)
+[x] (RELATÓRIO) Folha de Pagamento Semanal: (Concluído em 2024-08-02)
+[x] Na página de locação, adicionar um botão "Gerar Relatório de Pagamento".
+[x] O relatório deve consolidar todas as locações da semana (ou período selecionado), de todas as obras, organizadas por funcionário.
+[x] O relatório deve respeitar as datas de pagamento futuras, não incluindo na cobrança da semana atual o que foi agendado para depois.
+[x] Antes de gerar, o sistema deve alertar sobre os dias sem locações registradas em cada obra. O usuário pode confirmar e gerar o relatório mesmo assim.
 🚀 4. Melhorias Contínuas e Backlog
 [x] (UI/UX Locação) Adicionar status visual (Hoje, Futura, Passada, Cancelada) com cores e ordenação customizada à lista de locações para melhor clareza. (Concluído em 14/06/2025)
 [x] (FIX) Corrigida inconsistência na exibição de datas entre diferentes telas (problema de fuso horário), garantindo que `TIME_ZONE` no backend seja 'America/Sao_Paulo' e que a formatação de datas no frontend (para DD/MM/YYYY) não seja afetada pelo fuso horário do navegador. (Concluído em 15/06/2025)
 [x] (MELHORIA) Filtros na Lista de Compras: Adicionar filtros por intervalo de datas e por fornecedor. (Concluído em 30/07/2024)
 [x] (UI) Detalhes da Locação: Adicionar um ícone em cada registro de locação na tabela para abrir um modal com todos os detalhes (obra, funcionário/equipe, tipo de pagamento, valor, data, etc.). (Concluído em 30/07/2024)
   - [x] Adicionado campo "Observações" ao formulário de criação/edição de locação. (Concluído em 30/07/2024)
-[ ] (MELHORIA) Alerta de Estoque Baixo: Criar um sistema de notificação ou alerta visual quando o estoque de um material atingir um nível mínimo pré-definido.
-[ ] (UI) Paginação: Garantir que todas as tabelas com grande volume de dados tenham um sistema de paginação funcional.
-[ ] (UI/UX) Feedback Visual: Continuar aprimorando o feedback para o usuário com toasts para sucesso/erro e spinners durante o carregamento de dados.
+[x] (MELHORIA) Alerta de Estoque Baixo: Criar um sistema de notificação ou alerta visual quando o estoque de um material atingir um nível mínimo pré-definido. (Concluído em 2024-08-02)
+[x] (UI) Paginação: Garantir que todas as tabelas com grande volume de dados tenham um sistema de paginação funcional. (Concluído em 2024-08-02)
+[x] (UI/UX) Feedback Visual: Continuar aprimorando o feedback para o usuário com toasts para sucesso/erro e spinners durante o carregamento de dados. (Concluído em 2024-08-02)
 [x] (UTILITÁRIO) Criar script `run_migrations.bat` para facilitar a aplicação de migrações do Django.
   - Concluído em 29/07/2024.

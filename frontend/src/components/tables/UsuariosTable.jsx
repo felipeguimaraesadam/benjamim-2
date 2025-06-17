@@ -1,6 +1,6 @@
 import React from 'react';
 
-const UsuariosTable = ({ users, onEdit, onDelete, isLoading }) => {
+const UsuariosTable = ({ users = [], onEdit, onDelete, isLoading }) => {
 
   const formatNivelAcesso = (nivel) => {
     if (!nivel) return 'N/A';
