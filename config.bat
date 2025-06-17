@@ -7,37 +7,49 @@ echo Este script ira configurar o ambiente e instalar todas as
 echo dependencias necessarias para o backend e frontend.
 echo.
 
-echo Verificando Python...
-python --version >nul 2>&1
+echo Iniciando verificacao do Python...
+python --version > python_version_log.txt 2>&1
 IF %ERRORLEVEL% NEQ 0 (
     echo.
-    echo ERRO: Python nao encontrado. Por favor, instale Python e adicione ao PATH.
+    echo ERRO: Python nao parece estar instalado ou nao foi encontrado no PATH.
+    echo Verifique o arquivo python_version_log.txt para mais detalhes.
+    echo Por favor, instale Python e adicione-o ao PATH.
     echo.
     pause
+) ELSE (
+    echo Python encontrado. Detalhes em python_version_log.txt
 )
-echo Python encontrado.
+echo Verificacao do Python concluida.
 echo.
 
-echo Verificando Node.js...
-node --version >nul 2>&1
+echo Iniciando verificacao do Node.js...
+node --version > node_version_log.txt 2>&1
 IF %ERRORLEVEL% NEQ 0 (
     echo.
-    echo ERRO: Node.js nao encontrado. Por favor, instale Node.js e adicione ao PATH.
+    echo ERRO: Node.js nao parece estar instalado ou nao foi encontrado no PATH.
+    echo Verifique o arquivo node_version_log.txt para mais detalhes.
+    echo Por favor, instale Node.js (que inclui NPM).
     echo.
     pause
+) ELSE (
+    echo Node.js encontrado. Detalhes em node_version_log.txt
 )
-echo Node.js encontrado.
+echo Verificacao do Node.js concluida.
 echo.
 
-echo Verificando NPM...
-npm --version >nul 2>&1
+echo Iniciando verificacao do NPM...
+npm --version > npm_version_log.txt 2>&1
 IF %ERRORLEVEL% NEQ 0 (
     echo.
-    echo ERRO: NPM nao encontrado. Por favor, instale NPM (geralmente vem com Node.js).
+    echo ERRO: NPM nao parece estar instalado ou nao foi encontrado no PATH.
+    echo Verifique o arquivo npm_version_log.txt para mais detalhes.
+    echo Por favor, instale Node.js (que inclui NPM) e verifique se o NPM esta funcionando.
     echo.
     pause
+) ELSE (
+    echo NPM encontrado. Detalhes em npm_version_log.txt
 )
-echo NPM encontrado.
+echo Verificacao do NPM concluida.
 echo.
 
 echo [PASSO 1 de 2] Configurando o Backend (Python/Django)...
