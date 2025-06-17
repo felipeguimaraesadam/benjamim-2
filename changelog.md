@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.12] - YYYY-MM-DD
+### Corrigido
+- **Página de Relatórios:** Corrigido um erro (`removeChild` error) que podia ocorrer ao alternar entre diferentes tipos de formulários de relatório. Adicionadas `key` props estáticas e únicas aos formulários renderizados condicionalmente para garantir a correta reconciliação pelo React.
+
 ## [v0.6.11] - YYYY-MM-DD
 ### Corrigido
 - **Notificações (Toast):** Corrigido um erro ("Element type is invalid... got: undefined") que causava uma tela em branco após salvar uma nova despesa. O erro originava-se na biblioteca `react-toastify` ao tentar renderizar o toast de sucesso. A correção envolve desabilitar o ícone padrão para toasts de sucesso (`icon: false` em `frontend/src/utils/toastUtils.js`), o que evita a renderização do componente problemático.

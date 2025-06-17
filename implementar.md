@@ -35,8 +35,10 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Frontend: Implementar um modal de detalhes para exibir todos os itens de uma compra.
 - [x] Erro na Página de Despesas (DespesasExtrasPage.jsx)
 - [x] Corrigir a passagem de props para DespesaExtraForm, garantindo que obras seja sempre um array (response.data.results).
-[ ] Erro na Página de Relatórios (RelatoriosPage.jsx)
-[ ] Atribuir uma key estática e única para cada componente de formulário renderizado condicionalmente para evitar o erro de removeChild.
+- [x] Erro na Página de Relatórios (RelatoriosPage.jsx)
+- [x] Atribuir uma key estática e única para cada componente de formulário renderizado condicionalmente para evitar o erro de removeChild.
+[ ] Erro de Tela em Branco ao Salvar Despesa (DespesasExtrasPage.jsx)
+[ ] Investigar erro "Element type is invalid... got: undefined" que ocorre após salvar uma despesa com sucesso. A tela fica em branco, exigindo atualização manual. O problema persiste apesar de tentativas de correção focadas em `react-toastify` e `SpinnerIcon`.
 - [x] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx)
 - [x] Garantir que a prop usosMaterial passada para HistoricoUsoTable.jsx seja sempre um array, tratando casos de resposta nula da API com um array vazio [].
 📅 4. Funcionalidades de Relatório (Pendentes)
