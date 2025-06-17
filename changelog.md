@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.9] - YYYY-MM-DD
+### Corrigido
+- **Formulário de Despesa Extra:** Tentativa de correção para um erro ("Element type is invalid... got: undefined") que ocorria ao salvar uma nova despesa. Verificadas as importações e exportações de componentes (especialmente `SpinnerIcon`) que parecem corretas. Adicionado um comentário ao arquivo `DespesaExtraForm.jsx` para forçar o reprocessamento pelo sistema de build, o que pode resolver problemas de cache ou HMR.
+
 ## [v0.6.8] - YYYY-MM-DD
 ### Corrigido
 - **Formulário de Despesa Extra:** Corrigido um erro que impedia a listagem correta de obras no formulário de despesas extras (`DespesasExtrasPage.jsx`). A busca de obras (`fetchObrasForForm`) agora solicita um número maior de registros (`page_size: 500`) e lida corretamente com respostas paginadas da API, garantindo que a lista de obras (`obras`) seja sempre um array.
