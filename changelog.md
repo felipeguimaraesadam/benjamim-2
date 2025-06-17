@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.8] - YYYY-MM-DD
+### Corrigido
+- **Formulário de Despesa Extra:** Corrigido um erro que impedia a listagem correta de obras no formulário de despesas extras (`DespesasExtrasPage.jsx`). A busca de obras (`fetchObrasForForm`) agora solicita um número maior de registros (`page_size: 500`) e lida corretamente com respostas paginadas da API, garantindo que a lista de obras (`obras`) seja sempre um array.
+
 ## [v0.6.7] - YYYY-MM-DD
 ### Corrigido
 - **Edição de Compra:** Corrigido um erro (`TypeError: api.getCompraById is not a function`) que impedia a edição de compras. A função `getCompraById` foi adicionada ao serviço da API (`frontend/src/services/api.js`).
@@ -214,5 +218,3 @@
 
 ---
 Formato do Changelog baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
-
-[end of changelog.md]

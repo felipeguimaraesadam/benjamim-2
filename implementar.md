@@ -33,8 +33,8 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Backend: Ajustar o CompraSerializer para aninhar e serializar os ItemCompra corretamente.
 - [x] Frontend: Refatorar ComprasTable.jsx para lidar com a nova estrutura de dados.
 - [x] Frontend: Implementar um modal de detalhes para exibir todos os itens de uma compra.
-[ ] Erro na Página de Despesas (DespesasExtrasPage.jsx)
-[ ] Corrigir a passagem de props para DespesaExtraForm, garantindo que obras seja sempre um array (response.data.results).
+- [x] Erro na Página de Despesas (DespesasExtrasPage.jsx)
+- [x] Corrigir a passagem de props para DespesaExtraForm, garantindo que obras seja sempre um array (response.data.results).
 [ ] Erro na Página de Relatórios (RelatoriosPage.jsx)
 [ ] Atribuir uma key estática e única para cada componente de formulário renderizado condicionalmente para evitar o erro de removeChild.
 - [x] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx)

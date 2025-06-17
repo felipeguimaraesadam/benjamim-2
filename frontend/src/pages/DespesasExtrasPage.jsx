@@ -47,8 +47,8 @@ const DespesasExtrasPage = () => {
   const fetchObrasForForm = useCallback(async () => {
     // Assuming getObras is already in api.js and fetches all obras
     try {
-      const response = await api.getObras();
-      setObras(response.data);
+      const response = await api.getObras({ page_size: 500 }); // Fetch more obras
+      setObras(response.data?.results || (Array.isArray(response.data) ? response.data : [])); // More robust extraction
     } catch (err) {
       // Handle error fetching obras for the form specifically if needed
       console.error("Fetch Obras for Form Error:", err);
