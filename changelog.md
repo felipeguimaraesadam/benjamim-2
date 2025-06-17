@@ -8,6 +8,9 @@
   - A página apresenta os dados do funcionário em seções organizadas: "Dados Pessoais", "Obras Participadas", "Histórico de Pagamentos" e "Ocorrências Registradas".
   - Adicionado um ícone de "visualizar" (olho) na tabela da página de listagem de funcionários (`FuncionariosTable.jsx`) para facilitar o acesso direto à nova página de detalhes.
 
+### Corrigido
+- **API de Detalhes do Funcionário**: Corrigido um erro 500 (Internal Server Error) no endpoint `/api/funcionarios/<id>/details/`. A correção envolveu tornar as consultas de dados relacionados (obras participadas, pagamentos) no `FuncionarioDetailSerializer` mais robustas, especificamente garantindo que obras associadas existam (`obra__isnull=False`) e removendo temporariamente o uso de `.only()` para evitar problemas com carregamento deferido de campos durante a serialização.
+
 ## [v0.6.14] - YYYY-MM-DD
 ### Corrigido
 - **Página de Detalhes da Obra (`ObraDetailPage.jsx`):** Corrigido um erro (`TypeError: todasAsComprasBruto.filter is not a function`) que ocorria ao processar a lista de compras da obra. Ajustada a lógica para garantir que a variável `todasAsComprasBruto` (ou uma derivada dela, `actualTodasAsCompras`) seja tratada como um array antes de aplicar métodos como `.filter()` ou ao ser passada para componentes filhos, especialmente ao lidar com respostas paginadas da API.

@@ -369,13 +369,10 @@ class FuncionarioDetailSerializer(FuncionarioSerializer): # Inherits from Funcio
     def get_obras_participadas(self, obj):
         # obj is the Funcionario instance
         locacoes = Locacao_Obras_Equipes.objects.filter(
-            funcionario_locado=obj
-        ).select_related('obra').only(
-            'id', 'obra__nome_obra', 'data_locacao_inicio', 'data_locacao_fim'
-        )
-        # Filter out locacoes where obra is None, if that's possible and not desired
-        locacoes = [loc for loc in locacoes if loc.obra is not None]
-        return FuncionarioObraParticipadaSerializer(locacoes, many=True).data
+            funcionario_locado=obj,
+            obra__isnull=False  # Ensure obra is not null
+        ).select_related('obra').distinct()
+        return FuncionarioObraParticipadaSerializer(locacoes, many=True, context=self.context).data
 
     def get_pagamentos_recebidos(self, obj):
         # obj is the Funcionario instance
@@ -383,14 +380,11 @@ class FuncionarioDetailSerializer(FuncionarioSerializer): # Inherits from Funcio
         # and we only want entries where a payment has been made (valor_pagamento > 0 and data_pagamento is not null)
         pagamentos = Locacao_Obras_Equipes.objects.filter(
             funcionario_locado=obj,
-            valor_pagamento__isnull=False, # Or valor_pagamento__gt=0 if that's the criteria
+            obra__isnull=False,  # Ensure obra is not null
+            valor_pagamento__isnull=False,
             data_pagamento__isnull=False
-        ).select_related('obra').only(
-            'id', 'obra__nome_obra', 'data_pagamento', 'valor_pagamento'
-        )
-        # Filter out locacoes where obra is None, if that's possible and not desired
-        pagamentos = [loc for loc in pagamentos if loc.obra is not None]
-        return FuncionarioPagamentoRecebidoSerializer(pagamentos, many=True).data
+        ).select_related('obra').distinct()
+        return FuncionarioPagamentoRecebidoSerializer(pagamentos, many=True, context=self.context).data
 
 
 class UsoMaterialSerializer(serializers.ModelSerializer):
