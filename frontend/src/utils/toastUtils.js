@@ -15,6 +15,7 @@ export const showSuccessToast = (message) => {
     draggable: true,
     progress: undefined,
     theme: "light",
+    icon: false, // Add this line to disable the default icon
     // You can add more default options here if needed
   });
 };

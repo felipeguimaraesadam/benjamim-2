@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.11] - YYYY-MM-DD
+### Corrigido
+- **Notificações (Toast):** Corrigido um erro ("Element type is invalid... got: undefined") que causava uma tela em branco após salvar uma nova despesa. O erro originava-se na biblioteca `react-toastify` ao tentar renderizar o toast de sucesso. A correção envolve desabilitar o ícone padrão para toasts de sucesso (`icon: false` em `frontend/src/utils/toastUtils.js`), o que evita a renderização do componente problemático.
+
 ## [v0.6.10] - YYYY-MM-DD
 ### Corrigido
 - **Página de Despesas Extras:** Tentativa adicional para corrigir o erro ("Element type is invalid... got: undefined") que ocorre após salvar uma despesa. Adicionados comentários aos arquivos `DespesasExtrasPage.jsx`, `DespesasExtrasTable.jsx`, e `PaginationControls.jsx` para forçar o reprocessamento pelo sistema de build. Esta medida visa resolver problemas de cache ou HMR que podem afetar a renderização de componentes após a submissão do formulário, complementando a verificação anterior no `DespesaExtraForm.jsx`.
