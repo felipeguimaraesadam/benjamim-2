@@ -66,11 +66,6 @@ const OcorrenciasPage = () => {
                 acc[tipoLabel] = (acc[tipoLabel] || 0) + 1;
                 return acc;
             }, {});
-            const contagemPorTipo = fetchedOcorrencias.reduce((acc, ocorr) => {
-                const tipoLabel = ocorr.tipo || "Não Especificado";
-                acc[tipoLabel] = (acc[tipoLabel] || 0) + 1;
-                return acc;
-            }, {});
             const dadosGrafico = Object.keys(contagemPorTipo).map(tipo => ({
                 name: tipo,
                 count: contagemPorTipo[tipo]
