@@ -19,13 +19,13 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 [ ] Frontend: Exibir o histórico de uso com gráficos e tabelas.
 ✨ 2. Melhorias de UI/UX e Consistência
 [ ] Padronização de Ações em Tabelas
-[ ] Substituir texto por ícones (editar, excluir) em FuncionariosPage.jsx, EquipesPage.jsx, MateriaisPage.jsx e ComprasPage.jsx.
+- [x] Substituir texto por ícones (editar, excluir) em FuncionariosPage.jsx, EquipesPage.jsx, MateriaisPage.jsx e ComprasPage.jsx.
 [ ] Adicionar ícone de olho (visualizar) para navegar para as novas páginas de detalhes.
 [ ] Consistência Terminológica: "Locação"
-[ ] Realizar busca e substituição global de "Localização" para "Locação" ou "Locações" em todo o frontend.
+- [x] Realizar busca e substituição global de "Localização" para "Locação" ou "Locações" em todo o frontend.
 [ ] Melhorias no Formulário de Locação (LocacaoForm.jsx)
-[ ] Implementar o preenchimento automático da "Data Pagamento" com base na "Data de Início da Locação".
-[ ] Corrigir o label "Dados Início Localização" para "Data de Início da Locação".
+- [x] Implementar o preenchimento automático da "Data Pagamento" com base na "Data de Início da Locação".
+- [x] Corrigir o label "Dados Início Localização" para "Data de Início da Locação".
 🐛 3. Correção de Bugs e Erros
 [ ] Correção na Listagem de Compras (ComprasPage.jsx)
 [ ] Backend: Ajustar o CompraSerializer para aninhar e serializar os ItemCompra corretamente.
