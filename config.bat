@@ -6,16 +6,27 @@ ECHO.
 
 REM --- ETAPA 1: VERIFICANDO FERRAMENTAS ---
 ECHO [ETAPA 1/4] Verificando Python e Node.js...
+
+REM Check Python
 python --version >NUL 2>&1
-IF ERRORLEVEL 1 (
-    ECHO [ERRO] Python nao encontrado no PATH. Instale o Python e adicione-o ao PATH.
-    GOTO:END
-)
+IF ERRORLEVEL 1 GOTO PYTHON_ERROR
+GOTO PYTHON_OK
+:PYTHON_ERROR
+ECHO [ERRO] Python nao encontrado no PATH. Instale o Python e adicione-o ao PATH.
+GOTO:END
+:PYTHON_OK
+ECHO [INFO] Python verificado.
+
+REM Check Node.js
 node --version >NUL 2>&1
-IF ERRORLEVEL 1 (
-    ECHO [ERRO] Node.js nao encontrado no PATH. Instale o Node.js (que inclui o npm).
-    GOTO:END
-)
+IF ERRORLEVEL 1 GOTO NODE_ERROR
+GOTO NODE_OK
+:NODE_ERROR
+ECHO [ERRO] Node.js nao encontrado no PATH. Instale o Node.js (que inclui o npm).
+GOTO:END
+:NODE_OK
+ECHO [INFO] Node.js verificado.
+
 ECHO [SUCESSO] Python e Node.js encontrados.
 ECHO.
 PAUSE
