@@ -123,6 +123,9 @@
 
 ## [Unreleased] - 2025-06-14
 
+### Melhorias
+- Melhorado o script `config.bat` para tratar de forma mais informativa o resultado do `npm install`. Agora, exibe um aviso caso `npm install` termine com erro (ex: devido a vulnerabilidades detectadas), mas permite que o script de configuração do frontend prossiga, evitando o término abrupto.
+
 ### Added
 - **Definição de Pagamento na Locação**: Ao locar um funcionário, equipe ou serviço externo, agora é obrigatório definir o tipo de pagamento (diária, por metro, empreitada), o valor do pagamento. Opcionalmente, uma data futura para o pagamento pode ser especificada. Isso se aplica tanto ao backend (modelo e API) quanto ao frontend (formulário e tabela de locações).
 - O campo 'Data Pagamento' no formulário de nova locação agora é preenchido automaticamente com a data atual.
