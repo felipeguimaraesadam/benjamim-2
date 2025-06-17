@@ -180,6 +180,10 @@ export const getEquipes = (params) => { // Modified to accept params
   return apiClient.get('/equipes/', { params });
 };
 
+export const getEquipeDetailsById = (id) => {
+  return apiClient.get(`/equipes/${id}/details/`);
+};
+
 export const getEquipeById = (id) => {
   return apiClient.get(`/equipes/${id}/`);
 };

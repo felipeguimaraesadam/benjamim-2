@@ -15,7 +15,8 @@ from .serializers import (
     UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer,
     LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer,
     DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer,
-    ItemCompraSerializer, FotoObraSerializer, FuncionarioDetailSerializer # Added FuncionarioDetailSerializer
+    ItemCompraSerializer, FotoObraSerializer, FuncionarioDetailSerializer,
+    EquipeDetailSerializer # Added EquipeDetailSerializer
 )
 from .permissions import IsNivelAdmin, IsNivelGerente
 from django.db.models import Sum, Count, F # Added F
@@ -69,6 +70,20 @@ class EquipeViewSet(viewsets.ModelViewSet):
     queryset = Equipe.objects.all()
     serializer_class = EquipeSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+
+# New EquipeDetailView
+class EquipeDetailView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get(self, request, pk, format=None):
+        try:
+            equipe = Equipe.objects.prefetch_related('membros').select_related('lider').get(pk=pk)
+        except Equipe.DoesNotExist:
+            return Response({"error": "Equipe não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EquipeDetailSerializer(equipe, context={'request': request})
+        return Response(serializer.data)
 
 
 class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):

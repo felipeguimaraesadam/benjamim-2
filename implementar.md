@@ -7,11 +7,11 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Frontend: Criar a página FuncionarioDetailPage.jsx.
 - [x] Frontend: Adicionar a rota /funcionarios/:id no App.jsx.
 - [x] Frontend: Exibir os dados do funcionário (obras, pagamentos, ocorrências) em seções claras.
-[ ] Página de Detalhes da Equipe
-[ ] Backend: Criar endpoint /api/equipes/<id>/details/ que retorna o histórico completo da equipe.
-[ ] Frontend: Criar a página EquipeDetailPage.jsx.
-[ ] Frontend: Adicionar a rota /equipes/:id.
-[ ] Frontend: Exibir os dados da equipe (obras, desempenho) de forma detalhada.
+[x] Página de Detalhes da Equipe
+- [x] Backend: Criar endpoint /api/equipes/<id>/details/ que retorna o histórico completo da equipe.
+- [x] Frontend: Criar a página EquipeDetailPage.jsx.
+- [x] Frontend: Adicionar a rota /equipes/:id.
+- [x] Frontend: Exibir os dados da equipe (obras, desempenho) de forma detalhada.
 [ ] Página de Detalhes do Material
 [ ] Backend: Criar endpoint /api/materiais/<id>/details/ que retorna o histórico de uso do material.
 [ ] Frontend: Criar a página MaterialDetailPage.jsx.
@@ -20,7 +20,7 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 ✨ 2. Melhorias de UI/UX e Consistência
 [ ] Padronização de Ações em Tabelas
 - [x] Substituir texto por ícones (editar, excluir) em FuncionariosPage.jsx, EquipesPage.jsx, MateriaisPage.jsx e ComprasPage.jsx.
-- [x] Adicionar ícone de olho (visualizar) para navegar para as novas páginas de detalhes. (Implementado para Funcionários)
+- [x] Adicionar ícone de olho (visualizar) para navegar para as novas páginas de detalhes. (Implementado para Funcionários e Equipes)
 [ ] Consistência Terminológica: "Locação"
 - [x] Realizar busca e substituição global de "Localização" para "Locação" ou "Locações" em todo o frontend.
 [ ] Melhorias no Formulário de Locação (LocacaoForm.jsx)

@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.16] - YYYY-MM-DD
+### Adicionado
+- **Página de Detalhes da Equipe**:
+  - Criado endpoint no backend (`/api/equipes/<id>/details/`) que fornece dados detalhados da equipe, incluindo líder, membros e um histórico de obras em que atuaram (locações).
+  - Implementados `EquipeDetailSerializer` e `EquipeLocacaoSerializer` no backend para estruturar os dados.
+  - Desenvolvida nova página no frontend (`EquipeDetailPage.jsx`) para exibir os detalhes da equipe, acessível via rota `/equipes/:id`.
+  - A página apresenta dados da equipe (líder, membros) e uma lista de suas locações (obras, datas, status).
+  - Adicionado ícone de "visualizar" (olho) na tabela da página de listagem de equipes (`EquipesTable.jsx`) para navegação direta à nova página de detalhes.
+
 ## [v0.6.15] - YYYY-MM-DD
 ### Adicionado
 - **Página de Detalhes do Funcionário**:

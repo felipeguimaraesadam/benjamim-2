@@ -387,6 +387,41 @@ class FuncionarioDetailSerializer(FuncionarioSerializer): # Inherits from Funcio
         return FuncionarioPagamentoRecebidoSerializer(pagamentos, many=True, context=self.context).data
 
 
+# Serializer for Locações within EquipeDetailSerializer
+class EquipeLocacaoSerializer(serializers.ModelSerializer):
+    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)
+
+    class Meta:
+        model = Locacao_Obras_Equipes
+        fields = ['id', 'obra_nome', 'data_locacao_inicio', 'data_locacao_fim', 'status_locacao']
+
+
+# EquipeDetailSerializer
+class EquipeDetailSerializer(serializers.ModelSerializer):
+    lider_nome = serializers.CharField(source='lider.nome_completo', read_only=True, allow_null=True)
+    membros = FuncionarioSerializer(many=True, read_only=True)
+    locacoes_participadas = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Equipe
+        fields = [
+            'id',
+            'nome_equipe',
+            'lider',  # Keep PK for writable field, or use nested for read-only details
+            'lider_nome',
+            'membros',
+            'locacoes_participadas'
+        ]
+
+    def get_locacoes_participadas(self, obj):
+        # obj is the Equipe instance
+        locacoes = Locacao_Obras_Equipes.objects.filter(
+            equipe=obj,
+            obra__isnull=False
+        ).select_related('obra').order_by('-data_locacao_inicio')
+        return EquipeLocacaoSerializer(locacoes, many=True, context=self.context).data
+
+
 class UsoMaterialSerializer(serializers.ModelSerializer):
     obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True, allow_null=True)
     material_nome = serializers.SerializerMethodField() # CHANGED
