@@ -27,8 +27,8 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   useEffect(() => {
     const fetchFuncionarios = async () => {
       try {
-        const response = await api.getFuncionarios();
-        setFuncionarios(response.data || response); // Adjust based on API response structure
+        const response = await api.getFuncionarios({ page_size: 500 });
+        setFuncionarios(response.data?.results || (Array.isArray(response.data) ? response.data : []));
       } catch (error) {
         console.error('Erro ao buscar funcionários:', error);
         setErrors(prev => ({ ...prev, funcionarios: 'Falha ao carregar funcionários.' }));
@@ -174,7 +174,7 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           className={`bg-gray-50 border ${errors.responsavel ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
         >
           <option value="">Selecione um Responsável (Opcional)</option>
-          {funcionarios.map((funcionario) => (
+          {Array.isArray(funcionarios) && funcionarios.map((funcionario) => (
             <option key={funcionario.id} value={funcionario.id}>
               {funcionario.nome_completo}
             </option>

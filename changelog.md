@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.13] - YYYY-MM-DD
+### Corrigido
+- **Formulário de Obra (`ObraForm.jsx`):** Corrigido um erro (`TypeError: funcionarios.map is not a function`) que ocorria ao tentar listar os funcionários no dropdown de 'Responsável pela Obra'. A função que busca os funcionários (`fetchFuncionarios`) foi ajustada para lidar corretamente com respostas paginadas da API (buscando `response.data?.results`) e para solicitar uma lista mais completa de funcionários (`page_size: 500`). Adicionalmente, uma verificação `Array.isArray(funcionarios)` foi adicionada antes do `.map()` como medida de segurança.
+
 ## [v0.6.12] - YYYY-MM-DD
 ### Corrigido
 - **Página de Relatórios:** Corrigido um erro (`removeChild` error) que podia ocorrer ao alternar entre diferentes tipos de formulários de relatório. Adicionadas `key` props estáticas e únicas aos formulários renderizados condicionalmente para garantir a correta reconciliação pelo React.
@@ -234,3 +238,5 @@
 
 ---
 Formato do Changelog baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
+
+[end of changelog.md]
