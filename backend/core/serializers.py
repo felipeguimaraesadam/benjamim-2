@@ -277,9 +277,11 @@ class MaterialSerializer(serializers.ModelSerializer):
 
 
 class ItemCompraSerializer(serializers.ModelSerializer):
+    material_nome = serializers.CharField(source='material.nome', read_only=True)
+
     class Meta:
         model = ItemCompra
-        fields = ['id', 'material', 'quantidade', 'valor_unitario', 'valor_total_item']
+        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item']
 
 
 class CompraSerializer(serializers.ModelSerializer):

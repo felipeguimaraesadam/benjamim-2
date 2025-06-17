@@ -30,9 +30,9 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Corrigida a abertura automática do navegador para apontar para a URL do frontend (5173) em vez do backend (8000) ao iniciar a aplicação. (backend/manage.py)
 - [x] Robustecida a instalação de dependências do frontend no `config.bat` para garantir a instalação incondicional de todos os pacotes.
 [ ] Correção na Listagem de Compras (ComprasPage.jsx)
-[ ] Backend: Ajustar o CompraSerializer para aninhar e serializar os ItemCompra corretamente.
-[ ] Frontend: Refatorar ComprasTable.jsx para lidar com a nova estrutura de dados.
-[ ] Frontend: Implementar um modal de detalhes para exibir todos os itens de uma compra.
+- [x] Backend: Ajustar o CompraSerializer para aninhar e serializar os ItemCompra corretamente.
+- [x] Frontend: Refatorar ComprasTable.jsx para lidar com a nova estrutura de dados.
+- [x] Frontend: Implementar um modal de detalhes para exibir todos os itens de uma compra.
 [ ] Erro na Página de Despesas (DespesasExtrasPage.jsx)
 [ ] Corrigir a passagem de props para DespesaExtraForm, garantindo que obras seja sempre um array (response.data.results).
 [ ] Erro na Página de Relatórios (RelatoriosPage.jsx)

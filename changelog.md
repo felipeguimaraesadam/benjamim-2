@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.4] - YYYY-MM-DD
+### Corrigido
+- **Listagem de Compras:** Ajustada a exibição de compras para suportar múltiplos itens. Implementado um modal para detalhar os itens de cada compra, melhorando a clareza e usabilidade da página de compras. O backend serializer (`ItemCompraSerializer`) foi ajustado para prover o campo `material_nome`, facilitando a exibição dos nomes dos materiais no frontend.
+
 ## [0.6.3] - 2024-08-02
 ### Fixed
 - **Frontend Build/Runtime Errors**:

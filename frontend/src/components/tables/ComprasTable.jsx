@@ -1,7 +1,7 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Eye } from 'lucide-react';
 
-const ComprasTable = ({ compras, onEdit, onDelete, isLoading }) => {
+const ComprasTable = ({ compras, onEdit, onDelete, onViewDetails, isLoading }) => {
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -31,12 +31,12 @@ const ComprasTable = ({ compras, onEdit, onDelete, isLoading }) => {
             <table className="w-full text-sm text-left text-gray-500">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                     <tr>
-                        <th scope="col" className="px-6 py-3">Material</th>
+                        <th scope="col" className="px-6 py-3">Itens</th>
                         <th scope="col" className="px-6 py-3">Obra</th>
-                        <th scope="col" className="px-6 py-3">Quantidade</th>
                         <th scope="col" className="px-6 py-3">Custo Total</th>
                         <th scope="col" className="px-6 py-3">Fornecedor</th>
                         <th scope="col" className="px-6 py-3">Data da Compra</th>
+                        <th scope="col" className="px-6 py-3 text-center">Detalhes</th>
                         <th scope="col" className="px-6 py-3 text-center">Ações</th>
                     </tr>
                 </thead>
@@ -44,14 +44,23 @@ const ComprasTable = ({ compras, onEdit, onDelete, isLoading }) => {
                     {compras.map((compra) => (
                         <tr key={compra.id} className="bg-white border-b hover:bg-gray-50">
                             <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                {compra.material?.nome || 'N/A'}
-                                {compra.material?.unidade_medida && ` (${compra.material.unidade_medida})`}
+                                {`${compra.itens?.length || 0} itens`}
                             </td>
                             <td className="px-6 py-4">{compra.obra?.nome_obra || 'N/A'}</td>
-                            <td className="px-6 py-4">{compra.quantidade}</td>
-                            <td className="px-6 py-4">{formatCurrency(compra.custo_total)}</td>
+                            <td className="px-6 py-4">{formatCurrency(compra.valor_total_liquido)}</td>
                             <td className="px-6 py-4">{compra.fornecedor}</td>
                             <td className="px-6 py-4">{formatDate(compra.data_compra)}</td>
+                            <td className="px-6 py-4 text-center">
+                                <button
+                                    onClick={() => onViewDetails(compra)}
+                                    className="text-gray-600 hover:text-gray-800 disabled:text-gray-400"
+                                    disabled={isLoading}
+                                    aria-label="Ver Detalhes"
+                                    title="Ver Detalhes"
+                                >
+                                    <Eye size={18} />
+                                </button>
+                            </td>
                             <td className="px-6 py-4 text-center space-x-2">
                                 <button
                                     onClick={() => onEdit(compra)}
