@@ -91,7 +91,7 @@ Lógica de Preenchimento Automático:
 No MaterialAutocomplete.jsx, quando um material for selecionado, ele deve retornar o objeto completo, incluindo o novo campo categoria_uso_padrao.
 No CompraForm.jsx, ao selecionar um material, verifique se ele possui categoria_uso_padrao e preencha automaticamente o <select> da categoria para aquele item.
 Envio de Dados: Garanta que o campo categoria_uso de cada item seja incluído no payload enviado para a API ao salvar a compra.
-[  ] Tarefa 4: Adicionar Orçamento Previsto à Obra
+[x] Tarefa 4: Adicionar Orçamento Previsto à Obra
 Justificativa: O campo já existe no backend, mas não está disponível na interface do usuário para inserção ou edição.
 
 Frontend (React):
