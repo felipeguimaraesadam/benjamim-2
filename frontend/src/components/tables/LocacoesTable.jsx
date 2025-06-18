@@ -82,18 +82,7 @@ const LocacoesTable = ({ locacoes, obras, equipes, onEdit, onDelete, onViewDetai
     <div className="overflow-x-auto shadow-md sm:rounded-lg">
       <table className="min-w-full text-sm text-left text-gray-500">
         <thead className="text-xs text-gray-700 uppercase bg-gray-100">
-          <tr>
-            <th scope="col" className="px-6 py-3">Obra</th>
-            <th scope="col" className="px-6 py-3">Recurso Locado</th>
-            <th scope="col" className="px-6 py-3">Data Início</th>
-            <th scope="col" className="px-6 py-3">Data Fim</th>
-            <th scope="col" className="px-6 py-3">Tipo Pag.</th>
-            <th scope="col" className="px-6 py-3">Valor Pag.</th>
-            <th scope="col" className="px-6 py-3">Data Pag.</th>
-            <th scope="col" className="px-6 py-3">Status</th> {/* New Header */}
-            <th scope="col" className="px-6 py-3">Detalhes</th>
-            <th scope="col" className="px-6 py-3">Ações</th>
-          </tr>
+          <tr><th scope="col" className="px-6 py-3">Obra</th><th scope="col" className="px-6 py-3">Recurso Locado</th><th scope="col" className="px-6 py-3">Data Início</th><th scope="col" className="px-6 py-3">Data Fim</th><th scope="col" className="px-6 py-3">Tipo Pag.</th><th scope="col" className="px-6 py-3">Valor Pag.</th><th scope="col" className="px-6 py-3">Data Pag.</th><th scope="col" className="px-6 py-3">Status</th><th scope="col" className="px-6 py-3">Detalhes</th><th scope="col" className="px-6 py-3">Ações</th></tr>
         </thead>
         <tbody>
           {locacoes.map((locacao) => (

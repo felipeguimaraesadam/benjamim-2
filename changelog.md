@@ -16,8 +16,8 @@
     - CSV export adaptado para nova estrutura detalhada por dia.
 - **Relatório de Pagamento de Materiais Comprados**:
   - Backend: Novo `RelatorioPagamentoMateriaisViewSet` com ações para:
-    - `pre_check_pagamentos_materiais`: Identifica compras no período com pagamento pendente ou futuro.
-    - `gerar_relatorio_pagamentos_materiais`: Gera relatório de compras com `data_pagamento` no período, agrupado por Obra e Fornecedor, com totais. Utiliza `CompraReportSerializer`.
+    - `pre_check_pagamentos_materiais`: Identifica compras (baseado na `data_compra`) no período com `data_pagamento` pendente ou futura.
+    - `gerar_relatorio_pagamentos_materiais`: Gera relatório de compras pagas no período (baseado na `data_pagamento`) OU compras realizadas no período com `data_pagamento` nula. Agrupado por Obra e Fornecedor, com totais. Utiliza `CompraReportSerializer`.
   - Frontend (`RelatoriosPage.jsx`):
     - Nova opção de relatório e modal multi-etapas.
     - Filtros incluem seleção de período (com novo seletor de semanas para conveniência), obra e fornecedor.
@@ -33,6 +33,8 @@
 - **Formulário de Material (`MaterialForm.jsx`)**: Corrigido erro `ReferenceError: SpinnerIcon is not defined`.
 - **Modal de Uso de Material (`DistribuicaoMaterialForm.jsx`)**: Corrigido erro `response.data.filter is not a function` ao carregar compras disponíveis, tratando corretamente a resposta paginada da API.
 - **Utilitários de Data e Importações**: Centralizadas funções de data (`getStartOfWeek`, `formatDateToYYYYMMDD`) em `frontend/src/utils/dateUtils.js`. Corrigidos os caminhos de importação para este arquivo em `LocacoesPage.jsx` e `RelatoriosPage.jsx` (de `../../utils/` para `../utils/`), resolvendo erros de build.
+- **Tabela de Materiais (`MateriaisTable.jsx`)**: Corrigido erro de hidratação "text nodes cannot be a child of <tbody>" pela remoção de um ponto e vírgula perdido.
+- **Tabela de Locações (`LocacoesTable.jsx`)**: Corrigido erro de hidratação "whitespace text nodes cannot be a child of <tr>" ao ajustar formatação no `<thead>`.
 
 ## [v0.6.19] - YYYY-MM-DD
 ### Corrigido

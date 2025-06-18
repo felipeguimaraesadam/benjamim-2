@@ -1162,14 +1162,20 @@ class RelatorioPagamentoMateriaisViewSet(viewsets.ViewSet):
             return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Filtra compras cuja data_pagamento está dentro do período do relatório.
-        filters = Q(data_pagamento__gte=start_date) & Q(data_pagamento__lte=end_date)
+        # Updated base filters
+        filters = (
+            Q(data_pagamento__gte=start_date) & Q(data_pagamento__lte=end_date)
+        ) | (
+            Q(data_pagamento__isnull=True) &
+            Q(data_compra__gte=start_date) & Q(data_compra__lte=end_date)
+        )
+
         if obra_id_str:
             filters &= Q(obra_id=obra_id_str)
         if fornecedor_str:
             filters &= Q(fornecedor__icontains=fornecedor_str)
 
-        compras_a_pagar = Compra.objects.filter(filters).select_related('obra').order_by('obra__nome_obra', 'fornecedor', 'data_pagamento')
+        compras_a_pagar = Compra.objects.filter(filters).select_related('obra').order_by('obra__nome_obra', 'fornecedor', 'data_compra', 'data_pagamento')
 
         report = defaultdict(lambda: {"obra_id": None, "obra_nome": "", "fornecedores": defaultdict(lambda: {"fornecedor_nome": "", "compras_a_pagar": [], "total_fornecedor_na_obra": Decimal('0.00')}), "total_obra": Decimal('0.00')})
         grand_total = Decimal('0.00')
