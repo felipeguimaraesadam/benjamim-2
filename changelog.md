@@ -5,6 +5,7 @@
 - **Página de Detalhes do Material**:
   - Backend: Criado endpoint `/api/materiais/<id>/details/` que retorna dados do material e seu histórico de uso. O histórico é derivado de `UsoMaterial` vinculado às `Compra`s que contêm o material. `MaterialDetailSerializer` foi implementado para esta finalidade.
   - Frontend: Criada a página `MaterialDetailPage.jsx` (acessível via `/materiais/:id`) para exibir informações do material (nome, unidade, estoque, nível mínimo) e uma tabela do seu histórico de uso (data, obra, quantidade, etc.). A função `getMaterialDetailsById` foi adicionada aos serviços da API.
+  - Frontend: Adicionado ícone de "visualizar" (olho) na tabela da página de listagem de materiais (`MateriaisTable.jsx`) para navegação direta à página de detalhes do material.
 
 ## [v0.6.19] - YYYY-MM-DD
 ### Corrigido

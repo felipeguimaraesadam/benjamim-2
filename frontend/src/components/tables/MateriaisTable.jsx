@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Eye } from 'lucide-react'; // Add Eye
+import { Link } from 'react-router-dom'; // Add Link
 
 const MateriaisTable = ({ materiais, onEdit, onDelete, isLoading, lowStockAlerts = [] }) => {
 
@@ -51,6 +52,14 @@ const MateriaisTable = ({ materiais, onEdit, onDelete, isLoading, lowStockAlerts
               </td>
               <td className="px-6 py-4">{getUnidadeMedidaLabel(material.unidade_medida)}</td>
               <td className="px-6 py-4 text-center space-x-2">
+                <Link
+                  to={`/materiais/${material.id}`}
+                  title="Visualizar Detalhes"
+                  aria-label="Visualizar Detalhes"
+                  className="text-green-600 hover:text-green-800 disabled:text-gray-400 inline-block"
+                >
+                  <Eye size={18} />
+                </Link>
                 <button
                   onClick={() => onEdit(material)}
                   className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
