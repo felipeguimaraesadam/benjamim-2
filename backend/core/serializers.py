@@ -345,6 +345,25 @@ class CompraSerializer(serializers.ModelSerializer):
         return compra
 
 
+# Serializers for RelatorioPagamentoMateriaisViewSet
+# class ItemCompraReportSerializer(serializers.ModelSerializer):
+#     material_nome = serializers.CharField(source='material.nome', read_only=True)
+#     class Meta:
+#         model = ItemCompra
+#         fields = ['material_nome', 'quantidade', 'valor_unitario', 'valor_total_item']
+
+class CompraReportSerializer(serializers.ModelSerializer):
+    # itens = ItemCompraReportSerializer(many=True, read_only=True) # Uncomment if item details are needed
+    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True, allow_null=True) # Allow null for obra_nome
+    class Meta:
+        model = Compra
+        fields = [
+            'id', 'obra', 'obra_nome', 'fornecedor', 'data_compra',
+            'data_pagamento', 'nota_fiscal', 'valor_total_liquido'
+            # , 'itens' # Uncomment if item details are needed
+        ]
+
+
 class DespesaExtraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Despesa_Extra

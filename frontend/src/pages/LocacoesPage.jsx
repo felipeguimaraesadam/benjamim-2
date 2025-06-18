@@ -639,71 +639,81 @@ const LocacoesPage = () => {
             {step === 3 && reportData && (
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold text-gray-800">Relatório Gerado</h3>
-                    <button
-                        onClick={() => exportPayrollReportToCSV(reportData, `relatorio_folha_pagamento_${reportStartDate}_a_${reportEndDate}.csv`)}
-                        disabled={!reportData || reportData.length === 0}
-                        className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300 text-sm disabled:opacity-50"
-                    >
-                        Exportar para CSV
-                    </button>
+                  <h3 className="text-xl font-semibold text-gray-800">Relatório Gerado</h3>
+                  <button
+                    onClick={() => exportPayrollReportToCSV(reportData, `relatorio_folha_pagamento_${reportStartDate}_a_${reportEndDate}.csv`)}
+                    disabled={!reportData || reportData.length === 0}
+                    className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300 text-sm disabled:opacity-50"
+                  >
+                    Exportar para CSV
+                  </button>
                 </div>
                 {reportData.length === 0 && <p className="text-gray-600">Nenhuma locação encontrada para o período e critérios selecionados.</p>}
 
                 {reportData.map(obraData => (
-                  <div key={obraData.obra_id} className="mb-6 p-4 border border-gray-200 rounded-lg shadow">
-                    <div className="flex justify-between items-baseline mb-2">
-                        <h4 className="text-lg font-semibold text-blue-700">{obraData.obra_nome}</h4>
-                        <p className="text-md font-medium text-gray-700">Total na Obra: <span className="text-green-600 font-bold">R$ {parseFloat(obraData.total_a_pagar_na_obra_periodo).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></p>
-                    </div>
-                    {obraData.locacoes_na_obra.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full text-sm text-left text-gray-500">
-                                <thead className="text-xs text-gray-700 uppercase bg-gray-100">
-                                    <tr>
-                                        <th scope="col" className="px-4 py-2">Funcionário</th>
-                                        <th scope="col" className="px-4 py-2">Início</th>
-                                        <th scope="col" className="px-4 py-2">Fim</th>
-                                        <th scope="col" className="px-4 py-2">Tipo Pag.</th>
-                                        <th scope="col" className="px-4 py-2 text-right">Valor Pag. (R$)</th>
-                                        <th scope="col" className="px-4 py-2">Data Pag.</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {obraData.locacoes_na_obra.map(loc => (
-                                    <tr key={loc.locacao_id} className="bg-white border-b hover:bg-gray-50">
-                                        <td className="px-4 py-2">{loc.funcionario_nome || 'N/A'}</td>
-                                        <td className="px-4 py-2">{new Date(loc.data_locacao_inicio + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                        <td className="px-4 py-2">{new Date(loc.data_locacao_fim + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                        <td className="px-4 py-2">{loc.tipo_pagamento}</td>
-                                        <td className="px-4 py-2 text-right">{parseFloat(loc.valor_pagamento).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                        <td className="px-4 py-2">{loc.data_pagamento ? new Date(loc.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'}</td>
-                                    </tr>
-                                    ))}
-                                </tbody>
+                  <div key={obraData.obra_id} className="mb-8 p-4 border border-gray-200 rounded-lg shadow">
+                    <h4 className="text-xl font-semibold text-blue-700 mb-3">{obraData.obra_nome}</h4>
+                    {obraData.dias.map(diaData => (
+                      <div key={diaData.data} className="mb-4 pl-4 border-l-2 border-blue-200">
+                        <p className="text-md font-semibold text-gray-700">
+                          Data: {formatDateToDMY(diaData.data)} - Total Dia: <span className="text-blue-600 font-bold">{parseFloat(diaData.total_dia_obra).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                        </p>
+                        {diaData.locacoes_no_dia.length > 0 ? (
+                          <div className="overflow-x-auto mt-2">
+                            <table className="min-w-full text-xs text-left text-gray-600">
+                              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                  <th scope="col" className="px-3 py-2">Recurso</th>
+                                  <th scope="col" className="px-3 py-2">Tipo Pag.</th>
+                                  <th scope="col" className="px-3 py-2 text-right">Valor Dia (R$)</th>
+                                  <th scope="col" className="px-3 py-2 text-right">Valor Total Loc. (R$)</th>
+                                  <th scope="col" className="px-3 py-2">Início Loc.</th>
+                                  <th scope="col" className="px-3 py-2">Fim Loc.</th>
+                                  <th scope="col" className="px-3 py-2">Data Pag. Prev.</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {diaData.locacoes_no_dia.map(loc => (
+                                  <tr key={loc.locacao_id} className="bg-white border-b hover:bg-gray-50">
+                                    <td className="px-3 py-2">{loc.recurso_nome}</td>
+                                    <td className="px-3 py-2">{loc.tipo_pagamento_display}</td>
+                                    <td className="px-3 py-2 text-right">{parseFloat(loc.valor_diario_atribuido).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                                    <td className="px-3 py-2 text-right">{parseFloat(loc.valor_pagamento_total_locacao).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                                    <td className="px-3 py-2">{formatDateToDMY(loc.data_locacao_original_inicio)}</td>
+                                    <td className="px-3 py-2">{formatDateToDMY(loc.data_locacao_original_fim)}</td>
+                                    <td className="px-3 py-2">{loc.data_pagamento_prevista ? formatDateToDMY(loc.data_pagamento_prevista) : 'N/A'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
                             </table>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-gray-500 italic">Nenhuma locação de funcionário a pagar nesta obra para o período.</p>
-                    )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-500 italic mt-1">Nenhuma locação com custo atribuído a este dia.</p>
+                        )}
+                      </div>
+                    ))}
+                    <p className="text-lg font-semibold text-right text-blue-700 mt-4 pt-2 border-t border-blue-200">
+                      Total para {obraData.obra_nome} no Período: <span className="text-green-600 font-bold">{parseFloat(obraData.total_obra_periodo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    </p>
                   </div>
                 ))}
+
                 {reportData.length > 0 && (
-                    <div className="mt-6 pt-4 border-t border-gray-300">
-                        <p className="text-lg font-bold text-right text-gray-800">
-                            Total Geral do Relatório:
-                            <span className="text-green-700 ml-2">
-                                R$ {reportData.reduce((sum, obra) => sum + parseFloat(obra.total_a_pagar_na_obra_periodo), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                        </p>
-                    </div>
+                  <div className="mt-8 pt-4 border-t-2 border-gray-300">
+                    <p className="text-xl font-bold text-right text-gray-800">
+                      Total Geral do Relatório:
+                      <span className="text-green-700 ml-2">
+                        {reportData.reduce((sum, obra) => sum + parseFloat(obra.total_obra_periodo), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                    </p>
+                  </div>
                 )}
-                 <div className="flex justify-end mt-6">
-                    <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Gerar Novo Relatório</button>
-                 </div>
+                <div className="flex justify-end mt-6">
+                  <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Gerar Novo Relatório</button>
+                </div>
               </div>
             )}
-             {isGeneratingReport && step !==3 && <p className="text-center text-gray-500 mt-4">{isGeneratingReport ? <SpinnerIcon className="w-5 h-5 mr-2 inline" /> : null} Gerando relatório...</p>}
+            {isGeneratingReport && step !== 3 && <p className="text-center text-gray-500 mt-4">{isGeneratingReport ? <SpinnerIcon className="w-5 h-5 mr-2 inline" /> : null} Gerando relatório...</p>}
              {reportError && step !== 3 && <p className="text-red-500 text-sm mt-3 text-center">{reportError}</p>}
 
 

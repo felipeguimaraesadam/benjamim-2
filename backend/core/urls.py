@@ -9,7 +9,7 @@ from .views import (
     RelatorioDesempenhoEquipeView, RelatorioCustoGeralView, ObraHistoricoCustosView,
     ObraCustosPorCategoriaView, ObraCustosPorMaterialView, # Added new views
     RelatorioFolhaPagamentoViewSet, FuncionarioDetailView, EquipeDetailView, # Added EquipeDetailView
-    MaterialDetailAPIView # Added MaterialDetailAPIView
+    MaterialDetailAPIView, RelatorioPagamentoMateriaisViewSet # Added RelatorioPagamentoMateriaisViewSet
 )
 
 router = DefaultRouter()
@@ -25,6 +25,7 @@ router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
 router.register(r'usomateriais', UsoMaterialViewSet, basename='usomaterial')
 router.register(r'fotosobras', FotoObraViewSet, basename='fotoobra') # Add this line
 router.register(r'relatorios/folha-pagamento', RelatorioFolhaPagamentoViewSet, basename='relatorio-folha-pagamento')
+router.register(r'relatorios/pagamento-materiais', RelatorioPagamentoMateriaisViewSet, basename='relatorio-pagamento-materiais')
 
 
 urlpatterns = [

@@ -250,6 +250,16 @@ export const getRelatorioCustoGeral = (params) => {
   return apiClient.get('/relatorios/custo-geral/', { params });
 };
 
+export const getRelatorioPagamentoMateriaisPreCheck = (params) => {
+  // params: { start_date, end_date, obra_id?, fornecedor? }
+  return apiClient.get('/relatorios/pagamento-materiais/pre-check/', { params });
+};
+
+export const generateRelatorioPagamentoMateriais = (params) => {
+  // params: { start_date, end_date, obra_id?, fornecedor? }
+  return apiClient.get('/relatorios/pagamento-materiais/generate/', { params });
+};
+
 
 // Export the configured apiClient if direct use is needed elsewhere,
 // though typically service functions are preferred.

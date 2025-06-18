@@ -16,7 +16,7 @@ from .serializers import (
     LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer,
     DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer,
     ItemCompraSerializer, FotoObraSerializer, FuncionarioDetailSerializer,
-    EquipeDetailSerializer, MaterialDetailSerializer
+    EquipeDetailSerializer, MaterialDetailSerializer, CompraReportSerializer # Added CompraReportSerializer
 )
 from .permissions import IsNivelAdmin, IsNivelGerente
 from django.db.models import Sum, Count, F # Added F
@@ -904,6 +904,7 @@ class ObraCustosPorCategoriaView(APIView):
 
 
 from collections import defaultdict
+from django.utils.dateparse import parse_date # For robust date parsing
 
 class RelatorioFolhaPagamentoViewSet(viewsets.ViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente] # Or your specific permissions
@@ -999,57 +1000,217 @@ class RelatorioFolhaPagamentoViewSet(viewsets.ViewSet):
             Q(data_locacao_inicio__gte=start_date) &
             Q(data_locacao_inicio__lte=end_date) &
             (Q(data_pagamento__isnull=True) | Q(data_pagamento__lte=end_date)) &
-            Q(funcionario_locado__isnull=False) & # Still focused on funcionario_locado for "Folha de Pagamento"
+            # Expanded filter to include all locacao types with a payment value
+            (
+                Q(funcionario_locado__isnull=False) |
+                Q(equipe__isnull=False) |
+                (Q(servico_externo__isnull=False) & ~Q(servico_externo=''))
+            ) &
             Q(status_locacao='ativa') &
-            Q(valor_pagamento__isnull=False) & # Ensure valor_pagamento is not null
-            Q(valor_pagamento__gt=Decimal('0.00')) # Ensure valor_pagamento is greater than 0
-        ).select_related('funcionario_locado', 'obra').order_by('obra__nome_obra', 'data_locacao_inicio', 'funcionario_locado__nome_completo')
+            Q(valor_pagamento__isnull=False) &
+            Q(valor_pagamento__gt=Decimal('0.00'))
+        ).select_related('obra', 'funcionario_locado', 'equipe')
 
         report_data_by_obra = defaultdict(lambda: {
             "obra_id": None,
             "obra_nome": "",
-            "locacoes_na_obra": [],
-            "total_a_pagar_na_obra_periodo": Decimal('0.00')
+            "dias": defaultdict(lambda: {
+                "data": None,
+                "locacoes_no_dia": [],
+                "total_dia_obra": Decimal('0.00')
+            }),
+            "total_obra_periodo": Decimal('0.00')
         })
+
+        def get_recurso_nome(locacao_instance):
+            if locacao_instance.funcionario_locado:
+                return f"Funcionário: {locacao_instance.funcionario_locado.nome_completo}"
+            elif locacao_instance.equipe:
+                return f"Equipe: {locacao_instance.equipe.nome_equipe}"
+            elif locacao_instance.servico_externo:
+                return f"Serviço Externo: {locacao_instance.servico_externo}"
+            return "N/A"
 
         for locacao in locacoes_periodo:
             obra = locacao.obra
-            if obra is None: # Should not happen if obra is mandatory for locacao
+            if not obra: # Should ideally not happen if obra is mandatory for locacao
                 continue
 
-            obra_key = obra.id
+            # Determine effective start and end dates for the locacao within the report period
+            effective_start_date = max(locacao.data_locacao_inicio, start_date)
+            effective_end_date = min(locacao.data_locacao_fim, end_date)
 
-            if report_data_by_obra[obra_key]["obra_id"] is None:
-                report_data_by_obra[obra_key]["obra_id"] = obra.id
-                report_data_by_obra[obra_key]["obra_nome"] = obra.nome_obra
+            current_day_in_loop = effective_start_date
+            while current_day_in_loop <= effective_end_date:
+                daily_cost_for_locacao = Decimal('0.00')
 
-            funcionario_nome = locacao.funcionario_locado.nome_completo if locacao.funcionario_locado else None
-            funcionario_id = locacao.funcionario_locado.id if locacao.funcionario_locado else None
+                if locacao.tipo_pagamento == 'diaria':
+                    daily_cost_for_locacao = locacao.valor_pagamento # Assumed to be per-diem rate
+                elif locacao.tipo_pagamento in ['metro', 'empreitada']:
+                    # Lump sum attributed to the locacao's actual start date if it falls on the current_day_in_loop
+                    if locacao.data_locacao_inicio == current_day_in_loop:
+                        daily_cost_for_locacao = locacao.valor_pagamento
 
-            report_data_by_obra[obra_key]["locacoes_na_obra"].append({
-                "locacao_id": locacao.id,
-                "funcionario_id": funcionario_id,
-                "funcionario_nome": funcionario_nome,
-                "data_locacao_inicio": locacao.data_locacao_inicio.isoformat(),
-                "data_locacao_fim": locacao.data_locacao_fim.isoformat(),
-                "tipo_pagamento": locacao.get_tipo_pagamento_display(),
-                "valor_pagamento": str(locacao.valor_pagamento),
-                "data_pagamento": locacao.data_pagamento.isoformat() if locacao.data_pagamento else None,
-                "status_locacao": locacao.get_status_locacao_display(),
+                if daily_cost_for_locacao > Decimal('0.00'):
+                    if report_data_by_obra[obra.id]["obra_id"] is None:
+                        report_data_by_obra[obra.id]["obra_id"] = obra.id
+                        report_data_by_obra[obra.id]["obra_nome"] = obra.nome_obra
+
+                    day_iso = current_day_in_loop.isoformat()
+                    day_data_dict = report_data_by_obra[obra.id]["dias"][day_iso]
+
+                    if day_data_dict["data"] is None:
+                        day_data_dict["data"] = day_iso
+
+                    day_data_dict["locacoes_no_dia"].append({
+                        "locacao_id": locacao.id,
+                        "recurso_nome": get_recurso_nome(locacao),
+                        "tipo_pagamento_display": locacao.get_tipo_pagamento_display(),
+                        "valor_diario_atribuido": str(daily_cost_for_locacao),
+                        "valor_pagamento_total_locacao": str(locacao.valor_pagamento),
+                        "data_locacao_original_inicio": locacao.data_locacao_inicio.isoformat(),
+                        "data_locacao_original_fim": locacao.data_locacao_fim.isoformat(),
+                        "data_pagamento_prevista": locacao.data_pagamento.isoformat() if locacao.data_pagamento else None,
+                    })
+                    day_data_dict["total_dia_obra"] += daily_cost_for_locacao
+                    report_data_by_obra[obra.id]["total_obra_periodo"] += daily_cost_for_locacao
+
+                current_day_in_loop += timedelta(days=1)
+
+        # Convert to list and format for response
+        final_report_list = []
+        sorted_obra_ids = sorted(report_data_by_obra.keys(), key=lambda obra_id_key: report_data_by_obra[obra_id_key]["obra_nome"])
+
+        for obra_id_key in sorted_obra_ids:
+            obra_data = report_data_by_obra[obra_id_key]
+            sorted_dias_keys = sorted(obra_data["dias"].keys())
+
+            dias_list = []
+            for day_key in sorted_dias_keys:
+                dia_info = obra_data["dias"][day_key]
+                dia_info["total_dia_obra"] = str(dia_info["total_dia_obra"])
+                # Sort locacoes within each day by recurso_nome for consistent ordering
+                dia_info["locacoes_no_dia"].sort(key=lambda x: x["recurso_nome"])
+                dias_list.append(dia_info)
+
+            final_report_list.append({
+                "obra_id": obra_data["obra_id"],
+                "obra_nome": obra_data["obra_nome"],
+                "dias": dias_list,
+                "total_obra_periodo": str(obra_data["total_obra_periodo"])
             })
-            report_data_by_obra[obra_key]["total_a_pagar_na_obra_periodo"] += locacao.valor_pagamento
-
-        # Convert defaultdict to list and sort by obra_nome
-        final_report_list = sorted(list(report_data_by_obra.values()), key=lambda x: x["obra_nome"])
-
-        # Convert Decimal total to string for each obra
-        for report_item in final_report_list:
-            report_item["total_a_pagar_na_obra_periodo"] = str(report_item["total_a_pagar_na_obra_periodo"])
-            # Sort locacoes within each obra
-            report_item["locacoes_na_obra"].sort(key=lambda x: (x["data_locacao_inicio"], x.get("funcionario_nome", "")))
-
 
         return Response(final_report_list)
+
+
+class RelatorioPagamentoMateriaisViewSet(viewsets.ViewSet):
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    @action(detail=False, methods=['get'], url_path='pre-check')
+    def pre_check_pagamentos_materiais(self, request):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+        obra_id_str = request.query_params.get('obra_id')
+        fornecedor_str = request.query_params.get('fornecedor')
+
+        if not start_date_str or not end_date_str:
+            return Response({"error": "Parâmetros start_date e end_date são obrigatórios."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            start_date = parse_date(start_date_str)
+            end_date = parse_date(end_date_str)
+            if not start_date or not end_date: raise ValueError("Invalid date format")
+        except ValueError:
+            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        filters = Q(data_compra__gte=start_date) & Q(data_compra__lte=end_date)
+        if obra_id_str:
+            filters &= Q(obra_id=obra_id_str)
+        if fornecedor_str:
+            filters &= Q(fornecedor__icontains=fornecedor_str)
+
+        compras_no_periodo = Compra.objects.filter(filters).select_related('obra')
+
+        compras_pagamento_pendente = []
+        # Identifica compras com data_pagamento nula ou futura à data_fim do relatório
+        # mas cuja data_compra está no período.
+        for compra in compras_no_periodo:
+            if compra.data_pagamento is None or compra.data_pagamento > end_date:
+                compras_pagamento_pendente.append(CompraReportSerializer(compra).data)
+
+        return Response({
+            'compras_com_pagamento_pendente_ou_futuro': compras_pagamento_pendente,
+            'message': "Listagem de compras no período com pagamento ainda não registrado ou agendado para após o período do relatório."
+        })
+
+    @action(detail=False, methods=['get'], url_path='generate')
+    def gerar_relatorio_pagamentos_materiais(self, request):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+        obra_id_str = request.query_params.get('obra_id')
+        fornecedor_str = request.query_params.get('fornecedor')
+
+        if not start_date_str or not end_date_str:
+            return Response({"error": "Parâmetros start_date e end_date são obrigatórios."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            start_date = parse_date(start_date_str)
+            end_date = parse_date(end_date_str)
+            if not start_date or not end_date: raise ValueError("Invalid date format")
+        except ValueError:
+            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Filtra compras cuja data_pagamento está dentro do período do relatório.
+        filters = Q(data_pagamento__gte=start_date) & Q(data_pagamento__lte=end_date)
+        if obra_id_str:
+            filters &= Q(obra_id=obra_id_str)
+        if fornecedor_str:
+            filters &= Q(fornecedor__icontains=fornecedor_str)
+
+        compras_a_pagar = Compra.objects.filter(filters).select_related('obra').order_by('obra__nome_obra', 'fornecedor', 'data_pagamento')
+
+        report = defaultdict(lambda: {"obra_id": None, "obra_nome": "", "fornecedores": defaultdict(lambda: {"fornecedor_nome": "", "compras_a_pagar": [], "total_fornecedor_na_obra": Decimal('0.00')}), "total_obra": Decimal('0.00')})
+        grand_total = Decimal('0.00')
+
+        for compra in compras_a_pagar:
+            obra_data = report[compra.obra.id]
+            if obra_data["obra_id"] is None:
+                obra_data["obra_id"] = compra.obra.id
+                obra_data["obra_nome"] = compra.obra.nome_obra
+
+            fornecedor_data = obra_data["fornecedores"][compra.fornecedor or "N/A"]
+            if not fornecedor_data["fornecedor_nome"]:
+                fornecedor_data["fornecedor_nome"] = compra.fornecedor or "N/A"
+
+            compra_detail = CompraReportSerializer(compra).data
+            fornecedor_data["compras_a_pagar"].append(compra_detail)
+
+            valor_liquido = compra.valor_total_liquido or Decimal('0.00')
+            fornecedor_data["total_fornecedor_na_obra"] += valor_liquido
+            obra_data["total_obra"] += valor_liquido
+            grand_total += valor_liquido
+
+        final_report_list = []
+        for obra_id_key in sorted(report.keys(), key=lambda ok: report[ok]["obra_nome"]):
+            obra_item = report[obra_id_key]
+
+            sorted_fornecedor_keys = sorted(obra_item["fornecedores"].keys())
+            fornecedores_list = []
+            for forn_key in sorted_fornecedor_keys:
+                forn_data = obra_item["fornecedores"][forn_key]
+                forn_data["total_fornecedor_na_obra"] = str(forn_data["total_fornecedor_na_obra"])
+                fornecedores_list.append(forn_data)
+
+            obra_item["fornecedores"] = fornecedores_list
+            obra_item["total_obra"] = str(obra_item["total_obra"])
+            final_report_list.append(obra_item)
+
+        return Response({
+            "report_data": final_report_list,
+            "total_geral_relatorio": str(grand_total)
+        })
 
 
 class FotoObraViewSet(viewsets.ModelViewSet):
