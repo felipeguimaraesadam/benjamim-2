@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
 import { exportDataToCsv, exportMaterialPaymentsReportToCSV } from '../utils/csvExporter'; // Import CSV exporter
 import SpinnerIcon from '../components/utils/SpinnerIcon'; // Assuming SpinnerIcon is needed
-import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../../utils/dateUtils.js'; // Import date utils
+import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../utils/dateUtils.js'; // Import date utils
 
 const RelatoriosPage = () => {
   const [obras, setObras] = useState([]);

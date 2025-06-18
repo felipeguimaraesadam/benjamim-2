@@ -9,7 +9,7 @@ import PaginationControls from '../components/utils/PaginationControls';
 import { showSuccessToast, showErrorToast } from '../utils/toastUtils.js'; // Import toast utilities
 import SpinnerIcon from '../components/utils/SpinnerIcon'; // Import SpinnerIcon
 import { exportPayrollReportToCSV } from '../utils/csvExporter'; // Import CSV exporter
-import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../../utils/dateUtils.js'; // Import date utils
+import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../utils/dateUtils.js'; // Import date utils
 
 const LocacoesPage = () => {
   const location = useLocation();
