@@ -9,6 +9,9 @@
   - A página apresenta dados da equipe (líder, membros) e uma lista de suas locações (obras, datas, status).
   - Adicionado ícone de "visualizar" (olho) na tabela da página de listagem de equipes (`EquipesTable.jsx`) para navegação direta à nova página de detalhes.
 
+### Corrigido
+- **Notificações (Toast) / Erro de Tela Branca**: Corrigido um erro crítico no frontend onde a aplicação apresentava uma tela branca após salvar dados em formulários (ex: Funcionários, Materiais). O erro (`Element type is invalid... but got: undefined`) originava-se na biblioteca `react-toastify` ao tentar renderizar ícones padrão. A solução implementada em `frontend/src/utils/toastUtils.js` foi definir globalmente `icon: () => null` nas `toastOptions`, impedindo a renderização desses ícones problemáticos e estabilizando a exibição de notificações.
+
 ## [v0.6.15] - YYYY-MM-DD
 ### Adicionado
 - **Página de Detalhes do Funcionário**:
