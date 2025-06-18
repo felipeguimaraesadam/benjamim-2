@@ -32,6 +32,7 @@
 - **Formulário de Locação (`LocacaoForm.jsx`)**: Corrigido erro `funcionarios.map is not a function`.
 - **Formulário de Material (`MaterialForm.jsx`)**: Corrigido erro `ReferenceError: SpinnerIcon is not defined`.
 - **Modal de Uso de Material (`DistribuicaoMaterialForm.jsx`)**: Corrigido erro `response.data.filter is not a function` ao carregar compras disponíveis, tratando corretamente a resposta paginada da API.
+- **Utilitários de Data e Importações**: Centralizadas funções de data (`getStartOfWeek`, `formatDateToYYYYMMDD`) em `frontend/src/utils/dateUtils.js`. Corrigidos os caminhos de importação para este arquivo em `LocacoesPage.jsx` e `RelatoriosPage.jsx` (de `../../utils/` para `../utils/`), resolvendo erros de build.
 
 ## [v0.6.19] - YYYY-MM-DD
 ### Corrigido
