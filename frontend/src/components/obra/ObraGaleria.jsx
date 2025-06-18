@@ -13,7 +13,9 @@ function ObraGaleria({ obraId, newFoto }) {
         setError('');
         try {
             const response = await apiClient.get(`/fotosobras/?obra_id=${obraId}`);
-            setFotos(response.data || []);
+            // Ajuste para acessar a lista de resultados se a API estiver paginada
+            const fotosData = response.data.results || response.data || [];
+            setFotos(fotosData);
         } catch (err) {
             console.error('Erro ao buscar fotos:', err.response ? err.response.data : err.message);
             setError('Não foi possível carregar as fotos. Tente recarregar a página.');
@@ -29,7 +31,13 @@ function ObraGaleria({ obraId, newFoto }) {
     // Effect to add newFoto to the list when it's uploaded
     useEffect(() => {
         if (newFoto && newFoto.obra === parseInt(obraId)) { // Ensure foto belongs to current obra
-            setFotos(prevFotos => [newFoto, ...prevFotos]); // Add new photo to the beginning
+            // Se fotos for um objeto paginado, precisamos ter cuidado aqui.
+            // No entanto, newFoto é um único objeto, então adicioná-lo a uma lista é o comportamento esperado.
+            // Se o estado `fotos` realmente se tornar um objeto paginado, esta lógica de adicionar
+            // uma foto nova diretamente ao estado precisaria ser repensada ou o estado `fotos`
+            // deveria consistentemente armazenar apenas a array de resultados.
+            // A correção em fetchFotos (setFotos(fotosData)) garante que `fotos` seja sempre uma array.
+            setFotos(prevFotosArray => [newFoto, ...prevFotosArray]); // Add new photo to the beginning
         }
     }, [newFoto, obraId]);
 
@@ -71,7 +79,8 @@ function ObraGaleria({ obraId, newFoto }) {
         );
     }
 
-    if (fotos.length === 0) {
+    // A verificação de fotos.length === 0 continua válida, pois `fotos` no estado sempre será uma array.
+    if (fotos.length === 0 && !isLoading && !error) { // Adicionado !isLoading e !error para mostrar apenas se não houver erro e não estiver carregando
         return (
             <div className="my-6 p-6 border-2 border-dashed border-gray-300 rounded-lg text-center">
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -83,11 +92,13 @@ function ObraGaleria({ obraId, newFoto }) {
         );
     }
 
+    // Renderiza a galeria apenas se fotos for uma array e tiver itens.
+    // Não é mais necessário checar fotos.results aqui porque `fotos` no estado é garantido ser uma array.
     return (
         <div className="my-6">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Galeria de Fotos</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {fotos.map((foto) => (
+                {fotos && fotos.map((foto) => ( // `fotos` aqui já é a array de resultados.
                     <div key={foto.id} className="group relative border rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out">
                         <img
                             src={foto.imagem} // Assuming backend serves images correctly
