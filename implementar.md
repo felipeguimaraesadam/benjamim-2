@@ -21,6 +21,10 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 [x] Padronização de Ações em Tabelas
 - [x] Substituir texto por ícones (editar, excluir) em FuncionariosPage.jsx, EquipesPage.jsx, MateriaisPage.jsx e ComprasPage.jsx.
 - [x] Adicionar ícone de olho (visualizar) para navegar para as novas páginas de detalhes/modais. (Implementado para Funcionários, Equipes, Materiais; Compras usa para modal de detalhes).
+- [ ] DespesasExtrasPage: Substituir texto por ícones nas ações da tabela.
+- [ ] OcorrenciasPage: Substituir texto por ícones nas ações da tabela.
+- [ ] LocacoesPage: Substituir texto por ícones nas ações da tabela (Editar/Excluir).
+- [ ] UsuariosPage: Substituir texto por ícones nas ações da tabela.
 [ ] Consistência Terminológica: "Locação"
 - [x] Realizar busca e substituição global de "Localização" para "Locação" ou "Locações" em todo o frontend.
 [ ] Melhorias no Formulário de Locação (LocacaoForm.jsx)
@@ -45,6 +49,8 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Garantir que a prop usosMaterial passada para HistoricoUsoTable.jsx seja sempre um array, tratando casos de resposta nula da API com um array vazio [].
 - [x] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx) - Compras
 - [x] Corrigir `TypeError: todasAsComprasBruto.filter is not a function` garantindo que a lista de compras seja sempre um array antes de ser filtrada ou passada para componentes filhos.
+[ ] Erro no Modal de Uso de Material (ObraDetailPage.jsx)
+- [ ] Investigar e corrigir erro `response.data.filter is not a function` ao registrar uso de material, garantindo que a lista de compras seja processada como array.
 📅 4. Funcionalidades de Relatório (Pendentes)
 [x] Relatório de Pagamento de Locação (Semanal)
 - [x] UI: Adicionar botão "Gerar Relatório de Pagamento" na LocacoesPage.jsx.
@@ -53,3 +59,10 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] API (Relatório): Implementar a geração dos dados do relatório, agrupados por obra e aplicando a regra de negócio da data de pagamento.
 - [x] Frontend: Exibir o relatório final no modal.
 - [x] Frontend: Adicionar a funcionalidade de exportação para CSV.
+[ ] Relatório de Pagamento de Materiais Comprados
+- [ ] Backend: API para pré-verificação de compras de materiais (ex: já pagas, pendentes).
+- [ ] Backend: API para gerar dados do relatório de pagamento de materiais (agrupado por Obra/Fornecedor).
+- [ ] Frontend: UI (botão na página de Relatórios ou Compras) para iniciar o relatório.
+- [ ] Frontend: Modal para seleção de período/filtros e exibição de pré-verificação.
+- [ ] Frontend: Exibição do relatório final no modal.
+- [ ] Frontend: Funcionalidade de exportação para CSV.
