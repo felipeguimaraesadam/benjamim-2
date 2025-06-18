@@ -152,7 +152,7 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
     funcionario_locado_nome = serializers.CharField(source='funcionario_locado.nome_completo', read_only=True, allow_null=True)
 
     # Campo para escrita do ID da equipe (se houver equipe)
-    equipe = serializers.PrimaryKeyRelatedField(queryset=Equipe.objects.all(), allow_null=True, required=False, source='equipe')
+    equipe = serializers.PrimaryKeyRelatedField(queryset=Equipe.objects.all(), allow_null=True, required=False)
     # Campo para leitura dos detalhes da equipe, incluindo membros
     equipe_details = EquipeComMembrosBasicSerializer(source='equipe', read_only=True)
 
