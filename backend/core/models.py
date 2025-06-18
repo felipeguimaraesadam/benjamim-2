@@ -193,27 +193,23 @@ class Ocorrencia_Funcionario(models.Model):
         return f"{self.tipo} - {self.funcionario.nome_completo} em {self.data}"
 
 class UsoMaterial(models.Model):
-    compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name='usos')
-    obra = models.ForeignKey(Obra, on_delete=models.CASCADE, related_name='usos_materiais')
+    item_compra = models.ForeignKey('ItemCompra', on_delete=models.CASCADE, related_name='usos')
+    # compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name='usos')
+    # obra = models.ForeignKey(Obra, on_delete=models.CASCADE, related_name='usos_materiais')
     quantidade_usada = models.DecimalField(max_digits=10, decimal_places=2)
     data_uso = models.DateField(auto_now_add=True)
     andar = models.CharField(max_length=50, choices=[('Terreo', 'Térreo'), ('1 Andar', '1º Andar'), ('2 Andar', '2º Andar'), ('Cobertura', 'Cobertura'), ('Area Externa', 'Área Externa'), ('Outro', 'Outro')])
     categoria_uso = models.CharField(max_length=50, choices=[('Geral', 'Geral'), ('Eletrica', 'Elétrica'), ('Hidraulica', 'Hidráulica'), ('Alvenaria', 'Alvenaria'), ('Acabamento', 'Acabamento'), ('Estrutura', 'Estrutura'), ('Uso da Equipe', 'Uso da Equipe')], default='Geral')
     descricao = models.TextField(blank=True, null=True)
 
-    def save(self, *args, **kwargs):
-        self.obra = self.compra.obra
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.obra = self.compra.obra
+    #     super().save(*args, **kwargs)
 
     def __str__(self):
-        # Attempt to get the material name safely for the string representation
-        material_display_name = "Material não especificado"
-        if self.compra and self.compra.itens.exists():
-            first_item = self.compra.itens.first()
-            if first_item and first_item.material:
-                material_display_name = first_item.material.nome
-
-        return f"Uso de {self.quantidade_usada} de '{material_display_name}' (Obra: {self.obra.nome_obra}, Compra ID: {self.compra.id}) em {self.data_uso}"
+        material_nome = self.item_compra.material.nome if self.item_compra and self.item_compra.material else "N/A"
+        obra_nome = self.item_compra.compra.obra.nome_obra if self.item_compra and self.item_compra.compra and self.item_compra.compra.obra else "N/A"
+        return f"Uso de {self.quantidade_usada} de '{material_nome}' na obra '{obra_nome}' em {self.data_uso.strftime('%d/%m/%Y') if self.data_uso else 'data não definida'}"
 
 
 class FotoObra(models.Model):

@@ -22,14 +22,14 @@ const CATEGORIA_USO_CHOICES = [
 
 const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal }) => {
   const [formData, setFormData] = useState({
-    compra: '', // Will store compra ID
+    item_compra: '', // Will store item_compra ID
     quantidade_usada: '',
     andar: ANDAR_CHOICES[0].value,
     categoria_uso: CATEGORIA_USO_CHOICES[0].value,
     descricao: '',
   });
-  const [comprasDisponiveis, setComprasDisponiveis] = useState([]);
-  const [selectedCompraEstoque, setSelectedCompraEstoque] = useState(0);
+  const [itensDisponiveis, setItensDisponiveis] = useState([]);
+  const [selectedItemEstoque, setSelectedItemEstoque] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -37,29 +37,29 @@ const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal 
     if (obraId && showModal) {
       setIsLoading(true);
       setError(null); // Clear previous errors
-      setComprasDisponiveis([]); // Reset compras list
-      setSelectedCompraEstoque(0); // Reset stock
+      setItensDisponiveis([]); // Reset itens list
+      setSelectedItemEstoque(0); // Reset stock
       setFormData(prev => ({ // Reset relevant parts of form
         ...prev,
-        compra: '',
+        item_compra: '',
         quantidade_usada: '',
         andar: ANDAR_CHOICES[0].value,
         categoria_uso: CATEGORIA_USO_CHOICES[0].value,
         descricao: '',
       }));
 
-      api.getCompras({ obra_id: obraId }) // Consider adding page_size: 1000 if many compras per obra are expected
+      api.getItensDisponiveisPorObra(obraId)
         .then(response => {
-          const comprasArray = response.data?.results || []; // Safely access results, default to empty array
-          const filteredCompras = comprasArray.filter(c => parseFloat(c.quantidade_disponivel) > 0);
-          setComprasDisponiveis(filteredCompras);
-          if (filteredCompras.length === 0) {
-            setError({ general: 'Nenhuma compra com material disponível encontrada para esta obra.' });
+          // A API já retorna os itens filtrados com quantidade_disponivel > 0
+          const itens = response.data || [];
+          setItensDisponiveis(itens);
+          if (itens.length === 0) {
+            setError({ general: 'Nenhum item com material disponível encontrado para esta obra.' });
           }
         })
         .catch(err => {
-          console.error("Erro ao buscar compras disponíveis:", err);
-          setError({ general: 'Falha ao carregar lista de compras disponíveis. ' + (err.response?.data?.detail || err.message) });
+          console.error("Erro ao buscar itens disponíveis:", err);
+          setError({ general: 'Falha ao carregar lista de itens disponíveis. ' + (err.response?.data?.detail || err.message) });
         })
         .finally(() => setIsLoading(false));
     }
@@ -71,29 +71,29 @@ const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal 
     setError(prevError => prevError ? { ...prevError, [name]: null, general: null } : null);
 
 
-    if (name === 'compra') {
-      const selected = comprasDisponiveis.find(c => c.id.toString() === value);
+    if (name === 'item_compra') {
+      const selected = itensDisponiveis.find(i => i.id.toString() === value);
       if (selected) {
-        setSelectedCompraEstoque(parseFloat(selected.quantidade_disponivel));
+        setSelectedItemEstoque(parseFloat(selected.quantidade_disponivel));
       } else {
-        setSelectedCompraEstoque(0);
+        setSelectedItemEstoque(0);
       }
-      // Reset quantidade_usada when compra changes
+      // Reset quantidade_usada when item_compra changes
       setFormData(prev => ({ ...prev, quantidade_usada: '' }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.compra) {
-      newErrors.compra = 'Selecione uma compra.';
+    if (!formData.item_compra) {
+      newErrors.item_compra = 'Selecione um material disponível (item de compra).';
     }
     const quantidade = parseFloat(formData.quantidade_usada);
     if (isNaN(quantidade) || quantidade <= 0) {
       newErrors.quantidade_usada = 'Quantidade usada deve ser um número maior que zero.';
     }
-    if (selectedCompraEstoque > 0 && quantidade > selectedCompraEstoque) { // Only validate against stock if stock is known
-      newErrors.quantidade_usada = `Quantidade usada (${quantidade.toLocaleString('pt-BR')}) não pode ser maior que a disponível (${selectedCompraEstoque.toLocaleString('pt-BR')}).`;
+    if (selectedItemEstoque > 0 && quantidade > selectedItemEstoque) { // Only validate against stock if stock is known
+      newErrors.quantidade_usada = `Quantidade usada (${quantidade.toLocaleString('pt-BR')}) não pode ser maior que a disponível (${selectedItemEstoque.toLocaleString('pt-BR')}).`;
     }
     if (!formData.andar) {
       newErrors.andar = 'Selecione o andar/destino.';
@@ -122,10 +122,9 @@ const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal 
       // Do not send obraId, backend derives it from compra
       // const { obra, ...payload } = { ...formData, obra: obraId }; // Ensure obra is included if needed by backend
 
-      // Correct payload: backend expects 'compra' (ID), 'quantidade_usada', 'andar', 'categoria_uso', 'descricao'
-      // The 'obra' field for UsoMaterial is derived by the backend from the 'compra' instance.
+      // Correct payload: backend expects 'item_compra' (ID), 'quantidade_usada', 'andar', 'categoria_uso', 'descricao'
       const submissionPayload = {
-        compra: formData.compra, // This is compra_id
+        item_compra: formData.item_compra, // This is item_compra_id
         quantidade_usada: formData.quantidade_usada,
         andar: formData.andar,
         categoria_uso: formData.categoria_uso,
@@ -178,26 +177,26 @@ const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal 
           )}
 
           <div>
-            <label htmlFor="compra" className="block text-sm font-medium text-gray-700">Compra Disponível</label>
+            <label htmlFor="item_compra" className="block text-sm font-medium text-gray-700">Material Disponível (Item de Compra)</label>
             <select
-              id="compra"
-              name="compra"
-              value={formData.compra}
+              id="item_compra"
+              name="item_compra"
+              value={formData.item_compra}
               onChange={handleChange}
-              className={`mt-1 block w-full py-2 px-3 border ${error?.compra ? 'border-red-500' : 'border-gray-300'} bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-              disabled={isLoading || (comprasDisponiveis.length === 0 && !error?.general?.includes('Falha ao carregar'))}
+              className={`mt-1 block w-full py-2 px-3 border ${error?.item_compra ? 'border-red-500' : 'border-gray-300'} bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+              disabled={isLoading || (itensDisponiveis.length === 0 && !error?.general?.includes('Falha ao carregar'))}
             >
-              <option value="">{isLoading ? "Carregando..." : (comprasDisponiveis.length === 0 && !error?.general?.includes('Falha ao carregar')) ? "Nenhuma compra disponível" : "Selecione uma compra"}</option>
-              {comprasDisponiveis.map(compra => (
-                <option key={compra.id} value={compra.id}>
-                  {compra.material_nome} (Disp: {parseFloat(compra.quantidade_disponivel).toLocaleString('pt-BR')} {compra.material_unidade_medida || ''}) - {new Date(compra.data_compra).toLocaleDateString('pt-BR')}
+              <option value="">{isLoading ? "Carregando..." : (itensDisponiveis.length === 0 && !error?.general?.includes('Falha ao carregar')) ? "Nenhum item disponível" : "Selecione um item"}</option>
+              {itensDisponiveis.map(item => (
+                <option key={item.id} value={item.id}>
+                  {item.material_nome} (Disponível: {parseFloat(item.quantidade_disponivel).toLocaleString('pt-BR')})
                 </option>
               ))}
             </select>
-            {selectedCompraEstoque > 0 && formData.compra && (
-              <p className="text-xs text-gray-500 mt-1">Estoque selecionado: {selectedCompraEstoque.toLocaleString('pt-BR')}</p>
+            {selectedItemEstoque > 0 && formData.item_compra && (
+              <p className="text-xs text-gray-500 mt-1">Estoque selecionado: {selectedItemEstoque.toLocaleString('pt-BR')}</p>
             )}
-            {error?.compra && <p className="text-xs text-red-500 mt-1">{error.compra}</p>}
+            {error?.item_compra && <p className="text-xs text-red-500 mt-1">{error.item_compra}</p>}
           </div>
 
           <div>
@@ -211,7 +210,7 @@ const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal 
               className={`mt-1 block w-full py-2 px-3 border ${error?.quantidade_usada ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
               step="0.01"
               placeholder="Ex: 10.50"
-              disabled={isLoading || !formData.compra}
+              disabled={isLoading || !formData.item_compra}
             />
             {error?.quantidade_usada && <p className="text-xs text-red-500 mt-1">{error.quantidade_usada}</p>}
           </div>
@@ -271,7 +270,7 @@ const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal 
             <button
               type="submit"
               className="py-2 px-4 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-              disabled={isLoading || (comprasDisponiveis.length === 0 && !error?.general?.includes('Falha ao carregar'))}
+              disabled={isLoading || (itensDisponiveis.length === 0 && !error?.general?.includes('Falha ao carregar'))}
             >
               {isLoading ? 'Salvando...' : 'Salvar Uso'}
             </button>

@@ -15,8 +15,9 @@ from .serializers import (
     UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer,
     LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer,
     DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer,
-    ItemCompraSerializer, FotoObraSerializer, FuncionarioDetailSerializer,
-    EquipeDetailSerializer, MaterialDetailSerializer, CompraReportSerializer # Added CompraReportSerializer
+    ItemCompraSerializer, ItemCompraComEstoqueSerializer, # <--- ADICIONADO ItemCompraComEstoqueSerializer
+    FotoObraSerializer, FuncionarioDetailSerializer,
+    EquipeDetailSerializer, MaterialDetailSerializer, CompraReportSerializer
 )
 from .permissions import IsNivelAdmin, IsNivelGerente
 from django.db.models import Sum, Count, F # Added F
@@ -38,6 +39,26 @@ class ObraViewSet(viewsets.ModelViewSet):
     queryset = Obra.objects.all()
     serializer_class = ObraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    @action(detail=True, methods=['get'], url_path='itens-disponiveis')
+    def itens_disponiveis(self, request, pk=None):
+        try:
+            obra = self.get_object() # pk é o ID da obra, get_object() o utiliza
+        except Obra.DoesNotExist: # get_object() levanta Http404, que é tratado pelo DRF
+            return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Encontrar todos os ItemCompra associados a esta obra através das Compras
+        itens_compra_da_obra = ItemCompra.objects.filter(compra__obra=obra).select_related(
+            'material', 'compra' # Otimizar queries
+        )
+
+        # Serializar com o novo ItemCompraComEstoqueSerializer
+        serializer = ItemCompraComEstoqueSerializer(itens_compra_da_obra, many=True, context={'request': request})
+
+        # Filtrar para retornar apenas itens com quantidade_disponivel > 0
+        itens_com_estoque = [item_data for item_data in serializer.data if Decimal(item_data.get('quantidade_disponivel', '0')) > Decimal('0.00')]
+
+        return Response(itens_com_estoque)
 
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
@@ -430,20 +451,18 @@ class UsoMaterialViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = UsoMaterial.objects.select_related(
-            'compra',
-            'obra'
-        ).prefetch_related(
-            'compra__itens__material' # Prefetch items and their materials for each compra
+            'item_compra__compra__obra', # Ajustado para a nova estrutura
+            'item_compra__material'      # Ajustado para a nova estrutura
         ).order_by('-data_uso')
 
         obra_id = self.request.query_params.get('obra_id')
         if obra_id:
-            queryset = queryset.filter(obra_id=obra_id)
+            # Filtrar pela obra através do item_compra e compra associada
+            queryset = queryset.filter(item_compra__compra__obra_id=obra_id)
 
-        # Optional: filter by compra_id if needed in the future
-        # compra_id = self.request.query_params.get('compra_id')
-        # if compra_id:
-        #     queryset = queryset.filter(compra_id=compra_id)
+        item_compra_id = self.request.query_params.get('item_compra_id')
+        if item_compra_id:
+            queryset = queryset.filter(item_compra_id=item_compra_id)
 
         return queryset
 

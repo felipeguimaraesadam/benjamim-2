@@ -102,6 +102,22 @@ const EquipesLocadasList = ({ locacoesEquipe, obraId, obraNome, onRemoverLocacao
                   <p><span className="font-medium">Data Pag.:</span> {formatDate(loc.data_pagamento)}</p>
                 )}
               </div>
+              {/* ADICIONAR ESTE BLOCO PARA EXIBIR MEMBROS DA EQUIPE */}
+              {loc.equipe_details && loc.equipe_details.membros && (
+                <div className="mt-2 pt-1 pl-2 border-t border-l-2 border-gray-200">
+                  <h5 className="text-xs font-semibold text-gray-600">Membros da Equipe:</h5>
+                  {loc.equipe_details.membros.length > 0 ? (
+                    <ul className="list-disc list-inside text-xs text-gray-500 pl-2">
+                      {loc.equipe_details.membros.map(membro => (
+                        <li key={membro.id}>{membro.nome_completo}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-gray-500 italic pl-2">Esta equipe não possui membros registrados.</p>
+                  )}
+                </div>
+              )}
+              {/* FIM DO BLOCO ADICIONADO */}
               <div className="mt-1">
                 <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${statusInfo.colorClass} ${statusInfo.textColorClass}`}>
                   {statusInfo.text}
