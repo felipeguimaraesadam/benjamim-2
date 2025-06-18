@@ -25,6 +25,7 @@ import UsuariosPage from './pages/UsuariosPage'; // Import UsuariosPage
 import ObraDetailPage from './pages/ObraDetailPage'; // Import ObraDetailPage
 import FuncionarioDetailPage from './pages/FuncionarioDetailPage'; // Import FuncionarioDetailPage
 import EquipeDetailPage from './pages/EquipeDetailPage'; // Import EquipeDetailPage
+import MaterialDetailPage from './pages/MaterialDetailPage'; // Import MaterialDetailPage
 
 const router = createBrowserRouter([
   {
@@ -86,6 +87,10 @@ const router = createBrowserRouter([
           {
             path: 'equipes/:id', // Dynamic route for equipe ID
             element: <EquipeDetailPage />,
+          },
+          {
+            path: 'materiais/:id', // Dynamic route for material ID
+            element: <MaterialDetailPage />,
           }
         ],
       }

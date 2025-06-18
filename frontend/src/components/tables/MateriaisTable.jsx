@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const MateriaisTable = ({ materiais, onEdit, onDelete, isLoading, lowStockAlerts = [] }) => {
 
@@ -39,39 +40,48 @@ const MateriaisTable = ({ materiais, onEdit, onDelete, isLoading, lowStockAlerts
           {materiais.map((material) => {
             const isLowStock = lowStockIds.has(material.id);
             return (
-            <tr key={material.id} className={`border-b hover:bg-gray-50 ${isLowStock ? 'bg-yellow-50 hover:bg-yellow-100' : 'bg-white'}`}>
-              <th scope="row" className={`px-6 py-4 font-medium whitespace-nowrap ${isLowStock ? 'text-yellow-700' : 'text-gray-900'}`}>
-                {material.nome}
-              </th>
-              <td className={`px-6 py-4 ${isLowStock && parseFloat(material.quantidade_em_estoque) <= parseFloat(material.nivel_minimo_estoque) ? 'text-red-600 font-bold' : ''}`}>
-                {material.quantidade_em_estoque !== undefined ? parseFloat(material.quantidade_em_estoque).toLocaleString('pt-BR') : 'N/A'}
-              </td>
-              <td className="px-6 py-4">
-                {material.nivel_minimo_estoque !== undefined ? material.nivel_minimo_estoque : 'N/A'}
-              </td>
-              <td className="px-6 py-4">{getUnidadeMedidaLabel(material.unidade_medida)}</td>
-              <td className="px-6 py-4 text-center space-x-2">
-                <button
-                  onClick={() => onEdit(material)}
-                  className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
-                  disabled={isLoading}
-                  aria-label="Editar Material"
-                  title="Editar Material"
-                >
-                  <Pencil size={18} />
-                </button>
-                <button
-                  onClick={() => onDelete(material.id)}
-                  className="text-red-600 hover:text-red-800 disabled:text-gray-400"
-                  disabled={isLoading}
-                  aria-label="Excluir Material"
-                  title="Excluir Material"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </td>
-            </tr>
-          )})};
+              <tr key={material.id} className={`border-b hover:bg-gray-50 ${isLowStock ? 'bg-yellow-50 hover:bg-yellow-100' : 'bg-white'}`}>
+                <th scope="row" className={`px-6 py-4 font-medium whitespace-nowrap ${isLowStock ? 'text-yellow-700' : 'text-gray-900'}`}>
+                  {material.nome}
+                </th>
+                <td className={`px-6 py-4 ${isLowStock && parseFloat(material.quantidade_em_estoque) <= parseFloat(material.nivel_minimo_estoque) ? 'text-red-600 font-bold' : ''}`}>
+                  {material.quantidade_em_estoque !== undefined ? parseFloat(material.quantidade_em_estoque).toLocaleString('pt-BR') : 'N/A'}
+                </td>
+                <td className="px-6 py-4">
+                  {material.nivel_minimo_estoque !== undefined ? material.nivel_minimo_estoque : 'N/A'}
+                </td>
+                <td className="px-6 py-4">{getUnidadeMedidaLabel(material.unidade_medida)}</td>
+                <td className="px-6 py-4 text-center space-x-2">
+                  <Link
+                    to={`/materiais/${material.id}`}
+                    title="Visualizar Detalhes"
+                    aria-label="Visualizar Detalhes"
+                    className="text-green-600 hover:text-green-800 disabled:text-gray-400 inline-block"
+                  >
+                    <Eye size={18} />
+                  </Link>
+                  <button
+                    onClick={() => onEdit(material)}
+                    className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+                    disabled={isLoading}
+                    aria-label="Editar Material"
+                    title="Editar Material"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button
+                    onClick={() => onDelete(material.id)}
+                    className="text-red-600 hover:text-red-800 disabled:text-gray-400"
+                    disabled={isLoading}
+                    aria-label="Excluir Material"
+                    title="Excluir Material"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

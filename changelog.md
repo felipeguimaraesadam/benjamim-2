@@ -1,5 +1,42 @@
 # Changelog
 
+## [v0.6.20] - 2024-08-06
+### Adicionado
+- **Página de Detalhes do Material**:
+  - Backend: Criado endpoint `/api/materiais/<id>/details/` que retorna dados do material e seu histórico de uso. `MaterialDetailSerializer` implementado.
+  - Frontend: Criada `MaterialDetailPage.jsx` e rota. Adicionado ícone de visualização na `MateriaisTable.jsx`.
+- **Relatório de Pagamento de Locação (Semanal) (Melhorado)**:
+  - Backend (`RelatorioFolhaPagamentoViewSet`):
+    - Ação `pre_check_dias_sem_locacoes` melhorada para identificar "medições pendentes".
+    - Ação `generate_report` refatorada para incluir todos os tipos de locações (funcionário, equipe, serviço externo com valor), calcular custos diários para locações multi-dia (diárias são rateadas, outras são atribuídas ao dia de início), e estruturar saída por obra e depois por dia.
+  - Frontend (`LocacoesPage.jsx`):
+    - Botão "Relatório de Pagamento" com estilo ajustado (fundo verde).
+    - Modal do relatório agora inclui seletor de semanas para facilitar escolha do período.
+    - Exibição do relatório atualizada para estrutura diária por obra, incluindo todos os tipos de locação e seus custos diários atribuídos.
+    - CSV export adaptado para nova estrutura detalhada por dia.
+- **Relatório de Pagamento de Materiais Comprados**:
+  - Backend: Novo `RelatorioPagamentoMateriaisViewSet` com ações para:
+    - `pre_check_pagamentos_materiais`: Identifica compras (baseado na `data_compra`) no período com `data_pagamento` pendente ou futura.
+    - `gerar_relatorio_pagamentos_materiais`: Gera relatório de todas as compras onde `data_compra` está no período selecionado, mostrando o status de `data_pagamento`. Agrupado por Obra e Fornecedor, com totais. Utiliza `CompraReportSerializer`.
+  - Frontend (`RelatoriosPage.jsx`):
+    - Nova opção de relatório e modal multi-etapas.
+    - Filtros incluem seleção de período (com novo seletor de semanas para conveniência), obra e fornecedor.
+    - Exibição de pré-verificação e relatório final agrupado (Obra -> Fornecedor -> Compras).
+    - Funcionalidade de exportação para CSV (`exportMaterialPaymentsReportToCSV`).
+- **Padronização de Ícones de Ação em Tabelas**:
+  - Ícones substituíram texto para ações de Editar/Excluir nas tabelas das páginas: Despesas Extras, Ocorrências, Locações e Usuários, seguindo o padrão já aplicado em outras seções.
+
+### Corrigido
+- **Script `run_migrations.bat`**: Caminho do ambiente virtual corrigido para `backend\.venv`.
+- **API de Detalhes do Material**: Corrigido erro `ImproperlyConfigured` no `MaterialDetailSerializer`.
+- **Formulário de Locação (`LocacaoForm.jsx`)**: Corrigido erro `funcionarios.map is not a function`.
+- **Formulário de Material (`MaterialForm.jsx`)**: Corrigido erro `ReferenceError: SpinnerIcon is not defined`.
+- **Modal de Uso de Material (`DistribuicaoMaterialForm.jsx`)**: Corrigido erro `response.data.filter is not a function` ao carregar compras disponíveis, tratando corretamente a resposta paginada da API.
+- **Utilitários de Data e Importações**: Centralizadas funções de data (`getStartOfWeek`, `formatDateToYYYYMMDD`) em `frontend/src/utils/dateUtils.js`. Corrigidos os caminhos de importação para este arquivo em `LocacoesPage.jsx` e `RelatoriosPage.jsx` (de `../../utils/` para `../utils/`), resolvendo erros de build.
+- **Tabela de Materiais (`MateriaisTable.jsx`)**: Corrigido erro de hidratação "text nodes cannot be a child of <tbody>" pela remoção de um ponto e vírgula perdido.
+- **Tabela de Locações (`LocacoesTable.jsx`)**: Corrigido erro de hidratação "whitespace text nodes cannot be a child of <tr>" ao ajustar formatação no `<thead>`.
+- **Tabela de Materiais (`MateriaisTable.jsx`)**: Corrigido erro de sintaxe (`Unexpected token, expected ","`) que surgiu após uma tentativa de correção de erro de hidratação, garantindo a formatação correta do bloco `.map()`.
+
 ## [v0.6.19] - YYYY-MM-DD
 ### Corrigido
 - **Notificações (Toast) / Erro de Tela Branca**: Resolvido o erro crítico `Element type is invalid... but got: undefined` que causava uma tela branca após salvar formulários. A causa raiz era uma incompatibilidade entre a versão anterior do `react-toastify` (v9.x) e o React 19. A biblioteca `react-toastify` foi atualizada para a versão mais recente (`^11.0.5`), que é compatível com as versões modernas do React, eliminando o erro de renderização.

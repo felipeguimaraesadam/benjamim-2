@@ -48,9 +48,10 @@ const DistribuicaoMaterialForm = ({ obraId, onClose, onSubmitSuccess, showModal 
         descricao: '',
       }));
 
-      api.getCompras({ obra_id: obraId })
+      api.getCompras({ obra_id: obraId }) // Consider adding page_size: 1000 if many compras per obra are expected
         .then(response => {
-          const filteredCompras = response.data.filter(c => parseFloat(c.quantidade_disponivel) > 0);
+          const comprasArray = response.data?.results || []; // Safely access results, default to empty array
+          const filteredCompras = comprasArray.filter(c => parseFloat(c.quantidade_disponivel) > 0);
           setComprasDisponiveis(filteredCompras);
           if (filteredCompras.length === 0) {
             setError({ general: 'Nenhuma compra com material disponível encontrada para esta obra.' });

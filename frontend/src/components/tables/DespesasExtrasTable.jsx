@@ -1,5 +1,6 @@
 // Re-processing trigger for DespesasExtrasTable
 import React from 'react';
+import { Pencil, Trash2 } from 'lucide-react'; // Add icon imports
 
 const DespesasExtrasTable = ({ despesas, obras, onEdit, onDelete, isLoading }) => {
   // Helper to find obra name by ID
@@ -40,15 +41,21 @@ const DespesasExtrasTable = ({ despesas, obras, onEdit, onDelete, isLoading }) =
               <td className="px-6 py-4 flex space-x-2">
                 <button
                   onClick={() => onEdit(despesa)}
-                  className="font-medium text-blue-600 hover:underline"
+                  className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+                  disabled={isLoading}
+                  aria-label="Editar Despesa"
+                  title="Editar Despesa"
                 >
-                  Editar
+                  <Pencil size={18} />
                 </button>
                 <button
                   onClick={() => onDelete(despesa.id)}
-                  className="font-medium text-red-600 hover:underline"
+                  className="text-red-600 hover:text-red-800 disabled:text-gray-400"
+                  disabled={isLoading}
+                  aria-label="Excluir Despesa"
+                  title="Excluir Despesa"
                 >
-                  Excluir
+                  <Trash2 size={18} />
                 </button>
               </td>
             </tr>

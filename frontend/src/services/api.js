@@ -209,6 +209,10 @@ export const getMaterialById = (id) => {
   return apiClient.get(`/materiais/${id}/`);
 };
 
+export const getMaterialDetailsById = (id) => {
+  return apiClient.get(`/materiais/${id}/details/`);
+};
+
 export const createMaterial = (materialData) => {
   return apiClient.post('/materiais/', materialData);
 };
@@ -244,6 +248,16 @@ export const getRelatorioDesempenhoEquipe = (params) => {
 export const getRelatorioCustoGeral = (params) => {
   // params: { data_inicio, data_fim }
   return apiClient.get('/relatorios/custo-geral/', { params });
+};
+
+export const getRelatorioPagamentoMateriaisPreCheck = (params) => {
+  // params: { start_date, end_date, obra_id?, fornecedor? }
+  return apiClient.get('/relatorios/pagamento-materiais/pre-check/', { params });
+};
+
+export const generateRelatorioPagamentoMateriais = (params) => {
+  // params: { start_date, end_date, obra_id?, fornecedor? }
+  return apiClient.get('/relatorios/pagamento-materiais/generate/', { params });
 };
 
 

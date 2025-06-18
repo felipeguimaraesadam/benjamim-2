@@ -36,13 +36,25 @@ const LocacaoForm = ({ initialData, obras, equipes, onSubmit, onCancel, isLoadin
 
   // Fetch Funcionarios
   useEffect(() => {
-    api.getFuncionarios()
-      .then(response => setFuncionarios(response.data || response)) // Adjust based on API response structure
-      .catch(error => {
+    const fetchAllFuncionarios = async () => {
+      try {
+        // Request a large page size to get all/most funcionarios
+        // Assuming 500 is a reasonable upper limit for selection in a dropdown.
+        // Adjust if necessary.
+        const response = await api.getFuncionarios({ page_size: 500 });
+        // Ensure that we are setting an array to the state.
+        // Access response.data.results for paginated data.
+        // Default to an empty array if results are not available.
+        setFuncionarios(response.data?.results || []);
+      } catch (error) {
         console.error("Erro ao buscar funcionários:", error);
-        setFormErrors(prev => ({ ...prev, funcionarios: "Falha ao carregar funcionários."}));
-      });
-  }, []);
+        setFuncionarios([]); // Set to empty array on error to prevent .map issues
+        setFormErrors(prev => ({ ...prev, funcionarios: "Falha ao carregar funcionários." }));
+      }
+    };
+
+    fetchAllFuncionarios();
+  }, []); // Empty dependency array means this runs once on mount.
 
   useEffect(() => {
     if (initialData) {

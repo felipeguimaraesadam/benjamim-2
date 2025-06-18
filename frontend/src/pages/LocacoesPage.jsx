@@ -8,6 +8,8 @@ import LocacaoDetailModal from '../components/modals/LocacaoDetailModal';
 import PaginationControls from '../components/utils/PaginationControls';
 import { showSuccessToast, showErrorToast } from '../utils/toastUtils.js'; // Import toast utilities
 import SpinnerIcon from '../components/utils/SpinnerIcon'; // Import SpinnerIcon
+import { exportPayrollReportToCSV } from '../utils/csvExporter'; // Import CSV exporter
+import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../utils/dateUtils.js'; // Import date utils
 
 const LocacoesPage = () => {
   const location = useLocation();
@@ -277,6 +279,35 @@ const LocacoesPage = () => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [reportError, setReportError] = useState(null);
   const [step, setStep] = useState(1); // 1: date selection, 2: pre-check alert, 3: report view
+  const [preCheckMedicoesPendentes, setPreCheckMedicoesPendentes] = useState([]); // New state
+
+  const handleWeekSelectorChange = (event) => {
+    const selectedWeekOffset = parseInt(event.target.value, 10);
+    if (isNaN(selectedWeekOffset)) {
+        return;
+    }
+
+    const today = new Date();
+    const startOfCurrentWeek = getStartOfWeek(today, 1); // Use imported function, Monday as startDay = 1
+
+    const targetMonday = new Date(startOfCurrentWeek);
+    targetMonday.setDate(startOfCurrentWeek.getDate() + (selectedWeekOffset * 7));
+
+    const targetSunday = new Date(targetMonday);
+    targetSunday.setDate(targetMonday.getDate() + 6);
+
+    setReportStartDate(formatDateToYYYYMMDD(targetMonday));
+    setReportEndDate(formatDateToYYYYMMDD(targetSunday));
+  };
+
+  const weekOptions = [
+    { label: "Esta Semana", value: 0 },
+    { label: "Semana Passada", value: -1 },
+    { label: "2 Semanas Atrás", value: -2 },
+    { label: "3 Semanas Atrás", value: -3 },
+    { label: "4 Semanas Atrás", value: -4 },
+    { label: "5 Semanas Atrás", value: -5 },
+  ];
 
   const handleOpenReportModal = () => {
     setShowReportModal(true);
@@ -286,6 +317,7 @@ const LocacoesPage = () => {
     setReportStartDate(sevenDaysAgo.toISOString().split('T')[0]);
     setReportEndDate(new Date().toISOString().split('T')[0]); // Reset today for end date
     setPreCheckAlertDays([]);
+    setPreCheckMedicoesPendentes([]); // Reset new state
     setReportData(null);
     setPreCheckError(null);
     setReportError(null);
@@ -296,6 +328,7 @@ const LocacoesPage = () => {
     setShowReportModal(false);
     // Reset all report states
     setPreCheckAlertDays([]);
+    setPreCheckMedicoesPendentes([]); // Reset new state
     setReportData(null);
     setPreCheckError(null);
     setReportError(null);
@@ -309,18 +342,23 @@ const LocacoesPage = () => {
     }
     setIsPreChecking(true);
     setPreCheckError(null);
+    setPreCheckMedicoesPendentes([]);
     setReportData(null); // Clear previous report
     try {
       const response = await api.getRelatorioFolhaPagamentoPreCheck(reportStartDate, reportEndDate);
-      setPreCheckAlertDays(response.data.dias_sem_locacoes || []);
-      if (response.data.dias_sem_locacoes && response.data.dias_sem_locacoes.length > 0) {
+      const diasSemLocacoes = response.data.dias_sem_locacoes || [];
+      const medicoesPendentes = response.data.medicoes_pendentes || [];
+      setPreCheckAlertDays(diasSemLocacoes);
+      setPreCheckMedicoesPendentes(medicoesPendentes);
+
+      if (diasSemLocacoes.length > 0 || medicoesPendentes.length > 0) {
         setStep(2); // Show alert step
       } else {
-        // No alert days, proceed to generate report directly or enable generate button
-        setStep(2); // Still go to step 2 to give option to generate
+        // No alerts, proceed to generate report directly or enable generate button
+        setStep(2); // Still go to step 2 to give option to generate if no direct generation
       }
     } catch (err) {
-      setPreCheckError(err.response?.data?.error || err.message || 'Falha ao verificar dias.');
+      setPreCheckError(err.response?.data?.error || err.message || 'Falha ao realizar pré-verificação.');
       setStep(1); // Stay on date selection if error
     } finally {
       setIsPreChecking(false);
@@ -444,7 +482,7 @@ const LocacoesPage = () => {
         <div>
             <button
                 onClick={handleOpenReportModal}
-                className="mr-3 bg-secondary-500 hover:bg-secondary-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-secondary-300"
+                className="mr-3 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300"
             >
                 Relatório de Pagamento
             </button>
@@ -477,6 +515,23 @@ const LocacoesPage = () => {
             {/* Step 1: Date Selection */}
             {step === 1 && (
               <div>
+                {/* New Week Selector */}
+                <div className="mb-4">
+                  <label htmlFor="weekSelector" className="block text-sm font-medium text-gray-700 mb-1">Selecionar Semana (Opcional):</label>
+                  <select
+                    id="weekSelector"
+                    onChange={handleWeekSelectorChange}
+                    className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Escolha uma semana...</option>
+                    {weekOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Existing Date Inputs */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label htmlFor="reportStartDate" className="block text-sm font-medium text-gray-700 mb-1">Data de Início:</label>
@@ -514,28 +569,51 @@ const LocacoesPage = () => {
             {/* Step 2: Pre-check Alert */}
             {step === 2 && (
               <div className="my-4">
-                {preCheckAlertDays.length > 0 ? (
-                  <div className="p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
-                    <h3 className="font-bold mb-2">Alerta: Dias Sem Locações Registradas!</h3>
-                    <p className="mb-1">Foram encontrados os seguintes dias dentro do período selecionado que não possuem nenhuma locação ativa registrada:</p>
-                    <ul className="list-disc list-inside mb-3">
-                      {preCheckAlertDays.map(day => <li key={day}>{new Date(day  + 'T00:00:00').toLocaleDateString('pt-BR')}</li>)}
-                    </ul>
+                {preCheckError && <p className="text-red-500 text-sm mb-3">{preCheckError}</p>}
+
+                {(preCheckAlertDays.length > 0 || preCheckMedicoesPendentes.length > 0) ? (
+                  <>
+                    {preCheckAlertDays.length > 0 && (
+                      <div className="p-4 mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+                        <h3 className="font-bold mb-2">Alerta: Dias Sem Locações Registradas!</h3>
+                        <p className="mb-1">Foram encontrados os seguintes dias dentro do período selecionado que não possuem nenhuma locação ativa registrada:</p>
+                        <ul className="list-disc list-inside mb-3">
+                          {preCheckAlertDays.map(day => <li key={day}>{new Date(day + 'T00:00:00').toLocaleDateString('pt-BR')}</li>)}
+                        </ul>
+                      </div>
+                    )}
+
+                    {preCheckMedicoesPendentes.length > 0 && (
+                      <div className="p-4 mb-4 bg-orange-100 border-l-4 border-orange-500 text-orange-700">
+                        <h3 className="font-bold mb-2">Alerta: Medições Pendentes!</h3>
+                        <p className="mb-1">As seguintes locações ativas no período possuem valor de pagamento zerado ou não definido e podem precisar de ajuste:</p>
+                        <ul className="list-disc list-inside mb-3 text-xs">
+                          {preCheckMedicoesPendentes.map(loc => (
+                            <li key={loc.locacao_id}>
+                              ID: {loc.locacao_id} - {loc.obra_nome} - {loc.recurso_locado} (Início: {new Date(loc.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR')}, Tipo: {loc.tipo_pagamento}, Valor: {loc.valor_pagamento === null ? 'NULO' : parseFloat(loc.valor_pagamento).toFixed(2)})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     <p className="mb-3">Deseja gerar o relatório mesmo assim?</p>
                     <div className="flex justify-end space-x-3">
                        <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Voltar/Corrigir Datas</button>
                        <button onClick={handleContinueDespiteAlert} disabled={isGeneratingReport} className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md disabled:opacity-50">
+                        {isGeneratingReport ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
                         {isGeneratingReport ? 'Gerando...' : 'Continuar Mesmo Assim'}
                        </button>
                     </div>
-                  </div>
+                  </>
                 ) : (
                   <div className="p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
                     <h3 className="font-bold mb-2">Verificação Concluída</h3>
-                    <p>Nenhum dia sem locações ativas encontrado no período selecionado.</p>
+                    <p>Nenhuma pendência (dias sem locações ou medições zeradas) encontrada no período selecionado.</p>
                      <div className="flex justify-end space-x-3 mt-3">
                        <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Voltar</button>
                        <button onClick={handleGenerateReport} disabled={isGeneratingReport} className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md disabled:opacity-50">
+                        {isGeneratingReport ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
                         {isGeneratingReport ? 'Gerando...' : 'Gerar Relatório'}
                        </button>
                     </div>
@@ -548,48 +626,82 @@ const LocacoesPage = () => {
             {/* Step 3: Report Display */}
             {step === 3 && reportData && (
               <div className="mt-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">Relatório Gerado</h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-800">Relatório Gerado</h3>
+                  <button
+                    onClick={() => exportPayrollReportToCSV(reportData, `relatorio_folha_pagamento_${reportStartDate}_a_${reportEndDate}.csv`)}
+                    disabled={!reportData || reportData.length === 0}
+                    className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300 text-sm disabled:opacity-50"
+                  >
+                    Exportar para CSV
+                  </button>
+                </div>
                 {reportData.length === 0 && <p className="text-gray-600">Nenhuma locação encontrada para o período e critérios selecionados.</p>}
-                {reportData.map(funcData => (
-                  <div key={funcData.funcionario_id} className="mb-6 p-4 border border-gray-200 rounded-lg shadow">
-                    <div className="flex justify-between items-baseline mb-2">
-                        <h4 className="text-lg font-semibold text-primary-700">{funcData.funcionario_nome}</h4>
-                        <p className="text-md font-medium text-gray-700">Total a Pagar: <span className="text-green-600 font-bold">R$ {parseFloat(funcData.total_a_pagar_periodo).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></p>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full text-sm text-left text-gray-500">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+
+                {reportData.map(obraData => (
+                  <div key={obraData.obra_id} className="mb-8 p-4 border border-gray-200 rounded-lg shadow">
+                    <h4 className="text-xl font-semibold text-blue-700 mb-3">{obraData.obra_nome}</h4>
+                    {obraData.dias.map(diaData => (
+                      <div key={diaData.data} className="mb-4 pl-4 border-l-2 border-blue-200">
+                        <p className="text-md font-semibold text-gray-700">
+                          Data: {formatDateToDMY(diaData.data)} - Total Dia: <span className="text-blue-600 font-bold">{parseFloat(diaData.total_dia_obra).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                        </p>
+                        {diaData.locacoes_no_dia.length > 0 ? (
+                          <div className="overflow-x-auto mt-2">
+                            <table className="min-w-full text-xs text-left text-gray-600">
+                              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                                 <tr>
-                                    <th scope="col" className="px-4 py-2">Obra</th>
-                                    <th scope="col" className="px-4 py-2">Início</th>
-                                    <th scope="col" className="px-4 py-2">Fim</th>
-                                    <th scope="col" className="px-4 py-2">Tipo Pag.</th>
-                                    <th scope="col" className="px-4 py-2">Valor Pag. (R$)</th>
-                                    <th scope="col" className="px-4 py-2">Data Pag.</th>
+                                  <th scope="col" className="px-3 py-2">Recurso</th>
+                                  <th scope="col" className="px-3 py-2">Tipo Pag.</th>
+                                  <th scope="col" className="px-3 py-2 text-right">Valor Dia (R$)</th>
+                                  <th scope="col" className="px-3 py-2 text-right">Valor Total Loc. (R$)</th>
+                                  <th scope="col" className="px-3 py-2">Início Loc.</th>
+                                  <th scope="col" className="px-3 py-2">Fim Loc.</th>
+                                  <th scope="col" className="px-3 py-2">Data Pag. Prev.</th>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {funcData.locacoes.map(loc => (
-                                <tr key={loc.locacao_id} className="bg-white border-b hover:bg-gray-50">
-                                    <td className="px-4 py-2">{loc.obra_nome}</td>
-                                    <td className="px-4 py-2">{new Date(loc.data_locacao_inicio + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                    <td className="px-4 py-2">{new Date(loc.data_locacao_fim + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                                    <td className="px-4 py-2">{loc.tipo_pagamento}</td>
-                                    <td className="px-4 py-2 text-right">{parseFloat(loc.valor_pagamento).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                    <td className="px-4 py-2">{loc.data_pagamento ? new Date(loc.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'}</td>
-                                </tr>
+                              </thead>
+                              <tbody>
+                                {diaData.locacoes_no_dia.map(loc => (
+                                  <tr key={loc.locacao_id} className="bg-white border-b hover:bg-gray-50">
+                                    <td className="px-3 py-2">{loc.recurso_nome}</td>
+                                    <td className="px-3 py-2">{loc.tipo_pagamento_display}</td>
+                                    <td className="px-3 py-2 text-right">{parseFloat(loc.valor_diario_atribuido).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                                    <td className="px-3 py-2 text-right">{parseFloat(loc.valor_pagamento_total_locacao).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                                    <td className="px-3 py-2">{formatDateToDMY(loc.data_locacao_original_inicio)}</td>
+                                    <td className="px-3 py-2">{formatDateToDMY(loc.data_locacao_original_fim)}</td>
+                                    <td className="px-3 py-2">{loc.data_pagamento_prevista ? formatDateToDMY(loc.data_pagamento_prevista) : 'N/A'}</td>
+                                  </tr>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-500 italic mt-1">Nenhuma locação com custo atribuído a este dia.</p>
+                        )}
+                      </div>
+                    ))}
+                    <p className="text-lg font-semibold text-right text-blue-700 mt-4 pt-2 border-t border-blue-200">
+                      Total para {obraData.obra_nome} no Período: <span className="text-green-600 font-bold">{parseFloat(obraData.total_obra_periodo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    </p>
                   </div>
                 ))}
-                 <div className="flex justify-end mt-6">
-                    <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Gerar Novo Relatório</button>
-                 </div>
+
+                {reportData.length > 0 && (
+                  <div className="mt-8 pt-4 border-t-2 border-gray-300">
+                    <p className="text-xl font-bold text-right text-gray-800">
+                      Total Geral do Relatório:
+                      <span className="text-green-700 ml-2">
+                        {reportData.reduce((sum, obra) => sum + parseFloat(obra.total_obra_periodo), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                    </p>
+                  </div>
+                )}
+                <div className="flex justify-end mt-6">
+                  <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Gerar Novo Relatório</button>
+                </div>
               </div>
             )}
-             {isGeneratingReport && step !==3 && <p className="text-center text-gray-500 mt-4">Gerando relatório...</p>}
+            {isGeneratingReport && step !== 3 && <p className="text-center text-gray-500 mt-4">{isGeneratingReport ? <SpinnerIcon className="w-5 h-5 mr-2 inline" /> : null} Gerando relatório...</p>}
              {reportError && step !== 3 && <p className="text-red-500 text-sm mt-3 text-center">{reportError}</p>}
 
 

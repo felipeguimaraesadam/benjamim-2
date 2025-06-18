@@ -8,7 +8,8 @@ from .views import (
     RelatorioFinanceiroObraView, RelatorioGeralComprasView, DashboardStatsView,
     RelatorioDesempenhoEquipeView, RelatorioCustoGeralView, ObraHistoricoCustosView,
     ObraCustosPorCategoriaView, ObraCustosPorMaterialView, # Added new views
-    RelatorioFolhaPagamentoViewSet, FuncionarioDetailView, EquipeDetailView # Added EquipeDetailView
+    RelatorioFolhaPagamentoViewSet, FuncionarioDetailView, EquipeDetailView, # Added EquipeDetailView
+    MaterialDetailAPIView, RelatorioPagamentoMateriaisViewSet # Added RelatorioPagamentoMateriaisViewSet
 )
 
 router = DefaultRouter()
@@ -24,6 +25,7 @@ router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
 router.register(r'usomateriais', UsoMaterialViewSet, basename='usomaterial')
 router.register(r'fotosobras', FotoObraViewSet, basename='fotoobra') # Add this line
 router.register(r'relatorios/folha-pagamento', RelatorioFolhaPagamentoViewSet, basename='relatorio-folha-pagamento')
+router.register(r'relatorios/pagamento-materiais', RelatorioPagamentoMateriaisViewSet, basename='relatorio-pagamento-materiais')
 
 
 urlpatterns = [
@@ -40,4 +42,6 @@ urlpatterns = [
     path('funcionarios/<int:pk>/details/', FuncionarioDetailView.as_view(), name='funcionario-details'),
     # Path for EquipeDetailView
     path('equipes/<int:pk>/details/', EquipeDetailView.as_view(), name='equipe-details'),
+    # Path for MaterialDetailAPIView
+    path('materiais/<int:pk>/details/', MaterialDetailAPIView.as_view(), name='material-details'),
 ]

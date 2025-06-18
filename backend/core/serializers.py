@@ -276,6 +276,32 @@ class MaterialSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class MaterialDetailSerializer(MaterialSerializer):
+    usage_history = serializers.SerializerMethodField()
+
+    class Meta: # Remove (MaterialSerializer.Meta)
+        model = Material # Explicitly define the model
+        fields = [
+            'id',
+            'nome',
+            'unidade_medida',
+            'quantidade_em_estoque',
+            'nivel_minimo_estoque',
+            'usage_history' # Add the new field
+        ]
+
+    def get_usage_history(self, obj):
+        # obj is the Material instance
+        item_compras = ItemCompra.objects.filter(material=obj)
+        compra_ids = item_compras.values_list('compra_id', flat=True).distinct()
+
+        # Optimized query for UsoMaterial
+        usos_material = UsoMaterial.objects.filter(compra_id__in=compra_ids).select_related('obra', 'compra').order_by('-data_uso')
+
+        context = getattr(self, 'context', {})
+        return UsoMaterialSerializer(usos_material, many=True, context=context).data
+
+
 class ItemCompraSerializer(serializers.ModelSerializer):
     material_nome = serializers.CharField(source='material.nome', read_only=True)
 
@@ -317,6 +343,25 @@ class CompraSerializer(serializers.ModelSerializer):
         # Save Compra again to trigger valor_total_liquido calculation (and save valor_total_bruto)
         compra.save()
         return compra
+
+
+# Serializers for RelatorioPagamentoMateriaisViewSet
+# class ItemCompraReportSerializer(serializers.ModelSerializer):
+#     material_nome = serializers.CharField(source='material.nome', read_only=True)
+#     class Meta:
+#         model = ItemCompra
+#         fields = ['material_nome', 'quantidade', 'valor_unitario', 'valor_total_item']
+
+class CompraReportSerializer(serializers.ModelSerializer):
+    # itens = ItemCompraReportSerializer(many=True, read_only=True) # Uncomment if item details are needed
+    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True, allow_null=True) # Allow null for obra_nome
+    class Meta:
+        model = Compra
+        fields = [
+            'id', 'obra', 'obra_nome', 'fornecedor', 'data_compra',
+            'data_pagamento', 'nota_fiscal', 'valor_total_liquido'
+            # , 'itens' # Uncomment if item details are needed
+        ]
 
 
 class DespesaExtraSerializer(serializers.ModelSerializer):

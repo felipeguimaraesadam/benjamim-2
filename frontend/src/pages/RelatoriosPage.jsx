@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
-import { exportDataToCsv } from '../utils/csvExporter'; // Import CSV exporter
+import { exportDataToCsv, exportMaterialPaymentsReportToCSV } from '../utils/csvExporter'; // Import CSV exporter
+import SpinnerIcon from '../components/utils/SpinnerIcon'; // Assuming SpinnerIcon is needed
+import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../utils/dateUtils.js'; // Import date utils
 
 const RelatoriosPage = () => {
   const [obras, setObras] = useState([]);
   const [materiais, setMateriais] = useState([]);
   const [equipes, setEquipes] = useState([]);
-  const [reportType, setReportType] = useState('financeiroObra'); // 'financeiroObra', 'geralCompras', 'desempenhoEquipe', 'custoGeral'
+  const [reportType, setReportType] = useState('financeiroObra'); // 'financeiroObra', 'geralCompras', 'desempenhoEquipe', 'custoGeral', 'pagamentoMateriais'
 
   // Filters state for each report type
   const [financeiroFilters, setFinanceiroFilters] = useState({ obra_id: '', data_inicio: '', data_fim: '' });
@@ -16,36 +18,82 @@ const RelatoriosPage = () => {
 
   const [reportData, setReportData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(false); // For initial dropdown data
   const [error, setError] = useState(null);
+
+  // State for Material Payments Report Modal
+  const [showMaterialPayModal, setShowMaterialPayModal] = useState(false);
+  const [mpStartDate, setMpStartDate] = useState('');
+  const [mpEndDate, setMpEndDate] = useState('');
+  const [mpObraId, setMpObraId] = useState('');
+  const [mpFornecedor, setMpFornecedor] = useState('');
+  const [mpObras, setMpObras] = useState([]); // For Obra dropdown in this modal
+
+  const [mpPreCheckData, setMpPreCheckData] = useState(null);
+  const [mpIsPreChecking, setMpIsPreChecking] = useState(false);
+  const [mpPreCheckError, setMpPreCheckError] = useState(null);
+
+  const [mpReportData, setMpReportData] = useState(null);
+  const [mpIsGeneratingReport, setMpIsGeneratingReport] = useState(false);
+  const [mpReportError, setMpReportError] = useState(null);
+
+  const [mpStep, setMpStep] = useState(1); // 1: filters, 2: pre-check, 3: report
+
+  const weekOptions = [
+    { label: "Esta Semana", value: 0 },
+    { label: "Semana Passada", value: -1 },
+    { label: "2 Semanas Atrás", value: -2 },
+    { label: "3 Semanas Atrás", value: -3 },
+    { label: "4 Semanas Atrás", value: -4 },
+    { label: "5 Semanas Atrás", value: -5 },
+  ];
+
+  const handleMaterialPayWeekSelectorChange = (event) => {
+    const selectedWeekOffset = parseInt(event.target.value, 10);
+    if (isNaN(selectedWeekOffset)) {
+      return;
+    }
+
+    const today = new Date();
+    const startOfCurrentWeek = getStartOfWeek(today, 1); // Monday as startDay = 1
+
+    const targetMonday = new Date(startOfCurrentWeek);
+    targetMonday.setDate(startOfCurrentWeek.getDate() + (selectedWeekOffset * 7));
+
+    const targetSunday = new Date(targetMonday);
+    targetSunday.setDate(targetMonday.getDate() + 6); // Sunday is 6 days after Monday
+
+    setMpStartDate(formatDateToYYYYMMDD(targetMonday));
+    setMpEndDate(formatDateToYYYYMMDD(targetSunday));
+  };
 
   const fetchDropdownData = useCallback(async () => {
     setIsInitialLoading(true);
     try {
+      // Fetch all necessary data for dropdowns, including obras for the new report
       const [obrasRes, materiaisRes, equipesRes] = await Promise.all([
-        api.getObras(),
-        api.getMateriais(),
-        api.getEquipes(),
+        api.getObras({ page_size: 1000 }), // Fetch more obras if needed for dropdowns
+        api.getMateriais({ page_size: 1000 }), // Fetch more materiais if needed
+        api.getEquipes({ page_size: 1000 }),   // Fetch more equipes if needed
       ]);
 
-      // Ensure data is always an array, defaulting to empty array if not.
-      // Assumes typical API response structure like { data: [...] } or { data: { results: [...] } }
-      // Or the response itself is an array.
       const getSafeData = (response) => {
         const data = response?.data?.results || response?.data || (Array.isArray(response) ? response : []);
         return Array.isArray(data) ? data : [];
       };
 
       setObras(getSafeData(obrasRes));
+      setMpObras(getSafeData(obrasRes)); // Also for the new report modal
       setMateriais(getSafeData(materiaisRes));
       setEquipes(getSafeData(equipesRes));
 
     } catch (err) {
       console.error("Failed to fetch dropdown data:", err);
       setError('Falha ao carregar dados para filtros.');
-      setObras([]); // Set to empty array on error
-      setMateriais([]); // Set to empty array on error
-      setEquipes([]); // Set to empty array on error
+      setObras([]);
+      setMpObras([]);
+      setMateriais([]);
+      setEquipes([]);
     } finally {
       setIsInitialLoading(false);
     }
@@ -54,6 +102,7 @@ const RelatoriosPage = () => {
   useEffect(() => {
     fetchDropdownData();
   }, [fetchDropdownData]);
+
 
   const handleFilterChange = (report, field, value) => {
     setError(null);
@@ -294,15 +343,85 @@ const RelatoriosPage = () => {
                 </div>
                 <button type="submit" disabled={isLoading}
                         className="px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg shadow hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-75 disabled:opacity-50">
+                {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2 inline-block" /> : null}
                 {isLoading ? 'Gerando...' : 'Gerar Relatório'}
                 </button>
             </div>
             </form>
         );
+      // Add case for 'pagamentoMateriais' if its form is different or managed here.
+      // For now, it will have its own modal.
       default:
         return null;
     }
   };
+
+  // --- Handlers for Material Payments Report Modal ---
+  const handleOpenMaterialPayModal = () => {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    setMpStartDate(firstDayOfMonth.toISOString().split('T')[0]);
+    setMpEndDate(lastDayOfMonth.toISOString().split('T')[0]);
+    setMpObraId('');
+    setMpFornecedor('');
+    setMpPreCheckData(null);
+    setMpReportData(null);
+    setMpPreCheckError(null);
+    setMpReportError(null);
+    setMpStep(1);
+    setShowMaterialPayModal(true);
+    // Obras (mpObras) are fetched once on page load by fetchDropdownData
+  };
+
+  const handleCloseMaterialPayModal = () => {
+    setShowMaterialPayModal(false);
+  };
+
+  const handleMpPreCheck = async () => {
+    if (!mpStartDate || !mpEndDate) {
+      setMpPreCheckError("Datas de início e fim são obrigatórias.");
+      return;
+    }
+    setMpIsPreChecking(true);
+    setMpPreCheckError(null);
+    setMpReportData(null);
+    try {
+      const params = { start_date: mpStartDate, end_date: mpEndDate };
+      if (mpObraId) params.obra_id = mpObraId;
+      if (mpFornecedor) params.fornecedor = mpFornecedor;
+      const response = await api.getRelatorioPagamentoMateriaisPreCheck(params);
+      setMpPreCheckData(response.data);
+      setMpStep(2);
+    } catch (err) {
+      setMpPreCheckError(err.response?.data?.error || err.message || "Falha na pré-verificação.");
+    } finally {
+      setMpIsPreChecking(false);
+    }
+  };
+
+  const handleMpGenerateReport = async () => {
+    setMpIsGeneratingReport(true);
+    setMpReportError(null);
+    try {
+      const params = { start_date: mpStartDate, end_date: mpEndDate };
+      if (mpObraId) params.obra_id = mpObraId;
+      if (mpFornecedor) params.fornecedor = mpFornecedor;
+      const response = await api.generateRelatorioPagamentoMateriais(params);
+      setMpReportData(response.data);
+      setMpStep(3);
+    } catch (err) {
+      setMpReportError(err.response?.data?.error || err.message || "Falha ao gerar relatório.");
+    } finally {
+      setMpIsGeneratingReport(false);
+    }
+  };
+
+  const handleMpContinueDespiteAlert = () => {
+    handleMpGenerateReport();
+  };
+
 
   // --- Helper functions for data transformation before CSV export ---
   // It's important that these functions have access to 'obras', 'materiais', 'formatDate', 'formatCurrency'
@@ -390,6 +509,12 @@ const RelatoriosPage = () => {
         </button>
         <button onClick={() => { setReportType('custoGeral'); setReportData(null); setError(null); }} className={`px-4 py-2 rounded-md font-medium mb-2 ${reportType === 'custoGeral' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
             Custo Geral do Sistema
+        </button>
+        <button
+            onClick={handleOpenMaterialPayModal}
+            className={`px-4 py-2 rounded-md font-medium mb-2 bg-blue-500 text-white hover:bg-blue-600`}
+        >
+            Pagamento de Materiais
         </button>
       </div>
 
@@ -545,6 +670,160 @@ const RelatoriosPage = () => {
                 </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal for Material Payments Report */}
+      {showMaterialPayModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800">Relatório de Pagamento de Materiais</h2>
+              <button onClick={handleCloseMaterialPayModal} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+
+            {/* Step 1: Filters */}
+            {mpStep === 1 && (
+              <div className="space-y-4">
+                {/* Week Selector for Material Payments Report */}
+                <div className="mb-4">
+                  <label htmlFor="mpWeekSelector" className="block text-sm font-medium text-gray-700 mb-1">Selecionar Semana (Opcional):</label>
+                  <select
+                    id="mpWeekSelector"
+                    onChange={handleMaterialPayWeekSelectorChange}
+                    className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Escolha uma semana...</option>
+                    {weekOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="mpStartDate" className="block text-sm font-medium text-gray-700">Data Início Pagamento <span className="text-red-500">*</span></label>
+                    <input type="date" id="mpStartDate" value={mpStartDate} onChange={(e) => setMpStartDate(e.target.value)}
+                           className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"/>
+                  </div>
+                  <div>
+                    <label htmlFor="mpEndDate" className="block text-sm font-medium text-gray-700">Data Fim Pagamento <span className="text-red-500">*</span></label>
+                    <input type="date" id="mpEndDate" value={mpEndDate} onChange={(e) => setMpEndDate(e.target.value)}
+                           className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"/>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="mpObraId" className="block text-sm font-medium text-gray-700">Obra (Opcional)</label>
+                  <select id="mpObraId" value={mpObraId} onChange={(e) => setMpObraId(e.target.value)}
+                          className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                    <option value="">Todas as Obras</option>
+                    {mpObras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="mpFornecedor" className="block text-sm font-medium text-gray-700">Fornecedor (Opcional)</label>
+                  <input type="text" id="mpFornecedor" value={mpFornecedor} onChange={(e) => setMpFornecedor(e.target.value)}
+                         placeholder="Nome parcial do fornecedor"
+                         className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"/>
+                </div>
+                {mpPreCheckError && <p className="text-red-500 text-sm">{mpPreCheckError}</p>}
+                <button onClick={handleMpPreCheck} disabled={mpIsPreChecking || !mpStartDate || !mpEndDate}
+                        className="w-full mt-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center">
+                  {mpIsPreChecking && <SpinnerIcon className="w-5 h-5 mr-2"/>}
+                  {mpIsPreChecking ? 'Verificando...' : 'Verificar Pendências'}
+                </button>
+              </div>
+            )}
+
+            {/* Step 2: Pre-check Display */}
+            {mpStep === 2 && mpPreCheckData && (
+              <div className="my-4">
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">Pré-verificação de Pagamentos</h3>
+                {mpPreCheckData.compras_com_pagamento_pendente_ou_futuro?.length > 0 ? (
+                  <div className="p-4 mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+                    <p className="font-bold mb-1">{mpPreCheckData.message}</p>
+                    <ul className="list-disc list-inside text-sm">
+                      {mpPreCheckData.compras_com_pagamento_pendente_ou_futuro.map(compra => (
+                        <li key={compra.id}>
+                          Compra ID {compra.id} ({compra.fornecedor}, Obra: {compra.obra_nome || 'N/A'}) - Valor: {formatCurrency(compra.valor_total_liquido)} - Data Compra: {formatDate(compra.data_compra)} - Pagamento Previsto: {compra.data_pagamento ? formatDate(compra.data_pagamento) : 'Pendente'}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="p-4 bg-green-100 border-l-4 border-green-500 text-green-700">Nenhuma compra com pagamento pendente ou futuro encontrada para os filtros e período de compra informados.</p>
+                )}
+                <div className="flex justify-end space-x-3 mt-4">
+                  <button onClick={() => setMpStep(1)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Voltar</button>
+                  <button onClick={handleMpGenerateReport} disabled={mpIsGeneratingReport}
+                          className="px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg shadow hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center">
+                    {mpIsGeneratingReport && <SpinnerIcon className="w-5 h-5 mr-2"/>}
+                    Gerar Relatório
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Report Display */}
+            {mpStep === 3 && mpReportData && (
+              <div className="mt-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-semibold text-gray-800">Relatório de Pagamentos de Materiais</h3>
+                    <button onClick={() => exportMaterialPaymentsReportToCSV(mpReportData, `relatorio_pagamento_materiais_${mpStartDate}_a_${mpEndDate}.csv`)}
+                            disabled={!mpReportData.report_data || mpReportData.report_data.length === 0}
+                            className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 disabled:opacity-50">
+                        Exportar para CSV
+                    </button>
+                </div>
+                {mpReportError && <p className="text-red-500 text-sm mb-3">{mpReportError}</p>}
+                {mpReportData.report_data?.length === 0 && <p>Nenhum pagamento de material encontrado para o período e filtros selecionados.</p>}
+
+                {mpReportData.report_data?.map(obra => (
+                  <div key={obra.obra_id} className="mb-6 p-3 border rounded-md">
+                    <h4 className="text-lg font-semibold text-blue-600 mb-2">Obra: {obra.obra_nome} - Total Pago: {formatCurrency(obra.total_obra)}</h4>
+                    {obra.fornecedores.map(fornecedor => (
+                      <div key={fornecedor.fornecedor_nome} className="mb-3 pl-3 border-l-2">
+                        <h5 className="text-md font-semibold text-gray-700">Fornecedor: {fornecedor.fornecedor_nome} - Total Pago: {formatCurrency(fornecedor.total_fornecedor_na_obra)}</h5>
+                        <table className="min-w-full text-xs mt-1">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-2 py-1 text-left">ID Compra</th>
+                              <th className="px-2 py-1 text-left">Data Compra</th>
+                              <th className="px-2 py-1 text-left">Data Pagamento</th>
+                              <th className="px-2 py-1 text-left">Nota Fiscal</th>
+                              <th className="px-2 py-1 text-right">Valor Líquido</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {fornecedor.compras_a_pagar.map(compra => (
+                              <tr key={compra.id} className="border-b">
+                                <td className="px-2 py-1">{compra.id}</td>
+                                <td className="px-2 py-1">{formatDate(compra.data_compra)}</td>
+                                <td className="px-2 py-1">{compra.data_pagamento ? formatDate(compra.data_pagamento) : 'N/A'}</td>
+                                <td className="px-2 py-1">{compra.nota_fiscal || '-'}</td>
+                                <td className="px-2 py-1 text-right">{formatCurrency(compra.valor_total_liquido)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                {mpReportData.report_data?.length > 0 && (
+                    <div className="mt-4 pt-2 border-t">
+                        <p className="text-lg font-bold text-right">Total Geral Pago: {formatCurrency(mpReportData.total_geral_relatorio)}</p>
+                    </div>
+                )}
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button onClick={() => setMpStep(1)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                    Gerar Novo Relatório
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
