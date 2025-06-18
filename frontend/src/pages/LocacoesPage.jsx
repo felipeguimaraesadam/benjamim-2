@@ -280,6 +280,47 @@ const LocacoesPage = () => {
   const [step, setStep] = useState(1); // 1: date selection, 2: pre-check alert, 3: report view
   const [preCheckMedicoesPendentes, setPreCheckMedicoesPendentes] = useState([]); // New state
 
+  // Helper function to get the start of a week (Monday)
+  const getStartOfWeek = (date) => {
+    const d = new Date(date);
+    const day = d.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust if Sunday is 0
+    return new Date(d.setDate(diff));
+  };
+
+  // Helper function to format date to YYYY-MM-DD
+  const formatDateToYYYYMMDD = (date) => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const handleWeekSelectorChange = (event) => {
+    const selectedWeekOffset = parseInt(event.target.value, 10);
+    if (isNaN(selectedWeekOffset)) {
+        return;
+    }
+
+    const today = new Date();
+    const startOfCurrentWeek = getStartOfWeek(today);
+
+    const targetMonday = new Date(startOfCurrentWeek);
+    targetMonday.setDate(startOfCurrentWeek.getDate() + (selectedWeekOffset * 7));
+
+    const targetSunday = new Date(targetMonday);
+    targetSunday.setDate(targetMonday.getDate() + 6);
+
+    setReportStartDate(formatDateToYYYYMMDD(targetMonday));
+    setReportEndDate(formatDateToYYYYMMDD(targetSunday));
+  };
+
+  const weekOptions = [
+    { label: "Esta Semana", value: 0 },
+    { label: "Semana Passada", value: -1 },
+    { label: "2 Semanas Atrás", value: -2 },
+    { label: "3 Semanas Atrás", value: -3 },
+    { label: "4 Semanas Atrás", value: -4 },
+    { label: "5 Semanas Atrás", value: -5 },
+  ];
+
   const handleOpenReportModal = () => {
     setShowReportModal(true);
     setReportStartDate(new Date().toISOString().split('T')[0]);
@@ -453,7 +494,7 @@ const LocacoesPage = () => {
         <div>
             <button
                 onClick={handleOpenReportModal}
-                className="mr-3 bg-secondary-500 hover:bg-secondary-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-secondary-300"
+                className="mr-3 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300"
             >
                 Relatório de Pagamento
             </button>
@@ -486,6 +527,23 @@ const LocacoesPage = () => {
             {/* Step 1: Date Selection */}
             {step === 1 && (
               <div>
+                {/* New Week Selector */}
+                <div className="mb-4">
+                  <label htmlFor="weekSelector" className="block text-sm font-medium text-gray-700 mb-1">Selecionar Semana (Opcional):</label>
+                  <select
+                    id="weekSelector"
+                    onChange={handleWeekSelectorChange}
+                    className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Escolha uma semana...</option>
+                    {weekOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Existing Date Inputs */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label htmlFor="reportStartDate" className="block text-sm font-medium text-gray-700 mb-1">Data de Início:</label>

@@ -8,12 +8,13 @@
   - Frontend: Adicionado ícone de "visualizar" (olho) na tabela da página de listagem de materiais (`MateriaisTable.jsx`) para navegação direta à página de detalhes do material.
 - **Relatório de Pagamento de Locação (Semanal)**:
   - Backend: API `RelatorioFolhaPagamentoViewSet` atualizada. A ação `pre_check_dias_sem_locacoes` agora também identifica "medições pendentes" (locações com valor zero ou nulo). A ação `generate_report` foi modificada para agrupar os dados por obra, focando em pagamentos de `funcionario_locado`.
-  - Frontend: Na página de Locações, adicionado botão "Relatório de Pagamento". Implementado fluxo de modal com seleção de período, exibição de alertas de pré-verificação (dias sem locações e medições pendentes) e visualização do relatório final agrupado por obra, com totais por obra e total geral. Adicionada funcionalidade de exportação para CSV do relatório gerado.
+  - Frontend: Na página de Locações, o botão "Relatório de Pagamento" teve seu estilo ajustado para melhor visibilidade (fundo verde). No modal do relatório, foi adicionado um seletor de semanas para facilitar a escolha do período (preenchendo automaticamente as datas de início e fim), além do fluxo existente de seleção manual de datas, pré-verificação e visualização do relatório agrupado por obra com exportação para CSV.
 
 ### Corrigido
 - **Script `run_migrations.bat`**: Corrigido o caminho para ativação do ambiente virtual de `backend\venv` para `backend\.venv`.
 - **API de Detalhes do Material**: Corrigido erro `ImproperlyConfigured` (Field name `_` is not valid) no `MaterialDetailSerializer` ao listar explicitamente os campos na `Meta` classe, em vez de herdar e modificar `fields = '__all__'` de forma problemática. Otimizada também a consulta em `get_usage_history`.
 - **Formulário de Locação (`LocacaoForm.jsx`)**: Corrigido erro `funcionarios.map is not a function` que ocorria ao tentar listar funcionários. A busca de funcionários foi ajustada para lidar corretamente com a resposta paginada da API (buscando `response.data?.results` e solicitando `page_size: 500`) e para garantir que a lista de funcionários seja sempre um array.
+- **Formulário de Material (`MaterialForm.jsx`)**: Corrigido erro `ReferenceError: SpinnerIcon is not defined` pela adição da importação faltante do componente `SpinnerIcon`.
 
 ## [v0.6.19] - YYYY-MM-DD
 ### Corrigido
