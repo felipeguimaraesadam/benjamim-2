@@ -1,6 +1,7 @@
 import { toast } from 'react-toastify';
 
-const toastOptions = {
+// Common options, but icon will be overridden explicitly below
+const baseToastOptions = {
   position: "top-right",
   autoClose: 5000,
   hideProgressBar: false,
@@ -9,7 +10,7 @@ const toastOptions = {
   draggable: true,
   progress: undefined,
   theme: "light",
-  icon: () => null // Correção: Fornece um componente nulo para o ícone.
+  // icon: () => null // This can be removed from here if explicitly set in each function
 };
 
 /**
@@ -17,7 +18,10 @@ const toastOptions = {
  * @param {string} message - The message to display.
  */
 export const showSuccessToast = (message) => {
-  toast.success(message, toastOptions);
+  toast.success(message, {
+    ...baseToastOptions,
+    icon: () => null
+  });
 };
 
 /**
@@ -25,7 +29,10 @@ export const showSuccessToast = (message) => {
  * @param {string} message - The message to display.
  */
 export const showErrorToast = (message) => {
-  toast.error(message, toastOptions);
+  toast.error(message, {
+    ...baseToastOptions,
+    icon: () => null
+  });
 };
 
 /**
@@ -33,7 +40,10 @@ export const showErrorToast = (message) => {
  * @param {string} message - The message to display.
  */
 export const showInfoToast = (message) => {
-  toast.info(message, toastOptions);
+  toast.info(message, {
+    ...baseToastOptions,
+    icon: () => null
+  });
 };
 
 /**
@@ -41,5 +51,8 @@ export const showInfoToast = (message) => {
  * @param {string} message - The message to display.
  */
 export const showWarningToast = (message) => {
-  toast.warn(message, toastOptions);
+  toast.warn(message, {
+    ...baseToastOptions,
+    icon: () => null
+  });
 };

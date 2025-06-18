@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.6.17] - YYYY-MM-DD
+### Corrigido
+- **Notificações (Toast) / Erro de Tela Branca**: Reforçada a correção para o erro de tela branca (`Element type is invalid... but got: undefined`) que ocorria após salvar formulários. A configuração `icon: () => null` agora é explicitamente aplicada em cada chamada de função de toast (`toast.success`, `toast.error`, etc.) em `frontend/src/utils/toastUtils.js`, em vez de depender apenas de um objeto de opções compartilhado. Isso garante que a anulação do ícone problemático da `react-toastify` seja aplicada de forma mais direta.
+- **Scripts Batch (.bat)**: Corrigido o caminho do ambiente virtual no script `create_dev_superuser.bat`. Anteriormente, ele tentava ativar `backend\venv\Scripts\activate.bat`, o que falhava pois o ambiente virtual correto é `.venv`. O script foi atualizado para usar `backend\.venv\Scripts\activate.bat`, alinhando-o com o `start.bat` e o nome real do ambiente virtual.
+
 ## [v0.6.16] - YYYY-MM-DD
 ### Adicionado
 - **Página de Detalhes da Equipe**:
