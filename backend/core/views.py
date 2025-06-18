@@ -1162,25 +1162,21 @@ class RelatorioPagamentoMateriaisViewSet(viewsets.ViewSet):
             return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Updated base filters
-        filters = (
-            Q(data_pagamento__gte=start_date) & Q(data_pagamento__lte=end_date)
-        ) | (
-            Q(data_pagamento__isnull=True) &
-            Q(data_compra__gte=start_date) & Q(data_compra__lte=end_date)
-        )
+        # Define the primary filter based on data_compra within the period
+        filters = Q(data_compra__gte=start_date) & Q(data_compra__lte=end_date)
 
+        # Apply optional additional filters for obra_id and fornecedor
         if obra_id_str:
             filters &= Q(obra_id=obra_id_str)
         if fornecedor_str:
             filters &= Q(fornecedor__icontains=fornecedor_str)
 
-        compras_a_pagar = Compra.objects.filter(filters).select_related('obra').order_by('obra__nome_obra', 'fornecedor', 'data_compra', 'data_pagamento')
+        compras_do_periodo = Compra.objects.filter(filters).select_related('obra').order_by('obra__nome_obra', 'fornecedor', 'data_compra', 'data_pagamento')
 
         report = defaultdict(lambda: {"obra_id": None, "obra_nome": "", "fornecedores": defaultdict(lambda: {"fornecedor_nome": "", "compras_a_pagar": [], "total_fornecedor_na_obra": Decimal('0.00')}), "total_obra": Decimal('0.00')})
         grand_total = Decimal('0.00')
 
-        for compra in compras_a_pagar:
+        for compra in compras_do_periodo: # Changed variable name here
             obra_data = report[compra.obra.id]
             if obra_data["obra_id"] is None:
                 obra_data["obra_id"] = compra.obra.id
