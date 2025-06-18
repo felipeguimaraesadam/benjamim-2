@@ -13,6 +13,7 @@
 ### Corrigido
 - **Script `run_migrations.bat`**: Corrigido o caminho para ativação do ambiente virtual de `backend\venv` para `backend\.venv`.
 - **API de Detalhes do Material**: Corrigido erro `ImproperlyConfigured` (Field name `_` is not valid) no `MaterialDetailSerializer` ao listar explicitamente os campos na `Meta` classe, em vez de herdar e modificar `fields = '__all__'` de forma problemática. Otimizada também a consulta em `get_usage_history`.
+- **Formulário de Locação (`LocacaoForm.jsx`)**: Corrigido erro `funcionarios.map is not a function` que ocorria ao tentar listar funcionários. A busca de funcionários foi ajustada para lidar corretamente com a resposta paginada da API (buscando `response.data?.results` e solicitando `page_size: 500`) e para garantir que a lista de funcionários seja sempre um array.
 
 ## [v0.6.19] - YYYY-MM-DD
 ### Corrigido
