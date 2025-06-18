@@ -93,7 +93,6 @@ const FuncionarioDetailPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <p><strong>Nome Completo:</strong> {funcionarioDetails.nome_completo}</p>
           <p><strong>Cargo:</strong> {funcionarioDetails.cargo}</p>
-          <p><strong>Salário:</strong> {formatCurrency(funcionarioDetails.salario)}</p>
           <p><strong>Data de Contratação:</strong> {formatDateToDMY(funcionarioDetails.data_contratacao)}</p>
           <p><strong>Valor Diária Padrão:</strong> {formatCurrency(funcionarioDetails.valor_diaria_padrao)}</p>
           <p><strong>Valor Metro Padrão:</strong> {formatCurrency(funcionarioDetails.valor_metro_padrao)}</p>

@@ -13,7 +13,6 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
     nome_completo: '',
     cargo: '',
-    salario: '',
     data_contratacao: '',
     valor_diaria_padrao: '',
     valor_metro_padrao: '',
@@ -26,7 +25,6 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       setFormData({
         nome_completo: initialData.nome_completo || '',
         cargo: initialData.cargo || '',
-        salario: initialData.salario || '',
         data_contratacao: initialData.data_contratacao ? initialData.data_contratacao.split('T')[0] : '',
         valor_diaria_padrao: initialData.valor_diaria_padrao || '',
         valor_metro_padrao: initialData.valor_metro_padrao || '',
@@ -37,7 +35,6 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       setFormData({
         nome_completo: '',
         cargo: '',
-        salario: '',
         data_contratacao: '',
         valor_diaria_padrao: '',
         valor_metro_padrao: '',
@@ -58,11 +55,6 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     const newErrors = {};
     if (!formData.nome_completo.trim()) newErrors.nome_completo = 'Nome completo é obrigatório.';
     if (!formData.cargo.trim()) newErrors.cargo = 'Cargo é obrigatório.';
-    if (!formData.salario || parseFloat(formData.salario) <= 0) {
-      newErrors.salario = 'Salário deve ser um valor positivo.';
-    } else if (isNaN(parseFloat(formData.salario))) {
-        newErrors.salario = 'Salário deve ser um número válido.';
-    }
     if (!formData.data_contratacao) newErrors.data_contratacao = 'Data de contratação é obrigatória.';
     // Optional fields, so no specific validation unless they have values
     if (formData.valor_diaria_padrao && (isNaN(parseFloat(formData.valor_diaria_padrao)) || parseFloat(formData.valor_diaria_padrao) < 0)) {
@@ -84,7 +76,6 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     if (validateForm()) {
       const dataToSubmit = {
         ...formData,
-        salario: parseFloat(formData.salario).toFixed(2),
         data_contratacao: formData.data_contratacao || null,
         valor_diaria_padrao: formData.valor_diaria_padrao ? parseFloat(formData.valor_diaria_padrao).toFixed(2) : null,
         valor_metro_padrao: formData.valor_metro_padrao ? parseFloat(formData.valor_metro_padrao).toFixed(2) : null,
@@ -107,12 +98,6 @@ const FuncionarioForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         <input type="text" name="cargo" id="cargo" value={formData.cargo} onChange={handleChange}
                className={`bg-gray-50 border ${errors.cargo ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`} />
         {errors.cargo && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.cargo}</p>}
-      </div>
-      <div>
-        <label htmlFor="salario" className="block mb-2 text-sm font-medium text-gray-900">Salário</label>
-        <input type="number" name="salario" id="salario" value={formData.salario} onChange={handleChange} step="0.01"
-               className={`bg-gray-50 border ${errors.salario ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`} />
-        {errors.salario && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.salario}</p>}
       </div>
       <div>
         <label htmlFor="data_contratacao" className="block mb-2 text-sm font-medium text-gray-900">Data de Contratação</label>
