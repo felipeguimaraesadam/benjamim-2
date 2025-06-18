@@ -33,7 +33,6 @@ const FuncionariosTable = ({ funcionarios, onEdit, onDelete, isLoading }) => {
           <tr>
             <th scope="col" className="px-6 py-3">Nome Completo</th>
             <th scope="col" className="px-6 py-3">Cargo</th>
-            <th scope="col" className="px-6 py-3">Salário</th>
             <th scope="col" className="px-6 py-3">Data Contratação</th>
             <th scope="col" className="px-6 py-3">Diária (R$)</th>
             <th scope="col" className="px-6 py-3">Metro (R$)</th>
@@ -48,7 +47,6 @@ const FuncionariosTable = ({ funcionarios, onEdit, onDelete, isLoading }) => {
                 {funcionario.nome_completo}
               </th>
               <td className="px-6 py-4">{funcionario.cargo}</td>
-              <td className="px-6 py-4">{formatCurrency(funcionario.salario)}</td>
               <td className="px-6 py-4">{formatDate(funcionario.data_contratacao)}</td>
               <td className="px-6 py-4">{formatCurrency(funcionario.valor_diaria_padrao)}</td>
               <td className="px-6 py-4">{formatCurrency(funcionario.valor_metro_padrao)}</td>

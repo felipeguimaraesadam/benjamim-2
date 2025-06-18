@@ -123,7 +123,6 @@ class FuncionarioSerializer(serializers.ModelSerializer):
             'id',
             'nome_completo',
             'cargo',
-            'salario',
             'data_contratacao',
             'valor_diaria_padrao',
             'valor_metro_padrao',

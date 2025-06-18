@@ -63,7 +63,6 @@ class Obra(models.Model):
 class Funcionario(models.Model):
     nome_completo = models.CharField(max_length=255)
     cargo = models.CharField(max_length=100)
-    salario = models.DecimalField(max_digits=10, decimal_places=2)
     data_contratacao = models.DateField()
     valor_diaria_padrao = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     valor_metro_padrao = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

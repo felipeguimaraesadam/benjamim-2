@@ -3,7 +3,7 @@ Este documento organiza as próximas tarefas para o desenvolvimento do sistema, 
 As tarefas foram divididas em "Backend" e "Frontend" para maior clareza.
 
 Plano de Implementação de Tarefas
-[  ] Tarefa 1: Remover o campo salario do Funcionário
+[x] Tarefa 1: Remover o campo salario do Funcionário
 Justificativa: O modelo de negócio agora se baseia exclusivamente em diárias/pagamentos por serviço, tornando o campo de salário fixo obsoleto.
 
 Backend (Django):
