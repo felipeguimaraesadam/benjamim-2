@@ -150,6 +150,10 @@ export const getObraCustosPorMaterial = (obraId) => { // New function
     return apiClient.get(`/obras/${obraId}/custos-por-material/`);
 };
 
+export const getItensDisponiveisPorObra = (obraId) => {
+  return apiClient.get(`/obras/${obraId}/itens-disponiveis/`);
+};
+
 // --- Funcionario Service Functions ---
 export const getFuncionarios = (params) => { // Modified to accept params
   return apiClient.get('/funcionarios/', { params });

@@ -181,7 +181,7 @@ const ObraDetailPage = () => {
         <div className="py-6">
           {activeTab === 'equipes' && (
             <EquipesLocadasList
-              locacoesEquipe={locacoesEquipe}
+              locacoesEquipe={locacoesEquipe?.results || (Array.isArray(locacoesEquipe) ? locacoesEquipe : [])}
               obraId={obra.id}
               obraNome={obra.nome_obra}
               onRemoverLocacao={handleRemoverLocacao}

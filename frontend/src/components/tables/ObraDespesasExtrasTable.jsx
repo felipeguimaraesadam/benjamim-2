@@ -20,7 +20,19 @@ const ObraDespesasExtrasTable = ({ despesas, isLoading, error }) => {
     return <div className="p-4 text-center text-red-500">Erro ao carregar despesas: {typeof error === 'string' ? error : error.message}</div>;
   }
 
-  if (!despesas || despesas.length === 0) {
+  // Adiciona uma camada de robustez: se 'despesas' for um objeto paginado, usa 'despesas.results'.
+  // Caso contrário, assume que 'despesas' já é a array.
+  const despesasList = React.useMemo(() => {
+    if (despesas && Array.isArray(despesas.results)) {
+      return despesas.results;
+    }
+    if (Array.isArray(despesas)) {
+      return despesas;
+    }
+    return [];
+  }, [despesas]);
+
+  if (despesasList.length === 0) {
     return <div className="p-4 text-center text-gray-500">Nenhuma despesa extra registrada para esta obra.</div>;
   }
 
@@ -36,7 +48,7 @@ const ObraDespesasExtrasTable = ({ despesas, isLoading, error }) => {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {despesas.map(despesa => (
+          {despesasList.map(despesa => (
             <tr key={despesa.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{formatDate(despesa.data)}</td>
               <td className="px-4 py-3 text-sm text-gray-900 max-w-sm truncate" title={despesa.descricao}>{despesa.descricao}</td>
