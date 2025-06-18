@@ -1,20 +1,37 @@
 # Changelog
 
-## [v0.6.20] - 2024-08-05
+## [v0.6.20] - 2024-08-06
 ### Adicionado
 - **Página de Detalhes do Material**:
-  - Backend: Criado endpoint `/api/materiais/<id>/details/` que retorna dados do material e seu histórico de uso. O histórico é derivado de `UsoMaterial` vinculado às `Compra`s que contêm o material. `MaterialDetailSerializer` foi implementado para esta finalidade.
-  - Frontend: Criada a página `MaterialDetailPage.jsx` (acessível via `/materiais/:id`) para exibir informações do material (nome, unidade, estoque, nível mínimo) e uma tabela do seu histórico de uso (data, obra, quantidade, etc.). A função `getMaterialDetailsById` foi adicionada aos serviços da API.
-  - Frontend: Adicionado ícone de "visualizar" (olho) na tabela da página de listagem de materiais (`MateriaisTable.jsx`) para navegação direta à página de detalhes do material.
-- **Relatório de Pagamento de Locação (Semanal)**:
-  - Backend: API `RelatorioFolhaPagamentoViewSet` atualizada. A ação `pre_check_dias_sem_locacoes` agora também identifica "medições pendentes" (locações com valor zero ou nulo). A ação `generate_report` foi modificada para agrupar os dados por obra, focando em pagamentos de `funcionario_locado`.
-  - Frontend: Na página de Locações, o botão "Relatório de Pagamento" teve seu estilo ajustado para melhor visibilidade (fundo verde). No modal do relatório, foi adicionado um seletor de semanas para facilitar a escolha do período (preenchendo automaticamente as datas de início e fim), além do fluxo existente de seleção manual de datas, pré-verificação e visualização do relatório agrupado por obra com exportação para CSV.
+  - Backend: Criado endpoint `/api/materiais/<id>/details/` que retorna dados do material e seu histórico de uso. `MaterialDetailSerializer` implementado.
+  - Frontend: Criada `MaterialDetailPage.jsx` e rota. Adicionado ícone de visualização na `MateriaisTable.jsx`.
+- **Relatório de Pagamento de Locação (Semanal) (Melhorado)**:
+  - Backend (`RelatorioFolhaPagamentoViewSet`):
+    - Ação `pre_check_dias_sem_locacoes` melhorada para identificar "medições pendentes".
+    - Ação `generate_report` refatorada para incluir todos os tipos de locações (funcionário, equipe, serviço externo com valor), calcular custos diários para locações multi-dia (diárias são rateadas, outras são atribuídas ao dia de início), e estruturar saída por obra e depois por dia.
+  - Frontend (`LocacoesPage.jsx`):
+    - Botão "Relatório de Pagamento" com estilo ajustado (fundo verde).
+    - Modal do relatório agora inclui seletor de semanas para facilitar escolha do período.
+    - Exibição do relatório atualizada para estrutura diária por obra, incluindo todos os tipos de locação e seus custos diários atribuídos.
+    - CSV export adaptado para nova estrutura detalhada por dia.
+- **Relatório de Pagamento de Materiais Comprados**:
+  - Backend: Novo `RelatorioPagamentoMateriaisViewSet` com ações para:
+    - `pre_check_pagamentos_materiais`: Identifica compras no período com pagamento pendente ou futuro.
+    - `gerar_relatorio_pagamentos_materiais`: Gera relatório de compras com `data_pagamento` no período, agrupado por Obra e Fornecedor, com totais. Utiliza `CompraReportSerializer`.
+  - Frontend (`RelatoriosPage.jsx`):
+    - Nova opção de relatório e modal multi-etapas.
+    - Filtros incluem seleção de período (com novo seletor de semanas para conveniência), obra e fornecedor.
+    - Exibição de pré-verificação e relatório final agrupado (Obra -> Fornecedor -> Compras).
+    - Funcionalidade de exportação para CSV (`exportMaterialPaymentsReportToCSV`).
+- **Padronização de Ícones de Ação em Tabelas**:
+  - Ícones substituíram texto para ações de Editar/Excluir nas tabelas das páginas: Despesas Extras, Ocorrências, Locações e Usuários, seguindo o padrão já aplicado em outras seções.
 
 ### Corrigido
-- **Script `run_migrations.bat`**: Corrigido o caminho para ativação do ambiente virtual de `backend\venv` para `backend\.venv`.
-- **API de Detalhes do Material**: Corrigido erro `ImproperlyConfigured` (Field name `_` is not valid) no `MaterialDetailSerializer` ao listar explicitamente os campos na `Meta` classe, em vez de herdar e modificar `fields = '__all__'` de forma problemática. Otimizada também a consulta em `get_usage_history`.
-- **Formulário de Locação (`LocacaoForm.jsx`)**: Corrigido erro `funcionarios.map is not a function` que ocorria ao tentar listar funcionários. A busca de funcionários foi ajustada para lidar corretamente com a resposta paginada da API (buscando `response.data?.results` e solicitando `page_size: 500`) e para garantir que a lista de funcionários seja sempre um array.
-- **Formulário de Material (`MaterialForm.jsx`)**: Corrigido erro `ReferenceError: SpinnerIcon is not defined` pela adição da importação faltante do componente `SpinnerIcon`.
+- **Script `run_migrations.bat`**: Caminho do ambiente virtual corrigido para `backend\.venv`.
+- **API de Detalhes do Material**: Corrigido erro `ImproperlyConfigured` no `MaterialDetailSerializer`.
+- **Formulário de Locação (`LocacaoForm.jsx`)**: Corrigido erro `funcionarios.map is not a function`.
+- **Formulário de Material (`MaterialForm.jsx`)**: Corrigido erro `ReferenceError: SpinnerIcon is not defined`.
+- **Modal de Uso de Material (`DistribuicaoMaterialForm.jsx`)**: Corrigido erro `response.data.filter is not a function` ao carregar compras disponíveis, tratando corretamente a resposta paginada da API.
 
 ## [v0.6.19] - YYYY-MM-DD
 ### Corrigido

@@ -59,10 +59,11 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] API (Relatório): Refatorar para incluir todos os tipos de locações (funcionário, equipe, serviço externo com valor), calcular custos diários para locações multi-dia, e estruturar saída por obra/dia.
 - [x] Frontend: Refatorar exibição do relatório no modal para refletir a estrutura diária por obra e todos os tipos de locação.
 - [x] Frontend: Adaptar funcionalidade de exportação para CSV para a nova estrutura de dados diária.
-[x] Relatório de Pagamento de Materiais Comprados
+[ ] Relatório de Pagamento de Materiais Comprados (Enhancement: Week Selector)
 - [x] Backend: API para pré-verificação de compras de materiais (ex: já pagas, pendentes).
 - [x] Backend: API para gerar dados do relatório de pagamento de materiais (agrupado por Obra/Fornecedor).
 - [x] Frontend: UI (botão na página de Relatórios ou Compras) para iniciar o relatório.
-- [x] Frontend: Modal para seleção de período/filtros e exibição de pré-verificação.
+- [ ] Frontend: Modal para seleção de período/filtros e exibição de pré-verificação. (Enhancement: Adding week selector)
+- [ ] Frontend: Adicionar seletor de semanas no modal para facilitar a seleção do período.
 - [x] Frontend: Exibição do relatório final no modal.
 - [x] Frontend: Funcionalidade de exportação para CSV.

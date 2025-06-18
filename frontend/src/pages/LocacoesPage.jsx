@@ -9,6 +9,7 @@ import PaginationControls from '../components/utils/PaginationControls';
 import { showSuccessToast, showErrorToast } from '../utils/toastUtils.js'; // Import toast utilities
 import SpinnerIcon from '../components/utils/SpinnerIcon'; // Import SpinnerIcon
 import { exportPayrollReportToCSV } from '../utils/csvExporter'; // Import CSV exporter
+import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../../utils/dateUtils.js'; // Import date utils
 
 const LocacoesPage = () => {
   const location = useLocation();
@@ -280,19 +281,6 @@ const LocacoesPage = () => {
   const [step, setStep] = useState(1); // 1: date selection, 2: pre-check alert, 3: report view
   const [preCheckMedicoesPendentes, setPreCheckMedicoesPendentes] = useState([]); // New state
 
-  // Helper function to get the start of a week (Monday)
-  const getStartOfWeek = (date) => {
-    const d = new Date(date);
-    const day = d.getDay(); // Sunday - 0, Monday - 1, ..., Saturday - 6
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust if Sunday is 0
-    return new Date(d.setDate(diff));
-  };
-
-  // Helper function to format date to YYYY-MM-DD
-  const formatDateToYYYYMMDD = (date) => {
-    return date.toISOString().split('T')[0];
-  };
-
   const handleWeekSelectorChange = (event) => {
     const selectedWeekOffset = parseInt(event.target.value, 10);
     if (isNaN(selectedWeekOffset)) {
@@ -300,7 +288,7 @@ const LocacoesPage = () => {
     }
 
     const today = new Date();
-    const startOfCurrentWeek = getStartOfWeek(today);
+    const startOfCurrentWeek = getStartOfWeek(today, 1); // Use imported function, Monday as startDay = 1
 
     const targetMonday = new Date(startOfCurrentWeek);
     targetMonday.setDate(startOfCurrentWeek.getDate() + (selectedWeekOffset * 7));

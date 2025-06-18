@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
 import { exportDataToCsv, exportMaterialPaymentsReportToCSV } from '../utils/csvExporter'; // Import CSV exporter
 import SpinnerIcon from '../components/utils/SpinnerIcon'; // Assuming SpinnerIcon is needed
+import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../../utils/dateUtils.js'; // Import date utils
 
 const RelatoriosPage = () => {
   const [obras, setObras] = useState([]);
@@ -38,6 +39,33 @@ const RelatoriosPage = () => {
 
   const [mpStep, setMpStep] = useState(1); // 1: filters, 2: pre-check, 3: report
 
+  const weekOptions = [
+    { label: "Esta Semana", value: 0 },
+    { label: "Semana Passada", value: -1 },
+    { label: "2 Semanas Atrás", value: -2 },
+    { label: "3 Semanas Atrás", value: -3 },
+    { label: "4 Semanas Atrás", value: -4 },
+    { label: "5 Semanas Atrás", value: -5 },
+  ];
+
+  const handleMaterialPayWeekSelectorChange = (event) => {
+    const selectedWeekOffset = parseInt(event.target.value, 10);
+    if (isNaN(selectedWeekOffset)) {
+      return;
+    }
+
+    const today = new Date();
+    const startOfCurrentWeek = getStartOfWeek(today, 1); // Monday as startDay = 1
+
+    const targetMonday = new Date(startOfCurrentWeek);
+    targetMonday.setDate(startOfCurrentWeek.getDate() + (selectedWeekOffset * 7));
+
+    const targetSunday = new Date(targetMonday);
+    targetSunday.setDate(targetMonday.getDate() + 6); // Sunday is 6 days after Monday
+
+    setMpStartDate(formatDateToYYYYMMDD(targetMonday));
+    setMpEndDate(formatDateToYYYYMMDD(targetSunday));
+  };
 
   const fetchDropdownData = useCallback(async () => {
     setIsInitialLoading(true);
@@ -657,6 +685,22 @@ const RelatoriosPage = () => {
             {/* Step 1: Filters */}
             {mpStep === 1 && (
               <div className="space-y-4">
+                {/* Week Selector for Material Payments Report */}
+                <div className="mb-4">
+                  <label htmlFor="mpWeekSelector" className="block text-sm font-medium text-gray-700 mb-1">Selecionar Semana (Opcional):</label>
+                  <select
+                    id="mpWeekSelector"
+                    onChange={handleMaterialPayWeekSelectorChange}
+                    className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Escolha uma semana...</option>
+                    {weekOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="mpStartDate" className="block text-sm font-medium text-gray-700">Data Início Pagamento <span className="text-red-500">*</span></label>
