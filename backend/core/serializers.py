@@ -330,14 +330,20 @@ class MaterialDetailSerializer(MaterialSerializer):
         ]
 
     def get_usage_history(self, obj):
-        # obj is the Material instance
-        item_compras = ItemCompra.objects.filter(material=obj)
-        compra_ids = item_compras.values_list('compra_id', flat=True).distinct()
+        # obj é a instância de Material
+        # 1. Encontre todos os ItemCompra associados a este Material
+        item_compra_instances = ItemCompra.objects.filter(material=obj)
 
-        # Optimized query for UsoMaterial
-        usos_material = UsoMaterial.objects.filter(compra_id__in=compra_ids).select_related('obra', 'compra').order_by('-data_uso')
+        # 2. Obtenha os IDs desses ItemCompra
+        item_compra_ids = item_compra_instances.values_list('id', flat=True)
 
-        context = getattr(self, 'context', {})
+        # 3. Filtre UsoMaterial que estão ligados a esses ItemCompra
+        usos_material = UsoMaterial.objects.filter(item_compra_id__in=item_compra_ids).select_related(
+            'item_compra__compra__obra', # Para acessar a obra
+            'item_compra__material'    # Para acessar o material (embora já tenhamos o material principal 'obj')
+        ).order_by('-data_uso')
+
+        context = getattr(self, 'context', {}) # Preserva o contexto se existir
         return UsoMaterialSerializer(usos_material, many=True, context=context).data
 
 

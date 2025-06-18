@@ -24,7 +24,9 @@ const EquipeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     setIsLoadingFuncionarios(true);
     api.getFuncionarios()
       .then(response => {
-        setFuncionarios(response.data);
+        // Ajuste para lidar com resposta paginada ou não paginada
+        const funcionariosData = response.data.results || response.data || [];
+        setFuncionarios(funcionariosData);
       })
       .catch(error => {
         console.error("Failed to fetch funcionarios for form", error);
