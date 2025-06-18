@@ -5,6 +5,9 @@
 - **Notificações (Toast) / Erro de Tela Branca**: Resolvido o erro crítico `Element type is invalid... but got: undefined` que causava uma tela branca após salvar formulários. A causa raiz era uma incompatibilidade entre a versão anterior do `react-toastify` (v9.x) e o React 19. A biblioteca `react-toastify` foi atualizada para a versão mais recente (`^11.0.5`), que é compatível com as versões modernas do React, eliminando o erro de renderização.
 - **Acessibilidade**: Adicionado um `aria-label="Abrir menu"` ao botão "hamburger" do menu de navegação (`frontend/src/components/Navegacao.jsx`) para garantir que ele tenha um texto discernível para leitores de tela.
 
+### Melhorias
+- **Script de Configuração (`config.bat`)**: Adicionado o comando `npm audit fix --force` após a etapa de `npm install` na configuração do frontend. Isso visa tentar corrigir automaticamente vulnerabilidades de dependências npm e pode evitar a necessidade de executar o script de configuração múltiplas vezes.
+
 ## [v0.6.18] - YYYY-MM-DD
 ### Corrigido
 - **Erro de Tela Branca (White Screen) / `FinancialDashboard.jsx`**: Resolvido um erro crítico (`TypeError: Cannot read properties of undefined (reading 'filter')`) que causava uma tela branca em várias páginas após o salvamento de formulários. O problema ocorria no componente `FinancialDashboard.jsx` ao tentar acessar `obra.custos_por_categoria` quando esta propriedade estava momentaneamente indefinida durante re-renderizações rápidas (race condition). A correção foi aplicar "Optional Chaining" (`obra?.custos_por_categoria`) para acessar a propriedade de forma segura, prevenindo o erro.
