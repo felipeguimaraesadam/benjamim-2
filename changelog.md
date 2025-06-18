@@ -7,6 +7,10 @@
   - Frontend: Criada a página `MaterialDetailPage.jsx` (acessível via `/materiais/:id`) para exibir informações do material (nome, unidade, estoque, nível mínimo) e uma tabela do seu histórico de uso (data, obra, quantidade, etc.). A função `getMaterialDetailsById` foi adicionada aos serviços da API.
   - Frontend: Adicionado ícone de "visualizar" (olho) na tabela da página de listagem de materiais (`MateriaisTable.jsx`) para navegação direta à página de detalhes do material.
 
+### Corrigido
+- **Script `run_migrations.bat`**: Corrigido o caminho para ativação do ambiente virtual de `backend\venv` para `backend\.venv`.
+- **API de Detalhes do Material**: Corrigido erro `ImproperlyConfigured` (Field name `_` is not valid) no `MaterialDetailSerializer` ao listar explicitamente os campos na `Meta` classe, em vez de herdar e modificar `fields = '__all__'` de forma problemática. Otimizada também a consulta em `get_usage_history`.
+
 ## [v0.6.19] - YYYY-MM-DD
 ### Corrigido
 - **Notificações (Toast) / Erro de Tela Branca**: Resolvido o erro crítico `Element type is invalid... but got: undefined` que causava uma tela branca após salvar formulários. A causa raiz era uma incompatibilidade entre a versão anterior do `react-toastify` (v9.x) e o React 19. A biblioteca `react-toastify` foi atualizada para a versão mais recente (`^11.0.5`), que é compatível com as versões modernas do React, eliminando o erro de renderização.
