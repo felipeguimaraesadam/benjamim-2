@@ -12,11 +12,11 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Frontend: Criar a página EquipeDetailPage.jsx.
 - [x] Frontend: Adicionar a rota /equipes/:id.
 - [x] Frontend: Exibir os dados da equipe (obras, desempenho) de forma detalhada.
-[ ] Página de Detalhes do Material
-[ ] Backend: Criar endpoint /api/materiais/<id>/details/ que retorna o histórico de uso do material.
-[ ] Frontend: Criar a página MaterialDetailPage.jsx.
-[ ] Frontend: Adicionar a rota /materiais/:id.
-[ ] Frontend: Exibir o histórico de uso com gráficos e tabelas.
+[x] Página de Detalhes do Material
+- [x] Backend: Criar endpoint /api/materiais/<id>/details/ que retorna o histórico de uso do material.
+- [x] Frontend: Criar a página MaterialDetailPage.jsx.
+- [x] Frontend: Adicionar a rota /materiais/:id.
+- [x] Frontend: Exibir o histórico de uso com gráficos e tabelas.
 ✨ 2. Melhorias de UI/UX e Consistência
 [ ] Padronização de Ações em Tabelas
 - [x] Substituir texto por ícones (editar, excluir) em FuncionariosPage.jsx, EquipesPage.jsx, MateriaisPage.jsx e ComprasPage.jsx.

@@ -16,7 +16,7 @@ from .serializers import (
     LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer,
     DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer,
     ItemCompraSerializer, FotoObraSerializer, FuncionarioDetailSerializer,
-    EquipeDetailSerializer # Added EquipeDetailSerializer
+    EquipeDetailSerializer, MaterialDetailSerializer
 )
 from .permissions import IsNivelAdmin, IsNivelGerente
 from django.db.models import Sum, Count, F # Added F
@@ -263,6 +263,19 @@ class MaterialViewSet(viewsets.ModelViewSet):
         )
         # Use the viewset's default serializer, which is MaterialSerializer
         serializer = self.get_serializer(low_stock_materials, many=True)
+        return Response(serializer.data)
+
+
+class MaterialDetailAPIView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get(self, request, pk, format=None):
+        try:
+            material_instance = Material.objects.get(pk=pk)
+        except Material.DoesNotExist:
+            return Response({"error": "Material não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = MaterialDetailSerializer(material_instance, context={'request': request})
         return Response(serializer.data)
 
 

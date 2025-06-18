@@ -276,6 +276,33 @@ class MaterialSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class MaterialDetailSerializer(MaterialSerializer):
+    usage_history = serializers.SerializerMethodField()
+
+    class Meta(MaterialSerializer.Meta):
+        fields = list(MaterialSerializer.Meta.fields) + ['usage_history']
+
+    def get_usage_history(self, obj):
+        # obj is the Material instance
+        # Find ItemCompra instances for this material
+        item_compras = ItemCompra.objects.filter(material=obj)
+
+        # Get unique Compra instances from these ItemCompras
+        compra_ids = item_compras.values_list('compra_id', flat=True).distinct()
+        compras = Compra.objects.filter(id__in=compra_ids)
+
+        # Find UsoMaterial instances linked to these Compras
+        # and also directly to the material if that direct link existed (it does not currently in UsoMaterial model)
+        # The current model UsoMaterial is linked to Compra, not directly to Material.
+        # So, we find UsoMaterial instances related to the compras that involved this material.
+        usos_material = UsoMaterial.objects.filter(compra__in=compras).order_by('-data_uso')
+
+        # Serialize the UsoMaterial instances
+        # Need to pass context for nested serializers if they use it (e.g., request)
+        context = getattr(self, 'context', {})
+        return UsoMaterialSerializer(usos_material, many=True, context=context).data
+
+
 class ItemCompraSerializer(serializers.ModelSerializer):
     material_nome = serializers.CharField(source='material.nome', read_only=True)
 

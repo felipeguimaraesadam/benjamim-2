@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.6.20] - 2024-08-05
+### Adicionado
+- **Página de Detalhes do Material**:
+  - Backend: Criado endpoint `/api/materiais/<id>/details/` que retorna dados do material e seu histórico de uso. O histórico é derivado de `UsoMaterial` vinculado às `Compra`s que contêm o material. `MaterialDetailSerializer` foi implementado para esta finalidade.
+  - Frontend: Criada a página `MaterialDetailPage.jsx` (acessível via `/materiais/:id`) para exibir informações do material (nome, unidade, estoque, nível mínimo) e uma tabela do seu histórico de uso (data, obra, quantidade, etc.). A função `getMaterialDetailsById` foi adicionada aos serviços da API.
+
 ## [v0.6.19] - YYYY-MM-DD
 ### Corrigido
 - **Notificações (Toast) / Erro de Tela Branca**: Resolvido o erro crítico `Element type is invalid... but got: undefined` que causava uma tela branca após salvar formulários. A causa raiz era uma incompatibilidade entre a versão anterior do `react-toastify` (v9.x) e o React 19. A biblioteca `react-toastify` foi atualizada para a versão mais recente (`^11.0.5`), que é compatível com as versões modernas do React, eliminando o erro de renderização.

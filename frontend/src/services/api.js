@@ -209,6 +209,10 @@ export const getMaterialById = (id) => {
   return apiClient.get(`/materiais/${id}/`);
 };
 
+export const getMaterialDetailsById = (id) => {
+  return apiClient.get(`/materiais/${id}/details/`);
+};
+
 export const createMaterial = (materialData) => {
   return apiClient.post('/materiais/', materialData);
 };
