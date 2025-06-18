@@ -18,7 +18,7 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Frontend: Adicionar a rota /materiais/:id.
 - [x] Frontend: Exibir o histórico de uso com gráficos e tabelas.
 ✨ 2. Melhorias de UI/UX e Consistência
-[ ] Padronização de Ações em Tabelas
+[x] Padronização de Ações em Tabelas
 - [x] Substituir texto por ícones (editar, excluir) em FuncionariosPage.jsx, EquipesPage.jsx, MateriaisPage.jsx e ComprasPage.jsx.
 - [x] Adicionar ícone de olho (visualizar) para navegar para as novas páginas de detalhes/modais. (Implementado para Funcionários, Equipes, Materiais; Compras usa para modal de detalhes).
 [ ] Consistência Terminológica: "Locação"
@@ -37,8 +37,8 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Corrigir a passagem de props para DespesaExtraForm, garantindo que obras seja sempre um array (response.data.results).
 - [x] Erro na Página de Relatórios (RelatoriosPage.jsx)
 - [x] Atribuir uma key estática e única para cada componente de formulário renderizado condicionalmente para evitar o erro de removeChild.
-[ ] Erro de Tela em Branco ao Salvar Despesa (DespesasExtrasPage.jsx)
-[ ] Investigar erro "Element type is invalid... got: undefined" que ocorre após salvar uma despesa com sucesso. A tela fica em branco, exigindo atualização manual. O problema persiste apesar de tentativas de correção focadas em `react-toastify` e `SpinnerIcon`.
+[x] Erro de Tela em Branco ao Salvar Despesa (DespesasExtrasPage.jsx)
+- [x] Investigar erro "Element type is invalid... got: undefined" que ocorre após salvar uma despesa com sucesso. A tela fica em branco, exigindo atualização manual. O problema persiste apesar de tentativas de correção focadas em `react-toastify` e `SpinnerIcon`. (Resolvido conforme feedback do usuário)
 - [x] Erro no Formulário de Obra (ObraForm.jsx)
 - [x] Corrigir `TypeError: funcionarios.map is not a function` garantindo que a lista de funcionários seja sempre um array.
 - [x] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx)
