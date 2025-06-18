@@ -77,6 +77,7 @@ const Navegacao = () => {
       <button
         className="md:hidden fixed top-4 left-4 z-50 p-2 text-gray-600 hover:text-primary-600"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        aria-label="Abrir menu" // Added attribute
       >
         {isMobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
       </button>

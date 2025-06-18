@@ -1,5 +1,17 @@
-// frontend/src/utils/toastUtils.js
 import { toast } from 'react-toastify';
+
+// Common options, but icon will be overridden explicitly below
+const baseToastOptions = {
+  position: "top-right",
+  autoClose: 5000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+  progress: undefined,
+  theme: "light",
+  // icon: () => null // This can be removed from here if explicitly set in each function
+};
 
 /**
  * Displays a success toast notification.
@@ -7,16 +19,8 @@ import { toast } from 'react-toastify';
  */
 export const showSuccessToast = (message) => {
   toast.success(message, {
-    position: "top-right",
-    autoClose: 5000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    progress: undefined,
-    theme: "light",
-    icon: false, // Add this line to disable the default icon
-    // You can add more default options here if needed
+    ...baseToastOptions,
+    icon: () => null
   });
 };
 
@@ -26,14 +30,8 @@ export const showSuccessToast = (message) => {
  */
 export const showErrorToast = (message) => {
   toast.error(message, {
-    position: "top-right",
-    autoClose: 5000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    progress: undefined,
-    theme: "light",
+    ...baseToastOptions,
+    icon: () => null
   });
 };
 
@@ -43,14 +41,8 @@ export const showErrorToast = (message) => {
  */
 export const showInfoToast = (message) => {
   toast.info(message, {
-    position: "top-right",
-    autoClose: 5000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    progress: undefined,
-    theme: "light",
+    ...baseToastOptions,
+    icon: () => null
   });
 };
 
@@ -60,13 +52,7 @@ export const showInfoToast = (message) => {
  */
 export const showWarningToast = (message) => {
   toast.warn(message, {
-    position: "top-right",
-    autoClose: 5000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    progress: undefined,
-    theme: "light",
+    ...baseToastOptions,
+    icon: () => null
   });
 };

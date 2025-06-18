@@ -92,6 +92,11 @@ IF ERRORLEVEL 1 (
 ) ELSE (
     ECHO [SUCESSO] Dependencias do frontend instaladas (ERRORLEVEL 0).
 )
+
+ECHO    - Tentando corrigir vulnerabilidades com 'npm audit fix --force'...
+npm audit fix --force
+ECHO    - Comando 'npm audit fix --force' finalizado. Verifique o log acima para detalhes.
+
 GOTO NPM_DEPS_CHECKED
 
 :NPM_INSTALL_ERROR

@@ -5,7 +5,7 @@ const FinancialDashboard = ({ obra }) => {
   if (!obra) return null;
 
   // Prepare data for PieChart, ensuring values are numbers and filtering out zero values
-  const custosCategoriaData = obra.custos_por_categoria ?
+  const custosCategoriaData = obra?.custos_por_categoria ? // MODIFIED LINE
     Object.entries(obra.custos_por_categoria)
       .map(([name, value]) => ({ name, value: parseFloat(value) || 0 }))
       .filter(entry => entry.value > 0)

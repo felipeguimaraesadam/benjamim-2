@@ -155,6 +155,10 @@ export const getFuncionarios = (params) => { // Modified to accept params
   return apiClient.get('/funcionarios/', { params });
 };
 
+export const getFuncionarioDetailsById = (id) => {
+  return apiClient.get(`/funcionarios/${id}/details/`);
+};
+
 export const getFuncionarioById = (id) => {
   return apiClient.get(`/funcionarios/${id}/`);
 };
@@ -174,6 +178,10 @@ export const deleteFuncionario = (id) => {
 // --- Equipe Service Functions ---
 export const getEquipes = (params) => { // Modified to accept params
   return apiClient.get('/equipes/', { params });
+};
+
+export const getEquipeDetailsById = (id) => {
+  return apiClient.get(`/equipes/${id}/details/`);
 };
 
 export const getEquipeById = (id) => {

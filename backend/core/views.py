@@ -11,7 +11,13 @@ from django.utils import timezone
 from datetime import date, timedelta
 
 from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra, FotoObra
-from .serializers import UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer, LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer, DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer, ItemCompraSerializer, FotoObraSerializer
+from .serializers import (
+    UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer,
+    LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer,
+    DespesaExtraSerializer, OcorrenciaFuncionarioSerializer, UsoMaterialSerializer,
+    ItemCompraSerializer, FotoObraSerializer, FuncionarioDetailSerializer,
+    EquipeDetailSerializer # Added EquipeDetailSerializer
+)
 from .permissions import IsNivelAdmin, IsNivelGerente
 from django.db.models import Sum, Count, F # Added F
 from decimal import Decimal # Added Decimal
@@ -43,6 +49,20 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
 
+# New FuncionarioDetailView
+class FuncionarioDetailView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente] # Or more specific permissions
+
+    def get(self, request, pk, format=None):
+        try:
+            funcionario = Funcionario.objects.get(pk=pk)
+        except Funcionario.DoesNotExist:
+            return Response({"error": "Funcionário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = FuncionarioDetailSerializer(funcionario, context={'request': request})
+        return Response(serializer.data)
+
+
 class EquipeViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows equipes to be viewed or edited.
@@ -50,6 +70,20 @@ class EquipeViewSet(viewsets.ModelViewSet):
     queryset = Equipe.objects.all()
     serializer_class = EquipeSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+
+# New EquipeDetailView
+class EquipeDetailView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get(self, request, pk, format=None):
+        try:
+            equipe = Equipe.objects.prefetch_related('membros').select_related('lider').get(pk=pk)
+        except Equipe.DoesNotExist:
+            return Response({"error": "Equipe não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EquipeDetailSerializer(equipe, context={'request': request})
+        return Response(serializer.data)
 
 
 class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):

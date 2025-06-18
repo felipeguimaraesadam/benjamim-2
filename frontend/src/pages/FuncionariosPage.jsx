@@ -109,7 +109,14 @@ const FuncionariosPage = () => {
       }
       setShowFormModal(false);
       setCurrentFuncionario(null);
-      fetchFuncionarios(isEditing ? currentPage : 1); // Refetch: current page on update, first page on create
+
+      // Adicionamos um atraso para garantir que a transição do modal (se houver)
+      // e a atualização de estado do React para fechar o modal sejam processadas
+      // antes de o React começar a re-renderizar a página com os novos dados.
+      setTimeout(() => {
+        fetchFuncionarios(isEditing ? currentPage : 1);
+      }, 200); // 200 milissegundos de atraso
+
     } catch (err) {
       // Handle more specific backend errors if available (e.g., from a DRF serializer)
       const errorData = err.response?.data;

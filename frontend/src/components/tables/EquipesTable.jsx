@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Eye } from 'lucide-react'; // Added Eye
+import { Link } from 'react-router-dom'; // Added Link
 
 const EquipesTable = ({ equipes, funcionarios, onEdit, onDelete, isLoading }) => {
 
@@ -45,9 +46,17 @@ const EquipesTable = ({ equipes, funcionarios, onEdit, onDelete, isLoading }) =>
               <td className="px-6 py-4">{equipe.membros ? equipe.membros.length : 0}</td>
               {/* <td className="px-6 py-4 truncate max-w-xs">{getMembrosNomes(equipe.membros)}</td> */}
               <td className="px-6 py-4 text-center space-x-2">
+                <Link
+                  to={`/equipes/${equipe.id}`}
+                  title="Visualizar Detalhes da Equipe"
+                  aria-label="Visualizar Detalhes da Equipe"
+                  className="text-green-600 hover:text-green-800 disabled:text-gray-400 inline-block align-middle"
+                >
+                  <Eye size={18} />
+                </Link>
                 <button
                   onClick={() => onEdit(equipe)}
-                  className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+                  className="text-blue-600 hover:text-blue-800 disabled:text-gray-400 inline-block align-middle"
                   disabled={isLoading}
                   aria-label="Editar Equipe"
                   title="Editar Equipe"
@@ -56,7 +65,7 @@ const EquipesTable = ({ equipes, funcionarios, onEdit, onDelete, isLoading }) =>
                 </button>
                 <button
                   onClick={() => onDelete(equipe.id)}
-                  className="text-red-600 hover:text-red-800 disabled:text-gray-400"
+                  className="text-red-600 hover:text-red-800 disabled:text-gray-400 inline-block align-middle"
                   disabled={isLoading}
                   aria-label="Excluir Equipe"
                   title="Excluir Equipe"

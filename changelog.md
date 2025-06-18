@@ -1,5 +1,45 @@
 # Changelog
 
+## [v0.6.19] - YYYY-MM-DD
+### Corrigido
+- **Notificações (Toast) / Erro de Tela Branca**: Resolvido o erro crítico `Element type is invalid... but got: undefined` que causava uma tela branca após salvar formulários. A causa raiz era uma incompatibilidade entre a versão anterior do `react-toastify` (v9.x) e o React 19. A biblioteca `react-toastify` foi atualizada para a versão mais recente (`^11.0.5`), que é compatível com as versões modernas do React, eliminando o erro de renderização.
+- **Acessibilidade**: Adicionado um `aria-label="Abrir menu"` ao botão "hamburger" do menu de navegação (`frontend/src/components/Navegacao.jsx`) para garantir que ele tenha um texto discernível para leitores de tela.
+
+### Melhorias
+- **Script de Configuração (`config.bat`)**: Adicionado o comando `npm audit fix --force` após a etapa de `npm install` na configuração do frontend. Isso visa tentar corrigir automaticamente vulnerabilidades de dependências npm e pode evitar a necessidade de executar o script de configuração múltiplas vezes.
+
+## [v0.6.18] - YYYY-MM-DD
+### Corrigido
+- **Erro de Tela Branca (White Screen) / `FinancialDashboard.jsx`**: Resolvido um erro crítico (`TypeError: Cannot read properties of undefined (reading 'filter')`) que causava uma tela branca em várias páginas após o salvamento de formulários. O problema ocorria no componente `FinancialDashboard.jsx` ao tentar acessar `obra.custos_por_categoria` quando esta propriedade estava momentaneamente indefinida durante re-renderizações rápidas (race condition). A correção foi aplicar "Optional Chaining" (`obra?.custos_por_categoria`) para acessar a propriedade de forma segura, prevenindo o erro.
+
+## [v0.6.17] - YYYY-MM-DD
+### Corrigido
+- **Notificações (Toast) / Erro de Tela Branca**: Reforçada a correção para o erro de tela branca (`Element type is invalid... but got: undefined`) que ocorria após salvar formulários. A configuração `icon: () => null` agora é explicitamente aplicada em cada chamada de função de toast (`toast.success`, `toast.error`, etc.) em `frontend/src/utils/toastUtils.js`, em vez de depender apenas de um objeto de opções compartilhado. Isso garante que a anulação do ícone problemático da `react-toastify` seja aplicada de forma mais direta.
+- **Scripts Batch (.bat)**: Corrigido o caminho do ambiente virtual no script `create_dev_superuser.bat`. Anteriormente, ele tentava ativar `backend\venv\Scripts\activate.bat`, o que falhava pois o ambiente virtual correto é `.venv`. O script foi atualizado para usar `backend\.venv\Scripts\activate.bat`, alinhando-o com o `start.bat` e o nome real do ambiente virtual.
+
+## [v0.6.16] - YYYY-MM-DD
+### Adicionado
+- **Página de Detalhes da Equipe**:
+  - Criado endpoint no backend (`/api/equipes/<id>/details/`) que fornece dados detalhados da equipe, incluindo líder, membros e um histórico de obras em que atuaram (locações).
+  - Implementados `EquipeDetailSerializer` e `EquipeLocacaoSerializer` no backend para estruturar os dados.
+  - Desenvolvida nova página no frontend (`EquipeDetailPage.jsx`) para exibir os detalhes da equipe, acessível via rota `/equipes/:id`.
+  - A página apresenta dados da equipe (líder, membros) e uma lista de suas locações (obras, datas, status).
+  - Adicionado ícone de "visualizar" (olho) na tabela da página de listagem de equipes (`EquipesTable.jsx`) para navegação direta à nova página de detalhes.
+
+### Corrigido
+- **Notificações (Toast) / Erro de Tela Branca**: Corrigido um erro crítico no frontend onde a aplicação apresentava uma tela branca após salvar dados em formulários (ex: Funcionários, Materiais). O erro (`Element type is invalid... but got: undefined`) originava-se na biblioteca `react-toastify` ao tentar renderizar ícones padrão. A solução implementada em `frontend/src/utils/toastUtils.js` foi definir globalmente `icon: () => null` nas `toastOptions`, impedindo a renderização desses ícones problemáticos e estabilizando a exibição de notificações.
+
+## [v0.6.15] - YYYY-MM-DD
+### Adicionado
+- **Página de Detalhes do Funcionário**:
+  - Criado endpoint no backend (`/api/funcionarios/<id>/details/`) que fornece um histórico completo do funcionário, incluindo obras participadas, pagamentos recebidos e ocorrências registradas.
+  - Desenvolvida nova página no frontend (`FuncionarioDetailPage.jsx`) para exibir os detalhes do funcionário, acessível através da rota `/funcionarios/:id`.
+  - A página apresenta os dados do funcionário em seções organizadas: "Dados Pessoais", "Obras Participadas", "Histórico de Pagamentos" e "Ocorrências Registradas".
+  - Adicionado um ícone de "visualizar" (olho) na tabela da página de listagem de funcionários (`FuncionariosTable.jsx`) para facilitar o acesso direto à nova página de detalhes.
+
+### Corrigido
+- **API de Detalhes do Funcionário**: Corrigido um erro 500 (Internal Server Error) no endpoint `/api/funcionarios/<id>/details/` que era causado por uma `AssertionError` no backend. A falha ocorria devido à especificação redundante do argumento `source` em campos do `FuncionarioObraParticipadaSerializer` (ex: `data_locacao_inicio = serializers.DateField(source='data_locacao_inicio')`). A correção envolveu remover esses argumentos `source` redundantes. As modificações anteriores para robustez da consulta (como `obra__isnull=False` e remoção de `.only()`) foram mantidas.
+
 ## [v0.6.14] - YYYY-MM-DD
 ### Corrigido
 - **Página de Detalhes da Obra (`ObraDetailPage.jsx`):** Corrigido um erro (`TypeError: todasAsComprasBruto.filter is not a function`) que ocorria ao processar a lista de compras da obra. Ajustada a lógica para garantir que a variável `todasAsComprasBruto` (ou uma derivada dela, `actualTodasAsCompras`) seja tratada como um array antes de aplicar métodos como `.filter()` ou ao ser passada para componentes filhos, especialmente ao lidar com respostas paginadas da API.
