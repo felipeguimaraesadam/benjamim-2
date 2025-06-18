@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.18] - YYYY-MM-DD
+### Corrigido
+- **Erro de Tela Branca (White Screen) / `FinancialDashboard.jsx`**: Resolvido um erro crítico (`TypeError: Cannot read properties of undefined (reading 'filter')`) que causava uma tela branca em várias páginas após o salvamento de formulários. O problema ocorria no componente `FinancialDashboard.jsx` ao tentar acessar `obra.custos_por_categoria` quando esta propriedade estava momentaneamente indefinida durante re-renderizações rápidas (race condition). A correção foi aplicar "Optional Chaining" (`obra?.custos_por_categoria`) para acessar a propriedade de forma segura, prevenindo o erro.
+
 ## [v0.6.17] - YYYY-MM-DD
 ### Corrigido
 - **Notificações (Toast) / Erro de Tela Branca**: Reforçada a correção para o erro de tela branca (`Element type is invalid... but got: undefined`) que ocorria após salvar formulários. A configuração `icon: () => null` agora é explicitamente aplicada em cada chamada de função de toast (`toast.success`, `toast.error`, etc.) em `frontend/src/utils/toastUtils.js`, em vez de depender apenas de um objeto de opções compartilhado. Isso garante que a anulação do ícone problemático da `react-toastify` seja aplicada de forma mais direta.
