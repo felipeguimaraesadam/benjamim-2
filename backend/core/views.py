@@ -941,10 +941,40 @@ class RelatorioFolhaPagamentoViewSet(viewsets.ViewSet):
         ).values_list('data_locacao_inicio', flat=True).distinct()
 
         locacoes_dates_set = set(locacoes_dates_qs)
-
         dias_sem_locacoes = sorted([dt.isoformat() for dt in (all_dates_in_range - locacoes_dates_set)])
 
-        return Response({'dias_sem_locacoes': dias_sem_locacoes})
+        # New: Identify "medições pendentes"
+        medicoes_pendentes_qs = Locacao_Obras_Equipes.objects.filter(
+            Q(data_locacao_inicio__gte=start_date) &
+            Q(data_locacao_inicio__lte=end_date) &
+            Q(status_locacao='ativa') &
+            (Q(valor_pagamento__isnull=True) | Q(valor_pagamento=Decimal('0.00')))
+        ).select_related('obra', 'funcionario_locado', 'equipe')
+
+        medicoes_pendentes_list = []
+        for loc in medicoes_pendentes_qs:
+            recurso_locado_str = "Serviço Externo"
+            if loc.funcionario_locado:
+                recurso_locado_str = f"Funcionário: {loc.funcionario_locado.nome_completo}"
+            elif loc.equipe:
+                recurso_locado_str = f"Equipe: {loc.equipe.nome_equipe}"
+            elif loc.servico_externo: # Ensure servico_externo is captured if it's the case
+                 recurso_locado_str = f"Serviço Externo: {loc.servico_externo}"
+
+
+            medicoes_pendentes_list.append({
+                'locacao_id': loc.id,
+                'obra_nome': loc.obra.nome_obra if loc.obra else "Obra não especificada",
+                'recurso_locado': recurso_locado_str,
+                'data_inicio': loc.data_locacao_inicio.isoformat(),
+                'tipo_pagamento': loc.get_tipo_pagamento_display(),
+                'valor_pagamento': loc.valor_pagamento # Will be null or 0.00
+            })
+
+        return Response({
+            'dias_sem_locacoes': dias_sem_locacoes,
+            'medicoes_pendentes': medicoes_pendentes_list
+        })
 
     @action(detail=False, methods=['get'], url_path='generate_report')
     def generate_report(self, request):
@@ -965,53 +995,61 @@ class RelatorioFolhaPagamentoViewSet(viewsets.ViewSet):
             return Response({"error": "start_date não pode ser posterior a end_date."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Filter locações:
-        # - Within the date range for data_locacao_inicio
-        # - Payable in the period (data_pagamento is null OR data_pagamento <= end_date)
-        # - Must be linked to a funcionario_locado (not equipe or servico_externo alone)
-        # - Status must be 'ativa'
         locacoes_periodo = Locacao_Obras_Equipes.objects.filter(
             Q(data_locacao_inicio__gte=start_date) &
             Q(data_locacao_inicio__lte=end_date) &
             (Q(data_pagamento__isnull=True) | Q(data_pagamento__lte=end_date)) &
-            Q(funcionario_locado__isnull=False) &
-            Q(status_locacao='ativa')
-        ).select_related('funcionario_locado', 'obra').order_by('funcionario_locado__nome_completo', 'data_locacao_inicio')
+            Q(funcionario_locado__isnull=False) & # Still focused on funcionario_locado for "Folha de Pagamento"
+            Q(status_locacao='ativa') &
+            Q(valor_pagamento__isnull=False) & # Ensure valor_pagamento is not null
+            Q(valor_pagamento__gt=Decimal('0.00')) # Ensure valor_pagamento is greater than 0
+        ).select_related('funcionario_locado', 'obra').order_by('obra__nome_obra', 'data_locacao_inicio', 'funcionario_locado__nome_completo')
 
-        report_data = defaultdict(lambda: {"funcionario_id": None, "funcionario_nome": "", "locacoes": [], "total_a_pagar_periodo": Decimal('0.00')})
+        report_data_by_obra = defaultdict(lambda: {
+            "obra_id": None,
+            "obra_nome": "",
+            "locacoes_na_obra": [],
+            "total_a_pagar_na_obra_periodo": Decimal('0.00')
+        })
 
         for locacao in locacoes_periodo:
-            func = locacao.funcionario_locado # Should not be None due to filter
-            if func is None: # Should not happen with Q(funcionario_locado__isnull=False)
+            obra = locacao.obra
+            if obra is None: # Should not happen if obra is mandatory for locacao
                 continue
 
-            func_key = func.id
+            obra_key = obra.id
 
-            if report_data[func_key]["funcionario_id"] is None:
-                report_data[func_key]["funcionario_id"] = func.id
-                report_data[func_key]["funcionario_nome"] = func.nome_completo
+            if report_data_by_obra[obra_key]["obra_id"] is None:
+                report_data_by_obra[obra_key]["obra_id"] = obra.id
+                report_data_by_obra[obra_key]["obra_nome"] = obra.nome_obra
 
-            report_data[func_key]["locacoes"].append({
-                "locacao_id": locacao.id, # Added for potential detail linking on frontend
-                "obra_id": locacao.obra.id,
-                "obra_nome": locacao.obra.nome_obra,
+            funcionario_nome = locacao.funcionario_locado.nome_completo if locacao.funcionario_locado else None
+            funcionario_id = locacao.funcionario_locado.id if locacao.funcionario_locado else None
+
+            report_data_by_obra[obra_key]["locacoes_na_obra"].append({
+                "locacao_id": locacao.id,
+                "funcionario_id": funcionario_id,
+                "funcionario_nome": funcionario_nome,
                 "data_locacao_inicio": locacao.data_locacao_inicio.isoformat(),
                 "data_locacao_fim": locacao.data_locacao_fim.isoformat(),
-                "tipo_pagamento": locacao.get_tipo_pagamento_display(), # Get human-readable choice
-                "valor_pagamento": str(locacao.valor_pagamento), # Convert Decimal to string
+                "tipo_pagamento": locacao.get_tipo_pagamento_display(),
+                "valor_pagamento": str(locacao.valor_pagamento),
                 "data_pagamento": locacao.data_pagamento.isoformat() if locacao.data_pagamento else None,
-                "status_locacao": locacao.get_status_locacao_display()
+                "status_locacao": locacao.get_status_locacao_display(),
             })
-            report_data[func_key]["total_a_pagar_periodo"] += locacao.valor_pagamento
+            report_data_by_obra[obra_key]["total_a_pagar_na_obra_periodo"] += locacao.valor_pagamento
 
-        # Convert defaultdict to list and Decimal to string for total
-        final_report = []
-        for key in sorted(report_data.keys(), key=lambda k: report_data[k]["funcionario_nome"]): # Sort by funcionario_nome
-            data = report_data[key]
-            data["total_a_pagar_periodo"] = str(data["total_a_pagar_periodo"])
-            final_report.append(data)
+        # Convert defaultdict to list and sort by obra_nome
+        final_report_list = sorted(list(report_data_by_obra.values()), key=lambda x: x["obra_nome"])
 
-        return Response(final_report)
+        # Convert Decimal total to string for each obra
+        for report_item in final_report_list:
+            report_item["total_a_pagar_na_obra_periodo"] = str(report_item["total_a_pagar_na_obra_periodo"])
+            # Sort locacoes within each obra
+            report_item["locacoes_na_obra"].sort(key=lambda x: (x["data_locacao_inicio"], x.get("funcionario_nome", "")))
+
+
+        return Response(final_report_list)
 
 
 class FotoObraViewSet(viewsets.ModelViewSet):

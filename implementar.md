@@ -20,7 +20,7 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 ✨ 2. Melhorias de UI/UX e Consistência
 [ ] Padronização de Ações em Tabelas
 - [x] Substituir texto por ícones (editar, excluir) em FuncionariosPage.jsx, EquipesPage.jsx, MateriaisPage.jsx e ComprasPage.jsx.
-- [x] Adicionar ícone de olho (visualizar) para navegar para as novas páginas de detalhes. (Implementado para Funcionários e Equipes)
+- [x] Adicionar ícone de olho (visualizar) para navegar para as novas páginas de detalhes/modais. (Implementado para Funcionários, Equipes, Materiais; Compras usa para modal de detalhes).
 [ ] Consistência Terminológica: "Locação"
 - [x] Realizar busca e substituição global de "Localização" para "Locação" ou "Locações" em todo o frontend.
 [ ] Melhorias no Formulário de Locação (LocacaoForm.jsx)
@@ -29,7 +29,7 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 🐛 3. Correção de Bugs e Erros
 - [x] Corrigida a abertura automática do navegador para apontar para a URL do frontend (5173) em vez do backend (8000) ao iniciar a aplicação. (backend/manage.py)
 - [x] Robustecida a instalação de dependências do frontend no `config.bat` para garantir a instalação incondicional de todos os pacotes.
-[ ] Correção na Listagem de Compras (ComprasPage.jsx)
+[x] Correção na Listagem de Compras (ComprasPage.jsx)
 - [x] Backend: Ajustar o CompraSerializer para aninhar e serializar os ItemCompra corretamente.
 - [x] Frontend: Refatorar ComprasTable.jsx para lidar com a nova estrutura de dados.
 - [x] Frontend: Implementar um modal de detalhes para exibir todos os itens de uma compra.
@@ -46,10 +46,10 @@ Este documento serve como um checklist para as próximas tarefas de desenvolvime
 - [x] Erro na Página de Detalhes da Obra (ObraDetailPage.jsx) - Compras
 - [x] Corrigir `TypeError: todasAsComprasBruto.filter is not a function` garantindo que a lista de compras seja sempre um array antes de ser filtrada ou passada para componentes filhos.
 📅 4. Funcionalidades de Relatório (Pendentes)
-[ ] Relatório de Pagamento de Locação (Semanal)
-[ ] UI: Adicionar botão "Gerar Relatório de Pagamento" na LocacoesPage.jsx.
-[ ] Modal: Criar fluxo de modais para seleção de período e pré-verificação.
-[ ] API (Pré-verificação): Implementar lógica para identificar dias sem locação e medições pendentes.
-[ ] API (Relatório): Implementar a geração dos dados do relatório, agrupados por obra e aplicando a regra de negócio da data de pagamento.
-[ ] Frontend: Exibir o relatório final no modal.
-[ ] Frontend: Adicionar a funcionalidade de exportação para CSV.
+[x] Relatório de Pagamento de Locação (Semanal)
+- [x] UI: Adicionar botão "Gerar Relatório de Pagamento" na LocacoesPage.jsx.
+- [x] Modal: Criar fluxo de modais para seleção de período e pré-verificação.
+- [x] API (Pré-verificação): Implementar lógica para identificar dias sem locação e medições pendentes.
+- [x] API (Relatório): Implementar a geração dos dados do relatório, agrupados por obra e aplicando a regra de negócio da data de pagamento.
+- [x] Frontend: Exibir o relatório final no modal.
+- [x] Frontend: Adicionar a funcionalidade de exportação para CSV.

@@ -6,6 +6,9 @@
   - Backend: Criado endpoint `/api/materiais/<id>/details/` que retorna dados do material e seu histórico de uso. O histórico é derivado de `UsoMaterial` vinculado às `Compra`s que contêm o material. `MaterialDetailSerializer` foi implementado para esta finalidade.
   - Frontend: Criada a página `MaterialDetailPage.jsx` (acessível via `/materiais/:id`) para exibir informações do material (nome, unidade, estoque, nível mínimo) e uma tabela do seu histórico de uso (data, obra, quantidade, etc.). A função `getMaterialDetailsById` foi adicionada aos serviços da API.
   - Frontend: Adicionado ícone de "visualizar" (olho) na tabela da página de listagem de materiais (`MateriaisTable.jsx`) para navegação direta à página de detalhes do material.
+- **Relatório de Pagamento de Locação (Semanal)**:
+  - Backend: API `RelatorioFolhaPagamentoViewSet` atualizada. A ação `pre_check_dias_sem_locacoes` agora também identifica "medições pendentes" (locações com valor zero ou nulo). A ação `generate_report` foi modificada para agrupar os dados por obra, focando em pagamentos de `funcionario_locado`.
+  - Frontend: Na página de Locações, adicionado botão "Relatório de Pagamento". Implementado fluxo de modal com seleção de período, exibição de alertas de pré-verificação (dias sem locações e medições pendentes) e visualização do relatório final agrupado por obra, com totais por obra e total geral. Adicionada funcionalidade de exportação para CSV do relatório gerado.
 
 ### Corrigido
 - **Script `run_migrations.bat`**: Corrigido o caminho para ativação do ambiente virtual de `backend\venv` para `backend\.venv`.
