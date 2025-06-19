@@ -19,6 +19,7 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     data_real_fim: '',
     responsavel: '', // Added responsavel field
     cliente_nome: '', // Added cliente_nome field
+    orcamento_previsto: '', // Added orcamento_previsto field
   });
   const [errors, setErrors] = useState({});
   const [funcionarios, setFuncionarios] = useState([]); // State for funcionarios
@@ -50,6 +51,7 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         data_real_fim: initialData.data_real_fim ? initialData.data_real_fim.split('T')[0] : '',
         responsavel: initialData.responsavel || '', // Populate responsavel
         cliente_nome: initialData.cliente_nome || '', // Populate cliente_nome
+        orcamento_previsto: initialData.orcamento_previsto || '', // Populate orcamento_previsto
       });
     } else {
       // Reset form for new entry
@@ -63,12 +65,14 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         data_real_fim: '',
         responsavel: '', // Reset responsavel
         cliente_nome: '', // Reset cliente_nome
+        orcamento_previsto: '', // Reset orcamento_previsto
       });
     }
   }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log('handleChange | field:', name, 'value:', value); // Added console.log
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
@@ -89,6 +93,12 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
      if (formData.data_inicio && formData.data_real_fim && formData.data_real_fim < formData.data_inicio) {
         newErrors.data_real_fim = 'Data real de fim não pode ser anterior à data de início.';
     }
+    // Validation for orcamento_previsto
+    if (formData.orcamento_previsto && isNaN(parseFloat(formData.orcamento_previsto))) {
+        newErrors.orcamento_previsto = 'Orçamento previsto deve ser um número.';
+    } else if (formData.orcamento_previsto && parseFloat(formData.orcamento_previsto) < 0) {
+        newErrors.orcamento_previsto = 'Orçamento previsto não pode ser negativo.';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -104,7 +114,9 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         data_real_fim: formData.data_real_fim || null,
         responsavel: formData.responsavel ? parseInt(formData.responsavel, 10) : null,
         cliente_nome: formData.cliente_nome.trim() || null, // Add cliente_nome, ensure null if empty
+        orcamento_previsto: formData.orcamento_previsto ? parseFloat(formData.orcamento_previsto) : null, // Add orcamento_previsto
       };
+      console.log('handleSubmit | dataToSubmit:', dataToSubmit); // Added console.log
       onSubmit(dataToSubmit);
     }
   };
@@ -152,6 +164,23 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                className={`bg-gray-50 border ${errors.cidade ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`} />
         {errors.cidade && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.cidade}</p>}
       </div>
+
+      {/* Orçamento Previsto Field */}
+      <div>
+        <label htmlFor="orcamento_previsto" className="block mb-2 text-sm font-medium text-gray-900">Orçamento Previsto (R$)</label>
+        <input
+          type="number"
+          step="0.01"
+          name="orcamento_previsto"
+          id="orcamento_previsto"
+          value={formData.orcamento_previsto}
+          onChange={handleChange}
+          className={`bg-gray-50 border ${errors.orcamento_previsto ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
+          placeholder="Ex: 15000.00"
+        />
+        {errors.orcamento_previsto && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.orcamento_previsto}</p>}
+      </div>
+
       <div>
         <label htmlFor="status" className="block mb-2 text-sm font-medium text-gray-900">Status</label>
         <select name="status" id="status" value={formData.status} onChange={handleChange}
