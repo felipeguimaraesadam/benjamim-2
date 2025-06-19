@@ -7,7 +7,7 @@ import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Leg
 
 import ObraDetailHeader from '../components/obra/ObraDetailHeader';
 import FinancialDashboard from '../components/obra/FinancialDashboard';
-import CurrentStockTable from '../components/obra/CurrentStockTable';
+// import CurrentStockTable from '../components/obra/CurrentStockTable'; // Removed
 import EquipesLocadasList from '../components/obra/EquipesLocadasList';
 import CostHistoryChart from '../components/obra/CostHistoryChart';
 import TopMaterialsChart from '../components/obra/TopMaterialsChart';
@@ -43,11 +43,11 @@ const ObraDetailPage = () => {
       return todasAsComprasBruto?.results || (Array.isArray(todasAsComprasBruto) ? todasAsComprasBruto : []);
   }, [todasAsComprasBruto]);
 
-  // Derived state for comprasEstoque
-  const comprasEstoque = useMemo(() => {
-      if (!Array.isArray(actualTodasAsCompras)) return [];
-      return actualTodasAsCompras.filter(compra => parseFloat(compra.quantidade_disponivel) > 0);
-  }, [actualTodasAsCompras]);
+  // Derived state for comprasEstoque (removed)
+  // const comprasEstoque = useMemo(() => {
+  //     if (!Array.isArray(actualTodasAsCompras)) return [];
+  //     return actualTodasAsCompras.filter(compra => parseFloat(compra.quantidade_disponivel) > 0);
+  // }, [actualTodasAsCompras]);
 
   // UI State
   const [activeTab, setActiveTab] = useState('equipes'); // Default tab
@@ -211,12 +211,7 @@ const ObraDetailPage = () => {
       )}
       {/* End New Charts Section */}
 
-      <CurrentStockTable
-        comprasEstoque={comprasEstoque}
-        formatDate={formatDateToDMY}
-        // isLoading={isLoadingTodasAsCompras} // Can add if needed for a specific loader on this table
-        // error={errorTodasAsCompras}
-      />
+      {/* CurrentStockTable component instance removed */}
 
       <div className="mb-8">
         <div className="border-b border-gray-200">
