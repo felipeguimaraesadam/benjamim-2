@@ -142,7 +142,7 @@ Frontend (React):
 
 Atualizar Formulário: Em frontend/src/components/forms/ObraForm.jsx, adicione um novo campo de input para "Metragem da Obra (m²)".
 Atualize o estado e a lógica de submissão para incluir o novo campo.
-[  ] Tarefa 7: Calcular e Exibir Custo por Metro Quadrado
+[x] Tarefa 7: Calcular e Exibir Custo por Metro Quadrado
 Justificativa: Fornecer um indicador de performance chave (KPI) na página de detalhes da obra.
 
 Backend (Django):
