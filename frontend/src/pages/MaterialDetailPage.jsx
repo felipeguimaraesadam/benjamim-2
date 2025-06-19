@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getMaterialDetailsById } from '../services/api'; // To be created
-import { formatDateToDMY } from '../utils/dateUtils';
+// import { formatDateToDMY } from '../utils/dateUtils'; // formatDateToDMY is used by MaterialPurchaseHistoryTable internally
 import SpinnerIcon from '../components/utils/SpinnerIcon';
+import MaterialPurchaseHistoryTable from '../components/tables/MaterialPurchaseHistoryTable'; // Import the new table
 
 const MaterialDetailPage = () => {
   const { id } = useParams();
@@ -101,47 +102,10 @@ const MaterialDetailPage = () => {
         </div>
       </div>
 
-      {/* Histórico de Uso */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Histórico de Uso</h2>
-        {materialDetails.usage_history && materialDetails.usage_history.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">Data de Uso</th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">Obra</th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">Qtde. Usada</th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">Andar</th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">Categoria de Uso</th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">Descrição</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-700">
-                {materialDetails.usage_history.map(uso => (
-                  <tr key={uso.id} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="py-3 px-4">{formatDateToDMY(uso.data_uso)}</td>
-                    <td className="py-3 px-4">
-                      {uso.obra && uso.obra_nome ? (
-                        <Link to={`/obras/${uso.obra}`} className="text-blue-600 hover:text-blue-800 hover:underline">
-                          {uso.obra_nome}
-                        </Link>
-                      ) : (
-                        uso.obra_nome || 'N/A'
-                      )}
-                    </td>
-                    <td className="py-3 px-4">{formatNumber(uso.quantidade_usada)}</td>
-                    <td className="py-3 px-4">{uso.andar || 'N/A'}</td>
-                    <td className="py-3 px-4">{uso.categoria_uso || 'N/A'}</td>
-                    <td className="py-3 px-4">{uso.descricao || 'N/A'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-600">Nenhum histórico de uso encontrado.</p>
-        )}
+      {/* Histórico de Compras */}
+      <div className="bg-white shadow rounded-lg p-6 mt-6">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Histórico de Compras</h2>
+        <MaterialPurchaseHistoryTable purchaseHistory={materialDetails?.purchase_history} />
       </div>
     </div>
   );
