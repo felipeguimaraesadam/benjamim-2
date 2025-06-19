@@ -22,64 +22,7 @@ from .serializers import (
 from .permissions import IsNivelAdmin, IsNivelGerente
 from django.db.models import Sum, Count, F # Added F
 from decimal import Decimal # Added Decimal
-from django.db.models.functions import Coalesce # Added for ObrasDashboardSummaryView
-from django.db.models import Value # Added for ObrasDashboardSummaryView
-
-
-class ObrasDashboardSummaryView(APIView):
-    permission_classes = [IsNivelAdmin | IsNivelGerente] # Or your specific permissions
-
-    def get(self, request, *args, **kwargs):
-        # Calculate orcamento_total_geral
-        orcamento_total_geral = Obra.objects.aggregate(
-            total=Coalesce(Sum('orcamento_previsto'), Value(Decimal('0.00')))
-        )['total']
-
-        # Calculate gastos_por_tipo and components of gasto_total_geral
-        total_compras = Compra.objects.aggregate(
-            total=Coalesce(Sum('valor_total_liquido'), Value(Decimal('0.00')))
-        )['total']
-        total_locacoes = Locacao_Obras_Equipes.objects.aggregate(
-            total=Coalesce(Sum('valor_pagamento'), Value(Decimal('0.00')))
-        )['total']
-        total_despesas_extras = Despesa_Extra.objects.aggregate(
-            total=Coalesce(Sum('valor'), Value(Decimal('0.00')))
-        )['total']
-
-        gastos_por_tipo = {
-            'compras': total_compras,
-            'locacoes': total_locacoes,
-            'despesas_extras': total_despesas_extras
-        }
-
-        # Calculate gasto_total_geral
-        gasto_total_geral = total_compras + total_locacoes + total_despesas_extras
-
-        # Calculate gastos_por_categoria_material
-        gastos_por_categoria_material_query = ItemCompra.objects.values('categoria_uso').annotate(
-            total_custo=Sum('valor_total_item')
-        ).order_by('categoria_uso')
-
-        gastos_por_categoria_material = {}
-        for item in gastos_por_categoria_material_query:
-            categoria = item['categoria_uso'] if item['categoria_uso'] else 'Não Especificada'
-            gastos_por_categoria_material[categoria] = item['total_custo']
-
-        # Prepare response data
-        data = {
-            'orcamento_total_geral': orcamento_total_geral,
-            'gasto_total_geral': gasto_total_geral,
-            'gastos_por_tipo': gastos_por_tipo,
-            'gastos_por_categoria_material': gastos_por_categoria_material
-        }
-
-        # Debug prints
-        print(f"[DEBUG ObrasDashboardSummaryView] Orcamento Total Geral: {orcamento_total_geral}")
-        print(f"[DEBUG ObrasDashboardSummaryView] Gasto Total Geral: {gasto_total_geral}")
-        print(f"[DEBUG ObrasDashboardSummaryView] Gastos por Tipo: {gastos_por_tipo}")
-        print(f"[DEBUG ObrasDashboardSummaryView] Gastos por Categoria Material: {gastos_por_categoria_material}")
-
-        return Response(data)
+# Coalesce and Value imports removed as they were specific to ObrasDashboardSummaryView or already imported
 
 
 class UsuarioViewSet(viewsets.ModelViewSet):
