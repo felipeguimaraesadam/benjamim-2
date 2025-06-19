@@ -64,15 +64,33 @@ class ObraSerializer(serializers.ModelSerializer):
     custo_total_realizado = serializers.SerializerMethodField()
     balanco_financeiro = serializers.SerializerMethodField()
     custos_por_categoria = serializers.SerializerMethodField()
+    custo_por_metro = serializers.SerializerMethodField()
 
     class Meta:
         model = Obra
         fields = [
             'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
             'data_inicio', 'data_prevista_fim', 'data_real_fim',
-            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem',
+            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem', 'custo_por_metro',
             'custo_total_realizado', 'balanco_financeiro', 'custos_por_categoria'
         ]
+
+    def get_custo_por_metro(self, obj):
+        # Debug print
+        print(f"[DEBUG] Calculating custo_por_metro for Obra ID: {obj.id}, Area: {obj.area_metragem}")
+
+        if obj.area_metragem and obj.area_metragem > Decimal('0.00'):
+            custo_realizado = self.get_custo_total_realizado(obj)
+            if custo_realizado is not None:
+                result = (custo_realizado / obj.area_metragem).quantize(Decimal('0.01'))
+                print(f"[DEBUG] Cust_realizado: {custo_realizado}, Area: {obj.area_metragem}, Result: {result}")
+                return result
+            else:
+                print(f"[DEBUG] Custo_realizado is None for Obra ID: {obj.id}")
+                return Decimal('0.00')
+        else:
+            print(f"[DEBUG] Area_metragem is zero or None for Obra ID: {obj.id}")
+            return Decimal('0.00')
 
     def get_custo_total_realizado(self, obj):
         # obj is the Obra instance
