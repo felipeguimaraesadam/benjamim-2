@@ -22,6 +22,8 @@ from .serializers import (
 from .permissions import IsNivelAdmin, IsNivelGerente
 from django.db.models import Sum, Count, F # Added F
 from decimal import Decimal # Added Decimal
+# Coalesce and Value imports removed as they were specific to ObrasDashboardSummaryView or already imported
+
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     """

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import * as api from '../services/api';
+import { apiClient, getObras, createObra, updateObra, deleteObra } from '../services/api';
+import { toast } from 'react-toastify'; // Toast import kept, might be used by other parts or showErrorToast
+// Recharts imports removed
 import ObrasTable from '../components/tables/ObrasTable';
 import ObraForm from '../components/forms/ObraForm';
 import PaginationControls from '../components/utils/PaginationControls';
@@ -25,11 +27,20 @@ const ObrasPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [obraToDeleteId, setObraToDeleteId] = useState(null);
 
+  // State for dashboard summary (removed)
+  // const [dashboardSummary, setDashboardSummary] = useState(null);
+  // const [loadingSummary, setLoadingSummary] = useState(true);
+
+  // Colors for charts (removed)
+  // const COLORS_PIE = ['#0088FE', '#FF8042', '#FFBB28', '#00C49F'];
+  // const COLORS_CATEGORIES = ['#8884d8', '#82ca9d', '#ffc658', '#FF8042', '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28CFF', '#FF8F57', '#FFDA83', '#80E1D1'];
+
+
   const fetchObras = useCallback(async (page = 1) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.getObras({ page }); // Pass page to API
+      const response = await getObras({ page }); // Pass page to API
       setObras(response.data.results);
       setTotalItems(response.data.count);
       setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
@@ -47,6 +58,31 @@ const ObrasPage = () => {
   useEffect(() => {
     fetchObras(currentPage);
   }, [currentPage, fetchObras]);
+
+  // useEffect to fetch dashboard summary data (removed)
+  // useEffect(() => {
+  //   const fetchDashboardSummary = async () => {
+  //     setLoadingSummary(true);
+  //     try {
+  //       console.log("[DEBUG ObrasPage] Fetching dashboard summary...");
+  //       const response = await apiClient.get('/dashboard/obras-summary/');
+  //       setDashboardSummary(response.data);
+  //       console.log("[DEBUG ObrasPage] Dashboard summary data:", response.data);
+  //     } catch (error) {
+  //       console.error("Erro ao buscar resumo do dashboard de obras:", error);
+  //       toast.error("Erro ao buscar resumo do dashboard de obras. Tente novamente mais tarde.");
+  //       setDashboardSummary(null); // Or an empty structure
+  //     } finally {
+  //       setLoadingSummary(false);
+  //     }
+  //   };
+  //   fetchDashboardSummary();
+  // }, []);
+
+  // Prepare data for charts (removed)
+  // const orcamentoVsGastoData = ...
+  // const composicaoGastosData = ...
+  // const gastosPorCategoriaData = ...
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -74,7 +110,7 @@ const ObrasPage = () => {
     setIsDeleting(true);
     setError(null);
     try {
-      await api.deleteObra(obraToDeleteId);
+      await deleteObra(obraToDeleteId);
       showSuccessToast('Obra excluída com sucesso!');
       setObraToDeleteId(null);
       setShowDeleteConfirm(false);
@@ -101,10 +137,10 @@ const ObrasPage = () => {
     setError(null); // Clear previous form errors
     try {
       if (currentObra && currentObra.id) {
-        await api.updateObra(currentObra.id, formData);
+        await updateObra(currentObra.id, formData);
         showSuccessToast('Obra atualizada com sucesso!');
       } else {
-        await api.createObra(formData);
+        await createObra(formData);
         showSuccessToast('Obra criada com sucesso!');
       }
       setShowFormModal(false);
@@ -137,6 +173,8 @@ const ObrasPage = () => {
           Adicionar Nova Obra
         </button>
       </div>
+
+      {/* Dashboard Summary Section with Charts (removed) */}
 
       {/* Page level error display (for fetch errors mainly) */}
       {error && !isLoading && !showFormModal && obras.length === 0 && (

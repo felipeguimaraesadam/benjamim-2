@@ -5,6 +5,7 @@ from .views import (
     LocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
     DespesaExtraViewSet, OcorrenciaFuncionarioViewSet,
     FotoObraViewSet, # Added FotoObraViewSet
+    # ObrasDashboardSummaryView removed
     RelatorioFinanceiroObraView, RelatorioGeralComprasView, DashboardStatsView,
     RelatorioDesempenhoEquipeView, RelatorioCustoGeralView, ObraHistoricoCustosView,
     ObraCustosPorCategoriaView, ObraCustosPorMaterialView, # Added new views
@@ -32,6 +33,7 @@ urlpatterns = [
     path('relatorios/financeiro-obra/', RelatorioFinanceiroObraView.as_view(), name='relatorio-financeiro-obra'),
     path('relatorios/geral-compras/', RelatorioGeralComprasView.as_view(), name='relatorio-geral-compras'),
     path('dashboard/stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
+    # path('dashboard/obras-summary/', ObrasDashboardSummaryView.as_view(), name='obras-dashboard-summary'), # Removed
     path('relatorios/desempenho-equipe/', RelatorioDesempenhoEquipeView.as_view(), name='relatorio-desempenho-equipe'),
     path('relatorios/custo-geral/', RelatorioCustoGeralView.as_view(), name='relatorio-custo-geral'),
     path('obras/<int:pk>/historico-custos/', ObraHistoricoCustosView.as_view(), name='obra-historico-custos'),

@@ -101,27 +101,23 @@ Adicione um novo campo de input do tipo number para "Orçamento Previsto".
 Atualize o estado inicial (useState), o useEffect para preencher dados iniciais, o handleChange e a lógica de handleSubmit para incluir o campo orcamento_previsto.
 É importante garantir que o valor seja enviado como um número decimal para a API.
 O modelo do backend (Obra) já possui o campo orcamento_previsto, portanto, nenhuma alteração no backend é necessária.
-[  ] Tarefa 5: Novos Gráficos na Página de Obras
-Justificativa: Fornecer uma visão geral e agregada de todas as obras, permitindo uma análise financeira mais rápida diretamente da página de listagem.
+[x] Tarefa 5: Substituir Gráfico de Composição de Custos por Três Gráficos Detalhados na Página de Detalhes da Obra (ObraDetailPage)
+Justificativa: Fornecer uma visão financeira mais detalhada e específica para cada obra na sua página de detalhes, substituindo uma visualização genérica anterior.
 
 Backend (Django):
+- Em `backend/core/serializers.py`, no `ObraSerializer`:
+    - Adicionado o campo `gastos_por_categoria_material_obra` (via `SerializerMethodField`).
+    - Implementado o método `get_gastos_por_categoria_material_obra` para calcular os custos de `ItemCompra` agrupados por `categoria_uso` para a obra específica.
+    - Verificado se `get_custos_por_categoria` e `get_custo_total_realizado` (já existentes) atendem aos requisitos dos novos gráficos para uma única obra.
 
-Criar Novo Endpoint de Sumarização: Em backend/core/views.py, crie uma nova APIView chamada ObrasDashboardSummaryView.
-Lógica do Endpoint: Esta view deverá calcular e retornar um JSON com os seguintes dados agregados de todas as obras:
-orcamento_total_geral: Soma de orcamento_previsto de todas as obras.
-gasto_total_geral: Soma de custo_total_realizado de todas as obras.
-gastos_por_tipo: Um objeto com a soma total de compras, locacoes e despesas_extras.
-gastos_por_categoria_material: Um objeto com a soma dos custos dos ItemCompra agrupados pelo novo campo categoria_uso.
-Registrar URL: Em backend/core/urls.py, adicione uma nova rota, como path('dashboard/obras-summary/', ObrasDashboardSummaryView.as_view(), name='obras-dashboard-summary'), para a nova view.
 Frontend (React):
-
-Modificar Página de Obras: Em frontend/src/pages/ObrasPage.jsx:
-Crie uma nova função para buscar os dados do endpoint /api/dashboard/obras-summary/.
-Adicione um novo div no topo da página para conter os três gráficos.
-Use a biblioteca recharts (já instalada) para criar os componentes dos gráficos:
-Gráfico 1 (Pizza): "Orçamento vs. Gasto Total". Use os dados orcamento_total_geral e gasto_total_geral.
-Gráfico 2 (Barras ou Pizza): "Composição dos Gastos". Use os dados de gastos_por_tipo.
-Gráfico 3 (Barras ou Pizza): "Gastos por Categoria de Material". Use os dados de gastos_por_categoria_material.
+- Em `frontend/src/pages/ObraDetailPage.jsx`:
+    - Adicionada uma nova seção com três gráficos `recharts` lado a lado, utilizando dados do objeto `obra` (que é populado pelo `ObraSerializer` atualizado):
+        - Gráfico 1 (Pizza): "Orçamento vs. Gasto Total (Obra)" - compara `obra.orcamento_previsto` com `obra.custo_total_realizado`.
+        - Gráfico 2 (Barras): "Composição dos Gastos (Obra)" - detalha `obra.custos_por_categoria` (Materiais, Locações, Despesas Extras).
+        - Gráfico 3 (Pizza): "Gastos por Categoria de Material (Obra)" - visualiza `obra.gastos_por_categoria_material_obra`.
+- Em `frontend/src/components/obra/FinancialDashboard.jsx`:
+    - Removida a lógica e a renderização do gráfico de "Composição dos Custos" que existia anteriormente neste componente, para evitar duplicidade e centralizar os novos gráficos na página de detalhes.
 [x] Tarefa 6: Adicionar Metragem da Obra
 Justificativa: Adicionar um dado fundamental da obra para permitir cálculos de custo por metro quadrado.
 
@@ -156,7 +152,7 @@ Python
 # Adicionar novo método ao ObraSerializer
 def get_custo_por_metro(self, obj):
     if obj.area_metragem and obj.area_metragem > 0:
-        custo_realizado = self.get_custo_total_realizado(obj)
+        custo_realizado = self.get_custo_total_realizado(obj) # Assumindo que get_custo_total_realizado já existe e funciona.
         return (custo_realizado / obj.area_metragem).quantize(Decimal('0.01'))
     return None # ou Decimal('0.00')
 Frontend (React):

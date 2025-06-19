@@ -65,6 +65,7 @@ class ObraSerializer(serializers.ModelSerializer):
     balanco_financeiro = serializers.SerializerMethodField()
     custos_por_categoria = serializers.SerializerMethodField()
     custo_por_metro = serializers.SerializerMethodField()
+    gastos_por_categoria_material_obra = serializers.SerializerMethodField()
 
     class Meta:
         model = Obra
@@ -72,8 +73,28 @@ class ObraSerializer(serializers.ModelSerializer):
             'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
             'data_inicio', 'data_prevista_fim', 'data_real_fim',
             'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem', 'custo_por_metro',
-            'custo_total_realizado', 'balanco_financeiro', 'custos_por_categoria'
+            'custo_total_realizado', 'balanco_financeiro', 'custos_por_categoria',
+            'gastos_por_categoria_material_obra' # Added new field
         ]
+
+    def get_gastos_por_categoria_material_obra(self, obj):
+        # obj is the Obra instance
+        print(f"[DEBUG ObraSerializer] Calculating get_gastos_por_categoria_material_obra for Obra ID: {obj.id}")
+
+        custos_agregados = ItemCompra.objects.filter(compra__obra=obj) \
+            .values('categoria_uso') \
+            .annotate(total_valor_categoria=Sum('valor_total_item')) \
+            .order_by('categoria_uso')
+
+        resultado_formatado = {}
+        for item in custos_agregados:
+            categoria = item['categoria_uso'] if item['categoria_uso'] else 'Não Especificada'
+            # Ensure the value is Decimal, default to Decimal('0.00') if None
+            valor = item['total_valor_categoria'] if item['total_valor_categoria'] is not None else Decimal('0.00')
+            resultado_formatado[categoria] = valor
+
+        print(f"[DEBUG ObraSerializer] Gastos por Categoria Material for Obra ID {obj.id}: {resultado_formatado}")
+        return resultado_formatado
 
     def get_custo_por_metro(self, obj):
         # Debug print
@@ -109,6 +130,7 @@ class ObraSerializer(serializers.ModelSerializer):
         return orcamento - custo_realizado
 
     def get_custos_por_categoria(self, obj):
+        print(f"[DEBUG ObraSerializer] Calculating get_custos_por_categoria for Obra ID: {obj.id}")
         total_compras = obj.compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         total_despesas = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
 
@@ -119,13 +141,14 @@ class ObraSerializer(serializers.ModelSerializer):
         # 'total_locacoes' now represents the cost for allocated resources.
         # We can rename 'equipes' to 'locacoes' or add it as a new category.
         # Let's add it as 'locacoes' for clarity.
-        return {
+        data_to_return = {
             'materiais': total_compras,
             'despesas_extras': total_despesas,
             'locacoes': total_locacoes, # New category for locação costs
-            'servicos': Decimal('0.00'), # Assuming this is for other types of services not covered by locacao
-            # 'equipes': Decimal('0.00') # This can be removed if 'locacoes' covers all allocated personnel/team costs
+            'servicos': Decimal('0.00') # Assuming this is for other types of services not covered by locacao
         }
+        print(f"[DEBUG ObraSerializer] Custos por Categoria for Obra ID {obj.id}: {data_to_return}")
+        return data_to_return
 
 # Novo Serializer Básico para Funcionário
 class FuncionarioBasicSerializer(serializers.ModelSerializer):
