@@ -4,12 +4,9 @@ import * as api from '../services/api.js';
 import { formatDateToDMY } from '../utils/dateUtils.js'; // Import the new formatter
 import { useApiData } from '../hooks/useApiData'; // Import the custom hook
 
-import DistribuicaoMaterialForm from '../components/forms/DistribuicaoMaterialForm';
 import ObraDetailHeader from '../components/obra/ObraDetailHeader';
 import FinancialDashboard from '../components/obra/FinancialDashboard';
-import QuickActionsSection from '../components/obra/QuickActionsSection';
 import CurrentStockTable from '../components/obra/CurrentStockTable';
-import MaterialUsageHistory from '../components/obra/MaterialUsageHistory';
 import EquipesLocadasList from '../components/obra/EquipesLocadasList';
 import CostHistoryChart from '../components/obra/CostHistoryChart';
 import TopMaterialsChart from '../components/obra/TopMaterialsChart';
@@ -39,8 +36,6 @@ const ObraDetailPage = () => {
   const { data: custosMaterial, isLoading: isLoadingCustosMaterial, error: errorCustosMaterial, fetchData: fetchCustosMaterial } = useApiData(api.getObraCustosPorMaterial, obraApiParams, [], true);
   const { data: todasAsComprasBruto, isLoading: isLoadingTodasAsCompras, error: errorTodasAsCompras, fetchData: fetchTodasAsCompras } = useApiData(api.getCompras, obraQueryObjParams, [], true);
 
-  // Assuming getUsosMaterial takes obraId directly as string/number
-  const { data: usosMaterial, isLoading: isLoadingUsosMaterial, error: errorUsosMaterial, fetchData: fetchUsosMaterial } = useApiData(api.getUsosMaterial, obraApiParams, [], true);
   const { data: despesasExtrasObra, isLoading: isLoadingDespesasExtras, error: errorDespesasExtras, fetchData: fetchDespesasExtras } = useApiData(api.getDespesasExtras, obraQueryObjParams, [], true);
 
   const actualTodasAsCompras = useMemo(() => {
@@ -54,7 +49,6 @@ const ObraDetailPage = () => {
   }, [actualTodasAsCompras]);
 
   // UI State
-  const [showDistribuicaoModal, setShowDistribuicaoModal] = useState(false);
   const [activeTab, setActiveTab] = useState('equipes'); // Default tab
   const [specificLocacaoError, setSpecificLocacaoError] = useState(null);
   const [removingLocacaoId, setRemovingLocacaoId] = useState(null); // For loading state on remove button
@@ -74,17 +68,6 @@ const ObraDetailPage = () => {
   }, [operationStatus]);
 
   // Event Handlers
-  const handleOpenDistribuicaoModal = useCallback(() => setShowDistribuicaoModal(true), []);
-  const handleCloseDistribuicaoModal = useCallback(() => setShowDistribuicaoModal(false), []);
-
-  const handleSubmitDistribuicaoSuccess = useCallback(() => {
-     fetchObraDetails();
-     fetchTodasAsCompras();
-     fetchUsosMaterial();
-     handleCloseDistribuicaoModal();
-     setOperationStatus({ type: 'success', message: 'Uso de material registrado com sucesso!' });
-  }, [fetchObraDetails, fetchTodasAsCompras, fetchUsosMaterial, handleCloseDistribuicaoModal, setOperationStatus]);
-
   const handleRemoverLocacao = useCallback(async (locacaoId) => {
      if (window.confirm('Tem certeza que deseja remover esta locação de equipe?')) {
          setRemovingLocacaoId(locacaoId);
@@ -122,15 +105,6 @@ const ObraDetailPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      {showDistribuicaoModal && (
-        <DistribuicaoMaterialForm
-          obraId={id}
-          onClose={handleCloseDistribuicaoModal}
-          onSubmitSuccess={handleSubmitDistribuicaoSuccess}
-          showModal={showDistribuicaoModal}
-        />
-      )}
-
       {operationStatus.message && (
         <div className={`p-3 my-4 rounded-md text-sm shadow ${operationStatus.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-700 border border-red-300'}`} role="alert">
             {operationStatus.message}
@@ -141,19 +115,11 @@ const ObraDetailPage = () => {
 
       <FinancialDashboard obra={obra} />
 
-      <QuickActionsSection onOpenDistribuicaoModal={handleOpenDistribuicaoModal} />
-
       <CurrentStockTable
         comprasEstoque={comprasEstoque}
         formatDate={formatDateToDMY}
         // isLoading={isLoadingTodasAsCompras} // Can add if needed for a specific loader on this table
         // error={errorTodasAsCompras}
-      />
-
-      <MaterialUsageHistory
-        usosMaterial={usosMaterial?.results || []}
-        isLoading={isLoadingUsosMaterial}
-        error={errorUsosMaterial}
       />
 
       <div className="mb-8">
