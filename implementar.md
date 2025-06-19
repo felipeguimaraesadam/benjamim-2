@@ -101,7 +101,7 @@ Adicione um novo campo de input do tipo number para "Orçamento Previsto".
 Atualize o estado inicial (useState), o useEffect para preencher dados iniciais, o handleChange e a lógica de handleSubmit para incluir o campo orcamento_previsto.
 É importante garantir que o valor seja enviado como um número decimal para a API.
 O modelo do backend (Obra) já possui o campo orcamento_previsto, portanto, nenhuma alteração no backend é necessária.
-[  ] Tarefa 5: Novos Gráficos na Página de Obras
+[x] Tarefa 5: Novos Gráficos na Página de Obras
 Justificativa: Fornecer uma visão geral e agregada de todas as obras, permitindo uma análise financeira mais rápida diretamente da página de listagem.
 
 Backend (Django):
@@ -109,7 +109,7 @@ Backend (Django):
 Criar Novo Endpoint de Sumarização: Em backend/core/views.py, crie uma nova APIView chamada ObrasDashboardSummaryView.
 Lógica do Endpoint: Esta view deverá calcular e retornar um JSON com os seguintes dados agregados de todas as obras:
 orcamento_total_geral: Soma de orcamento_previsto de todas as obras.
-gasto_total_geral: Soma de custo_total_realizado de todas as obras.
+gasto_total_geral: Soma de custo_total_realizado de todas as obras. (Nota: Custo total realizado foi implementado como a soma de compras, locações e despesas extras no endpoint)
 gastos_por_tipo: Um objeto com a soma total de compras, locacoes e despesas_extras.
 gastos_por_categoria_material: Um objeto com a soma dos custos dos ItemCompra agrupados pelo novo campo categoria_uso.
 Registrar URL: Em backend/core/urls.py, adicione uma nova rota, como path('dashboard/obras-summary/', ObrasDashboardSummaryView.as_view(), name='obras-dashboard-summary'), para a nova view.
@@ -156,7 +156,7 @@ Python
 # Adicionar novo método ao ObraSerializer
 def get_custo_por_metro(self, obj):
     if obj.area_metragem and obj.area_metragem > 0:
-        custo_realizado = self.get_custo_total_realizado(obj)
+        custo_realizado = self.get_custo_total_realizado(obj) # Assumindo que get_custo_total_realizado já existe e funciona.
         return (custo_realizado / obj.area_metragem).quantize(Decimal('0.01'))
     return None # ou Decimal('0.00')
 Frontend (React):

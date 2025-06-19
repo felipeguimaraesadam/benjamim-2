@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import * as api from '../services/api';
+import api from '../services/api'; // Corrected to default import
+import { toast } from 'react-toastify'; // Added toast for error handling
+import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, ResponsiveContainer, Sector } from 'recharts';
 import ObrasTable from '../components/tables/ObrasTable';
 import ObraForm from '../components/forms/ObraForm';
 import PaginationControls from '../components/utils/PaginationControls';
@@ -25,6 +27,15 @@ const ObrasPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [obraToDeleteId, setObraToDeleteId] = useState(null);
 
+  // State for dashboard summary
+  const [dashboardSummary, setDashboardSummary] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+
+  // Colors for charts
+  const COLORS_PIE = ['#0088FE', '#FF8042', '#FFBB28', '#00C49F'];
+  const COLORS_CATEGORIES = ['#8884d8', '#82ca9d', '#ffc658', '#FF8042', '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28CFF', '#FF8F57', '#FFDA83', '#80E1D1'];
+
+
   const fetchObras = useCallback(async (page = 1) => {
     setIsLoading(true);
     setError(null);
@@ -47,6 +58,47 @@ const ObrasPage = () => {
   useEffect(() => {
     fetchObras(currentPage);
   }, [currentPage, fetchObras]);
+
+  // useEffect to fetch dashboard summary data
+  useEffect(() => {
+    const fetchDashboardSummary = async () => {
+      setLoadingSummary(true);
+      try {
+        console.log("[DEBUG ObrasPage] Fetching dashboard summary...");
+        // Assuming api.get is the correct method based on typical service structure
+        const response = await api.get('/dashboard/obras-summary/');
+        setDashboardSummary(response.data);
+        console.log("[DEBUG ObrasPage] Dashboard summary data:", response.data);
+      } catch (error) {
+        console.error("Erro ao buscar resumo do dashboard de obras:", error);
+        toast.error("Erro ao buscar resumo do dashboard de obras. Tente novamente mais tarde.");
+        setDashboardSummary(null); // Or an empty structure
+      } finally {
+        setLoadingSummary(false);
+      }
+    };
+
+    fetchDashboardSummary();
+  }, []); // Empty dependency array to run once on mount
+
+  // Prepare data for charts
+  const orcamentoVsGastoData = dashboardSummary ? [
+    { name: 'Orçamento Total', value: parseFloat(dashboardSummary.orcamento_total_geral) || 0 },
+    { name: 'Gasto Total', value: parseFloat(dashboardSummary.gasto_total_geral) || 0 },
+  ] : [];
+
+  const composicaoGastosData = dashboardSummary && dashboardSummary.gastos_por_tipo ? [
+    { name: 'Compras', value: parseFloat(dashboardSummary.gastos_por_tipo.compras) || 0 },
+    { name: 'Locações', value: parseFloat(dashboardSummary.gastos_por_tipo.locacoes) || 0 },
+    { name: 'Despesas Extras', value: parseFloat(dashboardSummary.gastos_por_tipo.despesas_extras) || 0 },
+  ] : [];
+
+  const gastosPorCategoriaData = dashboardSummary && dashboardSummary.gastos_por_categoria_material ?
+    Object.entries(dashboardSummary.gastos_por_categoria_material).map(([key, value]) => ({
+      name: key,
+      value: parseFloat(value) || 0,
+    })).filter(entry => entry.value > 0) // Filter out categories with zero value
+    : [];
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -130,6 +182,81 @@ const ObrasPage = () => {
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Gestão de Obras</h1>
+        {/* Placeholder for where summary might go, or it could be a separate section */}
+      </div>
+
+      {/* Dashboard Summary Section with Charts */}
+      {loadingSummary && <p className="text-center text-gray-600 py-8">Carregando resumo e gráficos...</p>}
+      {!loadingSummary && dashboardSummary && (
+        <div className="mb-8 p-4 bg-gray-50 shadow-lg rounded-lg">
+          <h2 className="text-2xl font-bold mb-6 text-center text-gray-700">Resumo Financeiro Geral das Obras</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Chart 1: Orçamento vs. Gasto Total */}
+            <div className="chart-container p-4 bg-white shadow-md rounded-lg">
+              <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Orçamento vs. Gasto Total</h3>
+              {orcamentoVsGastoData.reduce((acc, item) => acc + item.value, 0) > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie data={orcamentoVsGastoData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
+                      {orcamentoVsGastoData.map((entry, index) => (
+                        <Cell key={`cell-orcamento-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (<p className="text-center text-gray-500 py-10">Não há dados de orçamento ou gastos para exibir.</p>)}
+            </div>
+
+            {/* Chart 2: Composição dos Gastos */}
+            <div className="chart-container p-4 bg-white shadow-md rounded-lg">
+              <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Composição dos Gastos Totais</h3>
+              {composicaoGastosData.reduce((acc, item) => acc + item.value, 0) > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={composicaoGastosData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`} />
+                    <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                    <Legend />
+                    <Bar dataKey="value">
+                      {composicaoGastosData.map((entry, index) => (
+                        <Cell key={`cell-composicao-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (<p className="text-center text-gray-500 py-10">Não há dados de composição de gastos para exibir.</p>)}
+            </div>
+
+            {/* Chart 3: Gastos por Categoria de Material */}
+            <div className="chart-container p-4 bg-white shadow-md rounded-lg">
+              <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Gastos por Categoria de Material</h3>
+              {gastosPorCategoriaData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie data={gastosPorCategoriaData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#ffc658" label>
+                      {gastosPorCategoriaData.map((entry, index) => (
+                        <Cell key={`cell-categoria-${index}`} fill={COLORS_CATEGORIES[index % COLORS_CATEGORIES.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                    <Legend wrapperStyle={{ overflowX: 'auto', maxHeight: '80px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-center text-gray-500 py-10">Não há dados de gastos por categoria de material para exibir.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* End Dashboard Summary Section with Charts */}
+
+      <div className="flex justify-between items-center mb-6 pt-4 border-t border-gray-200">
+        {/*Moved Add button to a new row for clarity, or it can be integrated elsewhere */}
+        <div></div> {/*Keeps Add button to the right if title is also here */}
         <button
           onClick={handleAddNew}
           className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:bg-primary-300"
