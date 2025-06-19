@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import api from '../services/api'; // Corrected to default import
+import { apiClient, getObras, createObra, updateObra, deleteObra } from '../services/api';
 import { toast } from 'react-toastify'; // Added toast for error handling
 import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, ResponsiveContainer, Sector } from 'recharts';
 import ObrasTable from '../components/tables/ObrasTable';
@@ -40,7 +40,7 @@ const ObrasPage = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.getObras({ page }); // Pass page to API
+      const response = await getObras({ page }); // Pass page to API
       setObras(response.data.results);
       setTotalItems(response.data.count);
       setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
@@ -65,8 +65,7 @@ const ObrasPage = () => {
       setLoadingSummary(true);
       try {
         console.log("[DEBUG ObrasPage] Fetching dashboard summary...");
-        // Assuming api.get is the correct method based on typical service structure
-        const response = await api.get('/dashboard/obras-summary/');
+        const response = await apiClient.get('/dashboard/obras-summary/');
         setDashboardSummary(response.data);
         console.log("[DEBUG ObrasPage] Dashboard summary data:", response.data);
       } catch (error) {
@@ -126,7 +125,7 @@ const ObrasPage = () => {
     setIsDeleting(true);
     setError(null);
     try {
-      await api.deleteObra(obraToDeleteId);
+      await deleteObra(obraToDeleteId);
       showSuccessToast('Obra excluída com sucesso!');
       setObraToDeleteId(null);
       setShowDeleteConfirm(false);
@@ -153,10 +152,10 @@ const ObrasPage = () => {
     setError(null); // Clear previous form errors
     try {
       if (currentObra && currentObra.id) {
-        await api.updateObra(currentObra.id, formData);
+        await updateObra(currentObra.id, formData);
         showSuccessToast('Obra atualizada com sucesso!');
       } else {
-        await api.createObra(formData);
+        await createObra(formData);
         showSuccessToast('Obra criada com sucesso!');
       }
       setShowFormModal(false);
