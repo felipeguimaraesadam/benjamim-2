@@ -20,6 +20,7 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     responsavel: '', // Added responsavel field
     cliente_nome: '', // Added cliente_nome field
     orcamento_previsto: '', // Added orcamento_previsto field
+    area_metragem: '', // Added area_metragem field
   });
   const [errors, setErrors] = useState({});
   const [funcionarios, setFuncionarios] = useState([]); // State for funcionarios
@@ -52,6 +53,7 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         responsavel: initialData.responsavel || '', // Populate responsavel
         cliente_nome: initialData.cliente_nome || '', // Populate cliente_nome
         orcamento_previsto: initialData.orcamento_previsto || '', // Populate orcamento_previsto
+        area_metragem: initialData.area_metragem || '', // Populate area_metragem
       });
     } else {
       // Reset form for new entry
@@ -66,13 +68,15 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         responsavel: '', // Reset responsavel
         cliente_nome: '', // Reset cliente_nome
         orcamento_previsto: '', // Reset orcamento_previsto
+        area_metragem: '', // Reset area_metragem
       });
     }
   }, [initialData]);
 
   const handleChange = (e) => {
+    console.log(`[DEBUG ObraForm handleChange] name: ${e.target.name}, value: ${e.target.value}`);
     const { name, value } = e.target;
-    console.log('handleChange | field:', name, 'value:', value); // Added console.log
+    // console.log('handleChange | field:', name, 'value:', value); // Original console.log replaced by the one above
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
@@ -99,6 +103,12 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     } else if (formData.orcamento_previsto && parseFloat(formData.orcamento_previsto) < 0) {
         newErrors.orcamento_previsto = 'Orçamento previsto não pode ser negativo.';
     }
+    // Validation for area_metragem
+    if (formData.area_metragem && isNaN(parseFloat(formData.area_metragem))) {
+        newErrors.area_metragem = 'Metragem da obra deve ser um número.';
+    } else if (formData.area_metragem && parseFloat(formData.area_metragem) < 0) {
+        newErrors.area_metragem = 'Metragem da obra não pode ser negativa.';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -113,10 +123,12 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         data_prevista_fim: formData.data_prevista_fim || null,
         data_real_fim: formData.data_real_fim || null,
         responsavel: formData.responsavel ? parseInt(formData.responsavel, 10) : null,
-        cliente_nome: formData.cliente_nome.trim() || null, // Add cliente_nome, ensure null if empty
-        orcamento_previsto: formData.orcamento_previsto ? parseFloat(formData.orcamento_previsto) : null, // Add orcamento_previsto
+        cliente_nome: formData.cliente_nome.trim() || null,
+        orcamento_previsto: formData.orcamento_previsto ? parseFloat(formData.orcamento_previsto) : null,
+        area_metragem: formData.area_metragem ? parseFloat(formData.area_metragem) : null, // Process area_metragem
       };
-      console.log('handleSubmit | dataToSubmit:', dataToSubmit); // Added console.log
+      console.log('[DEBUG ObraForm handleSubmit] formData:', dataToSubmit);
+      // console.log('handleSubmit | dataToSubmit:', dataToSubmit); // Original console.log replaced by the one above
       onSubmit(dataToSubmit);
     }
   };
@@ -179,6 +191,22 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           placeholder="Ex: 15000.00"
         />
         {errors.orcamento_previsto && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.orcamento_previsto}</p>}
+      </div>
+
+      {/* Area Metragem Field */}
+      <div>
+        <label htmlFor="area_metragem" className="block mb-2 text-sm font-medium text-gray-900">Metragem da Obra (m²)</label>
+        <input
+          type="number"
+          step="0.01"
+          name="area_metragem"
+          id="area_metragem"
+          value={formData.area_metragem}
+          onChange={handleChange}
+          className={`bg-gray-50 border ${errors.area_metragem ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
+          placeholder="Ex: 120.50"
+        />
+        {errors.area_metragem && <p className="mt-1 text-sm text-red-600 flex items-center"><WarningIcon /> {errors.area_metragem}</p>}
       </div>
 
       <div>
