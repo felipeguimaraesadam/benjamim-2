@@ -100,6 +100,7 @@ const CompraItensModal = ({ isOpen, onClose, compra }) => {
                                     <th scope="col" className="px-4 py-3">Material</th>
                                     <th scope="col" className="px-4 py-3 text-right">Quantidade</th>
                                     <th scope="col" className="px-4 py-3 text-right">Valor Unitário</th>
+                                    <th scope="col" className="px-4 py-3">Categoria de Uso</th>
                                     <th scope="col" className="px-4 py-3 text-right">Valor Total</th>
                                 </tr>
                             </thead>
@@ -111,6 +112,7 @@ const CompraItensModal = ({ isOpen, onClose, compra }) => {
                                         </td>
                                         <td className="px-4 py-3 text-right">{item.quantidade}</td>
                                         <td className="px-4 py-3 text-right">{formatCurrency(item.valor_unitario)}</td>
+                                        <td className="px-4 py-3">{item.categoria_uso || 'N/A'}</td>
                                         <td className="px-4 py-3 text-right">{formatCurrency(item.valor_total_item)}</td>
                                     </tr>
                                 ))}

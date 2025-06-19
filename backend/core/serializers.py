@@ -59,6 +59,13 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     # which will use ModelBackend, which in turn respects Usuario.USERNAME_FIELD.
 
 
+# Nested Serializer for basic Obra info
+class ObraNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Obra
+        fields = ['id', 'nome_obra']
+
+
 class ObraSerializer(serializers.ModelSerializer):
     responsavel_nome = serializers.CharField(source='responsavel.nome_completo', read_only=True, allow_null=True)
     custo_total_realizado = serializers.SerializerMethodField()
@@ -405,16 +412,31 @@ class ItemCompraSerializer(serializers.ModelSerializer):
 
 class CompraSerializer(serializers.ModelSerializer):
     itens = ItemCompraSerializer(many=True)
-    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)
+    # obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True) # Replaced by nested serializer
+    obra = ObraNestedSerializer(read_only=True) # Use nested serializer for 'obra'
 
     class Meta:
         model = Compra
         fields = [
-            'id', 'obra', 'obra_nome', 'fornecedor', 'data_compra', 'data_pagamento',
-            'nota_fiscal', 'valor_total_bruto', 'desconto', 'valor_total_liquido',
-            'observacoes', 'itens', 'created_at', 'updated_at'
+            'id',
+            'obra', # Now 'obra' will be a nested object { 'id': ..., 'nome_obra': ... }
+            # 'obra_nome', # Removed from fields
+            'fornecedor',
+            'data_compra',
+            'data_pagamento',
+            'nota_fiscal',
+            'valor_total_bruto',
+            'desconto',
+            'valor_total_liquido',
+            'observacoes',
+            'itens',
+            'created_at',
+            'updated_at'
         ]
         extra_kwargs = {
+            # obra is read-only for output, but for input it's a PK.
+            # Default ModelSerializer handles related fields as PrimaryKeyRelatedField for write operations.
+            # So, when creating/updating a Compra, 'obra' field will expect an ID.
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True}
         }

@@ -67,8 +67,14 @@ const ComprasPage = () => {
 
         try {
             const response = await api.getCompras(params);
-            console.log('[DEBUG ComprasPage] Fetched Compras Data:', response.data.results || response.data || []);
-            setCompras(response.data.results || response.data || []);
+            const comprasData = response.data.results || response.data || [];
+            console.log('[DEBUG ComprasPage] Fetched Compras Array:', comprasData);
+            if (comprasData.length > 0) {
+                console.log('[DEBUG ComprasPage] First Compra Object:', comprasData[0]);
+                console.log('[DEBUG ComprasPage] First Compra.obra (PK or object):', comprasData[0]?.obra);
+                console.log('[DEBUG ComprasPage] First Compra.obra_nome (direct field):', comprasData[0]?.obra_nome);
+            }
+            setCompras(comprasData);
             setTotalItems(response.data.count || 0);
             setTotalPages(Math.ceil((response.data.count || 0) / PAGE_SIZE));
             setCurrentPage(page);
