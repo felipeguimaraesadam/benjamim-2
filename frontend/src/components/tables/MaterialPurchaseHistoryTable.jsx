@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatDateToDMY } from '../utils/dateUtils'; // Path assuming this file is in src/components/tables/
+import { formatDateToDMY } from '../../utils/dateUtils.js'; // Corrected path
 import { Link } from 'react-router-dom';
 
 const MaterialPurchaseHistoryTable = ({ purchaseHistory }) => {
