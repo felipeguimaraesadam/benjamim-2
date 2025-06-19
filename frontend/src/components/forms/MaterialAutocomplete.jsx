@@ -126,6 +126,7 @@ const MaterialAutocomplete = React.memo(React.forwardRef(({ value, onMaterialSel
         setSuggestions([]);
         setShowSuggestions(false);
         setHighlightedIndex(-1);
+        console.log("DEBUG: Selected Material in MaterialAutocomplete (suggestion click):", material);
         onMaterialSelect(itemIndex, material);
     };
 
@@ -184,6 +185,7 @@ const handleNewMaterialSubmit = async (materialFormData) => {
 
         // SUCCESS PATH:
         // Access props directly as they are destructured in the component's function signature
+        console.log("DEBUG: Selected Material in MaterialAutocomplete (new material submit):", createdMaterial);
         onMaterialSelect(itemIndex, createdMaterial, true); // Pass true for isNewMaterial
 
         // Ensure `setInputValue` is the state setter for the component's inputValue state

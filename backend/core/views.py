@@ -288,6 +288,44 @@ class CompraViewSet(viewsets.ModelViewSet):
     serializer_class = CompraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Manually handle the creation process to intercept itens_data
+        validated_data = serializer.validated_data
+        itens_data = validated_data.pop('itens')
+
+        compra = Compra.objects.create(**validated_data)
+
+        for item_data in itens_data:
+            # Create the ItemCompra instance
+            item = ItemCompra.objects.create(compra=compra, **item_data)
+
+            # Logic to update Material.categoria_uso_padrao
+            material_obj = item_data.get('material') # This should be a Material instance
+            categoria_uso = item_data.get('categoria_uso') # This is the string value
+
+            if categoria_uso and material_obj and isinstance(material_obj, Material): # Added type check
+                print(f"DEBUG: Attempting to update Material ID {material_obj.id} with categoria_uso: {categoria_uso}")
+                material_obj.categoria_uso_padrao = categoria_uso
+                material_obj.save(update_fields=['categoria_uso_padrao'])
+                print(f"DEBUG: Successfully updated categoria_uso_padrao for Material ID {material_obj.id} to {categoria_uso}")
+            elif material_obj and not isinstance(material_obj, Material):
+                print(f"DEBUG: material_obj for item was not a Material instance. Type: {type(material_obj)}. Value: {material_obj}")
+
+        # Recalculate valor_total_bruto based on saved items
+        total_bruto_calculado = sum(item.valor_total_item for item in compra.itens.all())
+        compra.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
+        compra.save() # This will also trigger valor_total_liquido calculation
+
+        # Re-serialize the Compra instance with the updated data
+        # Use the same serializer instance that was used for validation to return the response
+        # Or create a new one if that's cleaner, but ensure it's the correct serializer for output
+        final_serializer = CompraSerializer(compra, context=self.get_serializer_context())
+        headers = self.get_success_headers(final_serializer.data)
+        return Response(final_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def get_queryset(self):
         queryset = Compra.objects.all().select_related('obra').order_by('-data_compra')
 
@@ -1270,3 +1308,5 @@ class ObraCustosPorMaterialView(APIView):
         ]
 
         return Response(resultado_formatado)
+
+print("DEBUG: CompraViewSet logic updated.")

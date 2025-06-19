@@ -311,7 +311,14 @@ class FotoObraSerializer(serializers.ModelSerializer):
 class MaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Material
-        fields = '__all__'
+        fields = [
+            'id',
+            'nome',
+            'unidade_medida',
+            'quantidade_em_estoque',
+            'nivel_minimo_estoque',
+            'categoria_uso_padrao',  # Added field
+        ]
 
 
 class MaterialDetailSerializer(MaterialSerializer):
@@ -324,6 +331,7 @@ class MaterialDetailSerializer(MaterialSerializer):
             'unidade_medida',
             'quantidade_em_estoque',
             'nivel_minimo_estoque',
+            'categoria_uso_padrao',  # Added field
         ]
 
 
@@ -332,7 +340,7 @@ class ItemCompraSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ItemCompra
-        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item']
+        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item', 'categoria_uso']  # Added field
 
 
 class CompraSerializer(serializers.ModelSerializer):
@@ -490,3 +498,5 @@ class EquipeDetailSerializer(serializers.ModelSerializer):
             obra__isnull=False
         ).select_related('obra').order_by('-data_locacao_inicio')
         return EquipeLocacaoSerializer(locacoes, many=True, context=self.context).data
+
+print("DEBUG: Serializers updated for categoria_uso fields.")
