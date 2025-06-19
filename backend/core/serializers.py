@@ -72,7 +72,7 @@ class ObraSerializer(serializers.ModelSerializer):
             'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
             'data_inicio', 'data_prevista_fim', 'data_real_fim',
             'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem', 'custo_por_metro',
-            'custo_total_realizado', 'balanco_financeiro', 'custos_por_categoria', 'created_at', 'updated_at'
+            'custo_total_realizado', 'balanco_financeiro', 'custos_por_categoria'
         ]
 
     def get_custo_por_metro(self, obj):
