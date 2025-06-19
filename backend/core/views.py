@@ -360,6 +360,7 @@ class CompraViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object() # Get Compra instance
+        print(f"DEBUG: Updating Compra ID: {instance.id} with data: {request.data}")
 
         # Basic data for Compra model itself
         instance.obra_id = request.data.get('obra', instance.obra_id)
@@ -370,10 +371,11 @@ class CompraViewSet(viewsets.ModelViewSet):
         desconto_str = request.data.get('desconto', str(instance.desconto))
         try:
             instance.desconto = Decimal(desconto_str)
-        except: # Catch potential InvalidOperation if string is not a valid decimal
+        except ValueError: # Catch potential InvalidOperation if string is not a valid decimal
             instance.desconto = instance.desconto # Keep original if conversion fails
             # Optionally, return a 400 error here if strict validation is needed
             # return Response({"error": "Invalid format for desconto."}, status=status.HTTP_400_BAD_REQUEST)
+            print(f"WARNING: Invalid format for desconto '{desconto_str}'. Keeping original value.")
 
 
         instance.observacoes = request.data.get('observacoes', instance.observacoes)
@@ -386,51 +388,96 @@ class CompraViewSet(viewsets.ModelViewSet):
             request_items_ids = set()
 
             for item_data in itens_data:
+                print(f"DEBUG: Processing item_data: {item_data} for Compra ID: {instance.id}")
                 item_id = item_data.get('id', None)
-                material_id = item_data.get('material')
+                material_id = item_data.get('material') # This is expected to be an ID
+                categoria_uso = item_data.get('categoria_uso') # New field
 
-                # Ensure Decimal conversion for quantidade and valor_unitario
                 try:
                     quantidade_str = item_data.get('quantidade', '0')
                     quantidade = Decimal(quantidade_str)
                     valor_unitario_str = item_data.get('valor_unitario', '0')
                     valor_unitario = Decimal(valor_unitario_str)
-                except:
-                    # Skip this item or return error if conversion fails
-                    # Consider logging this issue or returning a specific error message
+                except ValueError as e:
+                    print(f"ERROR: Invalid decimal format for item {item_data}. Error: {e}. Skipping.")
+                    # Optionally, return Response({"error": f"Invalid decimal format for item {item_data}."}, status=status.HTTP_400_BAD_REQUEST)
                     continue # Skip this item if data is invalid
 
-                if not material_id:
-                    continue
+                material_obj = None
+                if material_id:
+                    try:
+                        material_obj = Material.objects.get(id=material_id)
+                    except Material.DoesNotExist:
+                        print(f"ERROR: Material ID {material_id} not found for item_data: {item_data}. Skipping item.")
+                        # Optionally, return Response({"error": f"Material ID {material_id} not found."}, status=status.HTTP_400_BAD_REQUEST)
+                        continue # Skip this item if material not found
+                else:
+                    print(f"ERROR: material_id not provided for item_data: {item_data}. Skipping item.")
+                    # Optionally, return Response({"error": "material_id is required for each item."}, status=status.HTTP_400_BAD_REQUEST)
+                    continue # Skip if no material_id
 
-                if item_id:
-                    request_items_ids.add(item_id)
+                if item_id: # Existing item
                     if item_id in existing_items_ids:
-                        item_instance = ItemCompra.objects.get(id=item_id, compra=instance)
-                        item_instance.material_id = material_id
-                        item_instance.quantidade = quantidade
-                        item_instance.valor_unitario = valor_unitario
-                        item_instance.save()
-                    # else: item_id provided but not found for this Compra - could be an error
+                        try:
+                            item_instance = ItemCompra.objects.get(id=item_id, compra=instance)
+                            item_instance.material = material_obj # Assign Material instance
+                            item_instance.quantidade = quantidade
+                            item_instance.valor_unitario = valor_unitario
+                            if categoria_uso is not None: # Only update if provided
+                                item_instance.categoria_uso = categoria_uso
+                            item_instance.save()
+                            request_items_ids.add(item_id) # Add to set only if successfully processed
+                            print(f"DEBUG: Updated ItemCompra ID {item_instance.id}")
+                        except ItemCompra.DoesNotExist:
+                             # This case should ideally not happen if item_id is in existing_items_ids from the same compra
+                            print(f"ERROR: ItemCompra ID {item_id} not found for Compra ID {instance.id} despite being in existing_items_ids. Skipping.")
+                            continue
+                    else:
+                        # item_id provided but not found for this Compra - this is an anomaly.
+                        # Could log an error or decide if this implies creating a new one,
+                        # but the current logic implies item_id is for an *existing* item of *this* Compra.
+                        print(f"WARNING: item_id {item_id} provided but not found in existing items for Compra ID {instance.id}. Skipping update for this item_data.")
+                        continue # Skip this item data, as it's ambiguous
                 else: # New item
-                    item_instance = ItemCompra.objects.create(
-                        compra=instance,
-                        material_id=material_id,
-                        quantidade=quantidade,
-                        valor_unitario=valor_unitario
-                    )
-                    request_items_ids.add(item_instance.id) # Add new item's ID to request_items_ids
+                    if not material_obj: # Should have been caught earlier, but as a safeguard
+                        print(f"ERROR: Cannot create new item without valid material. Skipping item_data: {item_data}")
+                        continue
+
+                    item_instance_data = {
+                        'compra': instance,
+                        'material': material_obj, # Assign Material instance
+                        'quantidade': quantidade,
+                        'valor_unitario': valor_unitario
+                    }
+                    if categoria_uso is not None:
+                        item_instance_data['categoria_uso'] = categoria_uso
+
+                    item_instance = ItemCompra.objects.create(**item_instance_data)
+                    request_items_ids.add(item_instance.id) # Add new item's ID
+                    print(f"DEBUG: Created new ItemCompra with ID {item_instance.id}")
+
+                # Update Material.categoria_uso_padrao
+                if categoria_uso and material_obj:
+                    print(f"DEBUG: Attempting to update Material ID {material_obj.id} with categoria_uso: {categoria_uso} during Compra update.")
+                    material_obj.categoria_uso_padrao = categoria_uso
+                    material_obj.save(update_fields=['categoria_uso_padrao'])
+                    print(f"DEBUG: Successfully updated categoria_uso_padrao for Material ID {material_obj.id} to {categoria_uso} during Compra update.")
 
             ids_to_delete = existing_items_ids - request_items_ids
             if ids_to_delete:
                 ItemCompra.objects.filter(id__in=ids_to_delete, compra=instance).delete()
+                print(f"DEBUG: Deleted ItemCompra IDs: {ids_to_delete} for Compra ID: {instance.id}")
 
         # Recalculate valor_total_bruto based on current items
-        all_current_items = instance.itens.all() # Fetch fresh list of items
+        # Fetch fresh list of items after all operations
+        all_current_items = instance.itens.all()
         total_bruto_calculado = sum(item.valor_total_item for item in all_current_items if item.valor_total_item is not None)
         instance.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
 
-        instance.save() # Save Compra instance to update valor_total_liquido via its save() method
+        # Save Compra instance to update valor_total_liquido (via Compra.save() method)
+        # and other direct Compra fields modified at the beginning.
+        instance.save()
+        print(f"DEBUG: Saved Compra ID: {instance.id} after item processing and recalculations.")
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)

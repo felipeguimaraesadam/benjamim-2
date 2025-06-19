@@ -349,6 +349,16 @@ class FotoObraSerializer(serializers.ModelSerializer):
         return FotoObra.objects.create(**validated_data)
 
 
+# Serializer for Material Purchase History
+class ItemCompraHistorySerializer(serializers.ModelSerializer):
+    obra_nome = serializers.CharField(source='compra.obra.nome_obra', read_only=True)
+    data_compra = serializers.DateField(source='compra.data_compra', read_only=True)
+
+    class Meta:
+        model = ItemCompra
+        fields = ['id', 'quantidade', 'valor_unitario', 'data_compra', 'obra_nome', 'valor_total_item']
+
+
 class MaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Material
@@ -363,6 +373,7 @@ class MaterialSerializer(serializers.ModelSerializer):
 
 
 class MaterialDetailSerializer(MaterialSerializer):
+    purchase_history = serializers.SerializerMethodField()
 
     class Meta: # Remove (MaterialSerializer.Meta)
         model = Material # Explicitly define the model
@@ -372,8 +383,16 @@ class MaterialDetailSerializer(MaterialSerializer):
             'unidade_medida',
             'quantidade_em_estoque',
             'nivel_minimo_estoque',
-            'categoria_uso_padrao',  # Added field
+            'categoria_uso_padrao',
+            'purchase_history', # Added new field
         ]
+
+    def get_purchase_history(self, obj):
+        # obj is the Material instance
+        print(f"[DEBUG MaterialDetailSerializer] Getting purchase_history for Material ID: {obj.id}")
+        itens_comprados = ItemCompra.objects.filter(material=obj).select_related('compra__obra').order_by('-compra__data_compra')
+        print(f"[DEBUG MaterialDetailSerializer] Found {itens_comprados.count()} items for Material ID: {obj.id}.")
+        return ItemCompraHistorySerializer(itens_comprados, many=True, context=self.context).data
 
 
 class ItemCompraSerializer(serializers.ModelSerializer):

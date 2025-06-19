@@ -50,7 +50,6 @@ const ObraDetailPage = () => {
   // }, [actualTodasAsCompras]);
 
   // UI State
-  const [activeTab, setActiveTab] = useState('equipes'); // Default tab
   const [specificLocacaoError, setSpecificLocacaoError] = useState(null);
   const [removingLocacaoId, setRemovingLocacaoId] = useState(null); // For loading state on remove button
   const [operationStatus, setOperationStatus] = useState({ type: '', message: '' }); // For success/error messages
@@ -213,66 +212,40 @@ const ObraDetailPage = () => {
 
       {/* CurrentStockTable component instance removed */}
 
-      <div className="mb-8">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs"> {/* Added overflow-x-auto for smaller screens */}
-            {['equipes', 'compras', 'despesas', 'fotos'].map(tabName => ( // Added 'fotos' tab
-              <button
-                key={tabName}
-                onClick={() => setActiveTab(tabName)}
-                className={`whitespace-nowrap py-4 px-3 md:px-4 border-b-2 font-medium text-sm ${ // Adjusted padding
-                  activeTab === tabName
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tabName === 'equipes' ? 'Equipes Locadas' :
-                 tabName === 'compras' ? 'Todas as Compras' :
-                 tabName === 'despesas' ? 'Despesas Extras' :
-                 'Fotos da Obra'} {/* Label for 'fotos' tab */}
-              </button>
-            ))}
-          </nav>
+      <div className="mb-8 py-6"> {/* Removed tab navigation structure, kept py-6 for padding */}
+        {/* Components rendered sequentially */}
+        <EquipesLocadasList
+          locacoesEquipe={locacoesEquipe?.results || (Array.isArray(locacoesEquipe) ? locacoesEquipe : [])}
+          obraId={obra.id}
+          obraNome={obra.nome_obra}
+          onRemoverLocacao={handleRemoverLocacao}
+          formatDate={formatDateToDMY}
+          locacaoError={errorLocacoes || specificLocacaoError}
+          isLoading={isLoadingLocacoes}
+          removingLocacaoId={removingLocacaoId}
+        />
+
+        <ObraPurchasesTabContent
+          todasCompras={actualTodasAsCompras}
+          isLoading={isLoadingTodasAsCompras}
+          todasComprasError={errorTodasAsCompras}
+          obraId={obra.id}
+          obraNome={obra.nome_obra}
+        />
+
+        {/* Container for Photo Components */}
+        <div className="my-6"> {/* Added some margin for separation */}
+          <ObraFotosUpload obraId={id} onUploadSuccess={handlePhotoUploaded} />
+          <ObraGaleria obraId={id} newFoto={latestUploadedFoto} />
         </div>
 
-        <div className="py-6">
-          {activeTab === 'equipes' && (
-            <EquipesLocadasList
-              locacoesEquipe={locacoesEquipe?.results || (Array.isArray(locacoesEquipe) ? locacoesEquipe : [])}
-              obraId={obra.id}
-              obraNome={obra.nome_obra}
-              onRemoverLocacao={handleRemoverLocacao}
-              formatDate={formatDateToDMY}
-              locacaoError={errorLocacoes || specificLocacaoError}
-              isLoading={isLoadingLocacoes}
-              removingLocacaoId={removingLocacaoId} // Pass loading state for specific button
-            />
-          )}
-          {activeTab === 'compras' && (
-            <ObraPurchasesTabContent
-              todasCompras={actualTodasAsCompras}
-              isLoading={isLoadingTodasAsCompras}
-              todasComprasError={errorTodasAsCompras}
-              obraId={obra.id}
-              obraNome={obra.nome_obra}
-            />
-          )}
-          {activeTab === 'despesas' && (
-            <ObraExpensesTabContent
-              despesasExtrasObra={despesasExtrasObra}
-              isLoading={isLoadingDespesasExtras}
-              despesasExtrasObraError={errorDespesasExtras}
-              obraId={obra.id}
-              obraNome={obra.nome_obra}
-            />
-          )}
-          {activeTab === 'fotos' && (
-            <div>
-              <ObraFotosUpload obraId={id} onUploadSuccess={handlePhotoUploaded} />
-              <ObraGaleria obraId={id} newFoto={latestUploadedFoto} />
-            </div>
-          )}
-        </div>
+        <ObraExpensesTabContent
+          despesasExtrasObra={despesasExtrasObra}
+          isLoading={isLoadingDespesasExtras}
+          despesasExtrasObraError={errorDespesasExtras}
+          obraId={obra.id}
+          obraNome={obra.nome_obra}
+        />
       </div>
 
       <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

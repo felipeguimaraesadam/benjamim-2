@@ -166,3 +166,51 @@ Gestão de Estoque: O sistema atualmente não possui um mecanismo para dar baixa
 
 Recomendação: Por agora, o campo quantidade_em_estoque deve ser tratado como um valor de referência apenas. Para uma futura versão, planeje uma funcionalidade de "Requisição de Material" ou "Baixa de Estoque" para controlar o inventário de forma precisa.
 Consistência dos Dados: A remoção do campo salario e a mudança na forma como o uso do material é registrado são melhorias significativas que alinham o sistema à sua forma de trabalho atual. Essas mudanças simplificarão o uso e reduzirão a complexidade do banco de dados.
+
+[x] Tarefa 1: Corrigir Salvamento de 'Categoria de Uso' na Edição de Compra
+Justificativa: Ao editar uma compra, a categoria_uso de um item não estava sendo salva no banco de dados, apesar de ser selecionada na interface. Isso ocorria porque a lógica de atualização no backend não processava e salva corretamente os dados dos itens aninhados.
+Backend (Django):
+- Localizar o Arquivo: `backend/core/views.py`.
+- Analisar a `CompraViewSet`: Encontrar a classe `CompraViewSet`. O método `update` foi refatorado.
+- Refatorar o Método `update`: Substituída a lógica de atualização por uma que itera sobre os itens recebidos na requisição. Para cada item, a lógica:
+    - Verifica se o item já existe (possui um `id`) para atualizá-lo (`ItemCompra.objects.get()`).
+    - Se não tiver `id`, cria uma nova instância de `ItemCompra`.
+    - Salva o campo `categoria_uso` para cada item (novo ou existente).
+    - Adiciona a lógica que, ao salvar um `ItemCompra` (novo ou existente com `categoria_uso`), também atualiza o campo `categoria_uso_padrao` do `Material` correspondente.
+    - Implementa a exclusão de itens que existiam no banco de dados mas não foram enviados na requisição de atualização.
+    - Recalcula o `valor_total_bruto` e `valor_total_liquido` da `Compra` com base nos itens atualizados antes de salvar.
+
+[x] Tarefa 2: Refatorar Layout da Página de Detalhes da Obra (Remover Abas)
+Justificativa: A navegação por abas na página de detalhes da obra não era ideal. Um layout sequencial, onde cada seção é exibida uma abaixo da outra, melhora a usabilidade e a visualização das informações.
+Frontend (React):
+- Localizar o Arquivo: `frontend/src/pages/ObraDetailPage.jsx`.
+- Remover Lógica de Abas:
+    - Removido o estado `const [activeTab, setActiveTab] = useState('equipes');`.
+    - Excluído o bloco `<nav>` que renderizava os botões das abas.
+- Renderizar Componentes Sequencialmente:
+    - Dentro do `div` principal da página, os componentes de cada seção foram renderizados diretamente, um após o outro.
+    - Ordem: `<EquipesLocadasList ... />`, `<ObraPurchasesTabContent ... />`, `<div> <ObraFotosUpload ... /> <ObraGaleria ... /> </div>`, `<ObraExpensesTabContent ... />`.
+    - Props necessárias foram mantidas.
+
+[x] Tarefa 3: Corrigir Exibição do Nome da Obra na Lista de Compras
+Justificativa: Na página principal "Gestão de Compras", a coluna "Obra" na tabela estava exibindo 'N/A'.
+Backend (Django):
+- Verificar o Serializer: Em `backend/core/serializers.py`, `CompraSerializer` já incluía `obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)`. Verificado e confirmado.
+- Verificar a ViewSet: Em `backend/core/views.py`, na `CompraViewSet`, `get_queryset` já utilizava `select_related('obra')`. Verificado e confirmado.
+Frontend (React):
+- Analisar o Componente da Tabela: `frontend/src/components/tables/ComprasTable.jsx`. A linha `<td>{compra.obra?.nome_obra || 'N/A'}</td>` já estava correta.
+- Depurar a Página: Em `frontend/src/pages/ComprasPage.jsx`, um `console.log(compras)` foi adicionado após `fetchCompras` para inspeção (para fins de diagnóstico, se o problema persistisse).
+- Ação Corretiva: A configuração do backend e o acesso no frontend pareciam corretos. A tarefa foi concluída com a verificação e a adição do log para diagnóstico futuro se necessário.
+
+[x] Tarefa 4: Implementar Histórico de Compras na Página de Detalhes do Material
+Justificativa: Substituir a funcionalidade removida de "Histórico de Uso" por um histórico de compras do material.
+Backend (Django):
+- Criar Novo Serializer: Em `backend/core/serializers.py`, criado `ItemCompraHistorySerializer` com os campos `id`, `quantidade`, `valor_unitario`, `data_compra`, `obra_nome`, `valor_total_item`.
+- Atualizar `MaterialDetailSerializer`: Adicionado `purchase_history = serializers.SerializerMethodField()` e a função `get_purchase_history` para usar o novo serializer.
+- Verificar a View: `MaterialDetailAPIView` em `backend/core/views.py` já usava `MaterialDetailSerializer`.
+Frontend (React):
+- Criar Componente de Tabela: Criado `frontend/src/components/tables/MaterialPurchaseHistoryTable.jsx` para exibir os dados do histórico de compras.
+- Atualizar a Página de Detalhes: Em `frontend/src/pages/MaterialDetailPage.jsx`:
+    - Removida a antiga tabela/lógica de "Histórico de Uso".
+    - Adicionado o novo componente `MaterialPurchaseHistoryTable`, passando `materialDetails.purchase_history`.
+- Remover Componentes Obsoletos: Excluídos `frontend/src/components/tables/HistoricoUsoTable.jsx` e `frontend/src/components/obra/MaterialUsageHistory.jsx`.

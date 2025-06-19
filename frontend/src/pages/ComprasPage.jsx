@@ -67,7 +67,8 @@ const ComprasPage = () => {
 
         try {
             const response = await api.getCompras(params);
-            setCompras(response.data.results || []);
+            console.log('[DEBUG ComprasPage] Fetched Compras Data:', response.data.results || response.data || []);
+            setCompras(response.data.results || response.data || []);
             setTotalItems(response.data.count || 0);
             setTotalPages(Math.ceil((response.data.count || 0) / PAGE_SIZE));
             setCurrentPage(page);
