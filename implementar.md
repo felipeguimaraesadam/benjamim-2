@@ -42,7 +42,7 @@ Remover Serializer: Exclua o UsoMaterialSerializer de backend/core/serializers.p
 Remover URL: Remova a rota usomateriais de backend/core/urls.py.
 Refatorar Dependências: Em backend/core/serializers.py, remova o campo usage_history do MaterialDetailSerializer, pois ele depende do UsoMaterial.
 Migração: Crie e execute uma migração para remover a tabela core_usomaterial do banco de dados.
-[  ] Tarefa 3: Registrar Categoria de Uso do Material na Compra
+[x] Tarefa 3: Registrar Categoria de Uso do Material na Compra
 Justificativa: Simplificar a alocação de custos de material, registrando a categoria de uso diretamente no item da compra e memorizando a escolha para futuros lançamentos.
 
 Backend (Django):

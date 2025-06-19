@@ -2,6 +2,15 @@ import React, { useState, useEffect, useCallback, useRef, useReducer } from 'rea
 import * as api from '../../services/api';
 import MaterialAutocomplete from './MaterialAutocomplete';
 
+const CATEGORIA_USO_CHOICES = [
+    { value: 'Geral', label: 'Geral' },
+    { value: 'Eletrica', label: 'Elétrica' },
+    { value: 'Hidraulica', label: 'Hidráulica' },
+    { value: 'Alvenaria', label: 'Alvenaria' },
+    { value: 'Acabamento', label: 'Acabamento' },
+    { value: 'Fundacao', label: 'Fundação' }
+];
+
 const WarningIcon = ({ className = "w-3 h-3 inline mr-1" }) => ( // Adjusted default size
   <svg className={className} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.216 3.031-1.742 3.031H4.42c-1.526 0-2.492-1.697-1.742-3.031l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1.75-4.5a1.75 1.75 0 00-3.5 0v.25h3.5v-.25z" clipRule="evenodd" /></svg>
 );
@@ -20,7 +29,8 @@ const ITEM_ACTION_TYPES = {
 // Helper for reducer (does not generate ID)
 const createNewEmptyItemPayload = () => ({
     originalId: null, material: null, materialId: '', materialNome: '',
-    quantidade: '', unidadeMedida: '', valorUnitario: '', valorTotalItem: '0.00'
+    quantidade: '', unidadeMedida: '', valorUnitario: '', valorTotalItem: '0.00',
+    categoria_uso: '' // Added categoria_uso
 });
 
 import SpinnerIcon from '../utils/SpinnerIcon'; // Import SpinnerIcon
@@ -128,6 +138,23 @@ const ItemRowInternal = ({
             </td>
             <td className="px-3 py-2.5 border-b border-slate-200 text-sm text-slate-800 font-medium align-middle text-right w-[140px]">
                 R$ {parseFloat(item.valorTotalItem || 0).toFixed(2).replace('.',',')}
+            </td>
+            <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top w-[180px]"> {/* Added Categoria de Uso column */}
+                <select
+                    name="categoria_uso"
+                    value={item.categoria_uso || ''}
+                    onChange={(e) => {
+                        console.log(`DEBUG: Categoria de Uso changed for item ${index}:`, e.target.value);
+                        onItemChange(index, 'categoria_uso', e.target.value);
+                    }}
+                    className={`w-full p-2 border ${getError('categoria_uso') ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
+                >
+                    <option value="">Selecione...</option>
+                    {CATEGORIA_USO_CHOICES.map(choice => (
+                        <option key={choice.value} value={choice.value}>{choice.label}</option>
+                    ))}
+                </select>
+                {getError('categoria_uso') && <p className="mt-1 text-xs text-red-600 flex items-center"><WarningIcon />{getError('categoria_uso')}</p>}
             </td>
             <td className="px-3 py-2.5 border-b border-slate-200 text-center align-middle w-[100px]"> {/* Adjusted width */}
                 <button type="button" onClick={() => onRemoveItem(index)}
@@ -249,7 +276,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
     const createNewEmptyItem = () => ({
         id: generateItemUniqueId(), originalId: null, material: null, materialId: '', materialNome: '',
-        quantidade: '', unidadeMedida: '', valorUnitario: '', valorTotalItem: '0.00'
+    quantidade: '', unidadeMedida: '', valorUnitario: '', valorTotalItem: '0.00',
+    categoria_uso: '' // Added categoria_uso
     });
 
     useEffect(() => {
@@ -279,6 +307,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                         quantidade: apiItem.quantidade != null ? apiItem.quantidade.toString().replace(',', '.') : '',
                         valorUnitario: apiItem.valor_unitario != null ? apiItem.valor_unitario.toString().replace(',', '.') : '',
                         valorTotalItem: '0.00',
+                        categoria_uso: apiItem.categoria_uso || (materialForState ? materialForState.categoria_uso_padrao : '') || '', // Added categoria_uso
                     };
                     const qty = parseFloat(newItem.quantidade) || 0; const price = parseFloat(newItem.valorUnitario) || 0;
                     newItem.valorTotalItem = (qty * price).toFixed(2);
@@ -319,12 +348,29 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     };
 
     const handleMaterialSelected = useCallback((index, selectedMaterialObj) => {
+        console.log("DEBUG: Material selected in CompraForm:", index, selectedMaterialObj);
         try {
             dispatchItems({
                 type: ITEM_ACTION_TYPES.SET_MATERIAL,
                 payload: { index, material: selectedMaterialObj }
             });
-            setErrors(prevErr => ({...prevErr, [`item_${index}_material`]: null}));
+
+            // Autofill categoria_uso
+            if (selectedMaterialObj && selectedMaterialObj.categoria_uso_padrao) {
+                console.log("DEBUG: Autofilling categoria_uso for item", index, "to", selectedMaterialObj.categoria_uso_padrao);
+                dispatchItems({
+                    type: ITEM_ACTION_TYPES.UPDATE_ITEM_FIELD,
+                    payload: { index, fieldName: 'categoria_uso', value: selectedMaterialObj.categoria_uso_padrao }
+                });
+            } else if (selectedMaterialObj === null) { // Material cleared
+                 console.log("DEBUG: Clearing categoria_uso for item", index, "due to material deselection");
+                 dispatchItems({
+                    type: ITEM_ACTION_TYPES.UPDATE_ITEM_FIELD,
+                    payload: { index, fieldName: 'categoria_uso', value: '' }
+                });
+            }
+
+            setErrors(prevErr => ({...prevErr, [`item_${index}_material`]: null, [`item_${index}_categoria_uso`]: null})); // Clear potential error for categoria_uso as well
             setTimeout(() => {
                 if (itemFieldRefs.current && itemFieldRefs.current[index] && itemFieldRefs.current[index].quantity && itemFieldRefs.current[index].quantity.current) {
                     itemFieldRefs.current[index].quantity.current.focus();
@@ -423,7 +469,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                     id: item.originalId || undefined,
                     material: parseInt(item.materialId || item.material?.id, 10),
                     quantidade: parseFloat(String(item.quantidade).replace(',', '.')),
-                    valor_unitario: parseFloat(String(item.valorUnitario).replace(',', '.'))
+                    valor_unitario: parseFloat(String(item.valorUnitario).replace(',', '.')),
+                    categoria_uso: item.categoria_uso || null // Added categoria_uso
             }));
             if (itemsToSubmit.length === 0 && !(initialData && initialData.id)) {
                  setErrors(prev => ({...prev, form: "Adicione pelo menos um item válido à compra."})); return;
@@ -433,6 +480,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 fornecedor: fornecedor, nota_fiscal: notaFiscal || null, desconto: finalDesconto,
                 observacoes: observacoes || null, itens: itemsToSubmit
             };
+            console.log("DEBUG: CompraForm submit payload:", compraData);
             onSubmit(compraData);
         }
     };
@@ -509,6 +557,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                                     <th scope="col" className="px-3 py-2.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-[100px]">Un.</th>
                                     <th scope="col" className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[150px]">Val. Unit. (R$)</th>
                                     <th scope="col" className="px-3 py-2.5 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider w-[140px]">Val. Total (R$)</th>
+                                    <th scope="col" className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[180px]">Categoria de Uso</th>
                                     <th scope="col" className="px-3 py-2.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-[100px]">Ação</th>
                                 </tr>
                             </thead>

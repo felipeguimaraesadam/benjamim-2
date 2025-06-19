@@ -2,6 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from decimal import Decimal
 
+CATEGORIA_USO_CHOICES = [
+    ('Geral', 'Geral'), ('Eletrica', 'Elétrica'), ('Hidraulica', 'Hidráulica'),
+    ('Alvenaria', 'Alvenaria'), ('Acabamento', 'Acabamento'), ('Fundacao', 'Fundação')
+]
+
 class UsuarioManager(BaseUserManager):
     def create_user(self, login, password=None, **extra_fields):
         if not login:
@@ -135,9 +140,12 @@ class Material(models.Model):
     quantidade_em_estoque = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     nivel_minimo_estoque = models.PositiveIntegerField(default=0, help_text="Nível mínimo de estoque para alerta. 0 para não alertar.")
     # TODO: Run makemigrations and migrate
+    categoria_uso_padrao = models.CharField(max_length=50, choices=CATEGORIA_USO_CHOICES, null=True, blank=True)
 
     def __str__(self):
         return self.nome
+
+print("DEBUG: Material model has been extended with categoria_uso_padrao.")
 
 class Compra(models.Model):
     obra = models.ForeignKey(Obra, on_delete=models.CASCADE, related_name='compras')
@@ -168,6 +176,7 @@ class ItemCompra(models.Model):
     quantidade = models.DecimalField(max_digits=10, decimal_places=3) # Suporta 1,5 kg, etc.
     valor_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     valor_total_item = models.DecimalField(max_digits=12, decimal_places=2, editable=False)
+    categoria_uso = models.CharField(max_length=50, choices=CATEGORIA_USO_CHOICES, null=True, blank=True)
 
     def __str__(self):
         return f"{self.quantidade}x {self.material.nome} na Compra {self.compra.id}"
@@ -176,6 +185,8 @@ class ItemCompra(models.Model):
         # Calcular o valor total do item antes de salvar
         self.valor_total_item = self.quantidade * self.valor_unitario
         super().save(*args, **kwargs)
+
+print("DEBUG: ItemCompra model has been extended with categoria_uso.")
 
 class Despesa_Extra(models.Model):
     obra = models.ForeignKey(Obra, on_delete=models.CASCADE, related_name='despesas_extras')
