@@ -56,9 +56,14 @@ class Obra(models.Model):
     responsavel = models.ForeignKey('Funcionario', on_delete=models.SET_NULL, null=True, blank=True, related_name='obras_responsaveis')
     cliente_nome = models.CharField(max_length=255, blank=True, null=True)
     orcamento_previsto = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, default=Decimal('0.00'))
+    area_metragem = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Área em metros quadrados (m²)")
 
     def __str__(self):
         return self.nome_obra
+
+    def save(self, *args, **kwargs):
+        print(f"[DEBUG Obra Save] ID: {self.id}, Area Metragem: {self.area_metragem}")
+        super().save(*args, **kwargs)
 
 class Funcionario(models.Model):
     nome_completo = models.CharField(max_length=255)

@@ -70,7 +70,7 @@ class ObraSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
             'data_inicio', 'data_prevista_fim', 'data_real_fim',
-            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto',
+            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem',
             'custo_total_realizado', 'balanco_financeiro', 'custos_por_categoria'
         ]
 

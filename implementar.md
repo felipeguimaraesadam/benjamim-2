@@ -122,7 +122,7 @@ Use a biblioteca recharts (já instalada) para criar os componentes dos gráfico
 Gráfico 1 (Pizza): "Orçamento vs. Gasto Total". Use os dados orcamento_total_geral e gasto_total_geral.
 Gráfico 2 (Barras ou Pizza): "Composição dos Gastos". Use os dados de gastos_por_tipo.
 Gráfico 3 (Barras ou Pizza): "Gastos por Categoria de Material". Use os dados de gastos_por_categoria_material.
-[  ] Tarefa 6: Adicionar Metragem da Obra
+[x] Tarefa 6: Adicionar Metragem da Obra
 Justificativa: Adicionar um dado fundamental da obra para permitir cálculos de custo por metro quadrado.
 
 Backend (Django):
