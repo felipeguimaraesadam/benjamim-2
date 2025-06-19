@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, UsoMaterial, ItemCompra, FotoObra
+from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra
 from django.db.models import Sum, Q
 from decimal import Decimal
 
@@ -315,7 +315,6 @@ class MaterialSerializer(serializers.ModelSerializer):
 
 
 class MaterialDetailSerializer(MaterialSerializer):
-    usage_history = serializers.SerializerMethodField()
 
     class Meta: # Remove (MaterialSerializer.Meta)
         model = Material # Explicitly define the model
@@ -325,25 +324,7 @@ class MaterialDetailSerializer(MaterialSerializer):
             'unidade_medida',
             'quantidade_em_estoque',
             'nivel_minimo_estoque',
-            'usage_history' # Add the new field
         ]
-
-    def get_usage_history(self, obj):
-        # obj é a instância de Material
-        # 1. Encontre todos os ItemCompra associados a este Material
-        item_compra_instances = ItemCompra.objects.filter(material=obj)
-
-        # 2. Obtenha os IDs desses ItemCompra
-        item_compra_ids = item_compra_instances.values_list('id', flat=True)
-
-        # 3. Filtre UsoMaterial que estão ligados a esses ItemCompra
-        usos_material = UsoMaterial.objects.filter(item_compra_id__in=item_compra_ids).select_related(
-            'item_compra__compra__obra', # Para acessar a obra
-            'item_compra__material'    # Para acessar o material (embora já tenhamos o material principal 'obj')
-        ).order_by('-data_uso')
-
-        context = getattr(self, 'context', {}) # Preserva o contexto se existir
-        return UsoMaterialSerializer(usos_material, many=True, context=context).data
 
 
 class ItemCompraSerializer(serializers.ModelSerializer):
@@ -352,19 +333,6 @@ class ItemCompraSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemCompra
         fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item']
-
-
-class ItemCompraComEstoqueSerializer(ItemCompraSerializer):
-    quantidade_disponivel = serializers.SerializerMethodField()
-
-    class Meta(ItemCompraSerializer.Meta):
-        fields = ItemCompraSerializer.Meta.fields + ['quantidade_disponivel']
-
-    def get_quantidade_disponivel(self, obj):
-        # obj is an ItemCompra instance
-        total_usado = obj.usos.aggregate(total=Sum('quantidade_usada'))['total'] or Decimal('0.00')
-        quantidade_disponivel = obj.quantidade - total_usado
-        return quantidade_disponivel
 
 
 class CompraSerializer(serializers.ModelSerializer):
@@ -522,67 +490,3 @@ class EquipeDetailSerializer(serializers.ModelSerializer):
             obra__isnull=False
         ).select_related('obra').order_by('-data_locacao_inicio')
         return EquipeLocacaoSerializer(locacoes, many=True, context=self.context).data
-
-
-class UsoMaterialSerializer(serializers.ModelSerializer):
-    obra_nome = serializers.CharField(source='item_compra.compra.obra.nome_obra', read_only=True, allow_null=True)
-    material_nome = serializers.SerializerMethodField()
-    custo_proporcional = serializers.SerializerMethodField()
-    item_compra = serializers.PrimaryKeyRelatedField(queryset=ItemCompra.objects.all())
-
-    class Meta:
-        model = UsoMaterial
-        fields = [
-            'id', 'item_compra', 'obra_nome', 'material_nome',
-            'custo_proporcional',
-            'quantidade_usada', 'data_uso', 'andar', 'categoria_uso', 'descricao'
-        ]
-        read_only_fields = ['data_uso', 'obra_nome', 'material_nome', 'custo_proporcional']
-
-    def get_material_nome(self, obj):
-        # obj is UsoMaterial instance
-        return obj.item_compra.material.nome if obj.item_compra and obj.item_compra.material else None
-
-    def get_custo_proporcional(self, obj):
-        # obj is the UsoMaterial instance
-        item = obj.item_compra
-        if item and hasattr(item, 'quantidade') and item.quantidade is not None and item.quantidade > 0 and \
-           hasattr(obj, 'quantidade_usada') and obj.quantidade_usada is not None:
-
-            quantidade_usada = Decimal(str(obj.quantidade_usada))
-            item_quantidade = Decimal(str(item.quantidade))
-            item_valor_total = Decimal(str(item.valor_total_item))
-
-            custo_proporcional = (quantidade_usada / item_quantidade) * item_valor_total
-            return custo_proporcional.quantize(Decimal('0.01'))
-        return Decimal('0.00')
-
-    def validate(self, data):
-        item_compra_instance = data.get('item_compra') if 'item_compra' in data else getattr(self.instance, 'item_compra', None)
-
-        if 'quantidade_usada' in data:
-            quantidade_usada = data['quantidade_usada']
-
-            if quantidade_usada <= Decimal('0'):
-                raise serializers.ValidationError({"quantidade_usada": "A quantidade usada deve ser maior que zero."})
-
-            if item_compra_instance:
-                # Calculate total already used for this ItemCompra, excluding current UsoMaterial instance if updating
-                query = UsoMaterial.objects.filter(item_compra=item_compra_instance)
-                if self.instance and self.instance.pk:
-                    query = query.exclude(pk=self.instance.pk)
-
-                total_ja_usado_do_item = query.aggregate(total=Sum('quantidade_usada'))['total'] or Decimal('0.00')
-
-                quantidade_original_do_item = item_compra_instance.quantidade
-                quantidade_efetivamente_disponivel = quantidade_original_do_item - total_ja_usado_do_item
-
-                if quantidade_usada > quantidade_efetivamente_disponivel:
-                    raise serializers.ValidationError({
-                        "quantidade_usada": f"A quantidade usada ({quantidade_usada}) excede a quantidade disponível ({quantidade_efetivamente_disponivel.quantize(Decimal('0.01'))}) para o item '{item_compra_instance.material.nome}'."
-                    })
-            # If creating and item_compra_instance is None, PrimaryKeyRelatedField should handle it.
-            elif not self.instance and not item_compra_instance:
-                 raise serializers.ValidationError({"item_compra": "Este campo é obrigatório."})
-
-        return data

@@ -25,7 +25,7 @@ Frontend (React):
 Formulário: Em frontend/src/components/forms/FuncionarioForm.jsx, remova o div que contém o label e o input para o campo "Salário".
 Tabela: Em frontend/src/components/tables/FuncionariosTable.jsx, remova a coluna (<th> e <td>) referente a "Salário".
 Página de Detalhes: Em frontend/src/pages/FuncionarioDetailPage.jsx, remova a linha que exibe o "Salário" nos dados pessoais.
-[  ] Tarefa 2: Remover a funcionalidade "Distribuir Materiais"
+[x] Tarefa 2: Remover a funcionalidade "Distribuir Materiais"
 Justificativa: A distribuição de materiais será simplificada e incorporada diretamente no fluxo de registro de Compras, tornando a funcionalidade separada redundante.
 
 Frontend (React):

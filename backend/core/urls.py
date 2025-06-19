@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     UsuarioViewSet, ObraViewSet, FuncionarioViewSet, EquipeViewSet,
     LocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
-    DespesaExtraViewSet, OcorrenciaFuncionarioViewSet, UsoMaterialViewSet,
+    DespesaExtraViewSet, OcorrenciaFuncionarioViewSet,
     FotoObraViewSet, # Added FotoObraViewSet
     RelatorioFinanceiroObraView, RelatorioGeralComprasView, DashboardStatsView,
     RelatorioDesempenhoEquipeView, RelatorioCustoGeralView, ObraHistoricoCustosView,
@@ -22,7 +22,6 @@ router.register(r'materiais', MaterialViewSet)
 router.register(r'compras', CompraViewSet, basename='compra')
 router.register(r'despesas', DespesaExtraViewSet, basename='despesaextra')
 router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
-router.register(r'usomateriais', UsoMaterialViewSet, basename='usomaterial')
 router.register(r'fotosobras', FotoObraViewSet, basename='fotoobra') # Add this line
 router.register(r'relatorios/folha-pagamento', RelatorioFolhaPagamentoViewSet, basename='relatorio-folha-pagamento')
 router.register(r'relatorios/pagamento-materiais', RelatorioPagamentoMateriaisViewSet, basename='relatorio-pagamento-materiais')
