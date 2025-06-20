@@ -837,6 +837,7 @@ class GerarRelatorioPDFObraView(APIView):
 
         fotos_for_context = []
         if fotos_qs: # Use fotos_qs here
+            print(f"DEBUG PDF IMG: Found {len(fotos_qs)} photo(s) for Obra ID {obra.id}")
             for foto_obj in fotos_qs: # Iterate over fotos_qs
                 try:
                     abs_path = foto_obj.imagem.path
@@ -848,9 +849,11 @@ class GerarRelatorioPDFObraView(APIView):
                         'description': foto_obj.descricao, # Matching template change
                         'original_path': abs_path
                     })
+                    print(f"DEBUG PDF IMG: Processed foto. Original path: {abs_path}, URI for PDF: {file_uri}")
                 except Exception as e_img:
-                    # Optionally, log this error to server logs instead of print
-                    pass # Silently pass or log e_img for server-side review
+                    print(f"DEBUG PDF IMG: Error processing image {getattr(foto_obj, 'id', 'N/A')}: {e_img}")
+
+        # Old debug block is now removed by this replacement.
 
         custo_total_materiais = sum(c.valor_total_liquido for c in compras if c.valor_total_liquido) or Decimal('0.00')
         custo_total_despesas_extras = sum(de.valor for de in despesas_extras if de.valor) or Decimal('0.00')
