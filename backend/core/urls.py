@@ -10,7 +10,7 @@ from .views import (
     RelatorioDesempenhoEquipeView, RelatorioCustoGeralView, ObraHistoricoCustosView,
     ObraCustosPorCategoriaView, ObraCustosPorMaterialView, # Added new views
     RelatorioFolhaPagamentoViewSet, FuncionarioDetailView, EquipeDetailView, # Added EquipeDetailView
-    MaterialDetailAPIView, RelatorioPagamentoMateriaisViewSet # Added RelatorioPagamentoMateriaisViewSet
+    MaterialDetailAPIView, RelatorioPagamentoMateriaisViewSet, GerarRelatorioPDFObraView # Added GerarRelatorioPDFObraView
 )
 
 router = DefaultRouter()
@@ -45,4 +45,5 @@ urlpatterns = [
     path('equipes/<int:pk>/details/', EquipeDetailView.as_view(), name='equipe-details'),
     # Path for MaterialDetailAPIView
     path('materiais/<int:pk>/details/', MaterialDetailAPIView.as_view(), name='material-details'),
+    path('obras/<int:pk>/gerar-relatorio-pdf/', GerarRelatorioPDFObraView.as_view(), name='gerar-relatorio-pdf-obra'),
 ]
