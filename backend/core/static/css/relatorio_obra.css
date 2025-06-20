@@ -1,0 +1,171 @@
+/* Main CSS for PDF Report - relatorio_obra.css */
+/* This file is loaded by the WeasyPrint view if found. */
+/* The HTML template also contains a <style> block with @page rules and basic defaults, */
+/* which act as a fallback or can be complemented by this external CSS. */
+
+/* @page rule is better defined directly in the HTML template's <style> block for WeasyPrint */
+/* as it gives more direct control, especially for cover pages vs content pages. */
+/* If you prefer all @page rules here, ensure they don't conflict with the HTML's <style>. */
+
+/* Example:
+@page {
+    size: A4;
+    margin: 1.5cm;
+}
+@page cover {
+    margin: 0;
+}
+*/
+
+body {
+    font-family: 'Arial', 'Helvetica', sans-serif; /* Changed font for broader compatibility */
+    font-size: 10pt;
+    color: #333333; /* Dark gray for text */
+    line-height: 1.4;
+}
+
+.cover-page-content {
+    /* Styles for cover page elements are mostly in the HTML's <style> block for @page:cover */
+    /* Add specific element styling here if needed */
+}
+.cover-page-content h1 { font-size: 26pt; margin-bottom: 20px; color: #2c3e50; } /* Darker blue/gray */
+.cover-page-content h2 { font-size: 20pt; margin-bottom: 40px; color: #34495e; } /* Slightly lighter blue/gray */
+.cover-page-content p { font-size: 12pt; margin-bottom: 8px; color: #555555; }
+.cover-page-content .emission-date { margin-top: 60px; font-size: 11pt; color: #555555;}
+
+
+.content-body {
+    /* Styles for the main content area after the cover page */
+}
+
+h1.main-title {
+    font-size: 18pt;
+    text-align: center;
+    margin-bottom: 1em;
+    color: #2c3e50;
+}
+
+h2.section-title {
+    font-size: 15pt;
+    border-bottom: 1.5px solid #bdc3c7; /* Slightly thicker border */
+    padding-bottom: 0.3em;
+    margin-top: 1.8em; /* More space before section */
+    margin-bottom: 1em;
+    color: #34495e;
+}
+
+h3.subsection-title {
+    font-size: 13pt;
+    margin-top: 1.2em;
+    margin-bottom: 0.8em;
+    color: #7f8c8d; /* Gray for subsection titles */
+    border-bottom: 1px dotted #bdc3c7;
+    padding-bottom: 0.2em;
+}
+
+h4.table-title {
+    font-size: 11pt;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    color: #333;
+    font-weight: bold;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.2em; /* More space after tables */
+    page-break-inside: auto;
+}
+
+tr {
+    page-break-inside: avoid; /* Try to keep rows from breaking */
+    page-break-after: auto;
+}
+
+th, td {
+    border: 1px solid #bdc3c7; /* Lighter gray for borders */
+    padding: 6px 8px; /* Slightly more padding */
+    text-align: left;
+    vertical-align: top;
+    word-wrap: break-word; /* Help prevent overflow */
+}
+
+th {
+    background-color: #ecf0f1; /* Light gray background for headers */
+    font-weight: bold;
+    color: #2c3e50; /* Dark blue/gray for header text */
+}
+
+.financial-summary td:nth-child(2),
+.text-right {
+    text-align: right;
+}
+
+.balance-positive {
+    color: #27ae60; /* Green for positive balance */
+    font-weight: bold;
+}
+
+.balance-negative {
+    color: #c0392b; /* Red for negative balance */
+    font-weight: bold;
+}
+
+.photo-gallery {
+    margin-top: 15px;
+    column-count: 2; /* Creates a two-column layout */
+    column-gap: 12px; /* Space between columns */
+    orphans: 2; /* Minimum lines to leave at bottom before break */
+    widows: 2;  /* Minimum lines to carry to top after break */
+}
+
+.photo-item {
+    text-align: center;
+    margin-bottom: 12px;
+    page-break-inside: avoid; /* WeasyPrint uses this for column breaks too */
+    -webkit-column-break-inside: avoid; /* For compatibility */
+    break-inside: avoid-column; /* Standard property */
+    display: block; /* Ensure it takes up block space for column layout */
+    width: 100%; /* Take full width of the column */
+}
+
+.photo-item img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+    margin-bottom: 5px;
+    max-height: 220px; /* Adjust as needed */
+    object-fit: contain; /* Scales image while maintaining aspect ratio */
+}
+
+.photo-item .description {
+    font-size: 8pt;
+    color: #555555;
+    padding: 0 5px; /* Add some padding if description is long */
+}
+
+.section {
+    margin-bottom: 25px;
+    orphans: 3;
+    widows: 3;
+}
+
+.avoid-break {
+    page-break-inside: avoid;
+}
+
+.font-bold {
+    font-weight: bold;
+}
+
+.total-row th,
+.total-row td {
+    background-color: #f9f9f9; /* Slightly different background for total rows */
+    font-weight: bold;
+    border-top: 1.5px solid #95a5a6; /* Heavier top border for total rows */
+}
+
+.currency::before {
+    content: "R$ ";
+}
