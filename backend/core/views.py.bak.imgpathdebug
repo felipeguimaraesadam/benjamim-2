@@ -835,15 +835,6 @@ class GerarRelatorioPDFObraView(APIView):
         ).order_by('data_locacao_inicio')
         fotos = FotoObra.objects.filter(obra=obra).order_by('uploaded_at')
 
-        if fotos:
-            first_foto = fotos[0]
-            image_name = first_foto.imagem.name
-            media_root_str = str(settings.MEDIA_ROOT)
-            constructed_path = os.path.join(media_root_str, image_name)
-            print(f"DEBUG PDF IMG: Attempting to use image path: file://{constructed_path}")
-            print(f"DEBUG PDF IMG: foto.imagem.url: {first_foto.imagem.url}")
-            print(f"DEBUG PDF IMG: foto.imagem.path: {first_foto.imagem.path}")
-
         custo_total_materiais = sum(c.valor_total_liquido for c in compras if c.valor_total_liquido) or Decimal('0.00')
         custo_total_despesas_extras = sum(de.valor for de in despesas_extras if de.valor) or Decimal('0.00')
         custo_total_locacoes = sum(loc.valor_pagamento for loc in locacoes if loc.valor_pagamento) or Decimal('0.00')
