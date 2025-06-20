@@ -852,7 +852,7 @@ class GerarRelatorioPDFObraView(APIView):
             'despesas_extras': despesas_extras,
             'locacoes': locacoes,
             'fotos': fotos,
-            'data_emissao': timezone.now(),
+            'data_emissao': timezone.now().date(),
             'custo_total_materiais': custo_total_materiais,
             'custo_total_despesas_extras': custo_total_despesas_extras,
             'custo_total_locacoes': custo_total_locacoes,
