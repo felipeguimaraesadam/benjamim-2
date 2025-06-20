@@ -246,9 +246,9 @@
             <div class="photo-gallery">
                 {% for foto in fotos %}
                     <div class="photo-item">
-                        <img src="{{ foto.uri }}" alt="{{ foto.description|default:'Foto da obra' }}">
-                        {% if foto.description %}
-                            <p class="description">{{ foto.description }}</p>
+                        <img src="file://{{ MEDIA_ROOT }}/{{ foto.imagem.name }}" alt="{{ foto.descricao|default:'Foto da obra' }}">
+                        {% if foto.descricao %}
+                            <p class="description">{{ foto.descricao }}</p>
                         {% endif %}
                     </div>
                 {% endfor %}

@@ -833,27 +833,16 @@ class GerarRelatorioPDFObraView(APIView):
         ).prefetch_related(
             'equipe__membros'
         ).order_by('data_locacao_inicio')
-        fotos_qs = FotoObra.objects.filter(obra=obra).order_by('uploaded_at') # Renamed to fotos_qs to avoid confusion
+        fotos = FotoObra.objects.filter(obra=obra).order_by('uploaded_at')
 
-        fotos_for_context = []
-        if fotos_qs: # Use fotos_qs here
-            print(f"DEBUG PDF IMG: Found {len(fotos_qs)} photo(s) for Obra ID {obra.id}")
-            for foto_obj in fotos_qs: # Iterate over fotos_qs
-                try:
-                    abs_path = foto_obj.imagem.path
-                    # Replace backslashes with forward slashes for file URI
-                    path_with_fwd_slashes = abs_path.replace('\\', '/')
-                    file_uri = f"file:///{path_with_fwd_slashes}"
-                    fotos_for_context.append({
-                        'uri': file_uri,
-                        'description': foto_obj.descricao, # Matching template change
-                        'original_path': abs_path
-                    })
-                    print(f"DEBUG PDF IMG: Processed foto. Original path: {abs_path}, URI for PDF: {file_uri}")
-                except Exception as e_img:
-                    print(f"DEBUG PDF IMG: Error processing image {getattr(foto_obj, 'id', 'N/A')}: {e_img}")
-
-        # Old debug block is now removed by this replacement.
+        if fotos:
+            first_foto = fotos[0]
+            image_name = first_foto.imagem.name
+            media_root_str = str(settings.MEDIA_ROOT)
+            constructed_path = os.path.join(media_root_str, image_name)
+            print(f"DEBUG PDF IMG: Attempting to use image path: file://{constructed_path}")
+            print(f"DEBUG PDF IMG: foto.imagem.url: {first_foto.imagem.url}")
+            print(f"DEBUG PDF IMG: foto.imagem.path: {first_foto.imagem.path}")
 
         custo_total_materiais = sum(c.valor_total_liquido for c in compras if c.valor_total_liquido) or Decimal('0.00')
         custo_total_despesas_extras = sum(de.valor for de in despesas_extras if de.valor) or Decimal('0.00')
@@ -871,7 +860,7 @@ class GerarRelatorioPDFObraView(APIView):
             'compras': compras,
             'despesas_extras': despesas_extras,
             'locacoes': locacoes,
-            'fotos': fotos_for_context, # Use the new list with processed URIs
+            'fotos': fotos,
             'data_emissao': timezone.now(),
             'custo_total_materiais': custo_total_materiais,
             'custo_total_despesas_extras': custo_total_despesas_extras,
@@ -879,7 +868,7 @@ class GerarRelatorioPDFObraView(APIView):
             'custo_total_realizado': custo_total_realizado,
             'balanco_financeiro': balanco_financeiro,
             'custo_por_m2': custo_por_m2,
-            'MEDIA_ROOT': settings.MEDIA_ROOT, # MEDIA_ROOT is still useful for other things or if some images are still direct
+            'MEDIA_ROOT': settings.MEDIA_ROOT,
         }
 
         html_string = render_to_string('relatorios/relatorio_obra.html', context)
