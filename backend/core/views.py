@@ -595,134 +595,314 @@ class ObraCustosPorCategoriaView(APIView):
 from collections import defaultdict
 from django.utils.dateparse import parse_date
 
+
+# Helper function to get resource name
+def get_recurso_nome_folha(locacao_instance):
+    if locacao_instance.funcionario_locado:
+        return f"Funcionário: {locacao_instance.funcionario_locado.nome_completo}"
+    elif locacao_instance.equipe:
+        return f"Equipe: {locacao_instance.equipe.nome_equipe}"
+    elif locacao_instance.servico_externo:
+        return f"Serviço Externo: {locacao_instance.servico_externo}"
+    return "N/A"
+
 class RelatorioFolhaPagamentoViewSet(viewsets.ViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
-    @action(detail=False, methods=['get'], url_path='pre_check_dias_sem_locacoes')
-    def pre_check_dias_sem_locacoes(self, request):
+
+    def _get_locacoes_no_periodo(self, start_date, end_date, obra_id_filter=None):
+        filters = Q(
+            Q(data_locacao_inicio__gte=start_date) & Q(data_locacao_inicio__lte=end_date) &
+            (Q(data_pagamento__isnull=True) | Q(data_pagamento__lte=end_date)) & # Considera pagamentos previstos dentro ou após o período, ou não definidos
+            (Q(funcionario_locado__isnull=False) | Q(equipe__isnull=False) | (Q(servico_externo__isnull=False) & ~Q(servico_externo=''))) &
+            Q(status_locacao='ativa') &
+            Q(valor_pagamento__isnull=False) & Q(valor_pagamento__gt=Decimal('0.00'))
+        )
+        if obra_id_filter:
+            filters &= Q(obra_id=obra_id_filter)
+
+        return Locacao_Obras_Equipes.objects.filter(filters).select_related(
+            'obra', 'funcionario_locado', 'equipe'
+        ).order_by('obra__nome_obra', 'data_locacao_inicio')
+
+    def _calculate_daily_cost(self, locacao, current_day_in_loop, start_date_period, end_date_period):
+        """
+        Calculates the cost of a locacao for a specific day within the reporting period.
+        Only attributes cost if current_day_in_loop is within the locacao's effective range AND the reporting period.
+        """
+        cost_for_day = Decimal('0.00')
+
+        # Ensure the current day is within the locacao's own start/end dates
+        if not (locacao.data_locacao_inicio <= current_day_in_loop <= (locacao.data_locacao_fim or date.max)): # type: ignore
+            return cost_for_day
+
+        # Ensure the current day is within the overall report period
+        if not (start_date_period <= current_day_in_loop <= end_date_period):
+            return cost_for_day
+
+        if locacao.tipo_pagamento == 'diaria':
+            cost_for_day = locacao.valor_pagamento or Decimal('0.00')
+        elif locacao.tipo_pagamento in ['metro', 'empreitada']:
+            # For non-daily, cost is attributed entirely to the start date of the locacao,
+            # but only if that start date falls within the report period.
+            if locacao.data_locacao_inicio == current_day_in_loop:
+                cost_for_day = locacao.valor_pagamento or Decimal('0.00')
+        return cost_for_day
+
+    @action(detail=False, methods=['get'], url_path='generate_report_data_for_pdf')
+    def generate_report_data_for_pdf(self, request):
         start_date_str = request.query_params.get('start_date')
         end_date_str = request.query_params.get('end_date')
-        if not start_date_str or not end_date_str: return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
+        obra_id_filter_str = request.query_params.get('obra_id') # Optional filter
+
+        if not start_date_str or not end_date_str:
+            return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
         try:
             start_date = date.fromisoformat(start_date_str)
             end_date = date.fromisoformat(end_date_str)
+        except ValueError:
+            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if start_date > end_date:
+            return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
+
+        obra_id_filter = None
+        if obra_id_filter_str:
+            try:
+                obra_id_filter = int(obra_id_filter_str)
+            except ValueError:
+                return Response({"error": "obra_id deve ser um número inteiro."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        locacoes_periodo = self._get_locacoes_no_periodo(start_date, end_date, obra_id_filter)
+
+        pagamentos_por_recurso = defaultdict(lambda: {
+            "recurso_nome": "",
+            "total_a_pagar_periodo": Decimal('0.00'),
+            "detalhes_por_obra": defaultdict(lambda: {
+                "obra_id": None,
+                "obra_nome": "",
+                "total_a_pagar_obra": Decimal('0.00'),
+                "locacoes_na_obra": [] # Stores {data_servico, tipo_pagamento, valor_atribuido, locacao_id}
+            })
+        })
+        grand_total_geral = Decimal('0.00')
+
+        # Iterate through each day in the period to correctly attribute daily costs
+        current_period_day = start_date
+        while current_period_day <= end_date:
+            for locacao in locacoes_periodo:
+                # We only process locacoes that are active on current_period_day
+                # and whose start_date is within the overall report period (covered by _get_locacoes_no_periodo)
+                # and whose own activity range [locacao.data_locacao_inicio, locacao.data_locacao_fim] includes current_period_day
+
+                locacao_starts_in_period = locacao.data_locacao_inicio >= start_date
+                locacao_ends_in_period = (locacao.data_locacao_fim or date.max) <= end_date # type: ignore
+
+                # Check if the current_period_day is within the locacao's active duration
+                if not (locacao.data_locacao_inicio <= current_period_day <= (locacao.data_locacao_fim or current_period_day)): # type: ignore
+                    continue
+
+                valor_atribuido_ao_dia = self._calculate_daily_cost(locacao, current_period_day, start_date, end_date)
+
+                if valor_atribuido_ao_dia > Decimal('0.00'):
+                    recurso_nome = get_recurso_nome_folha(locacao)
+                    obra_nome = locacao.obra.nome_obra if locacao.obra else "Obra Desconhecida"
+                    obra_id = locacao.obra.id if locacao.obra else 0
+
+                    recurso_data = pagamentos_por_recurso[recurso_nome]
+                    recurso_data["recurso_nome"] = recurso_nome
+                    recurso_data["total_a_pagar_periodo"] += valor_atribuido_ao_dia
+
+                    obra_details = recurso_data["detalhes_por_obra"][obra_id]
+                    obra_details["obra_id"] = obra_id
+                    obra_details["obra_nome"] = obra_nome
+                    obra_details["total_a_pagar_obra"] += valor_atribuido_ao_dia
+
+                    obra_details["locacoes_na_obra"].append({
+                        "locacao_id": locacao.id,
+                        "data_servico": current_period_day.isoformat(),
+                        "tipo_pagamento": locacao.get_tipo_pagamento_display(),
+                        "valor_atribuido": str(valor_atribuido_ao_dia),
+                        "observacoes": locacao.observacoes or ""
+                    })
+                    grand_total_geral += valor_atribuido_ao_dia
+            current_period_day += timedelta(days=1)
+
+
+        # Convert to list and format decimals as strings
+        final_recursos_list = []
+        for rec_nome, rec_data in sorted(pagamentos_por_recurso.items()):
+            rec_data["total_a_pagar_periodo"] = str(rec_data["total_a_pagar_periodo"])
+            obras_list = []
+            for ob_id, ob_data in sorted(rec_data["detalhes_por_obra"].items(), key=lambda item: item[1]['obra_nome']):
+                ob_data["total_a_pagar_obra"] = str(ob_data["total_a_pagar_obra"])
+                # Sort locacoes by date
+                ob_data["locacoes_na_obra"].sort(key=lambda x: x["data_servico"])
+                obras_list.append(ob_data)
+            rec_data["detalhes_por_obra"] = obras_list
+            final_recursos_list.append(rec_data)
+
+        final_recursos_list.sort(key=lambda x: x["recurso_nome"])
+
+
+        return Response({
+            "periodo": {"inicio": start_date_str, "fim": end_date_str},
+            "recursos_pagamentos": final_recursos_list,
+            "total_geral_periodo": str(grand_total_geral)
+        })
+
+    @action(detail=False, methods=['get'], url_path='pre_check_dias_sem_locacoes')
+    def pre_check_dias_sem_locacoes(self, request):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date') # type: ignore
+        if not start_date_str or not end_date_str: return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            start_date = date.fromisoformat(start_date_str) # type: ignore
+            end_date = date.fromisoformat(end_date_str) # type: ignore
         except ValueError: return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-        if start_date > end_date: return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
+        if start_date > end_date: return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST) # type: ignore
         all_dates_in_range = set()
         current_date = start_date
         while current_date <= end_date:
             all_dates_in_range.add(current_date)
             current_date += timedelta(days=1)
-        locacoes_dates_qs = Locacao_Obras_Equipes.objects.filter(data_locacao_inicio__gte=start_date, data_locacao_inicio__lte=end_date, status_locacao='ativa').values_list('data_locacao_inicio', flat=True).distinct()
-        locacoes_dates_set = set(locacoes_dates_qs)
-        dias_sem_locacoes = sorted([dt.isoformat() for dt in (all_dates_in_range - locacoes_dates_set)])
-        medicoes_pendentes_qs = Locacao_Obras_Equipes.objects.filter(
-            Q(data_locacao_inicio__gte=start_date) & Q(data_locacao_inicio__lte=end_date) &
-            Q(status_locacao='ativa') & (Q(valor_pagamento__isnull=True) | Q(valor_pagamento=Decimal('0.00')))
-        ).select_related('obra', 'funcionario_locado', 'equipe')
+        locacoes_dates_qs = Locacao_Obras_Equipes.objects.filter(data_locacao_inicio__gte=start_date, data_locacao_inicio__lte=end_date, status_locacao='ativa').values_list('data_locacao_inicio', flat=True).distinct() # type: ignore
+        locacoes_dates_set = set(locacoes_dates_qs) # type: ignore
+        dias_sem_locacoes = sorted([dt.isoformat() for dt in (all_dates_in_range - locacoes_dates_set)]) # type: ignore
+        medicoes_pendentes_qs = Locacao_Obras_Equipes.objects.filter( # type: ignore
+            Q(data_locacao_inicio__gte=start_date) & Q(data_locacao_inicio__lte=end_date) & # type: ignore
+            Q(status_locacao='ativa') & (Q(valor_pagamento__isnull=True) | Q(valor_pagamento=Decimal('0.00'))) # type: ignore
+        ).select_related('obra', 'funcionario_locado', 'equipe') # type: ignore
         medicoes_pendentes_list = []
-        for loc in medicoes_pendentes_qs:
-            recurso_locado_str = "Serviço Externo"
-            if loc.funcionario_locado: recurso_locado_str = f"Funcionário: {loc.funcionario_locado.nome_completo}"
-            elif loc.equipe: recurso_locado_str = f"Equipe: {loc.equipe.nome_equipe}"
-            elif loc.servico_externo: recurso_locado_str = f"Serviço Externo: {loc.servico_externo}"
-            medicoes_pendentes_list.append({
-                'locacao_id': loc.id, 'obra_nome': loc.obra.nome_obra if loc.obra else "Obra não especificada",
-                'recurso_locado': recurso_locado_str, 'data_inicio': loc.data_locacao_inicio.isoformat(),
-                'tipo_pagamento': loc.get_tipo_pagamento_display(), 'valor_pagamento': loc.valor_pagamento
+        for loc in medicoes_pendentes_qs: # type: ignore
+            recurso_locado_str = get_recurso_nome_folha(loc) # type: ignore
+            medicoes_pendentes_list.append({ # type: ignore
+                'locacao_id': loc.id, # type: ignore
+                'obra_nome': loc.obra.nome_obra if loc.obra else "Obra não especificada", # type: ignore
+                'recurso_locado': recurso_locado_str,
+                'data_inicio': loc.data_locacao_inicio.isoformat(), # type: ignore
+                'tipo_pagamento': loc.get_tipo_pagamento_display(), # type: ignore
+                'valor_pagamento': loc.valor_pagamento # type: ignore
             })
-        return Response({'dias_sem_locacoes': dias_sem_locacoes, 'medicoes_pendentes': medicoes_pendentes_list})
+        return Response({'dias_sem_locacoes': dias_sem_locacoes, 'medicoes_pendentes': medicoes_pendentes_list}) # type: ignore
 
     @action(detail=False, methods=['get'], url_path='generate_report')
-    def generate_report(self, request):
+    def generate_report(self, request): # This is for CSV / original structure
         start_date_str = request.query_params.get('start_date')
-        end_date_str = request.query_params.get('end_date')
-        if not start_date_str or not end_date_str: return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
+        end_date_str = request.query_params.get('end_date') # type: ignore
+        obra_id_filter_str = request.query_params.get('obra_id') # Optional filter
+
+        if not start_date_str or not end_date_str:
+            return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            start_date = date.fromisoformat(start_date_str)
-            end_date = date.fromisoformat(end_date_str)
-        except ValueError: return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-        if start_date > end_date: return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
-        locacoes_periodo = Locacao_Obras_Equipes.objects.filter(
-            Q(data_locacao_inicio__gte=start_date) & Q(data_locacao_inicio__lte=end_date) &
-            (Q(data_pagamento__isnull=True) | Q(data_pagamento__lte=end_date)) &
-            (Q(funcionario_locado__isnull=False) | Q(equipe__isnull=False) | (Q(servico_externo__isnull=False) & ~Q(servico_externo=''))) &
-            Q(status_locacao='ativa') & Q(valor_pagamento__isnull=False) & Q(valor_pagamento__gt=Decimal('0.00'))
-        ).select_related('obra', 'funcionario_locado', 'equipe')
-        report_data_by_obra = defaultdict(lambda: {"obra_id": None, "obra_nome": "", "dias": defaultdict(lambda: {"data": None, "locacoes_no_dia": [], "total_dia_obra": Decimal('0.00')}), "total_obra_periodo": Decimal('0.00')})
-        def get_recurso_nome(locacao_instance):
-            if locacao_instance.funcionario_locado: return f"Funcionário: {locacao_instance.funcionario_locado.nome_completo}"
-            elif locacao_instance.equipe: return f"Equipe: {locacao_instance.equipe.nome_equipe}"
-            elif locacao_instance.servico_externo: return f"Serviço Externo: {locacao_instance.servico_externo}"
-            return "N/A"
-        for locacao in locacoes_periodo:
-            obra = locacao.obra
-            if not obra: continue
-            effective_start_date = max(locacao.data_locacao_inicio, start_date)
-            effective_end_date = min(locacao.data_locacao_fim, end_date) # type: ignore
-            current_day_in_loop = effective_start_date
-            while current_day_in_loop <= effective_end_date:
-                daily_cost_for_locacao = Decimal('0.00')
-                if locacao.tipo_pagamento == 'diaria': daily_cost_for_locacao = locacao.valor_pagamento # type: ignore
-                elif locacao.tipo_pagamento in ['metro', 'empreitada']:
-                    if locacao.data_locacao_inicio == current_day_in_loop: daily_cost_for_locacao = locacao.valor_pagamento # type: ignore
+            start_date = date.fromisoformat(start_date_str) # type: ignore
+            end_date = date.fromisoformat(end_date_str) # type: ignore
+        except ValueError:
+            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+        if start_date > end_date: # type: ignore
+            return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
+
+        obra_id_filter = None
+        if obra_id_filter_str:
+            try:
+                obra_id_filter = int(obra_id_filter_str)
+            except ValueError:
+                return Response({"error": "obra_id deve ser um número inteiro."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        locacoes_periodo = self._get_locacoes_no_periodo(start_date, end_date, obra_id_filter) # type: ignore
+
+        # Data structure: Obra -> Dia -> Locações
+        report_data_by_obra = defaultdict(lambda: {
+            "obra_id": None, "obra_nome": "",
+            "dias": defaultdict(lambda: {
+                "data": None, "locacoes_no_dia": [], "total_dia_obra": Decimal('0.00')
+            }),
+            "total_obra_periodo": Decimal('0.00')
+        })
+
+        current_period_day = start_date
+        while current_period_day <= end_date: # type: ignore
+            for locacao in locacoes_periodo: # type: ignore
+                # Check if the current_period_day is within the locacao's active duration
+                if not (locacao.data_locacao_inicio <= current_period_day <= (locacao.data_locacao_fim or current_period_day)): # type: ignore
+                    continue
+
+                daily_cost_for_locacao = self._calculate_daily_cost(locacao, current_period_day, start_date, end_date) # type: ignore
+
                 if daily_cost_for_locacao > Decimal('0.00'):
-                    if report_data_by_obra[obra.id]["obra_id"] is None:
-                        report_data_by_obra[obra.id]["obra_id"] = obra.id
-                        report_data_by_obra[obra.id]["obra_nome"] = obra.nome_obra
-                    day_iso = current_day_in_loop.isoformat()
-                    day_data_dict = report_data_by_obra[obra.id]["dias"][day_iso]
-                    if day_data_dict["data"] is None: day_data_dict["data"] = day_iso
-                    day_data_dict["locacoes_no_dia"].append({
-                        "locacao_id": locacao.id, "recurso_nome": get_recurso_nome(locacao),
-                        "tipo_pagamento_display": locacao.get_tipo_pagamento_display(),
+                    obra = locacao.obra # type: ignore
+                    if not obra: continue
+
+                    obra_entry = report_data_by_obra[obra.id] # type: ignore
+                    if obra_entry["obra_id"] is None: # type: ignore
+                        obra_entry["obra_id"] = obra.id # type: ignore
+                        obra_entry["obra_nome"] = obra.nome_obra # type: ignore
+
+                    day_iso = current_period_day.isoformat() # type: ignore
+                    day_data_dict = obra_entry["dias"][day_iso] # type: ignore
+                    if day_data_dict["data"] is None: # type: ignore
+                        day_data_dict["data"] = day_iso # type: ignore
+
+                    day_data_dict["locacoes_no_dia"].append({ # type: ignore
+                        "locacao_id": locacao.id, # type: ignore
+                        "recurso_nome": get_recurso_nome_folha(locacao), # type: ignore
+                        "tipo_pagamento_display": locacao.get_tipo_pagamento_display(), # type: ignore
                         "valor_diario_atribuido": str(daily_cost_for_locacao),
-                        "valor_pagamento_total_locacao": str(locacao.valor_pagamento),
-                        "data_locacao_original_inicio": locacao.data_locacao_inicio.isoformat(),
+                        "valor_pagamento_total_locacao": str(locacao.valor_pagamento), # type: ignore
+                        "data_locacao_original_inicio": locacao.data_locacao_inicio.isoformat(), # type: ignore
                         "data_locacao_original_fim": locacao.data_locacao_fim.isoformat() if locacao.data_locacao_fim else None, # type: ignore
-                        "data_pagamento_prevista": locacao.data_pagamento.isoformat() if locacao.data_pagamento else None,
+                        "data_pagamento_prevista": locacao.data_pagamento.isoformat() if locacao.data_pagamento else None, # type: ignore
+                        "observacoes": locacao.observacoes or "" # type: ignore
                     })
-                    day_data_dict["total_dia_obra"] += daily_cost_for_locacao
-                    report_data_by_obra[obra.id]["total_obra_periodo"] += daily_cost_for_locacao
-                current_day_in_loop += timedelta(days=1)
+                    day_data_dict["total_dia_obra"] += daily_cost_for_locacao # type: ignore
+                    obra_entry["total_obra_periodo"] += daily_cost_for_locacao # type: ignore
+            current_period_day += timedelta(days=1) # type: ignore
+
         final_report_list = []
-        sorted_obra_ids = sorted(report_data_by_obra.keys(), key=lambda obra_id_key: report_data_by_obra[obra_id_key]["obra_nome"])
-        for obra_id_key in sorted_obra_ids:
-            obra_data = report_data_by_obra[obra_id_key]
-            sorted_dias_keys = sorted(obra_data["dias"].keys())
+        sorted_obra_ids = sorted(report_data_by_obra.keys(), key=lambda obra_id_key: report_data_by_obra[obra_id_key]["obra_nome"]) # type: ignore
+        for obra_id_key in sorted_obra_ids: # type: ignore
+            obra_data = report_data_by_obra[obra_id_key] # type: ignore
+            sorted_dias_keys = sorted(obra_data["dias"].keys()) # type: ignore
             dias_list = []
-            for day_key in sorted_dias_keys:
-                dia_info = obra_data["dias"][day_key]
-                dia_info["total_dia_obra"] = str(dia_info["total_dia_obra"])
-                dia_info["locacoes_no_dia"].sort(key=lambda x: x["recurso_nome"])
-                dias_list.append(dia_info)
-            final_report_list.append({
-                "obra_id": obra_data["obra_id"], "obra_nome": obra_data["obra_nome"],
-                "dias": dias_list, "total_obra_periodo": str(obra_data["total_obra_periodo"])
+            for day_key in sorted_dias_keys: # type: ignore
+                dia_info = obra_data["dias"][day_key] # type: ignore
+                dia_info["total_dia_obra"] = str(dia_info["total_dia_obra"]) # type: ignore
+                dia_info["locacoes_no_dia"].sort(key=lambda x: x["recurso_nome"]) # type: ignore
+                dias_list.append(dia_info) # type: ignore
+            final_report_list.append({ # type: ignore
+                "obra_id": obra_data["obra_id"], # type: ignore
+                "obra_nome": obra_data["obra_nome"], # type: ignore
+                "dias": dias_list,  # type: ignore
+                "total_obra_periodo": str(obra_data["total_obra_periodo"]) # type: ignore
             })
         return Response(final_report_list)
 
-class RelatorioPagamentoMateriaisViewSet(viewsets.ViewSet):
-    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+class RelatorioPagamentoMateriaisViewSet(viewsets.ViewSet): # type: ignore
+    permission_classes = [IsNivelAdmin | IsNivelGerente] # type: ignore
     @action(detail=False, methods=['get'], url_path='pre-check')
     def pre_check_pagamentos_materiais(self, request):
         start_date_str = request.query_params.get('start_date')
-        end_date_str = request.query_params.get('end_date')
-        obra_id_str = request.query_params.get('obra_id')
-        fornecedor_str = request.query_params.get('fornecedor')
+        end_date_str = request.query_params.get('end_date') # type: ignore
+        obra_id_str = request.query_params.get('obra_id') # type: ignore
+        fornecedor_str = request.query_params.get('fornecedor') # type: ignore
         if not start_date_str or not end_date_str: return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            start_date = parse_date(start_date_str) # type: ignore
-            end_date = parse_date(end_date_str) # type: ignore
-            if not start_date or not end_date: raise ValueError("Invalid date format")
+            start_date_parsed = parse_date(start_date_str) # type: ignore
+            end_date_parsed = parse_date(end_date_str) # type: ignore
+            if not start_date_parsed or not end_date_parsed: raise ValueError("Invalid date format")
         except ValueError: return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-        filters = Q(data_compra__gte=start_date) & Q(data_compra__lte=end_date)
-        if obra_id_str: filters &= Q(obra_id=obra_id_str)
-        if fornecedor_str: filters &= Q(fornecedor__icontains=fornecedor_str)
-        compras_no_periodo = Compra.objects.filter(filters).select_related('obra')
+
+        filters_q = Q(data_compra__gte=start_date_parsed) & Q(data_compra__lte=end_date_parsed) # type: ignore
+        if obra_id_str: filters_q &= Q(obra_id=obra_id_str) # type: ignore
+        if fornecedor_str: filters_q &= Q(fornecedor__icontains=fornecedor_str) # type: ignore
+
+        compras_no_periodo = Compra.objects.filter(filters_q).select_related('obra') # type: ignore
         compras_pagamento_pendente = []
-        for compra in compras_no_periodo:
-            if compra.data_pagamento is None or compra.data_pagamento > end_date: # type: ignore
-                compras_pagamento_pendente.append(CompraReportSerializer(compra).data)
+        for compra_instance in compras_no_periodo: # type: ignore
+            if compra_instance.data_pagamento is None or compra_instance.data_pagamento > end_date_parsed: # type: ignore
+                compras_pagamento_pendente.append(CompraReportSerializer(compra_instance).data) # type: ignore
         return Response({
             'compras_com_pagamento_pendente_ou_futuro': compras_pagamento_pendente,
             'message': "Listagem de compras no período com pagamento ainda não registrado ou agendado para após o período do relatório."
@@ -731,41 +911,48 @@ class RelatorioPagamentoMateriaisViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='generate')
     def gerar_relatorio_pagamentos_materiais(self, request):
         start_date_str = request.query_params.get('start_date')
-        end_date_str = request.query_params.get('end_date')
-        obra_id_str = request.query_params.get('obra_id')
-        fornecedor_str = request.query_params.get('fornecedor')
+        end_date_str = request.query_params.get('end_date') # type: ignore
+        obra_id_str = request.query_params.get('obra_id') # type: ignore
+        fornecedor_str = request.query_params.get('fornecedor') # type: ignore
         if not start_date_str or not end_date_str: return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            start_date = parse_date(start_date_str) # type: ignore
-            end_date = parse_date(end_date_str) # type: ignore
-            if not start_date or not end_date: raise ValueError("Invalid date format")
+            start_date_parsed = parse_date(start_date_str) # type: ignore
+            end_date_parsed = parse_date(end_date_str) # type: ignore
+            if not start_date_parsed or not end_date_parsed: raise ValueError("Invalid date format")
         except ValueError: return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-        filters = Q(data_compra__gte=start_date) & Q(data_compra__lte=end_date)
-        if obra_id_str: filters &= Q(obra_id=obra_id_str)
-        if fornecedor_str: filters &= Q(fornecedor__icontains=fornecedor_str)
-        compras_do_periodo = Compra.objects.filter(filters).select_related('obra').order_by('obra__nome_obra', 'fornecedor', 'data_compra', 'data_pagamento')
+
+        filters_q = Q(data_compra__gte=start_date_parsed) & Q(data_compra__lte=end_date_parsed) # type: ignore
+        if obra_id_str: filters_q &= Q(obra_id=obra_id_str) # type: ignore
+        if fornecedor_str: filters_q &= Q(fornecedor__icontains=fornecedor_str) # type: ignore
+
+        compras_do_periodo = Compra.objects.filter(filters_q).select_related('obra').order_by('obra__nome_obra', 'fornecedor', 'data_compra', 'data_pagamento') # type: ignore
         report = defaultdict(lambda: {"obra_id": None, "obra_nome": "", "fornecedores": defaultdict(lambda: {"fornecedor_nome": "", "compras_a_pagar": [], "total_fornecedor_na_obra": Decimal('0.00')}), "total_obra": Decimal('0.00')})
         grand_total = Decimal('0.00')
         for compra_item in compras_do_periodo: # Renamed 'compra' to 'compra_item' to avoid conflict
-            obra_data = report[compra_item.obra.id]
-            if obra_data["obra_id"] is None:
-                obra_data["obra_id"] = compra_item.obra.id
-                obra_data["obra_nome"] = compra_item.obra.nome_obra
-            fornecedor_data = obra_data["fornecedores"][compra_item.fornecedor or "N/A"]
-            if not fornecedor_data["fornecedor_nome"]: fornecedor_data["fornecedor_nome"] = compra_item.fornecedor or "N/A"
-            compra_detail = CompraReportSerializer(compra_item).data
-            fornecedor_data["compras_a_pagar"].append(compra_detail)
-            valor_liquido = compra_item.valor_total_liquido or Decimal('0.00')
+            obra_instance = compra_item.obra # type: ignore
+            obra_data = report[obra_instance.id] # type: ignore
+            if obra_data["obra_id"] is None: # type: ignore
+                obra_data["obra_id"] = obra_instance.id # type: ignore
+                obra_data["obra_nome"] = obra_instance.nome_obra # type: ignore
+
+            fornecedor_nome_key = compra_item.fornecedor or "N/A" # type: ignore
+            fornecedor_data = obra_data["fornecedores"][fornecedor_nome_key] # type: ignore
+            if not fornecedor_data["fornecedor_nome"]: # type: ignore
+                fornecedor_data["fornecedor_nome"] = fornecedor_nome_key # type: ignore
+
+            compra_detail = CompraReportSerializer(compra_item).data # type: ignore
+            fornecedor_data["compras_a_pagar"].append(compra_detail) # type: ignore
+            valor_liquido = compra_item.valor_total_liquido or Decimal('0.00') # type: ignore
             fornecedor_data["total_fornecedor_na_obra"] += valor_liquido
             obra_data["total_obra"] += valor_liquido
             grand_total += valor_liquido
         final_report_list = []
-        for obra_id_key in sorted(report.keys(), key=lambda ok: report[ok]["obra_nome"]):
-            obra_item = report[obra_id_key]
-            sorted_fornecedor_keys = sorted(obra_item["fornecedores"].keys())
+        for obra_id_key in sorted(report.keys(), key=lambda ok: report[ok]["obra_nome"]): # type: ignore
+            obra_item = report[obra_id_key] # type: ignore
+            sorted_fornecedor_keys = sorted(obra_item["fornecedores"].keys()) # type: ignore
             fornecedores_list = []
-            for forn_key in sorted_fornecedor_keys:
-                forn_data = obra_item["fornecedores"][forn_key]
+            for forn_key in sorted_fornecedor_keys: # type: ignore
+                forn_data = obra_item["fornecedores"][forn_key] # type: ignore
                 forn_data["total_fornecedor_na_obra"] = str(forn_data["total_fornecedor_na_obra"])
                 fornecedores_list.append(forn_data)
             obra_item["fornecedores"] = fornecedores_list
@@ -774,24 +961,24 @@ class RelatorioPagamentoMateriaisViewSet(viewsets.ViewSet):
         return Response({"report_data": final_report_list, "total_geral_relatorio": str(grand_total)})
 
 class FotoObraViewSet(viewsets.ModelViewSet):
-    queryset = FotoObra.objects.all().order_by('-uploaded_at')
-    serializer_class = FotoObraSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    queryset = FotoObra.objects.all().order_by('-uploaded_at') # type: ignore
+    serializer_class = FotoObraSerializer # type: ignore
+    permission_classes = [permissions.IsAuthenticated] # type: ignore
     parser_classes = (MultiPartParser, FormParser)
     def get_queryset(self):
         obra_id = self.request.query_params.get('obra_id')
-        if obra_id: return self.queryset.filter(obra__id=obra_id)
-        return self.queryset
+        if obra_id: return self.queryset.filter(obra__id=obra_id) # type: ignore
+        return self.queryset # type: ignore
     def create(self, request, *args, **kwargs):
         final_data = request.POST.copy()
         if 'obra_id' in final_data and 'obra' not in final_data:
-            final_data['obra'] = final_data.pop('obra_id')
-        for key, file_obj in request.FILES.items():
-            final_data[key] = file_obj
-        serializer = self.get_serializer(data=final_data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
+            final_data['obra'] = final_data.pop('obra_id') # type: ignore
+        for key, file_obj in request.FILES.items(): # type: ignore
+            final_data[key] = file_obj # type: ignore
+        serializer = self.get_serializer(data=final_data) # type: ignore
+        serializer.is_valid(raise_exception=True) # type: ignore
+        self.perform_create(serializer) # type: ignore
+        headers = self.get_success_headers(serializer.data) # type: ignore
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     def perform_create(self, serializer):
         serializer.save()
@@ -800,10 +987,10 @@ class ObraCustosPorMaterialView(APIView):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
     def get(self, request, pk, format=None):
         try:
-            obra = Obra.objects.get(pk=pk)
-        except Obra.DoesNotExist:
+            obra_instance = Obra.objects.get(pk=pk) # type: ignore
+        except Obra.DoesNotExist: # type: ignore
             return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
-        custos_por_material = ItemCompra.objects.filter(compra__obra=obra).values('material__nome').annotate(total_custo=Sum('valor_total_item')).order_by('-total_custo')
+        custos_por_material = ItemCompra.objects.filter(compra__obra=obra_instance).values('material__nome').annotate(total_custo=Sum('valor_total_item')).order_by('-total_custo') # type: ignore
         resultado_formatado = [
             {'name': item['material__nome'], 'value': item['total_custo'] or Decimal('0.00')}
             for item in custos_por_material
@@ -821,31 +1008,31 @@ class GerarRelatorioPDFObraView(APIView):
 
     def get(self, request, pk, format=None):
         try:
-            obra = Obra.objects.select_related('responsavel').get(pk=pk)
-        except Obra.DoesNotExist:
+            obra_instance = Obra.objects.select_related('responsavel').get(pk=pk) # type: ignore
+        except Obra.DoesNotExist: # type: ignore
             raise Http404("Obra não encontrada")
 
-        compras = Compra.objects.filter(obra=obra).prefetch_related('itens__material').order_by('data_compra', 'nota_fiscal')
-        despesas_extras = Despesa_Extra.objects.filter(obra=obra).order_by('data')
-        locacoes = Locacao_Obras_Equipes.objects.filter(obra=obra).select_related(
+        compras = Compra.objects.filter(obra=obra_instance).prefetch_related('itens__material').order_by('data_compra', 'nota_fiscal') # type: ignore
+        despesas_extras = Despesa_Extra.objects.filter(obra=obra_instance).order_by('data') # type: ignore
+        locacoes = Locacao_Obras_Equipes.objects.filter(obra=obra_instance).select_related( # type: ignore
             'equipe__lider',
             'funcionario_locado'
         ).prefetch_related(
             'equipe__membros'
         ).order_by('data_locacao_inicio')
-        fotos_qs = FotoObra.objects.filter(obra=obra).order_by('uploaded_at') # Renamed to fotos_qs to avoid confusion
+        fotos_qs = FotoObra.objects.filter(obra=obra_instance).order_by('uploaded_at') # type: ignore
 
         fotos_for_context = []
-        if fotos_qs: # Use fotos_qs here
-            for foto_obj in fotos_qs: # Iterate over fotos_qs
+        if fotos_qs:
+            for foto_obj in fotos_qs:
                 try:
-                    abs_path = foto_obj.imagem.path
+                    abs_path = foto_obj.imagem.path # type: ignore
                     # Replace backslashes with forward slashes for file URI
                     path_with_fwd_slashes = abs_path.replace('\\', '/')
                     file_uri = f"file:///{path_with_fwd_slashes}"
                     fotos_for_context.append({
                         'uri': file_uri,
-                        'description': foto_obj.descricao, # Matching template change
+                        'description': foto_obj.descricao, # type: ignore
                         'original_path': abs_path
                     })
                 except Exception as e_img:
@@ -857,14 +1044,14 @@ class GerarRelatorioPDFObraView(APIView):
         custo_total_locacoes = sum(loc.valor_pagamento for loc in locacoes if loc.valor_pagamento) or Decimal('0.00')
 
         custo_total_realizado = custo_total_materiais + custo_total_despesas_extras + custo_total_locacoes
-        balanco_financeiro = (obra.orcamento_previsto or Decimal('0.00')) - custo_total_realizado
+        balanco_financeiro = (obra_instance.orcamento_previsto or Decimal('0.00')) - custo_total_realizado # type: ignore
 
         custo_por_m2 = Decimal('0.00')
-        if obra.area_metragem and obra.area_metragem > 0: # type: ignore
-            custo_por_m2 = custo_total_realizado / obra.area_metragem # type: ignore
+        if obra_instance.area_metragem and obra_instance.area_metragem > 0: # type: ignore
+            custo_por_m2 = custo_total_realizado / obra_instance.area_metragem # type: ignore
 
         context = {
-            'obra': obra,
+            'obra': obra_instance,
             'compras': compras,
             'despesas_extras': despesas_extras,
             'locacoes': locacoes,
@@ -876,12 +1063,12 @@ class GerarRelatorioPDFObraView(APIView):
             'custo_total_realizado': custo_total_realizado,
             'balanco_financeiro': balanco_financeiro,
             'custo_por_m2': custo_por_m2,
-            'MEDIA_ROOT': settings.MEDIA_ROOT, # MEDIA_ROOT is still useful for other things or if some images are still direct
+            'MEDIA_ROOT': settings.MEDIA_ROOT, # type: ignore
         }
 
-        html_string = render_to_string('relatorios/relatorio_obra.html', context)
+        html_string = render_to_string('relatorios/relatorio_obra.html', context) # type: ignore
 
-        css_file_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_obra.css')
+        css_file_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_obra.css') # type: ignore
 
         stylesheets = []
         if os.path.exists(css_file_path):
@@ -889,11 +1076,84 @@ class GerarRelatorioPDFObraView(APIView):
         else:
             print(f"WARNING: PDF CSS file not found at {css_file_path}")
 
+        html_obj = HTML(string=html_string, base_url=request.build_absolute_uri('/')) # type: ignore
+        pdf_file = html_obj.write_pdf(stylesheets=stylesheets) # type: ignore
+
+        response = HttpResponse(pdf_file, content_type='application/pdf') # type: ignore
+        clean_obra_nome = "".join([c if c.isalnum() else "_" for c in obra_instance.nome_obra]) # type: ignore
+        response['Content-Disposition'] = f'attachment; filename="Relatorio_Obra_{clean_obra_nome}_{obra_instance.id}.pdf"' # type: ignore
+
+        return response
+
+
+# View para gerar PDF do Relatório de Pagamento de Locações
+class GerarRelatorioPagamentoLocacoesPDFView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get(self, request, *args, **kwargs):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+        obra_id_str = request.query_params.get('obra_id') # Optional
+
+        if not start_date_str or not end_date_str:
+            return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            start_date_obj = date.fromisoformat(start_date_str)
+            end_date_obj = date.fromisoformat(end_date_str)
+        except ValueError:
+            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if start_date_obj > end_date_obj:
+            return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch data using the new method in RelatorioFolhaPagamentoViewSet
+        # Create an instance of the viewset to call its method
+        folha_pagamento_viewset = RelatorioFolhaPagamentoViewSet()
+        # Mock a request object if necessary for the viewset method, or pass None if it handles it
+        # For simplicity, assuming the method can be called directly or with a basic request context
+
+        # Need to pass the original request to the viewset method for query_params
+        # Construct a new request or adapt the existing one if the viewset method relies on it.
+        # For this case, `generate_report_data_for_pdf` reads from `request.query_params`
+        # So, we can directly call it.
+        response_data = folha_pagamento_viewset.generate_report_data_for_pdf(request) # Pass the current request
+
+        if response_data.status_code != 200: # Check if data fetching was successful
+             return Response(response_data.data, status=response_data.status_code) # type: ignore
+
+        context = response_data.data # This is the dict with {periodo, recursos_pagamentos, total_geral_periodo}
+        context['data_emissao'] = timezone.now()
+        context['start_date_filter'] = start_date_obj
+        context['end_date_filter'] = end_date_obj
+        if obra_id_str:
+            try:
+                obra_filter_instance = Obra.objects.get(pk=int(obra_id_str))
+                context['obra_filter_nome'] = obra_filter_instance.nome_obra
+            except (Obra.DoesNotExist, ValueError):
+                context['obra_filter_nome'] = None
+
+
+        html_string = render_to_string('relatorios/relatorio_pagamento_locacoes.html', context)
+
+        css_file_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_pagamento_locacoes.css')
+        stylesheets = []
+        if os.path.exists(css_file_path):
+            stylesheets.append(CSS(filename=css_file_path))
+        else:
+            # Fallback or default styles if specific CSS is missing
+            # print(f"WARNING: PDF CSS file not found at {css_file_path}")
+            # Example: add a generic bootstrap or simple style
+            # default_css = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_obra.css') # Using obra's css as fallback
+            # if os.path.exists(default_css):
+            # stylesheets.append(CSS(filename=default_css))
+            pass
+
+
         html_obj = HTML(string=html_string, base_url=request.build_absolute_uri('/'))
         pdf_file = html_obj.write_pdf(stylesheets=stylesheets)
 
         response = HttpResponse(pdf_file, content_type='application/pdf')
-        clean_obra_nome = "".join([c if c.isalnum() else "_" for c in obra.nome_obra])
-        response['Content-Disposition'] = f'attachment; filename="Relatorio_Obra_{clean_obra_nome}_{obra.id}.pdf"'
+        filename = f"Relatorio_Pagamento_Locacoes_{start_date_str}_a_{end_date_str}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         return response

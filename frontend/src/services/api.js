@@ -147,7 +147,24 @@ export const getLocacaoCustoDiarioChart = (obraId = null) => {
   return apiClient.get(url);
 };
 export const getRelatorioFolhaPagamentoPreCheck = (startDate, endDate) => apiClient.get('/relatorios/folha-pagamento/pre_check_dias_sem_locacoes/', { params: { start_date: startDate, end_date: endDate } });
-export const generateRelatorioFolhaPagamento = (startDate, endDate) => apiClient.get('/relatorios/folha-pagamento/generate_report/', { params: { start_date: startDate, end_date: endDate } });
+// Fetches data for CSV export (original structure: Obra -> Dia -> Locacao)
+export const generateRelatorioFolhaPagamentoCSVData = (startDate, endDate, obraId = null) => {
+  const params = { start_date: startDate, end_date: endDate };
+  if (obraId) {
+    params.obra_id = obraId;
+  }
+  return apiClient.get('/relatorios/folha-pagamento/generate_report/', { params });
+};
+
+// Fetches data specifically structured for the PDF report (Recurso -> Obra -> Locacao)
+export const generateRelatorioFolhaPagamentoPDFData = (startDate, endDate, obraId = null) => {
+  const params = { start_date: startDate, end_date: endDate };
+  if (obraId) {
+    params.obra_id = obraId;
+  }
+  return apiClient.get('/relatorios/folha-pagamento/generate_report_data_for_pdf/', { params });
+};
+
 
 // --- Dashboard Service Functions ---
 export const getDashboardStats = () => apiClient.get('/dashboard/stats/');
@@ -184,6 +201,18 @@ export const deleteFotoObra = (fotoId) => apiClient.delete(`/fotosobras/${fotoId
 export const gerarRelatorioPDFObra = (obraId) => {
   return apiClient.get(`/obras/${obraId}/gerar-relatorio-pdf/`, {
     responseType: 'blob', // Crucial for handling file download
+  });
+};
+
+// New function to download the "Relatório de Pagamento de Locações" PDF
+export const gerarRelatorioPagamentoLocacoesPDF = (startDate, endDate, obraId = null) => {
+  const params = { start_date: startDate, end_date: endDate };
+  if (obraId) {
+    params.obra_id = obraId;
+  }
+  return apiClient.get('/relatorios/pagamento-locacoes/pdf/', {
+    params,
+    responseType: 'blob',
   });
 };
 

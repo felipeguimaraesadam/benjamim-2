@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
-import { exportDataToCsv, exportMaterialPaymentsReportToCSV } from '../utils/csvExporter'; // Import CSV exporter
+import { exportDataToCsv, exportMaterialPaymentsReportToCSV, exportPayrollReportToCSV } from '../utils/csvExporter'; // Import CSV exporter
 import SpinnerIcon from '../components/utils/SpinnerIcon'; // Assuming SpinnerIcon is needed
 import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../utils/dateUtils.js'; // Import date utils
+import { toast } from 'react-toastify'; // For displaying error messages
 
 const RelatoriosPage = () => {
-  const [obras, setObras] = useState([]);
-  const [materiais, setMateriais] = useState([]);
-  const [equipes, setEquipes] = useState([]);
-  const [reportType, setReportType] = useState('financeiroObra'); // 'financeiroObra', 'geralCompras', 'desempenhoEquipe', 'custoGeral', 'pagamentoMateriais'
+  const [obras, setObras] = useState([]); // Used for various dropdowns
+  const [materiais, setMateriais] = useState([]); // Used for Geral de Compras report dropdown
+  const [equipes, setEquipes] = useState([]); // Used for Desempenho Equipe report dropdown
+  const [reportType, setReportType] = useState('financeiroObra');
 
-  // Filters state for each report type
+  // Filters state for each main report type (not modals)
   const [financeiroFilters, setFinanceiroFilters] = useState({ obra_id: '', data_inicio: '', data_fim: '' });
   const [geralComprasFilters, setGeralComprasFilters] = useState({ data_inicio: '', data_fim: '', obra_id: '', material_id: '' });
   const [desempenhoEquipeFilters, setDesempenhoEquipeFilters] = useState({ equipe_id: '', data_inicio: '', data_fim: '' });
