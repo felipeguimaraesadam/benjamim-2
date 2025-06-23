@@ -412,15 +412,15 @@ class ItemCompraSerializer(serializers.ModelSerializer):
 
 class CompraSerializer(serializers.ModelSerializer):
     itens = ItemCompraSerializer(many=True)
-    # obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True) # Replaced by nested serializer
-    obra = ObraNestedSerializer(read_only=True) # Use nested serializer for 'obra'
+    # O campo 'obra' agora aceitará um ID para escrita por padrão.
+    # Vamos customizar sua representação para leitura.
+    # Removido: obra = ObraNestedSerializer(read_only=True)
 
     class Meta:
         model = Compra
         fields = [
             'id',
-            'obra', # Now 'obra' will be a nested object { 'id': ..., 'nome_obra': ... }
-            # 'obra_nome', # Removed from fields
+            'obra',
             'fornecedor',
             'data_compra',
             'data_pagamento',
@@ -433,17 +433,30 @@ class CompraSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at'
         ]
+        # Removido extra_kwargs para 'obra' se houvesse.
+        # Mantido extra_kwargs para outros campos, se necessário.
         extra_kwargs = {
-            # obra is read-only for output, but for input it's a PK.
-            # Default ModelSerializer handles related fields as PrimaryKeyRelatedField for write operations.
-            # So, when creating/updating a Compra, 'obra' field will expect an ID.
             'created_at': {'read_only': True},
             'updated_at': {'read_only': True}
         }
 
+    def to_representation(self, instance):
+        """
+        Customiza a representação de saída.
+        Para GET, substitui o ID da obra pelo objeto aninhado.
+        """
+        representation = super().to_representation(instance)
+        # Usando ObraNestedSerializer para manter a consistência com o que o frontend espera
+        if instance.obra: # Adicionado para evitar erro se obra for None
+            representation['obra'] = ObraNestedSerializer(instance.obra).data
+        else:
+            representation['obra'] = None # Ou outra representação apropriada para obra nula
+        return representation
+
     def create(self, validated_data):
         itens_data = validated_data.pop('itens')
-        # The default ModelSerializer behavior handles ForeignKey fields by expecting a PK for 'obra'.
+        # O campo 'obra' em validated_data será o ID da Obra.
+        # O ModelSerializer lida com isso automaticamente para campos ForeignKey.
         compra = Compra.objects.create(**validated_data)
 
         # After Compra is created, create ItemCompra instances
@@ -580,5 +593,3 @@ class EquipeDetailSerializer(serializers.ModelSerializer):
             obra__isnull=False
         ).select_related('obra').order_by('-data_locacao_inicio')
         return EquipeLocacaoSerializer(locacoes, many=True, context=self.context).data
-
-print("DEBUG: Serializers updated for categoria_uso fields.")
