@@ -17,7 +17,12 @@ const CostCompositionChart = ({ custosPorCategoria }) => {
   const COLORS = ['#14B8A6', '#6366F1', '#F97316']; // Teal-500, Indigo-500, Orange-500
 
   if (data.length === 0) {
-    return <p className="text-center text-gray-500 dark:text-gray-400 py-10">Não há composição de custos para exibir.</p>;
+    return (
+      <div className="p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800 h-full flex flex-col justify-center items-center min-h-[300px]">
+        <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-200">Composição dos Custos Totais</h3>
+        <p className="text-center text-gray-500 dark:text-gray-400 py-10">Não há composição de custos para exibir.</p>
+      </div>
+    );
   }
 
   // Custom Label para o PieChart para melhor visualização e evitar sobreposição
@@ -42,8 +47,9 @@ const CostCompositionChart = ({ custosPorCategoria }) => {
 
 
   return (
+    // Card principal do gráfico
     <div className="p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
-      <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-200">Composição dos Custos Totais</h3>
+      <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-100">Composição dos Custos Totais</h3>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
@@ -51,10 +57,9 @@ const CostCompositionChart = ({ custosPorCategoria }) => {
             cx="50%"
             cy="50%"
             labelLine={false}
-            // label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`} // Label padrão
-            label={renderCustomizedLabel} // Usando label customizado
-            outerRadius={110} // Aumentado um pouco o raio
-            fill="#8884d8" // Cor de fallback, cada Cell terá sua cor
+            label={renderCustomizedLabel}
+            outerRadius={110}
+            fill="#8884d8"
             dataKey="value"
           >
             {data.map((entry, index) => (
@@ -63,11 +68,21 @@ const CostCompositionChart = ({ custosPorCategoria }) => {
           </Pie>
           <Tooltip
             formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-            contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', color: '#333' }} // Estilo do tooltip para light mode
-            // Para dark mode, o Recharts não tem um suporte tão direto via props, pode precisar de CSS global ou wrapper
+            // Para o tooltip, o ideal é que ele se adapte. Recharts não facilita muito isso diretamente.
+            // Uma abordagem é usar contentStyle para um fundo semi-transparente que funcione em ambos os modos,
+            // ou criar um CustomTooltip que leia o tema.
+            // Por simplicidade, vamos usar um estilo que seja aceitável em ambos, priorizando legibilidade.
+            contentStyle={{
+              backgroundColor: document.documentElement.classList.contains('dark') ? 'rgba(55, 65, 81, 0.9)' : 'rgba(255, 255, 255, 0.9)', // dark:bg-gray-700, light:bg-white com opacidade
+              color: document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#1F2937', // dark:text-gray-200, light:text-gray-800
+              borderRadius: '0.375rem', // rounded-md
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' // shadow-lg
+            }}
+            cursor={{ fill: 'rgba(128, 128, 128, 0.1)' }} // Cor do cursor ao passar por cima
           />
           <Legend
-             formatter={(value, entry, index) => <span style={{ color: document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#4B5563' }}>{value}</span>}
+             // Ajusta a cor do texto da legenda dinamicamente baseado no tema
+             formatter={(value) => <span style={{ color: document.documentElement.classList.contains('dark') ? '#D1D5DB' : '#374151' }}>{value}</span>} // dark:text-gray-300, light:text-gray-700
           />
         </PieChart>
       </ResponsiveContainer>

@@ -15,8 +15,7 @@ const ObraLaborTabContent = ({
 }) => {
 
   return (
-    // O container principal agora é a própria tabela ou as mensagens de erro/carregamento dela.
-    // O título e botão de adicionar ficam aqui.
+    // Card principal para esta aba
     <div className="bg-white shadow-lg rounded-lg p-4 md:p-6 dark:bg-gray-800">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b pb-3 dark:border-gray-700">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2 sm:mb-0">
@@ -26,7 +25,8 @@ const ObraLaborTabContent = ({
           <Link
             to="/locacoes/nova"
             state={{ obraIdParaNovaAlocacao: obraId, obraNome: obraNome }}
-            className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 self-start sm:self-center dark:bg-indigo-600 dark:hover:bg-indigo-700"
+            // Mantendo o botão indigo, pois é uma ação primária e se destaca.
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 self-start sm:self-center dark:focus:ring-indigo-400"
           >
             + Nova Locação/Serviço
           </Link>
@@ -34,11 +34,12 @@ const ObraLaborTabContent = ({
       </div>
 
       {locacaoError && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md text-sm dark:bg-red-700 dark:text-red-100 dark:border-red-600">
+        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md text-sm dark:bg-red-800 dark:text-red-200 dark:border-red-700">
           <p><strong>Erro ao carregar dados de mão de obra:</strong> {typeof locacaoError === 'string' ? locacaoError : locacaoError.message || 'Erro desconhecido.'}</p>
         </div>
       )}
 
+      {/* A tabela em si não terá um fundo de card separado, ela faz parte deste card ObraLaborTabContent */}
       <ObraLaborCostsTable
         locacoesEquipe={locacoesEquipe}
         onRemoverLocacao={onRemoverLocacao}

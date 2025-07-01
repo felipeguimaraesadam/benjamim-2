@@ -154,22 +154,27 @@ const ObraDetailPage = () => {
   const COLORS_CATEGORIES_OBRA = ['#8884d8', '#82ca9d', '#ffc658', '#FF8042', '#0088FE', '#00C49F', '#FFBB28', '#FF7777'];
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    // Container principal da página com fundo cinza (claro/escuro)
+    <div className="container mx-auto px-4 py-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
       {operationStatus.message && (
-        <div className={`p-3 my-4 rounded-md text-sm shadow ${operationStatus.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-700 border border-red-300'}`} role="alert">
+        <div className={`p-3 my-4 rounded-md text-sm shadow ${
+            operationStatus.type === 'success'
+              ? 'bg-green-100 text-green-800 border border-green-300 dark:bg-green-800 dark:text-green-100 dark:border-green-700'
+              : 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-800 dark:text-red-100 dark:border-red-700'
+          }`} role="alert">
             {operationStatus.message}
         </div>
       )}
 
+      {/* ObraDetailHeader é um card */}
       <ObraDetailHeader obra={obra} formatDate={formatDateToDMY} />
 
-      {/* Botão para Gerar Relatório PDF */}
       {obra && obra.id && (
         <div className="my-4 py-4 text-center md:text-right">
           <button
             onClick={handleGenerateReport}
             disabled={isGeneratingPdf || !obra}
-            className="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-75 disabled:opacity-60 disabled:cursor-not-allowed transition ease-in-out duration-150"
+            className="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-75 disabled:opacity-60 disabled:cursor-not-allowed transition ease-in-out duration-150 dark:focus:ring-sky-400"
           >
             {isGeneratingPdf ? (
               <>
@@ -186,14 +191,14 @@ const ObraDetailPage = () => {
         </div>
       )}
 
+      {/* FinancialDashboard é um card */}
       <FinancialDashboard obra={obra} />
 
-      {/* Container para os gráficos principais de análise financeira */}
+      {/* Container para os gráficos principais de análise financeira - cada item é um card */}
       <div className="my-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Gráfico de Orçamento vs. Gasto Total */}
         {obra && (
           <div className="p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
-            <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-200">Orçamento vs. Gasto Total</h3>
+            <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-100">Orçamento vs. Gasto Total</h3>
             {orcamentoVsGastoDataObra.length > 0 && (orcamentoVsGastoDataObra[0].value > 0 || orcamentoVsGastoDataObra[1].value > 0) ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -204,27 +209,30 @@ const ObraDetailPage = () => {
                   </Pie>
                   <Tooltip
                     formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', color: '#333' }} // Estilo para tooltip em modo claro
+                    contentStyle={{
+                      backgroundColor: document.documentElement.classList.contains('dark') ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)', // gray-800 / white
+                      color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#1f2937', // gray-100 / gray-800
+                      borderRadius: '0.375rem',
+                      border: `1px solid ${document.documentElement.classList.contains('dark') ? '#4b5563' : '#e5e7eb'}` // gray-600 / gray-200
+                    }}
+                    cursor={{ fill: 'rgba(128, 128, 128, 0.1)' }}
                   />
-                  <Legend formatter={(value) => <span style={{ color: document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#4B5563' }}>{value}</span>}/>
+                  <Legend formatter={(value) => <span style={{ color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151' }}>{value}</span>}/>
                 </PieChart>
               </ResponsiveContainer>
             ) : <p className="text-center text-gray-500 dark:text-gray-400 py-10">Dados insuficientes.</p>}
           </div>
         )}
 
-        {/* Novo Gráfico de Composição de Custos */}
         {obra && obra.custos_por_categoria && (
           <CostCompositionChart custosPorCategoria={obra.custos_por_categoria} />
         )}
       </div>
 
-      {/* Wrapper para Gráfico de Materiais e Sistema de Abas para corrigir erro de JSX adjacente */}
-      <>
-        {/* Gráfico de Gastos por Categoria de Material (Renderizado condicionalmente) */}
-        {obra && ( /* Garante que a seção toda só aparece se `obra` existir */
+      <>{/* Fragmento para agrupar seções */}
+        {obra && (
           <div className="my-8 p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
-            <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-200">
+            <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-100">
               Gastos por Categoria de Material
             </h3>
             {gastosPorCategoriaMaterialDataObra.length > 0 ? (
@@ -247,11 +255,17 @@ const ObraDetailPage = () => {
                   </Pie>
                   <Tooltip
                     formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', color: '#333' }}
+                    contentStyle={{
+                      backgroundColor: document.documentElement.classList.contains('dark') ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                      color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#1f2937',
+                      borderRadius: '0.375rem',
+                      border: `1px solid ${document.documentElement.classList.contains('dark') ? '#4b5563' : '#e5e7eb'}`
+                    }}
+                    cursor={{ fill: 'rgba(128, 128, 128, 0.1)' }}
                   />
                   <Legend
                     wrapperStyle={{ overflowY: 'auto', maxHeight: 60 }}
-                    formatter={(value) => <span style={{ color: document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#4B5563' }}>{value}</span>}
+                    formatter={(value) => <span style={{ color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151' }}>{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>
