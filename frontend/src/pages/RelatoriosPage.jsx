@@ -17,10 +17,9 @@ const RelatoriosPage = () => {
   const [desempenhoEquipeFilters, setDesempenhoEquipeFilters] = useState({ equipe_id: '', data_inicio: '', data_fim: '' });
   const [custoGeralFilters, setCustoGeralFilters] = useState({ data_inicio: '', data_fim: '' });
 
-  const [reportData, setReportData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(false); // For initial dropdown data
-  const [error, setError] = useState(null);
+  const [reportData, setReportData] = useState(null); // For main page reports
+  const [isLoading, setIsLoading] = useState(false); // For main page report generation
+  const [error, setError] = useState(null); // For main page errors
 
   // State for Material Payments Report Modal
   const [showMaterialPayModal, setShowMaterialPayModal] = useState(false);
@@ -28,7 +27,7 @@ const RelatoriosPage = () => {
   const [mpEndDate, setMpEndDate] = useState('');
   const [mpObraId, setMpObraId] = useState('');
   const [mpFornecedor, setMpFornecedor] = useState('');
-  const [mpObras, setMpObras] = useState([]); // For Obra dropdown in this modal
+  // mpObras state is removed as general 'obras' will be used.
 
   const [mpPreCheckData, setMpPreCheckData] = useState(null);
   const [mpIsPreChecking, setMpIsPreChecking] = useState(false);
@@ -37,8 +36,19 @@ const RelatoriosPage = () => {
   const [mpReportData, setMpReportData] = useState(null);
   const [mpIsGeneratingReport, setMpIsGeneratingReport] = useState(false);
   const [mpReportError, setMpReportError] = useState(null);
-
   const [mpStep, setMpStep] = useState(1); // 1: filters, 2: pre-check, 3: report
+
+  // State for Pagamento de Locações Report Modal
+  const [showLocacaoPayModal, setShowLocacaoPayModal] = useState(false);
+  const [lpStartDate, setLpStartDate] = useState('');
+  const [lpEndDate, setLpEndDate] = useState('');
+  const [lpObraId, setLpObraId] = useState(''); // Optional filter for locações report
+  const [lpIsGeneratingCSV, setLpIsGeneratingCSV] = useState(false);
+  const [lpIsGeneratingPDF, setLpIsGeneratingPDF] = useState(false);
+  const [lpError, setLpError] = useState(null);
+
+  // Unified initial loading for all dropdowns
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // Set to true initially
 
   const weekOptions = [
     { label: "Esta Semana", value: 0 },
@@ -68,14 +78,32 @@ const RelatoriosPage = () => {
     setMpEndDate(formatDateToYYYYMMDD(targetSunday));
   };
 
+  // Generic week selector handler for modals
+  const handleModalWeekSelectorChange = (event, setStartDate, setEndDate) => {
+    const selectedWeekOffset = parseInt(event.target.value, 10);
+    if (isNaN(selectedWeekOffset)) {
+        setStartDate('');
+        setEndDate('');
+        return;
+    }
+    const today = new Date();
+    const startOfCurrentWeek = getStartOfWeek(today, 1); // Monday as startDay = 1
+    const targetMonday = new Date(startOfCurrentWeek);
+    targetMonday.setDate(startOfCurrentWeek.getDate() + (selectedWeekOffset * 7));
+    const targetSunday = new Date(targetMonday);
+    targetSunday.setDate(targetMonday.getDate() + 6);
+
+    setStartDate(formatDateToYYYYMMDD(targetMonday));
+    setEndDate(formatDateToYYYYMMDD(targetSunday));
+  };
+
   const fetchDropdownData = useCallback(async () => {
-    setIsInitialLoading(true);
+    // setIsInitialLoading(true); // Already set to true initially, and managed in finally
     try {
-      // Fetch all necessary data for dropdowns, including obras for the new report
       const [obrasRes, materiaisRes, equipesRes] = await Promise.all([
-        api.getObras({ page_size: 1000 }), // Fetch more obras if needed for dropdowns
-        api.getMateriais({ page_size: 1000 }), // Fetch more materiais if needed
-        api.getEquipes({ page_size: 1000 }),   // Fetch more equipes if needed
+        api.getObras({ page_size: 1000 }),
+        api.getMateriais({ page_size: 1000 }),
+        api.getEquipes({ page_size: 1000 }),
       ]);
 
       const getSafeData = (response) => {
@@ -84,15 +112,15 @@ const RelatoriosPage = () => {
       };
 
       setObras(getSafeData(obrasRes));
-      setMpObras(getSafeData(obrasRes)); // Also for the new report modal
+      // setMpObras(getSafeData(obrasRes)); // mpObras removed, using general 'obras'
       setMateriais(getSafeData(materiaisRes));
       setEquipes(getSafeData(equipesRes));
 
     } catch (err) {
       console.error("Failed to fetch dropdown data:", err);
-      setError('Falha ao carregar dados para filtros.');
+      setError('Falha ao carregar dados iniciais para filtros.');
       setObras([]);
-      setMpObras([]);
+      // setMpObras([]); // mpObras removed
       setMateriais([]);
       setEquipes([]);
     } finally {
@@ -423,6 +451,76 @@ const RelatoriosPage = () => {
     handleMpGenerateReport();
   };
 
+  // --- Handlers for Locacao Payments Report Modal ---
+  const handleOpenLocacaoPayModal = () => {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    setLpStartDate(formatDateToYYYYMMDD(firstDayOfMonth));
+    setLpEndDate(formatDateToYYYYMMDD(lastDayOfMonth));
+    setLpObraId('');
+    setLpError(null);
+    setShowLocacaoPayModal(true);
+  };
+
+  const handleCloseLocacaoPayModal = () => {
+    setShowLocacaoPayModal(false);
+  };
+
+  const handleExportLocacaoPagamentoCSV = async () => {
+    if (!lpStartDate || !lpEndDate) {
+      setLpError("Datas de início e fim são obrigatórias para CSV.");
+      toast.warn("Datas de início e fim são obrigatórias para CSV.");
+      return;
+    }
+    setLpIsGeneratingCSV(true);
+    setLpError(null);
+    try {
+      // Use the corrected API function name here
+      const response = await api.generateRelatorioFolhaPagamentoCSVData(lpStartDate, lpEndDate, lpObraId || null);
+      if (response.data && response.data.length > 0) {
+        exportPayrollReportToCSV(response.data, `relatorio_pagamento_locacoes_${lpStartDate}_a_${lpEndDate}.csv`);
+      } else {
+        toast.info("Nenhum dado encontrado para exportar para CSV com os filtros selecionados.");
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.message || "Falha ao gerar CSV do relatório de pagamento de locações.";
+      setLpError(errorMessage);
+      toast.error("Falha ao gerar CSV: " + errorMessage);
+    } finally {
+      setLpIsGeneratingCSV(false);
+    }
+  };
+
+  const handleExportLocacaoPagamentoPDF = async () => {
+    if (!lpStartDate || !lpEndDate) {
+      setLpError("Datas de início e fim são obrigatórias para PDF.");
+      toast.warn("Datas de início e fim são obrigatórias para PDF.");
+      return;
+    }
+    setLpIsGeneratingPDF(true);
+    setLpError(null);
+    try {
+      const response = await api.gerarRelatorioPagamentoLocacoesPDF(lpStartDate, lpEndDate, lpObraId || null);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = `Relatorio_Pagamento_Locacoes_${lpStartDate}_a_${lpEndDate}.pdf`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.message || "Falha ao gerar PDF do relatório de pagamento de locações.";
+      setLpError(errorMessage);
+      toast.error("Falha ao gerar PDF: " + errorMessage);
+    } finally {
+      setLpIsGeneratingPDF(false);
+    }
+  };
+
 
   // --- Helper functions for data transformation before CSV export ---
   // It's important that these functions have access to 'obras', 'materiais', 'formatDate', 'formatCurrency'
@@ -516,6 +614,12 @@ const RelatoriosPage = () => {
             className={`px-4 py-2 rounded-md font-medium mb-2 bg-blue-500 text-white hover:bg-blue-600`}
         >
             Pagamento de Materiais
+        </button>
+        <button
+            onClick={handleOpenLocacaoPayModal}
+            className={`px-4 py-2 rounded-md font-medium mb-2 bg-purple-500 text-white hover:bg-purple-600`}
+        >
+            Pagamento de Locações
         </button>
       </div>
 
@@ -718,8 +822,8 @@ const RelatoriosPage = () => {
                   <label htmlFor="mpObraId" className="block text-sm font-medium text-gray-700">Obra (Opcional)</label>
                   <select id="mpObraId" value={mpObraId} onChange={(e) => setMpObraId(e.target.value)}
                           className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
-                    <option value="">Todas as Obras</option>
-                    {mpObras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>)}
+                    <option value="">Todas as Obras</option> {/* mpObras is now just 'obras' */}
+                    {obras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>)}
                   </select>
                 </div>
                 <div>
@@ -824,6 +928,69 @@ const RelatoriosPage = () => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal for Pagamento de Locações Report */}
+      {showLocacaoPayModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800">Relatório de Pagamento de Locações</h2>
+              <button onClick={handleCloseLocacaoPayModal} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="mb-4">
+                <label htmlFor="lpWeekSelector" className="block text-sm font-medium text-gray-700 mb-1">Selecionar Semana (Opcional):</label>
+                <select
+                  id="lpWeekSelector"
+                  onChange={(e) => handleModalWeekSelectorChange(e, setLpStartDate, setLpEndDate)}
+                  className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  defaultValue=""
+                >
+                  <option value="" disabled>Escolha uma semana...</option>
+                  {weekOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="lpStartDate" className="block text-sm font-medium text-gray-700">Data Início <span className="text-red-500">*</span></label>
+                  <input type="date" id="lpStartDate" value={lpStartDate} onChange={(e) => setLpStartDate(e.target.value)}
+                         className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"/>
+                </div>
+                <div>
+                  <label htmlFor="lpEndDate" className="block text-sm font-medium text-gray-700">Data Fim <span className="text-red-500">*</span></label>
+                  <input type="date" id="lpEndDate" value={lpEndDate} onChange={(e) => setLpEndDate(e.target.value)}
+                         className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"/>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="lpObraId" className="block text-sm font-medium text-gray-700">Obra (Opcional)</label>
+                <select id="lpObraId" value={lpObraId} onChange={(e) => setLpObraId(e.target.value)}
+                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                  <option value="">Todas as Obras</option>
+                  {obras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>)}
+                </select>
+              </div>
+              {lpError && <p className="text-red-500 text-sm">{lpError}</p>}
+              <div className="flex space-x-3 mt-6">
+                <button onClick={handleExportLocacaoPagamentoCSV} disabled={lpIsGeneratingCSV || lpIsGeneratingPDF || !lpStartDate || !lpEndDate}
+                        className="flex-1 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 disabled:opacity-50 flex items-center justify-center">
+                  {lpIsGeneratingCSV && <SpinnerIcon className="w-5 h-5 mr-2"/>}
+                  {lpIsGeneratingCSV ? 'Gerando CSV...' : 'Exportar para CSV'}
+                </button>
+                <button onClick={handleExportLocacaoPagamentoPDF} disabled={lpIsGeneratingPDF || lpIsGeneratingCSV || !lpStartDate || !lpEndDate}
+                        className="flex-1 px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 disabled:opacity-50 flex items-center justify-center">
+                  {lpIsGeneratingPDF && <SpinnerIcon className="w-5 h-5 mr-2"/>}
+                  {lpIsGeneratingPDF ? 'Gerando PDF...' : 'Exportar para PDF'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
