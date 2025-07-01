@@ -347,9 +347,11 @@ const LocacoesPage = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       {/* Nova Seção do Weekly Planner (AGORA PRIMEIRO) */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold text-gray-700 mb-4">Planejamento Semanal de Locações</h2>
-        <WeeklyPlanner obras={obras} equipes={equipes} />
+      <div className="mb-8 min-h-[75vh] flex flex-col"> {/* Adicionado min-h e flex flex-col */}
+        <h2 className="text-2xl font-semibold text-gray-700 mb-4 flex-shrink-0">Planejamento Semanal de Locações</h2>
+        <div className="flex-grow"> {/* Novo wrapper para o planner ocupar espaço */}
+          <WeeklyPlanner obras={obras} equipes={equipes} />
+        </div>
       </div>
 
       {/* Chart Section (AGORA SEGUNDO) */}

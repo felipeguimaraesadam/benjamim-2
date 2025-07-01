@@ -29,9 +29,10 @@ function DayColumn({ id, date, locacoes, onOpenLocacaoForm, onOpenLocacaoDetail 
   return (
     <div
       ref={setNodeRef}
-      // Removido flex-1 daqui pois o wrapper no WeeklyPlanner.jsx agora controla isso.
-      // Adicionado h-full para que a cor de fundo preencha o espaço dado pelo wrapper.
-      className={`flex flex-col h-full min-h-[300px] max-h-[calc(100vh-250px)] rounded-lg shadow-md ${isOver ? 'bg-indigo-100' : 'bg-gray-50'}`}
+      // Usa h-full para preencher a altura dada pelo wrapper em WeeklyPlanner.
+      // min-h-[300px] (ou um valor maior como min-h-[400px] ou min-h-[500px]) garante uma altura mínima.
+      // max-h não é mais necessário aqui se o pai controla a altura total.
+      className={`flex flex-col h-full min-h-[400px] rounded-lg shadow-md ${isOver ? 'bg-indigo-100' : 'bg-gray-50'}`}
     >
       {/* Cabeçalho da Coluna */}
       <div className="p-2.5 sticky top-0 bg-gray-100 rounded-t-lg shadow z-10 border-b border-gray-200">

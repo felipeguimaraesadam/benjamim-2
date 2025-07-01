@@ -57,7 +57,7 @@ function RentalCard({ locacao, onCardClick }) {
       {...listeners}
       {...attributes}
       onClick={handleClick} // Adicionado onClick para abrir modal
-      className={`p-3 m-1 border rounded-lg shadow-sm transition-all duration-150 ease-in-out ${cardColor} ${textColor} ${borderColor} ${isDragging ? 'opacity-75 shadow-xl' : 'shadow-md'}`}
+      className={`p-2 m-1 border rounded-lg shadow-sm transition-all duration-150 ease-in-out ${cardColor} ${textColor} ${borderColor} ${isDragging ? 'opacity-75 shadow-xl' : 'shadow-md'}`} // Padding reduzido para p-2
       role="button"
       tabIndex={0}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClick()}

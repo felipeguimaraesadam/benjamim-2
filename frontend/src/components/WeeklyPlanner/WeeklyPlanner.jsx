@@ -205,13 +205,14 @@ function WeeklyPlanner({ obras, equipes }) {
         {error && <div className="text-center p-4 text-red-600">Erro: {error}</div>}
 
         {!isLoading && !error && (
-          <div className="flex mt-4 overflow-x-auto pb-4">
+          // Ajustado para preencher a altura e permitir scroll interno se necessário
+          <div className="flex mt-4 overflow-x-auto pb-4 h-full flex-grow">
             {/* Colunas dos Dias */}
             {daysOfWeek.map(day => {
               const formattedDayId = format(day, 'yyyy-MM-dd');
               return (
-                // Aplicar uma base flex e largura mínima para cada coluna de dia
-                <div key={formattedDayId} className="flex-1 min-w-[200px] md:min-w-[220px]">
+                // Reduzindo um pouco a largura mínima para melhor ajuste em telas menores
+                <div key={formattedDayId} className="flex-1 min-w-[180px] sm:min-w-[200px] md:min-w-[210px]">
                   <DayColumn
                     id={formattedDayId}
                     date={day}
