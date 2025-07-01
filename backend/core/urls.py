@@ -11,7 +11,8 @@ from .views import (
     ObraCustosPorCategoriaView, ObraCustosPorMaterialView, # Added new views
     RelatorioFolhaPagamentoViewSet, FuncionarioDetailView, EquipeDetailView,
     MaterialDetailAPIView, RelatorioPagamentoMateriaisViewSet, GerarRelatorioPDFObraView,
-    GerarRelatorioPagamentoLocacoesPDFView # Added new PDF view for Locacoes
+    GerarRelatorioPagamentoLocacoesPDFView, LocacaoSemanalView, # Added new PDF view for Locacoes and LocacaoSemanalView
+    RecursosMaisUtilizadosSemanaView # Added for analytics
 )
 
 router = DefaultRouter()
@@ -28,25 +29,28 @@ router.register(r'fotosobras', FotoObraViewSet, basename='fotoobra')
 router.register(r'relatorios/folha-pagamento', RelatorioFolhaPagamentoViewSet, basename='relatorio-folha-pagamento') # type: ignore
 router.register(r'relatorios/pagamento-materiais', RelatorioPagamentoMateriaisViewSet, basename='relatorio-pagamento-materiais') # type: ignore
 
-
-urlpatterns = [
-    path('', include(router.urls)), # type: ignore
+# URLs específicas devem vir ANTES do include do router para garantir que sejam resolvidas primeiro.
+specific_urlpatterns = [
+    path('locacoes/semana/', LocacaoSemanalView.as_view(), name='locacao-semanal'),
+    path('analytics/recursos-semana/', RecursosMaisUtilizadosSemanaView.as_view(), name='analytics-recursos-semana'),
     path('relatorios/financeiro-obra/', RelatorioFinanceiroObraView.as_view(), name='relatorio-financeiro-obra'),
     path('relatorios/geral-compras/', RelatorioGeralComprasView.as_view(), name='relatorio-geral-compras'),
     path('dashboard/stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
-    # path('dashboard/obras-summary/', ObrasDashboardSummaryView.as_view(), name='obras-dashboard-summary'), # Removed
     path('relatorios/desempenho-equipe/', RelatorioDesempenhoEquipeView.as_view(), name='relatorio-desempenho-equipe'),
     path('relatorios/custo-geral/', RelatorioCustoGeralView.as_view(), name='relatorio-custo-geral'),
     path('obras/<int:pk>/historico-custos/', ObraHistoricoCustosView.as_view(), name='obra-historico-custos'),
-    path('obras/<int:pk>/custos-por-categoria/', ObraCustosPorCategoriaView.as_view(), name='obra-custos-categoria'), # New route
-    path('obras/<int:pk>/custos-por-material/', ObraCustosPorMaterialView.as_view(), name='obra-custos-material'), # New route
-    # Path for FuncionarioDetailView
+    path('obras/<int:pk>/custos-por-categoria/', ObraCustosPorCategoriaView.as_view(), name='obra-custos-categoria'),
+    path('obras/<int:pk>/custos-por-material/', ObraCustosPorMaterialView.as_view(), name='obra-custos-material'),
     path('funcionarios/<int:pk>/details/', FuncionarioDetailView.as_view(), name='funcionario-details'),
-    # Path for EquipeDetailView
     path('equipes/<int:pk>/details/', EquipeDetailView.as_view(), name='equipe-details'),
-    # Path for MaterialDetailAPIView
-    path('materiais/<int:pk>/details/', MaterialDetailAPIView.as_view(), name='material-details'), # type: ignore
+    path('materiais/<int:pk>/details/', MaterialDetailAPIView.as_view(), name='material-details'),
     path('obras/<int:pk>/gerar-relatorio-pdf/', GerarRelatorioPDFObraView.as_view(), name='gerar-relatorio-pdf-obra'),
-    # New URL for Pagamento de Locações PDF Report
     path('relatorios/pagamento-locacoes/pdf/', GerarRelatorioPagamentoLocacoesPDFView.as_view(), name='gerar-relatorio-pagamento-locacoes-pdf'),
+]
+
+urlpatterns = [
+    # Inclui as URLs específicas primeiro
+    *specific_urlpatterns,
+    # Depois inclui as URLs do router
+    path('', include(router.urls)), # type: ignore
 ]
