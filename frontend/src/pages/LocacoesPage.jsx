@@ -373,7 +373,11 @@ const LocacoesPage = () => {
     setIsGeneratingReport(true);
     setReportError(null);
     try {
-      const response = await api.generateRelatorioFolhaPagamento(reportStartDate, reportEndDate);
+      // Corrected function call and added obraId (though not used in this specific modal's current UI for filtering)
+      // For now, this modal in LocacoesPage doesn't have an obraId filter, so passing null.
+      // If an obraId filter were added to this modal, it would be passed here.
+      const obraId = null; // Placeholder, as this modal doesn't currently filter by obra for this report
+      const response = await api.generateRelatorioFolhaPagamentoCSVData(reportStartDate, reportEndDate, obraId);
       setReportData(response.data);
       setStep(3); // Show report view
     } catch (err) {
