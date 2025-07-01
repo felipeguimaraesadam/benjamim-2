@@ -7,7 +7,8 @@ import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Leg
 
 import ObraDetailHeader from '../components/obra/ObraDetailHeader';
 import FinancialDashboard from '../components/obra/FinancialDashboard';
-import EquipesLocadasList from '../components/obra/EquipesLocadasList';
+import CostCompositionChart from '../components/obra/CostCompositionChart'; // Novo gráfico
+import ObraLaborTabContent from '../components/obra/ObraLaborTabContent'; // Renomeado
 import CostHistoryChart from '../components/obra/CostHistoryChart';
 import TopMaterialsChart from '../components/obra/TopMaterialsChart';
 import ObraPurchasesTabContent from '../components/obra/ObraPurchasesTabContent';
@@ -39,6 +40,7 @@ const ObraDetailPage = () => {
 
   // State for PDF generation
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [activeTab, setActiveTab] = useState('labor'); // Estado para aba ativa
 
   useEffect(() => {
     if (operationStatus.message) {
@@ -152,22 +154,27 @@ const ObraDetailPage = () => {
   const COLORS_CATEGORIES_OBRA = ['#8884d8', '#82ca9d', '#ffc658', '#FF8042', '#0088FE', '#00C49F', '#FFBB28', '#FF7777'];
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    // Container principal da página com fundo cinza (claro/escuro)
+    <div className="container mx-auto px-4 py-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
       {operationStatus.message && (
-        <div className={`p-3 my-4 rounded-md text-sm shadow ${operationStatus.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-700 border border-red-300'}`} role="alert">
+        <div className={`p-3 my-4 rounded-md text-sm shadow ${
+            operationStatus.type === 'success'
+              ? 'bg-green-100 text-green-800 border border-green-300 dark:bg-green-800 dark:text-green-100 dark:border-green-700'
+              : 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-800 dark:text-red-100 dark:border-red-700'
+          }`} role="alert">
             {operationStatus.message}
         </div>
       )}
 
+      {/* ObraDetailHeader é um card */}
       <ObraDetailHeader obra={obra} formatDate={formatDateToDMY} />
 
-      {/* Botão para Gerar Relatório PDF */}
       {obra && obra.id && (
         <div className="my-4 py-4 text-center md:text-right">
           <button
             onClick={handleGenerateReport}
             disabled={isGeneratingPdf || !obra}
-            className="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-75 disabled:opacity-60 disabled:cursor-not-allowed transition ease-in-out duration-150"
+            className="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-75 disabled:opacity-60 disabled:cursor-not-allowed transition ease-in-out duration-150 dark:focus:ring-sky-400"
           >
             {isGeneratingPdf ? (
               <>
@@ -184,105 +191,191 @@ const ObraDetailPage = () => {
         </div>
       )}
 
+      {/* FinancialDashboard é um card */}
       <FinancialDashboard obra={obra} />
 
-      {obra && (
-        <div className="my-8 p-4 bg-gray-50 shadow-md rounded-lg">
-            <h2 className="text-xl font-bold mb-6 text-gray-700 text-center">Análise Financeira Detalhada da Obra</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="p-4 bg-white shadow-lg rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Orçamento vs. Gasto Total</h3>
-                    {orcamentoVsGastoDataObra.length > 0 && (orcamentoVsGastoDataObra[0].value > 0 || orcamentoVsGastoDataObra[1].value > 0) ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie data={orcamentoVsGastoDataObra} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
-                                    {orcamentoVsGastoDataObra.map((entry, index) => (
-                                        <Cell key={`cell-ovg-${index}`} fill={COLORS_PIE_OBRA[index % COLORS_PIE_OBRA.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    ) : <p className="text-center text-gray-500 py-10">Dados insuficientes.</p>}
-                </div>
+      {/* Container para os gráficos principais de análise financeira - cada item é um card */}
+      <div className="my-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {obra && (
+          <div className="p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+            <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-100">Orçamento vs. Gasto Total</h3>
+            {orcamentoVsGastoDataObra.length > 0 && (orcamentoVsGastoDataObra[0].value > 0 || orcamentoVsGastoDataObra[1].value > 0) ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={orcamentoVsGastoDataObra} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
+                    {orcamentoVsGastoDataObra.map((entry, index) => (
+                      <Cell key={`cell-ovg-${index}`} fill={COLORS_PIE_OBRA[index % COLORS_PIE_OBRA.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    contentStyle={{
+                      backgroundColor: document.documentElement.classList.contains('dark') ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)', // gray-800 / white
+                      color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#1f2937', // gray-100 / gray-800
+                      borderRadius: '0.375rem',
+                      border: `1px solid ${document.documentElement.classList.contains('dark') ? '#4b5563' : '#e5e7eb'}` // gray-600 / gray-200
+                    }}
+                    cursor={{ fill: 'rgba(128, 128, 128, 0.1)' }}
+                  />
+                  <Legend formatter={(value) => <span style={{ color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151' }}>{value}</span>}/>
+                </PieChart>
+              </ResponsiveContainer>
+            ) : <p className="text-center text-gray-500 dark:text-gray-400 py-10">Dados insuficientes.</p>}
+          </div>
+        )}
 
-                <div className="p-4 bg-white shadow-lg rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Composição dos Gastos</h3>
-                    {composicaoGastosDataObra.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={composicaoGastosDataObra} layout="vertical">
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis type="number" tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`} />
-                                <YAxis type="category" dataKey="name" width={120} interval={0} />
-                                <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                                <Legend />
-                                <Bar dataKey="value" fill="#82ca9d">
-                                    {composicaoGastosDataObra.map((entry, index) => (
-                                        <Cell key={`cell-cg-${index}`} fill={COLORS_CATEGORIES_OBRA[index % COLORS_CATEGORIES_OBRA.length]} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    ) : <p className="text-center text-gray-500 py-10">Não há composição de gastos para exibir.</p>}
-                </div>
-
-                <div className="p-4 bg-white shadow-lg rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Gastos por Categoria de Material</h3>
-                     {gastosPorCategoriaMaterialDataObra.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie data={gastosPorCategoriaMaterialDataObra} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#ffc658" labelLine={false} label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
-                                    {gastosPorCategoriaMaterialDataObra.map((entry, index) => (
-                                        <Cell key={`cell-gcm-${index}`} fill={COLORS_CATEGORIES_OBRA[index % COLORS_CATEGORIES_OBRA.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                                <Legend wrapperStyle={{ overflowY: 'auto', maxHeight: 60 }}/>
-                            </PieChart>
-                        </ResponsiveContainer>
-                    ) : <p className="text-center text-gray-500 py-10">Não há gastos por categoria de material.</p>}
-                </div>
-            </div>
-        </div>
-      )}
-
-      <div className="mb-8 py-6">
-        <EquipesLocadasList
-          locacoesEquipe={locacoesEquipe?.results || (Array.isArray(locacoesEquipe) ? locacoesEquipe : [])}
-          obraId={obra?.id} // obra can be null initially
-          obraNome={obra?.nome_obra}
-          onRemoverLocacao={handleRemoverLocacao}
-          formatDate={formatDateToDMY}
-          locacaoError={errorLocacoes || specificLocacaoError}
-          isLoading={isLoadingLocacoes}
-          removingLocacaoId={removingLocacaoId}
-        />
-
-        <ObraPurchasesTabContent
-          todasCompras={actualTodasAsCompras}
-          isLoading={isLoadingTodasAsCompras}
-          todasComprasError={errorTodasAsCompras}
-          obraId={obra?.id}
-          obraNome={obra?.nome_obra}
-        />
-
-        <div className="my-6">
-          <ObraFotosUpload obraId={id} onUploadSuccess={handlePhotoUploaded} />
-          <ObraGaleria obraId={id} newFoto={latestUploadedFoto} />
-        </div>
-
-        <ObraExpensesTabContent
-          despesasExtrasObra={despesasExtrasObra}
-          isLoading={isLoadingDespesasExtras}
-          despesasExtrasObraError={errorDespesasExtras}
-          obraId={obra?.id}
-          obraNome={obra?.nome_obra}
-        />
+        {obra && obra.custos_por_categoria && (
+          <CostCompositionChart custosPorCategoria={obra.custos_por_categoria} />
+        )}
       </div>
 
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <>{/* Fragmento para agrupar seções */}
+        {obra && (
+          <div className="my-8 p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+            <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-100">
+              Gastos por Categoria de Material
+            </h3>
+            {gastosPorCategoriaMaterialDataObra.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={gastosPorCategoriaMaterialDataObra}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    fill="#ffc658"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {gastosPorCategoriaMaterialDataObra.map((entry, index) => (
+                      <Cell key={`cell-gcm-${index}`} fill={COLORS_CATEGORIES_OBRA[index % COLORS_CATEGORIES_OBRA.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    contentStyle={{
+                      backgroundColor: document.documentElement.classList.contains('dark') ? 'rgba(31, 41, 55, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                      color: document.documentElement.classList.contains('dark') ? '#f3f4f6' : '#1f2937',
+                      borderRadius: '0.375rem',
+                      border: `1px solid ${document.documentElement.classList.contains('dark') ? '#4b5563' : '#e5e7eb'}`
+                    }}
+                    cursor={{ fill: 'rgba(128, 128, 128, 0.1)' }}
+                  />
+                  <Legend
+                    wrapperStyle={{ overflowY: 'auto', maxHeight: 60 }}
+                    formatter={(value) => <span style={{ color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151' }}>{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-center text-gray-500 dark:text-gray-400 py-10">
+                Não há gastos por categoria de material para exibir.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Sistema de Abas */}
+        <div className="my-8">
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="-mb-px flex space-x-4 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
+              {/* Botão Mão de Obra/Serviços */}
+              <button
+                onClick={() => setActiveTab('labor')}
+                className={`${
+                  activeTab === 'labor'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
+                } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
+              >
+                Mão de Obra/Serviços
+              </button>
+              {/* Botão Materiais (Compras) */}
+              <button
+                onClick={() => setActiveTab('materials')}
+                className={`${
+                  activeTab === 'materials'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
+                } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
+              >
+                Materiais (Compras)
+              </button>
+              {/* Botão Despesas Extras */}
+              <button
+                onClick={() => setActiveTab('expenses')}
+                className={`${
+                  activeTab === 'expenses'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
+                } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
+              >
+                Despesas Extras
+              </button>
+              {/* Botão Fotos e Anexos */}
+              <button
+                onClick={() => setActiveTab('photos')}
+                className={`${
+                  activeTab === 'photos'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
+                } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
+              >
+                Fotos e Anexos
+              </button>
+            </nav>
+          </div>
+
+          {/* Conteúdo das Abas */}
+          <div className="mt-6">
+            {activeTab === 'labor' && (
+              <ObraLaborTabContent
+                locacoesEquipe={locacoesEquipe?.results || (Array.isArray(locacoesEquipe) ? locacoesEquipe : [])}
+                obraId={obra?.id}
+                obraNome={obra?.nome_obra}
+                onRemoverLocacao={handleRemoverLocacao}
+                locacaoError={errorLocacoes || specificLocacaoError}
+                isLoading={isLoadingLocacoes}
+                removingLocacaoId={removingLocacaoId}
+              />
+            )}
+            {activeTab === 'materials' && (
+              <ObraPurchasesTabContent
+                todasCompras={actualTodasAsCompras} // Já trata .results internamente
+                isLoading={isLoadingTodasAsCompras}
+                todasComprasError={errorTodasAsCompras}
+                obraId={obra?.id}
+                obraNome={obra?.nome_obra}
+              />
+            )}
+            {activeTab === 'expenses' && (
+              <ObraExpensesTabContent
+                despesasExtrasObra={despesasExtrasObra?.results || (Array.isArray(despesasExtrasObra) ? despesasExtrasObra : [])}
+                isLoading={isLoadingDespesasExtras}
+                despesasExtrasObraError={errorDespesasExtras}
+                obraId={obra?.id}
+                obraNome={obra?.nome_obra}
+              />
+            )}
+            {activeTab === 'photos' && (
+              <div className="p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Fotos e Anexos da Obra</h2>
+                <ObraFotosUpload obraId={id} onUploadSuccess={handlePhotoUploaded} />
+                <div className="mt-6">
+                  <ObraGaleria obraId={id} newFoto={latestUploadedFoto} />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+
+      {/* Gráficos de Histórico e Top Materiais (mantidos fora das abas) */}
+      <div className="my-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <CostHistoryChart historicoCustos={historicoCustos} custosError={errorHistoricoCustos} isLoading={isLoadingHistoricoCustos} />
+        {/* O gráfico TopMaterialsChart usa a prop custosMaterial que vem de api.getObraCustosPorMaterial */}
         <TopMaterialsChart custosMaterial={custosMaterial} materialError={errorCustosMaterial} isLoading={isLoadingCustosMaterial} />
       </div>
     </div>
