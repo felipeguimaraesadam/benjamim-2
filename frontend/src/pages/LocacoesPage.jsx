@@ -373,7 +373,11 @@ const LocacoesPage = () => {
     setIsGeneratingReport(true);
     setReportError(null);
     try {
-      const response = await api.generateRelatorioFolhaPagamento(reportStartDate, reportEndDate);
+      // Corrected function call and added obraId (though not used in this specific modal's current UI for filtering)
+      // For now, this modal in LocacoesPage doesn't have an obraId filter, so passing null.
+      // If an obraId filter were added to this modal, it would be passed here.
+      const obraId = null; // Placeholder, as this modal doesn't currently filter by obra for this report
+      const response = await api.generateRelatorioFolhaPagamentoCSVData(reportStartDate, reportEndDate, obraId);
       setReportData(response.data);
       setStep(3); // Show report view
     } catch (err) {
@@ -386,6 +390,38 @@ const LocacoesPage = () => {
 
   const handleContinueDespiteAlert = () => {
     handleGenerateReport(); // Proceed to generate report
+  };
+
+  const handleExportLocacaoPagamentoPDFFromModal = async () => {
+    if (!reportStartDate || !reportEndDate) {
+      setReportError("Datas de início e fim são obrigatórias para PDF."); // Error specific to this modal context
+      toast.warn("Datas de início e fim são obrigatórias para PDF.");
+      return;
+    }
+    // Assuming isGeneratingReport can be reused for PDF button in this modal
+    setIsGeneratingReport(true);
+    setReportError(null);
+    try {
+      // This modal currently does not have an obraId filter state. Pass null.
+      const obraId = null;
+      const response = await api.gerarRelatorioPagamentoLocacoesPDF(reportStartDate, reportEndDate, obraId);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = `Relatorio_Pagamento_Locacoes_${reportStartDate}_a_${reportEndDate}.pdf`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.message || "Falha ao gerar PDF do relatório de pagamento de locações.";
+      setReportError(errorMessage); // Show error in modal
+      toast.error("Falha ao gerar PDF: " + errorMessage);
+    } finally {
+      setIsGeneratingReport(false); // Re-use loading state
+    }
   };
 
 
@@ -628,13 +664,24 @@ const LocacoesPage = () => {
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xl font-semibold text-gray-800">Relatório Gerado</h3>
-                  <button
-                    onClick={() => exportPayrollReportToCSV(reportData, `relatorio_folha_pagamento_${reportStartDate}_a_${reportEndDate}.csv`)}
-                    disabled={!reportData || reportData.length === 0}
-                    className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300 text-sm disabled:opacity-50"
-                  >
-                    Exportar para CSV
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => exportPayrollReportToCSV(reportData, `relatorio_folha_pagamento_${reportStartDate}_a_${reportEndDate}.csv`)}
+                      disabled={!reportData || reportData.length === 0 || isGeneratingReport}
+                      className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300 text-sm disabled:opacity-50"
+                    >
+                      <SpinnerIcon className={`w-4 h-4 mr-1 ${isGeneratingReport && reportError === null ? 'inline-block' : 'hidden'}`} />
+                      Exportar para CSV
+                    </button>
+                    <button
+                      onClick={handleExportLocacaoPagamentoPDFFromModal}
+                      disabled={!reportData || reportData.length === 0 || isGeneratingReport}
+                      className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-red-300 text-sm disabled:opacity-50"
+                    >
+                      <SpinnerIcon className={`w-4 h-4 mr-1 ${isGeneratingReport && reportError === null ? 'inline-block' : 'hidden'}`} />
+                      Exportar para PDF
+                    </button>
+                  </div>
                 </div>
                 {reportData.length === 0 && <p className="text-gray-600">Nenhuma locação encontrada para o período e critérios selecionados.</p>}
 
