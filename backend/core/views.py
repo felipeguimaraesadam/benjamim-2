@@ -1129,8 +1129,9 @@ class GerarRelatorioPDFObraView(APIView):
 
 
 # View para gerar PDF do Relatório de Pagamento de Locações
-class GerarRelatorioPagamentoLocacoesPDFView(APIView):
-    permission_classes = [IsNivelAdmin | IsNivelGerente]
+# EMPTY Class definition removed, logic will be uncommented below.
+# class GerarRelatorioPagamentoLocacoesPDFView(APIView):
+#     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
 
 class RecursosMaisUtilizadosSemanaView(APIView):
@@ -1183,13 +1184,13 @@ class RecursosMaisUtilizadosSemanaView(APIView):
         return Response(resposta_formatada)
 
 # Comentário original da view GerarRelatorioPagamentoLocacoesPDFView removido para evitar confusão com a correção acima.
-# class GerarRelatorioPagamentoLocacoesPDFView(APIView):
-#     permission_classes = [IsNivelAdmin | IsNivelGerente]
-#
-#     def get(self, request, *args, **kwargs):
-#         start_date_str = request.query_params.get('start_date')
-#         end_date_str = request.query_params.get('end_date')
-#         obra_id_str = request.query_params.get('obra_id') # Optional
+class GerarRelatorioPagamentoLocacoesPDFView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get(self, request, *args, **kwargs):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+        obra_id_str = request.query_params.get('obra_id') # Optional
 
         if not start_date_str or not end_date_str:
             return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
