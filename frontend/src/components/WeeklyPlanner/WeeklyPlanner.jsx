@@ -5,9 +5,10 @@ import WeekNavigator from './WeekNavigator';
 import DayColumn from './DayColumn';
 import LocacaoDetailModal from '../modals/LocacaoDetailModal';
 import LocacaoForm from '../forms/LocacaoForm';
-import ContextMenu from '../utils/ContextMenu'; // Import ContextMenu
+import ContextMenu from '../utils/ContextMenu';
+import RentalCard from './RentalCard'; // Import RentalCard for DragOverlay
 import * as api from '../../services/api';
-import { DndContext } from '@dnd-kit/core';
+import { DndContext, DragOverlay } from '@dnd-kit/core'; // Import DragOverlay
 import { toast } from 'react-toastify';
 
 function WeeklyPlanner({ obras, equipes }) {
@@ -22,8 +23,14 @@ function WeeklyPlanner({ obras, equipes }) {
   const [locacaoFormInitialData, setLocacaoFormInitialData] = useState(null);
 
   const [showDragDropConfirmModal, setShowDragDropConfirmModal] = useState(false);
-  const [draggedLocacao, setDraggedLocacao] = useState(null);
-  const [targetDayId, setTargetDayId] = useState(null);
+  // draggedLocacao and targetDayId will be managed by the main drag end logic,
+  // but activeRental is for the DragOverlay specifically.
+  const [draggedLocacaoDataForModal, setDraggedLocacaoDataForModal] = useState(null); // Renamed from draggedLocacao to avoid confusion
+  const [targetDayIdForModal, setTargetDayIdForModal] = useState(null); // Renamed from targetDayId
+
+  // State for DragOverlay
+  const [activeDragId, setActiveDragId] = useState(null);
+  const [activeRental, setActiveRental] = useState(null);
 
   // Context Menu State
   const [contextMenu, setContextMenu] = useState({
@@ -132,51 +139,64 @@ function WeeklyPlanner({ obras, equipes }) {
   };
 
   // Drag and Drop Handlers
+  const handleDragStart = (event) => {
+    setActiveDragId(event.active.id);
+    setActiveRental(event.active.data.current?.locacao);
+  };
+
   const handleDragEnd = (event) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       const locacaoArrastada = active.data.current?.locacao;
-      const idColunaDestino = over.id; // YYYY-MM-DD da coluna de destino
+      const idColunaDestino = over.id;
 
       if (!locacaoArrastada || !idColunaDestino) {
         console.warn("Drag end sem dados suficientes:", event);
+        setActiveDragId(null); // Reset active drag state
+        setActiveRental(null);
         return;
       }
 
-      // Não faz nada se soltar na mesma coluna/dia original da locação
-      // A data da locação original já está no formato YYYY-MM-DD
       const dataInicioOriginal = locacaoArrastada.data_locacao_inicio;
       if (dataInicioOriginal === idColunaDestino) {
-        // console.log("Solto na mesma coluna, nenhuma ação.");
+        setActiveDragId(null); // Reset active drag state
+        setActiveRental(null);
         return;
       }
 
-      setDraggedLocacao(locacaoArrastada);
-      setTargetDayId(idColunaDestino);
+      setDraggedLocacaoDataForModal(locacaoArrastada);
+      setTargetDayIdForModal(idColunaDestino);
       setShowDragDropConfirmModal(true);
     }
+
+    // Reset active drag state regardless of whether the modal is shown
+    setActiveDragId(null);
+    setActiveRental(null);
+  };
+
+  const handleDragCancel = () => {
+    setActiveDragId(null);
+    setActiveRental(null);
   };
 
   const closeDragDropConfirmModal = () => {
     setShowDragDropConfirmModal(false);
-    setDraggedLocacao(null);
-    setTargetDayId(null);
+    setDraggedLocacaoDataForModal(null);
+    setTargetDayIdForModal(null);
   };
 
   const handleMoveLocacao = async () => {
-    if (!draggedLocacao || !targetDayId) return;
+    if (!draggedLocacaoDataForModal || !targetDayIdForModal) return;
     setIsLoading(true);
     try {
-      // Para "mover", atualizamos a data de início e fim para o novo dia.
-      // Se a locação original era de múltiplos dias, ela se torna de um único dia.
       const updatedData = {
-        data_locacao_inicio: targetDayId,
-        data_locacao_fim: targetDayId, // Simplificação: mover torna a locação de um dia.
+        data_locacao_inicio: targetDayIdForModal,
+        data_locacao_fim: targetDayIdForModal,
       };
-      await api.updateLocacao(draggedLocacao.id, updatedData);
-      toast.success(`Locação de ${draggedLocacao.recurso_nome} movida para ${format(new Date(targetDayId + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
-      fetchWeekData(currentDate); // Recarrega os dados
+      await api.updateLocacao(draggedLocacaoDataForModal.id, updatedData);
+      toast.success(`Locação de ${draggedLocacaoDataForModal.recurso_nome} movida para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
+      fetchWeekData(currentDate);
     } catch (error) {
       console.error("Erro ao mover locação:", error);
       toast.error(`Erro ao mover locação: ${error.response?.data?.detail || error.message}`);
@@ -187,34 +207,31 @@ function WeeklyPlanner({ obras, equipes }) {
   };
 
   const handleDuplicateLocacao = async () => {
-    if (!draggedLocacao || !targetDayId) return;
+    if (!draggedLocacaoDataForModal || !targetDayIdForModal) return;
     setIsLoading(true);
     try {
-      const { id, obra_nome, equipe_details, status_locacao, tipo, recurso_nome, ...restOfLocacao } = draggedLocacao;
+      const { id, obra_nome, equipe_details, status_locacao, tipo, recurso_nome, ...restOfLocacao } = draggedLocacaoDataForModal;
 
       const newLocacaoData = {
         ...restOfLocacao,
-        obra: draggedLocacao.obra.id || draggedLocacao.obra, // Garante que obra seja ID
-        data_locacao_inicio: targetDayId,
-        data_locacao_fim: targetDayId, // Duplicar para um dia específico cria uma locação de um dia
-        // Garante que IDs de relacionamento sejam enviados corretamente
-        equipe: draggedLocacao.equipe?.id || null,
-        funcionario_locado: draggedLocacao.funcionario_locado?.id || null,
+        obra: draggedLocacaoDataForModal.obra.id || draggedLocacaoDataForModal.obra,
+        data_locacao_inicio: targetDayIdForModal,
+        data_locacao_fim: targetDayIdForModal,
+        equipe: draggedLocacaoDataForModal.equipe?.id || null,
+        funcionario_locado: draggedLocacaoDataForModal.funcionario_locado?.id || null,
       };
-      // Remove campos que não devem ser enviados na criação ou que são apenas de leitura
       delete newLocacaoData.id;
       delete newLocacaoData.obra_nome;
       delete newLocacaoData.equipe_details;
       delete newLocacaoData.equipe_nome;
       delete newLocacaoData.funcionario_locado_nome;
-      delete newLocacaoData.status_locacao; // Status é definido no backend
-      delete newLocacaoData.tipo; // Campo calculado no serializer
-      delete newLocacaoData.recurso_nome; // Campo calculado no serializer
-
+      delete newLocacaoData.status_locacao;
+      delete newLocacaoData.tipo;
+      delete newLocacaoData.recurso_nome;
 
       await api.createLocacao(newLocacaoData);
-      toast.success(`Locação de ${draggedLocacao.recurso_nome} duplicada para ${format(new Date(targetDayId + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
-      fetchWeekData(currentDate); // Recarrega os dados
+      toast.success(`Locação de ${draggedLocacaoDataForModal.recurso_nome} duplicada para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
+      fetchWeekData(currentDate);
     } catch (error) {
       console.error("Erro ao duplicar locação:", error.response?.data || error.message);
       const errorMsg = error.response?.data && typeof error.response.data === 'object'
@@ -226,7 +243,6 @@ function WeeklyPlanner({ obras, equipes }) {
       closeDragDropConfirmModal();
     }
   };
-
 
   const weekStart = startOfWeek(currentDate, { locale, weekStartsOn });
   const daysOfWeek = eachDayOfInterval({ start: weekStart, end: endOfWeek(currentDate, { locale, weekStartsOn }) });
@@ -304,7 +320,11 @@ function WeeklyPlanner({ obras, equipes }) {
 
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
       <div className="p-4 bg-white shadow-lg rounded-lg">
         <WeekNavigator
           currentDate={currentDate}
@@ -326,7 +346,8 @@ function WeeklyPlanner({ obras, equipes }) {
                     locacoes={locacoesPorDia[formattedDayId] || []}
                     onOpenLocacaoForm={handleOpenLocacaoForm}
                     onOpenLocacaoDetail={handleOpenLocacaoDetail}
-                    onShowContextMenu={handleShowContextMenu} // Pass down
+                    onShowContextMenu={handleShowContextMenu}
+                    activeDragItemId={activeDragId} // Pass activeDragId to DayColumn
                   />
                 </div>
               );
@@ -423,6 +444,16 @@ function WeeklyPlanner({ obras, equipes }) {
             onClose={handleCloseContextMenu}
           />
         )}
+
+        <DragOverlay dropAnimation={null}>
+          {activeDragId && activeRental ? (
+            <RentalCard
+              locacao={activeRental}
+              isDraggingOverlay={true} // Custom prop to indicate this card is in the overlay
+            />
+          ) : null}
+        </DragOverlay>
+
       </div>
     </DndContext>
   );

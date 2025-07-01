@@ -10,34 +10,68 @@ import { User, Users, Wrench } from 'lucide-react';
 const LONG_PRESS_DURATION = 500;
 const DRAG_THRESHOLD = 5; // pixels
 
-function RentalCard({ locacao, onCardClick, onShowContextMenu }) {
+// activeDragItemId: ID of the item currently being dragged in the overlay (passed from WeeklyPlanner)
+// isDraggingOverlay: boolean, true if this card instance is rendered inside DragOverlay
+function RentalCard({
+  locacao,
+  onCardClick,
+  onShowContextMenu,
+  activeDragItemId = null, // ID of the globally dragged item
+  isDraggingOverlay = false // Is this instance for the overlay?
+}) {
   const { id, tipo, recurso_nome, valor_pagamento } = locacao;
+  const draggableId = `rental-${id}`;
 
   const timerRef = useRef(null);
   const isDraggingRef = useRef(false);
   const longPressOrDragHappenedRef = useRef(false);
   const mouseDownPositionRef = useRef({ x: 0, y: 0 });
 
-  const { attributes, listeners, setNodeRef, transform, isDragging: dndIsDragging } = useDraggable({
-    id: `rental-${id}`,
+  // Only setup draggable if not in overlay
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging: dndIsDragging
+  } = useDraggable({
+    id: draggableId,
     data: { locacao },
+    disabled: isDraggingOverlay, // Disable if this card is for the overlay
   });
 
-  // Reset refs when dndIsDragging changes from true to false (drag end)
-  useEffect(() => {
-    if (!dndIsDragging) {
-      isDraggingRef.current = false;
-      // longPressOrDragHappenedRef is reset onMouseUp
-    }
-  }, [dndIsDragging]);
+  // Determine if the original source item is being dragged
+  const isSourceItemDragging = dndIsDragging && draggableId === activeDragItemId;
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: dndIsDragging ? 9999 : 'auto', // Increased z-index
-    cursor: dndIsDragging ? 'grabbing' : 'grab',
-  } : {
-    cursor: 'grab',
-  };
+  useEffect(() => {
+    if (!isDraggingOverlay && !dndIsDragging) {
+      isDraggingRef.current = false;
+    }
+  }, [dndIsDragging, isDraggingOverlay]);
+
+  let style = {};
+  if (isDraggingOverlay) {
+    // Style for the card in the DragOverlay
+    // The DragOverlay handles transform. We just need visual styles.
+    style = {
+      cursor: 'grabbing',
+      zIndex: 9999, // Ensure overlay card is on top
+      // Opacity can be full here, or match the source item's dragging opacity if preferred
+      // opacity: 0.75, // Example: if you want the overlay to also be slightly transparent
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', // Example shadow
+    };
+  } else {
+    // Style for the original card
+    style = transform ? {
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      zIndex: isSourceItemDragging ? 9999 : 'auto',
+      cursor: isSourceItemDragging ? 'grabbing' : 'grab',
+      visibility: isSourceItemDragging ? 'hidden' : 'visible', // Hide original when it's being dragged via overlay
+    } : {
+      cursor: 'grab',
+      visibility: 'visible',
+    };
+  }
 
   let IconComponent;
   let cardColor = 'bg-gray-100';
@@ -141,21 +175,35 @@ function RentalCard({ locacao, onCardClick, onShowContextMenu }) {
   // The most robust way is to spread dnd-kit's listeners and then add our own.
   // React will invoke both if they are separate props.
 
+  // Do not attach interactive handlers if this card is in the overlay
+  const eventHandlers = isDraggingOverlay ? {} : {
+    onMouseDown: handleMouseDown,
+    onMouseUp: handleMouseUp,
+    onMouseMove: handleMouseMove,
+    onClick: handleClick,
+    onContextMenu: handleContextMenu,
+    ...listeners, // dnd-kit listeners only for the source item
+  };
+
+  // Determine class names, applying opacity if it's the source item being dragged
+  const currentDndIsDragging = !isDraggingOverlay && dndIsDragging && draggableId === activeDragItemId;
+  const opacityClass = currentDndIsDragging ? 'opacity-50' : ''; // Or use style.visibility for complete hiding
+
+  // If using visibility: 'hidden' for the source item, we don't need opacityClass.
+  // The style object already sets visibility: 'hidden' for isSourceItemDragging.
+  // So, opacityClass can be removed if visibility:hidden is the chosen method.
+  // For now, let's rely on style.visibility and remove opacityClass from className.
+
   return (
     <div
-      ref={setNodeRef}
+      ref={isDraggingOverlay ? null : setNodeRef} // Only setNodeRef for the actual draggable item
       style={style}
-      {...attributes} // dnd-kit's attributes (e.g. role, aria-pressed)
-      {...listeners} // Spread dnd-kit's listeners here
-      // Add our custom handlers. React will invoke both dnd-kit's and ours if they are for the same event.
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseMove={handleMouseMove}
-      onClick={handleClick}
-      onContextMenu={handleContextMenu}
-      className={`p-2 m-1 border rounded-lg shadow-sm transition-all duration-150 ease-in-out ${cardColor} ${textColor} ${borderColor} ${dndIsDragging ? 'opacity-75 shadow-xl' : 'shadow-md'}`}
+      {...(isDraggingOverlay ? {} : attributes)} // Only spread attributes for the actual draggable item
+      {...eventHandlers}
+      className={`p-2 m-1 border rounded-lg shadow-sm transition-all duration-150 ease-in-out ${cardColor} ${textColor} ${borderColor} ${!isDraggingOverlay && dndIsDragging ? 'shadow-xl' : 'shadow-md'}`}
+      // Removed opacityClass as visibility is handled in style
       role="button"
-      tabIndex={0}
+      tabIndex={isDraggingOverlay ? -1 : 0} // Overlay card is not focusable
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault(); // Prevent scrolling if space is pressed
