@@ -346,7 +346,13 @@ const LocacoesPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      {/* Chart Section */}
+      {/* Nova Seção do Weekly Planner (AGORA PRIMEIRO) */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold text-gray-700 mb-4">Planejamento Semanal de Locações</h2>
+        <WeeklyPlanner obras={obras} equipes={equipes} />
+      </div>
+
+      {/* Chart Section (AGORA SEGUNDO) */}
       <div className="mb-8 p-4 border rounded-lg shadow bg-white">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold text-gray-700">Custo Diário de Locações (Últimos 30 dias)</h2>
@@ -397,13 +403,8 @@ const LocacoesPage = () => {
         </div>
       </div>
 
-      {/* Nova Seção do Weekly Planner */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold text-gray-700 mb-4">Planejamento Semanal de Locações</h2>
-        <WeeklyPlanner obras={obras} equipes={equipes} />
-      </div>
-
       {/* Seção da Tabela de Locações (Pode ser removida ou mantida conforme necessidade) */}
+      {/* O título e botões abaixo são da listagem antiga, mantidos por enquanto */}
       <div className="flex justify-between items-center mb-6 mt-12">
         <h1 className="text-2xl font-bold text-gray-800">Listagem Detalhada de Locações</h1>
          <div>
