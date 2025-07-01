@@ -347,9 +347,10 @@ const LocacoesPage = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       {/* Nova Seção do Weekly Planner (AGORA PRIMEIRO) */}
-      <div className="mb-8 min-h-[75vh] flex flex-col"> {/* Adicionado min-h e flex flex-col */}
+      {/* Removed min-h-[75vh] to prevent excessive empty space */}
+      <div className="mb-8 flex flex-col">
         <h2 className="text-2xl font-semibold text-gray-700 mb-4 flex-shrink-0">Planejamento Semanal de Locações</h2>
-        <div className="flex-grow"> {/* Novo wrapper para o planner ocupar espaço */}
+        <div className="flex-grow"> {/* This flex-grow is fine if the parent (flex flex-col) doesn't force a huge height */}
           <WeeklyPlanner obras={obras} equipes={equipes} />
         </div>
       </div>
