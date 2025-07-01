@@ -83,11 +83,42 @@ function WeeklyPlanner({ obras, equipes }) {
     setLocacaoFormInitialData(null);
   };
 
-  const handleLocacaoFormSubmitSuccess = () => {
+  const handleLocacaoFormSubmitSuccess = () => { // Renomear para indicar que é APÓS o submit real
     handleCloseLocacaoForm();
     console.log('[WeeklyPlanner] handleLocacaoFormSubmitSuccess - Chamando fetchWeekData com currentDate:', currentDate); // LOG 3
     fetchWeekData(currentDate); // Re-fetch data
-    toast.success("Locação salva com sucesso!");
+    // O toast de sucesso será movido para handleActualFormSubmit
+  };
+
+  // Nova função para lidar com o submit real do LocacaoForm
+  const handleActualFormSubmit = async (formDataFromForm) => {
+    setIsLoading(true); // Usar isLoading geral ou um específico para o form
+    setError(null);
+
+    // Determinar se é criação ou edição baseado em locacaoFormInitialData
+    const isEditing = locacaoFormInitialData && locacaoFormInitialData.id;
+
+    try {
+      if (isEditing) {
+        await api.updateLocacao(locacaoFormInitialData.id, formDataFromForm);
+        toast.success("Locação atualizada com sucesso!");
+      } else {
+        await api.createLocacao(formDataFromForm);
+        toast.success("Locação criada com sucesso!");
+      }
+      handleLocacaoFormSubmitSuccess(); // Fecha modal e recarrega
+    } catch (err) {
+      console.error("[WeeklyPlanner] Erro ao salvar locação (handleActualFormSubmit):", err.response?.data || err.message);
+      const errorMsg = err.response?.data && typeof err.response.data === 'object'
+                       ? Object.values(err.response.data).flat().join('; ')
+                       : (err.response?.data?.detail || err.message || "Erro desconhecido ao salvar.");
+      toast.error(`Falha ao salvar locação: ${errorMsg}`);
+      setError(errorMsg); // Pode ser útil mostrar o erro no formulário ou no planner
+      // Não fechar o modal automaticamente em caso de erro, para o usuário ver.
+      // A prop isLoadingForm no LocacaoForm pode ser usada para reabilitar o botão de submit.
+    } finally {
+      setIsLoading(false); // Resetar o estado de loading
+    }
   };
 
   const handleLocacaoTransferSuccess = () => {
@@ -272,9 +303,9 @@ function WeeklyPlanner({ obras, equipes }) {
                 initialData={locacaoFormInitialData}
                 obras={obras || []} // Passa as obras recebidas por props
                 equipes={equipes || []} // Passa as equipes recebidas por props
-                onSubmit={handleLocacaoFormSubmitSuccess}
+                onSubmit={handleActualFormSubmit} // Alterado para a nova função de submit
                 onCancel={handleCloseLocacaoForm}
-                isLoading={isLoading} // Pode precisar de um isLoading específico para o form
+                isLoading={isLoading} // Passa o estado de loading do planner
                 onTransferSuccess={handleLocacaoTransferSuccess}
               />
             </div>
