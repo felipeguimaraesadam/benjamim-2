@@ -36,16 +36,18 @@ function WeeklyPlanner({ obras, equipes }) {
     setError(null);
     const weekStart = startOfWeek(dateForWeek, { locale, weekStartsOn });
     const formattedStartDate = format(weekStart, 'yyyy-MM-dd');
+    console.log('[WeeklyPlanner] fetchWeekData - StartDate para API:', formattedStartDate); // LOG 1
 
     try {
       const [locacoesRes, recursosRes] = await Promise.all([
         api.getLocacoesDaSemana(formattedStartDate),
         api.getRecursosMaisUtilizadosSemana(formattedStartDate)
       ]);
+      console.log('[WeeklyPlanner] fetchWeekData - Locações recebidas:', locacoesRes.data); // LOG 2
       setLocacoesPorDia(locacoesRes.data || {});
       setRecursosMaisUtilizados(recursosRes.data || []);
     } catch (err) {
-      console.error("Erro ao buscar dados da semana:", err);
+      console.error("[WeeklyPlanner] Erro ao buscar dados da semana:", err); // LOG Erro
       setError(err.message || "Falha ao buscar dados da semana.");
       setLocacoesPorDia({});
       setRecursosMaisUtilizados([]);
@@ -83,6 +85,7 @@ function WeeklyPlanner({ obras, equipes }) {
 
   const handleLocacaoFormSubmitSuccess = () => {
     handleCloseLocacaoForm();
+    console.log('[WeeklyPlanner] handleLocacaoFormSubmitSuccess - Chamando fetchWeekData com currentDate:', currentDate); // LOG 3
     fetchWeekData(currentDate); // Re-fetch data
     toast.success("Locação salva com sucesso!");
   };
@@ -208,6 +211,7 @@ function WeeklyPlanner({ obras, equipes }) {
           // Ajustado para preencher a altura e permitir scroll interno se necessário
           <div className="flex mt-4 overflow-x-auto pb-4 h-full flex-grow">
             {/* Colunas dos Dias */}
+            {console.log('[WeeklyPlanner] Render - locacoesPorDia:', locacoesPorDia) /* LOG 4 */}
             {daysOfWeek.map(day => {
               const formattedDayId = format(day, 'yyyy-MM-dd');
               return (

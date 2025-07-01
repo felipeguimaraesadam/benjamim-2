@@ -1018,6 +1018,7 @@ class LocacaoSemanalView(APIView):
             return Response({"error": "Formato de data inválido para 'inicio'. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
 
         fim_semana = inicio_semana + timedelta(days=6)
+        print(f"[LocacaoSemanalView] Periodo: {inicio_semana_str} a {fim_semana.isoformat()}") # LOG BACKEND 1
 
         locacoes_na_semana = Locacao_Obras_Equipes.objects.filter(
             status_locacao='ativa'
@@ -1025,6 +1026,8 @@ class LocacaoSemanalView(APIView):
             # Locação começa antes ou durante o fim da semana E Locação termina depois ou durante o início da semana
             Q(data_locacao_inicio__lte=fim_semana) & Q(data_locacao_fim__gte=inicio_semana)
         ).select_related('obra', 'equipe', 'funcionario_locado').order_by('data_locacao_inicio')
+
+        print(f"[LocacaoSemanalView] Locações encontradas no período geral: {locacoes_na_semana.count()}") # LOG BACKEND 2
 
         resposta_semanal = {}
         for i in range(7):
@@ -1038,6 +1041,7 @@ class LocacaoSemanalView(APIView):
                     serializer = LocacaoObrasEquipesSerializer(locacao, context={'request': request})
                     resposta_semanal[dia_str].append(serializer.data)
 
+        print(f"[LocacaoSemanalView] Resposta semanal final: {resposta_semanal}") # LOG BACKEND 3
         return Response(resposta_semanal)
 
 
