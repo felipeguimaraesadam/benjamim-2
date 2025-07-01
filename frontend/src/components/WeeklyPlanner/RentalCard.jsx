@@ -131,38 +131,28 @@ function RentalCard({ locacao, onCardClick, onShowContextMenu }) {
 
 
   // Combine dnd-kit listeners with our custom mouse event handlers
-  // Our handlers (handleMouseDown, handleMouseUp, handleMouseMove) are for long-press detection.
-  // dnd-kit listeners are for drag and drop.
-  // onClick is for regular clicks.
-  // onContextMenu is for right-clicks.
-  const combinedListeners = {
-    ...listeners, // dnd-kit's drag listeners
-    onMouseDown: (e) => {
-      listeners.onMouseDown(e); // Call dnd-kit's onMouseDown
-      handleMouseDown(e);     // Call our onMouseDown
-    },
-    onMouseUp: (e) => {
-      // dnd-kit doesn't have onMouseUp in its listeners object directly.
-      // It handles mouseup internally. We add our own for clearing timers.
-      handleMouseUp(e);
-    },
-    onMouseMove: (e) => {
-      // dnd-kit doesn't have onMouseMove in its listeners object directly for the draggable element.
-      // It's handled at the DndContext level. We add our own for drag detection for long press cancellation.
-      handleMouseMove(e);
-    },
-    // onClick is handled separately via the prop
-    onContextMenu: handleContextMenu, // For right-click
-  };
-
+  // dnd-kit listeners should be spread directly.
+  // Our custom handlers will also be on the div.
+  // React calls event handlers in order if multiple are attached to the same event type on an element,
+  // but for clarity and to ensure dnd-kit's internal logic isn't disrupted,
+  // we will call our custom handlers from within dnd-kit's, if dnd-kit provides them,
+  // or attach them separately if not.
+  // However, the error indicates `listeners.onMouseDown` is not a function to be called.
+  // The most robust way is to spread dnd-kit's listeners and then add our own.
+  // React will invoke both if they are separate props.
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes} // dnd-kit's attributes (e.g. role, aria-pressed)
-      {...combinedListeners} // Our combined event handlers
-      onClick={handleClick} // Regular click handler
+      {...listeners} // Spread dnd-kit's listeners here
+      // Add our custom handlers. React will invoke both dnd-kit's and ours if they are for the same event.
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseMove={handleMouseMove}
+      onClick={handleClick}
+      onContextMenu={handleContextMenu}
       className={`p-2 m-1 border rounded-lg shadow-sm transition-all duration-150 ease-in-out ${cardColor} ${textColor} ${borderColor} ${dndIsDragging ? 'opacity-75 shadow-xl' : 'shadow-md'}`}
       role="button"
       tabIndex={0}
