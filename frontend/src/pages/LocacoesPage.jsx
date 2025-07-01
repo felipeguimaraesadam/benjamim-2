@@ -512,26 +512,128 @@ const LocacoesPage = () => {
         </div>
       </div>
 
-      {/* Existing Locações Management Section */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Gestão de Locações</h1>
-        <div>
+import WeeklyPlanner from '../components/WeeklyPlanner/WeeklyPlanner'; // Import WeeklyPlanner
+
+// ... (imports existentes)
+
+const LocacoesPage = () => {
+  // ... (estados e hooks existentes)
+
+  // Estados para WeeklyPlanner (obras e equipes já são buscados)
+  // const [plannerObras, setPlannerObras] = useState([]); // Já temos 'obras'
+  // const [plannerEquipes, setPlannerEquipes] = useState([]); // Já temos 'equipes'
+
+  // No useEffect principal, já buscamos obras e equipes.
+  // Poderíamos passar 'obras' e 'equipes' diretamente para WeeklyPlanner.
+
+  return (
+    <div className="container mx-auto px-4 py-6">
+      {/* Chart Section */}
+      <div className="mb-8 p-4 border rounded-lg shadow bg-white">
+        {/* ... (conteúdo do gráfico existente) ... */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-semibold text-gray-700">Custo Diário de Locações (Últimos 30 dias)</h2>
+          <div className="flex items-center">
+            <label htmlFor="obraChartFilter" className="mr-2 text-sm font-medium text-gray-700">Filtrar por Obra:</label>
+            <select
+              id="obraChartFilter"
+              value={selectedObraIdForChart}
+              onChange={handleObraFilterChange}
+              className="block w-full md:w-auto pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
+            >
+              <option value="">Todas as Obras</option>
+              {obras.map((obra) => (
+                <option key={obra.id} value={obra.id}>
+                  {obra.nome_obra}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {isLoadingChart && <p className="text-center text-gray-500">Carregando gráfico...</p>}
+        {chartError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Erro no gráfico: </strong>
+            <span className="block sm:inline">{chartError}</span>
+          </div>
+        )}
+        {!isLoadingChart && !chartError && chartData.length === 0 && (
+          <p className="text-center text-gray-500">Nenhum dado de locação encontrado para o período ou filtro selecionado.</p>
+        )}
+        {!isLoadingChart && !chartError && chartData.length > 0 && (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart
+              data={chartData}
+              margin={{ top: 5, right: 30, left: 20, bottom: 25 }} // Increased bottom margin for XAxis label
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={formatDateTick}
+                label={{ value: 'Data (Últimos 30 dias)', position: 'insideBottom', offset: -15, dy:10, fontSize: 12 }}
+                interval={chartData.length > 15 ? Math.floor(chartData.length / 15) : 0} // Adjust interval to prevent overlap
+                angle={chartData.length > 20 ? -30 : 0} // Angle ticks if many dates
+                textAnchor={chartData.length > 20 ? 'end' : 'middle'} // Adjust anchor for angled ticks
+                height={50} // Allocate space for angled labels if needed
+              />
+              <YAxis
+                label={{ value: 'Custo (R$)', angle: -90, position: 'insideLeft', fontSize: 12 }}
+                tickFormatter={(value) => parseFloat(value).toLocaleString('pt-BR')}
+                domain={[0, 'dataMax + 1000']} // Add some padding to max value
+              />
+              <Tooltip
+                labelFormatter={formatTooltipLabel}
+                formatter={formatTooltipValue}
+              />
+              <Legend wrapperStyle={{ paddingTop: '20px' }} />
+              <Bar dataKey="total_cost" name="Custo Total Diário">
+                {chartData.map((entry, index) => {
+                  if (entry.total_cost === 0 && entry.has_locacoes === false) {
+                    return <Cell key={`cell-${index}`} fill="#FFCA28" height={3} y={297} />;
+                  }
+                  return <Cell key={`cell-${index}`} fill="#8884d8" />;
+                })}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+        <div className="mt-4 text-xs text-gray-500 text-center">
+            <span className="inline-block w-3 h-3 bg-[#FFCA28] mr-1 align-middle"></span>
+            <span className="align-middle">Dias sem locações (ou custo zero). Custo atribuído ao dia de início da locação.</span>
+        </div>
+      </div>
+
+      {/* Nova Seção do Weekly Planner */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold text-gray-700 mb-4">Planejamento Semanal de Locações</h2>
+        <WeeklyPlanner obras={obras} equipes={equipes} />
+      </div>
+
+      {/* Seção da Tabela de Locações (Pode ser removida ou mantida conforme necessidade) */}
+      <div className="flex justify-between items-center mb-6 mt-12">
+        <h1 className="text-2xl font-bold text-gray-800">Listagem Detalhada de Locações</h1>
+        {/* O botão de Nova Locação agora está principalmente no DayColumn do WeeklyPlanner,
+            mas podemos manter um aqui se fizer sentido para o fluxo do usuário fora do planner.
+            Por ora, vamos assumir que o planner é a principal forma de adicionar.
+            Se for necessário, o handleAddNew original pode ser adaptado ou um novo criado.
+        */}
+         <div>
             <button
-                onClick={handleOpenReportModal}
+                onClick={handleOpenReportModal} // Botão de relatório mantido
                 className="mr-3 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300"
             >
                 Relatório de Pagamento
             </button>
-            <button
+             <button // Botão Nova Locação global (opcional)
             onClick={handleAddNew}
             className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:bg-primary-300"
             >
-            Nova Locação
+            Nova Locação (Lista)
             </button>
         </div>
       </div>
 
-      {/* Page level error, if not related to form/modal context */}
       {error && !isLoading && !showFormModal && !showDeleteConfirm && locacoes.length === 0 && (
          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4 text-center" role="alert">
           <p className="font-bold">Falha ao Carregar Dados</p>
