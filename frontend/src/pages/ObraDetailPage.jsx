@@ -188,12 +188,12 @@ const ObraDetailPage = () => {
 
       <FinancialDashboard obra={obra} />
 
-      {/* Container para os gráficos principais */}
+      {/* Container para os gráficos principais de análise financeira */}
       <div className="my-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Gráfico de Orçamento vs. Gasto Total */}
         {obra && (
-          <div className="p-4 bg-white shadow-lg rounded-lg">
-            <h3 className="text-lg font-semibold mb-3 text-center text-gray-700">Orçamento vs. Gasto Total</h3>
+          <div className="p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+            <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-200">Orçamento vs. Gasto Total</h3>
             {orcamentoVsGastoDataObra.length > 0 && (orcamentoVsGastoDataObra[0].value > 0 || orcamentoVsGastoDataObra[1].value > 0) ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -202,11 +202,14 @@ const ObraDetailPage = () => {
                       <Cell key={`cell-ovg-${index}`} fill={COLORS_PIE_OBRA[index % COLORS_PIE_OBRA.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                  <Legend />
+                  <Tooltip
+                    formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', color: '#333' }} // Estilo para tooltip em modo claro
+                  />
+                  <Legend formatter={(value) => <span style={{ color: document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#4B5563' }}>{value}</span>}/>
                 </PieChart>
               </ResponsiveContainer>
-            ) : <p className="text-center text-gray-500 py-10">Dados insuficientes.</p>}
+            ) : <p className="text-center text-gray-500 dark:text-gray-400 py-10">Dados insuficientes.</p>}
           </div>
         )}
 
@@ -216,126 +219,149 @@ const ObraDetailPage = () => {
         )}
       </div>
 
-      {/* Gráfico de Gastos por Categoria de Material (movido para cá para melhor layout se necessário, ou pode ser agrupado com outros) */}
-      {obra && (
-        <div className="my-8 p-4 bg-gray-50 shadow-md rounded-lg">
-          <div className="grid grid-cols-1 gap-6"> {/* Ajustado para ocupar a largura total se for o único gráfico nesta seção */}
-            <div className="p-4 bg-white shadow-lg rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Gastos por Categoria de Material</h3>
-                     {gastosPorCategoriaMaterialDataObra.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie data={gastosPorCategoriaMaterialDataObra} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#ffc658" labelLine={false} label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
-                                    {gastosPorCategoriaMaterialDataObra.map((entry, index) => (
-                                        <Cell key={`cell-gcm-${index}`} fill={COLORS_CATEGORIES_OBRA[index % COLORS_CATEGORIES_OBRA.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                                <Legend wrapperStyle={{ overflowY: 'auto', maxHeight: 60 }}/>
-                            </PieChart>
-                        </ResponsiveContainer>
-                    ) : <p className="text-center text-gray-500 py-10">Não há gastos por categoria de material.</p>}
+      {/* Wrapper para Gráfico de Materiais e Sistema de Abas para corrigir erro de JSX adjacente */}
+      <>
+        {/* Gráfico de Gastos por Categoria de Material (Renderizado condicionalmente) */}
+        {obra && ( /* Garante que a seção toda só aparece se `obra` existir */
+          <div className="my-8 p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+            <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-200">
+              Gastos por Categoria de Material
+            </h3>
+            {gastosPorCategoriaMaterialDataObra.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={gastosPorCategoriaMaterialDataObra}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    fill="#ffc658"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {gastosPorCategoriaMaterialDataObra.map((entry, index) => (
+                      <Cell key={`cell-gcm-${index}`} fill={COLORS_CATEGORIES_OBRA[index % COLORS_CATEGORIES_OBRA.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => `R$ ${parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', color: '#333' }}
+                  />
+                  <Legend
+                    wrapperStyle={{ overflowY: 'auto', maxHeight: 60 }}
+                    formatter={(value) => <span style={{ color: document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#4B5563' }}>{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-center text-gray-500 dark:text-gray-400 py-10">
+                Não há gastos por categoria de material para exibir.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Sistema de Abas */}
+        <div className="my-8">
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="-mb-px flex space-x-4 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
+              {/* Botão Mão de Obra/Serviços */}
+              <button
+                onClick={() => setActiveTab('labor')}
+                className={`${
+                  activeTab === 'labor'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
+                } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
+              >
+                Mão de Obra/Serviços
+              </button>
+              {/* Botão Materiais (Compras) */}
+              <button
+                onClick={() => setActiveTab('materials')}
+                className={`${
+                  activeTab === 'materials'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
+                } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
+              >
+                Materiais (Compras)
+              </button>
+              {/* Botão Despesas Extras */}
+              <button
+                onClick={() => setActiveTab('expenses')}
+                className={`${
+                  activeTab === 'expenses'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
+                } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
+              >
+                Despesas Extras
+              </button>
+              {/* Botão Fotos e Anexos */}
+              <button
+                onClick={() => setActiveTab('photos')}
+                className={`${
+                  activeTab === 'photos'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
+                } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
+              >
+                Fotos e Anexos
+              </button>
+            </nav>
+          </div>
+
+          {/* Conteúdo das Abas */}
+          <div className="mt-6">
+            {activeTab === 'labor' && (
+              <ObraLaborTabContent
+                locacoesEquipe={locacoesEquipe?.results || (Array.isArray(locacoesEquipe) ? locacoesEquipe : [])}
+                obraId={obra?.id}
+                obraNome={obra?.nome_obra}
+                onRemoverLocacao={handleRemoverLocacao}
+                locacaoError={errorLocacoes || specificLocacaoError}
+                isLoading={isLoadingLocacoes}
+                removingLocacaoId={removingLocacaoId}
+              />
+            )}
+            {activeTab === 'materials' && (
+              <ObraPurchasesTabContent
+                todasCompras={actualTodasAsCompras} // Já trata .results internamente
+                isLoading={isLoadingTodasAsCompras}
+                todasComprasError={errorTodasAsCompras}
+                obraId={obra?.id}
+                obraNome={obra?.nome_obra}
+              />
+            )}
+            {activeTab === 'expenses' && (
+              <ObraExpensesTabContent
+                despesasExtrasObra={despesasExtrasObra?.results || (Array.isArray(despesasExtrasObra) ? despesasExtrasObra : [])}
+                isLoading={isLoadingDespesasExtras}
+                despesasExtrasObraError={errorDespesasExtras}
+                obraId={obra?.id}
+                obraNome={obra?.nome_obra}
+              />
+            )}
+            {activeTab === 'photos' && (
+              <div className="p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Fotos e Anexos da Obra</h2>
+                <ObraFotosUpload obraId={id} onUploadSuccess={handlePhotoUploaded} />
+                <div className="mt-6">
+                  <ObraGaleria obraId={id} newFoto={latestUploadedFoto} />
                 </div>
-            </div>
-            {/* A div de fechamento do "grid grid-cols-1 gap-6" estava faltando, adicionada aqui */}
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </>
 
-      {/* Sistema de Abas */}
-      <div className="my-8">
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-4 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
-            <button
-              onClick={() => setActiveTab('labor')}
-              className={`${
-                activeTab === 'labor'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
-              } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
-            >
-              Mão de Obra/Serviços
-            </button>
-            <button
-              onClick={() => setActiveTab('materials')}
-              className={`${
-                activeTab === 'materials'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
-              } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
-            >
-              Materiais (Compras)
-            </button>
-            <button
-              onClick={() => setActiveTab('expenses')}
-              className={`${
-                activeTab === 'expenses'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
-              } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
-            >
-              Despesas Extras
-            </button>
-             <button
-              onClick={() => setActiveTab('photos')}
-              className={`${
-                activeTab === 'photos'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'
-              } whitespace-nowrap py-3 px-2 sm:py-4 sm:px-3 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-150 ease-in-out`}
-            >
-              Fotos e Anexos
-            </button>
-          </nav>
-        </div>
-
-        {/* Conteúdo das Abas */}
-        <div className="mt-6">
-          {activeTab === 'labor' && (
-            <ObraLaborTabContent
-              locacoesEquipe={locacoesEquipe?.results || (Array.isArray(locacoesEquipe) ? locacoesEquipe : [])}
-              obraId={obra?.id}
-              obraNome={obra?.nome_obra}
-              onRemoverLocacao={handleRemoverLocacao}
-              locacaoError={errorLocacoes || specificLocacaoError}
-              isLoading={isLoadingLocacoes}
-              removingLocacaoId={removingLocacaoId}
-            />
-          )}
-          {activeTab === 'materials' && (
-            <ObraPurchasesTabContent
-              todasCompras={actualTodasAsCompras}
-              isLoading={isLoadingTodasAsCompras}
-              todasComprasError={errorTodasAsCompras}
-              obraId={obra?.id}
-              obraNome={obra?.nome_obra}
-            />
-          )}
-          {activeTab === 'expenses' && (
-            <ObraExpensesTabContent
-              // Garantir que despesasExtrasObra.results seja usado se a API retornar um objeto paginado
-              despesasExtrasObra={despesasExtrasObra?.results || (Array.isArray(despesasExtrasObra) ? despesasExtrasObra : [])}
-              isLoading={isLoadingDespesasExtras}
-              despesasExtrasObraError={errorDespesasExtras}
-              obraId={obra?.id}
-              obraNome={obra?.nome_obra}
-            />
-          )}
-          {activeTab === 'photos' && (
-            <div className="p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Fotos e Anexos da Obra</h2>
-              <ObraFotosUpload obraId={id} onUploadSuccess={handlePhotoUploaded} />
-              <div className="mt-6">
-                <ObraGaleria obraId={id} newFoto={latestUploadedFoto} />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Gráficos de Histórico e Materiais Mais Usados (mantidos fora das abas, como antes) */}
-      <div className="my-8 grid md:grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Gráficos de Histórico e Top Materiais (mantidos fora das abas) */}
+      <div className="my-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <CostHistoryChart historicoCustos={historicoCustos} custosError={errorHistoricoCustos} isLoading={isLoadingHistoricoCustos} />
+        {/* O gráfico TopMaterialsChart usa a prop custosMaterial que vem de api.getObraCustosPorMaterial */}
         <TopMaterialsChart custosMaterial={custosMaterial} materialError={errorCustosMaterial} isLoading={isLoadingCustosMaterial} />
       </div>
     </div>
