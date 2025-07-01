@@ -3,19 +3,26 @@ import * as api from '../services/api';
 import { exportDataToCsv, exportMaterialPaymentsReportToCSV, exportPayrollReportToCSV } from '../utils/csvExporter'; // Import CSV exporter
 import SpinnerIcon from '../components/utils/SpinnerIcon'; // Assuming SpinnerIcon is needed
 import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../utils/dateUtils.js'; // Import date utils
+import MonthSelector from '../components/utils/MonthSelector'; // Importado MonthSelector
 import { toast } from 'react-toastify'; // For displaying error messages
 
 const RelatoriosPage = () => {
   const [obras, setObras] = useState([]); // Used for various dropdowns
   const [materiais, setMateriais] = useState([]); // Used for Geral de Compras report dropdown
   const [equipes, setEquipes] = useState([]); // Used for Desempenho Equipe report dropdown
-  const [reportType, setReportType] = useState('financeiroObra');
+  const [activeTab, setActiveTab] = useState('financeiroObra'); // Renomeado de reportType
 
-  // Filters state for each main report type (not modals)
-  const [financeiroFilters, setFinanceiroFilters] = useState({ obra_id: '', data_inicio: '', data_fim: '' });
-  const [geralComprasFilters, setGeralComprasFilters] = useState({ data_inicio: '', data_fim: '', obra_id: '', material_id: '' });
-  const [desempenhoEquipeFilters, setDesempenhoEquipeFilters] = useState({ equipe_id: '', data_inicio: '', data_fim: '' });
-  const [custoGeralFilters, setCustoGeralFilters] = useState({ data_inicio: '', data_fim: '' });
+  // Estado unificado para filtros
+  const [filters, setFilters] = useState({
+    obra_id: '',
+    material_id: '',
+    equipe_id: '',
+    data_inicio: '',
+    data_fim: '',
+    // Para controlar o valor do MonthSelector diretamente, se necessário
+    // ou para manter o valor YYYY-MM para o input type="month"
+    selected_month: ''
+  });
 
   const [reportData, setReportData] = useState(null); // For main page reports
   const [isLoading, setIsLoading] = useState(false); // For main page report generation
@@ -132,65 +139,95 @@ const RelatoriosPage = () => {
     fetchDropdownData();
   }, [fetchDropdownData]);
 
-
-  const handleFilterChange = (report, field, value) => {
+  // Atualizada para usar o estado unificado 'filters'
+  const handleFilterChange = (field, value) => {
     setError(null);
     setReportData(null);
-    switch (report) {
-      case 'financeiroObra':
-        setFinanceiroFilters(prev => ({ ...prev, [field]: value }));
-        break;
-      case 'geralCompras':
-        setGeralComprasFilters(prev => ({ ...prev, [field]: value }));
-        break;
-      case 'desempenhoEquipe':
-        setDesempenhoEquipeFilters(prev => ({ ...prev, [field]: value }));
-        break;
-      case 'custoGeral':
-        setCustoGeralFilters(prev => ({ ...prev, [field]: value }));
-        break;
-      default:
-        break;
-    }
+    setFilters(prev => ({ ...prev, [field]: value }));
   };
 
-  const validateFilters = (report) => {
+  // Handler específico para o MonthSelector
+  const handleMonthChange = (dateInfo) => {
+    setError(null);
+    setReportData(null);
+    setFilters(prev => ({
+      ...prev,
+      data_inicio: dateInfo.startDate,
+      data_fim: dateInfo.endDate,
+      selected_month: dateInfo.monthYear, // Atualiza o valor YYYY-MM para o input
+    }));
+  };
+
+  // Inicializa selected_month e data_inicio/data_fim no carregamento da página
+  useEffect(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const currentMonthYear = `${year}-${month}`;
+
+    const firstDay = new Date(year, today.getMonth(), 1);
+    const lastDay = new Date(year, today.getMonth() + 1, 0);
+
+    const formatDate = (date) => {
+        const d = new Date(date);
+        let day = '' + d.getDate();
+        let mo = '' + (d.getMonth() + 1);
+        const y = d.getFullYear();
+
+        if (mo.length < 2) mo = '0' + mo;
+        if (day.length < 2) day = '0' + day;
+
+        return [y, mo, day].join('-');
+    };
+
+    setFilters(prev => ({
+        ...prev,
+        data_inicio: formatDate(firstDay),
+        data_fim: formatDate(lastDay),
+        selected_month: currentMonthYear,
+    }));
+  }, []);
+
+
+  // Atualizada para usar o estado unificado 'filters' e o 'activeTab'
+  const validateFilters = () => {
     let isValid = true;
     let currentError = null;
-    switch (report) {
+    switch (activeTab) {
         case 'financeiroObra':
-            if (!financeiroFilters.obra_id) currentError = "Obra é obrigatória.";
-            else if (!financeiroFilters.data_inicio) currentError = "Data de Início é obrigatória.";
-            else if (!financeiroFilters.data_fim) currentError = "Data de Fim é obrigatória.";
-            else if (new Date(financeiroFilters.data_inicio) > new Date(financeiroFilters.data_fim)) currentError = "Data de Início não pode ser posterior à Data de Fim.";
+            if (!filters.obra_id) currentError = "Obra é obrigatória.";
+            else if (!filters.data_inicio) currentError = "Mês (Data de Início) é obrigatória.";
+            else if (!filters.data_fim) currentError = "Mês (Data de Fim) é obrigatória.";
+            // Validação de data_inicio > data_fim não é mais necessária com MonthSelector
             break;
         case 'geralCompras':
-            if (!geralComprasFilters.data_inicio) currentError = "Data de Início é obrigatória.";
-            else if (!geralComprasFilters.data_fim) currentError = "Data de Fim é obrigatória.";
-            else if (new Date(geralComprasFilters.data_inicio) > new Date(geralComprasFilters.data_fim)) currentError = "Data de Início não pode ser posterior à Data de Fim.";
+            if (!filters.data_inicio) currentError = "Mês (Data de Início) é obrigatória.";
+            else if (!filters.data_fim) currentError = "Mês (Data de Fim) é obrigatória.";
             break;
-        case 'desempenhoEquipe':
-            if (!desempenhoEquipeFilters.equipe_id) currentError = "Equipe é obrigatória.";
-            else if (desempenhoEquipeFilters.data_inicio && desempenhoEquipeFilters.data_fim && new Date(desempenhoEquipeFilters.data_inicio) > new Date(desempenhoEquipeFilters.data_fim)) currentError = "Data de Início não pode ser posterior à Data de Fim.";
+        case 'desempenhoEquipe': // Mantém data_inicio e data_fim opcionais
+            if (!filters.equipe_id) currentError = "Equipe é obrigatória.";
+            else if (filters.data_inicio && filters.data_fim && new Date(filters.data_inicio) > new Date(filters.data_fim)) {
+                currentError = "Data de Início não pode ser posterior à Data de Fim.";
+            }
             break;
         case 'custoGeral':
-            if (!custoGeralFilters.data_inicio) currentError = "Data de Início é obrigatória.";
-            else if (!custoGeralFilters.data_fim) currentError = "Data de Fim é obrigatória.";
-            else if (new Date(custoGeralFilters.data_inicio) > new Date(custoGeralFilters.data_fim)) currentError = "Data de Início não pode ser posterior à Data de Fim.";
+            if (!filters.data_inicio) currentError = "Mês (Data de Início) é obrigatória.";
+            else if (!filters.data_fim) currentError = "Mês (Data de Fim) é obrigatória.";
             break;
         default:
             isValid = false; // Should not happen
     }
     if(currentError) {
         setError(currentError);
+        toast.warn(currentError);
         isValid = false;
     }
     return isValid;
   };
 
-
-  const handleSubmitReport = async (currentReportType) => {
-    if (!validateFilters(currentReportType)) return;
+  // Renomeado para handleGenerateReport e atualizado para usar 'filters' e 'activeTab'
+  const handleGenerateReport = async () => {
+    if (!validateFilters()) return;
 
     setError(null);
     setReportData(null);
@@ -198,33 +235,40 @@ const RelatoriosPage = () => {
 
     try {
       let response;
-      let params;
-      switch (currentReportType) {
+      let params = {
+        data_inicio: filters.data_inicio,
+        data_fim: filters.data_fim,
+      };
+
+      switch (activeTab) {
         case 'financeiroObra':
-          response = await api.getRelatorioFinanceiroObra(financeiroFilters);
+          params.obra_id = filters.obra_id;
+          response = await api.getRelatorioFinanceiroObra(params);
           break;
         case 'geralCompras':
-          params = { ...geralComprasFilters };
-          if (!params.obra_id) delete params.obra_id;
-          if (!params.material_id) delete params.material_id;
+          if (filters.obra_id) params.obra_id = filters.obra_id;
+          if (filters.material_id) params.material_id = filters.material_id;
           response = await api.getRelatorioGeralCompras(params);
           break;
         case 'desempenhoEquipe':
-          params = { ...desempenhoEquipeFilters };
-          if (!params.data_inicio) delete params.data_inicio;
-          if (!params.data_fim) delete params.data_fim;
+          params = { equipe_id: filters.equipe_id }; // Começa com params limpo para este caso
+          if (filters.data_inicio) params.data_inicio = filters.data_inicio;
+          if (filters.data_fim) params.data_fim = filters.data_fim;
           response = await api.getRelatorioDesempenhoEquipe(params);
           break;
         case 'custoGeral':
-          response = await api.getRelatorioCustoGeral(custoGeralFilters);
+          // params já tem data_inicio e data_fim
+          response = await api.getRelatorioCustoGeral(params);
           break;
         default:
           throw new Error("Tipo de relatório desconhecido.");
       }
-      setReportData({ type: currentReportType, data: response.data });
+      setReportData({ type: activeTab, data: response.data });
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Falha ao gerar relatório.');
-      console.error(`Relatorio ${currentReportType} Error:`, err);
+      const errorMessage = err.response?.data?.detail || err.response?.data?.error || err.message || 'Falha ao gerar relatório.';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error(`Relatorio ${activeTab} Error:`, err);
     } finally {
       setIsLoading(false);
     }
@@ -244,110 +288,107 @@ const RelatoriosPage = () => {
   const renderReportForm = () => {
     if (isInitialLoading) return <p className="text-center text-gray-600">Carregando filtros...</p>;
 
-    switch (reportType) {
+    switch (activeTab) { // Modificado de reportType para activeTab
       case 'financeiroObra':
         return (
-          <form key="form-financeiro-obra" onSubmit={(e) => { e.preventDefault(); handleSubmitReport('financeiroObra'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+          <form key="form-financeiro-obra" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório Financeiro da Obra</h2>
-            <div>
-              <label htmlFor="obra_id_fin" className="block text-sm font-medium text-gray-700">Obra <span className="text-red-500">*</span></label>
-              <select id="obra_id_fin" name="obra_id" value={financeiroFilters.obra_id}
-                      onChange={(e) => handleFilterChange('financeiroObra', 'obra_id', e.target.value)}
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                <option value="">Selecione uma Obra</option>
-                {obras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>)}
-              </select>
-            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="data_inicio_fin" className="block text-sm font-medium text-gray-700">Data Início <span className="text-red-500">*</span></label>
-                <input type="date" id="data_inicio_fin" name="data_inicio" value={financeiroFilters.data_inicio}
-                       onChange={(e) => handleFilterChange('financeiroObra', 'data_inicio', e.target.value)}
-                       className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
+                <label htmlFor="obra_id_fin" className="block text-sm font-medium text-gray-700">Obra <span className="text-red-500">*</span></label>
+                <select id="obra_id_fin" name="obra_id" value={filters.obra_id}
+                        onChange={(e) => handleFilterChange('obra_id', e.target.value)}
+                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                  <option value="">Selecione uma Obra</option>
+                  {obras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>)}
+                </select>
               </div>
               <div>
-                <label htmlFor="data_fim_fin" className="block text-sm font-medium text-gray-700">Data Fim <span className="text-red-500">*</span></label>
-                <input type="date" id="data_fim_fin" name="data_fim" value={financeiroFilters.data_fim}
-                       onChange={(e) => handleFilterChange('financeiroObra', 'data_fim', e.target.value)}
-                       className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
+                <label htmlFor="month_selector_fin" className="block text-sm font-medium text-gray-700">Mês do Relatório <span className="text-red-500">*</span></label>
+                <MonthSelector
+                  id="month_selector_fin"
+                  name="selected_month"
+                  value={filters.selected_month}
+                  onChange={handleMonthChange}
+                />
               </div>
             </div>
-            <button type="submit" disabled={isLoading}
+            <button type="submit" disabled={isLoading || !filters.obra_id}
                     className="w-full md:w-auto mt-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg shadow hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-75 disabled:opacity-50">
+              {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2 inline-block" /> : null}
               {isLoading ? 'Gerando...' : 'Gerar Relatório'}
             </button>
           </form>
         );
       case 'geralCompras':
          return (
-            <form key="form-geral-compras" onSubmit={(e) => { e.preventDefault(); handleSubmitReport('geralCompras'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+            <form key="form-geral-compras" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório Geral de Compras</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                <label htmlFor="data_inicio_comp" className="block text-sm font-medium text-gray-700">Data Início <span className="text-red-500">*</span></label>
-                <input type="date" id="data_inicio_comp" name="data_inicio" value={geralComprasFilters.data_inicio}
-                        onChange={(e) => handleFilterChange('geralCompras', 'data_inicio', e.target.value)}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
+                  <label htmlFor="month_selector_comp" className="block text-sm font-medium text-gray-700">Mês do Relatório <span className="text-red-500">*</span></label>
+                  <MonthSelector
+                    id="month_selector_comp"
+                    name="selected_month"
+                    value={filters.selected_month}
+                    onChange={handleMonthChange}
+                  />
                 </div>
                 <div>
-                <label htmlFor="data_fim_comp" className="block text-sm font-medium text-gray-700">Data Fim <span className="text-red-500">*</span></label>
-                <input type="date" id="data_fim_comp" name="data_fim" value={geralComprasFilters.data_fim}
-                        onChange={(e) => handleFilterChange('geralCompras', 'data_fim', e.target.value)}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
+                  <label htmlFor="obra_id_comp" className="block text-sm font-medium text-gray-700">Obra (Opcional)</label>
+                  <select id="obra_id_comp" name="obra_id" value={filters.obra_id}
+                          onChange={(e) => handleFilterChange('obra_id', e.target.value)}
+                          className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                      <option value="">Todas as Obras</option>
+                      {obras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>)}
+                  </select>
                 </div>
                 <div>
-                <label htmlFor="obra_id_comp" className="block text-sm font-medium text-gray-700">Obra (Opcional)</label>
-                <select id="obra_id_comp" name="obra_id" value={geralComprasFilters.obra_id}
-                        onChange={(e) => handleFilterChange('geralCompras', 'obra_id', e.target.value)}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    <option value="">Todas as Obras</option>
-                    {obras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>)}
-                </select>
-                </div>
-                <div>
-                <label htmlFor="material_id_comp" className="block text-sm font-medium text-gray-700">Material (Opcional)</label>
-                <select id="material_id_comp" name="material_id" value={geralComprasFilters.material_id}
-                        onChange={(e) => handleFilterChange('geralCompras', 'material_id', e.target.value)}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    <option value="">Todos os Materiais</option>
-                    {materiais.map(material => <option key={material.id} value={material.id}>{material.nome}</option>)}
-                </select>
+                  <label htmlFor="material_id_comp" className="block text-sm font-medium text-gray-700">Material (Opcional)</label>
+                  <select id="material_id_comp" name="material_id" value={filters.material_id}
+                          onChange={(e) => handleFilterChange('material_id', e.target.value)}
+                          className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                      <option value="">Todos os Materiais</option>
+                      {materiais.map(material => <option key={material.id} value={material.id}>{material.nome}</option>)}
+                  </select>
                 </div>
             </div>
             <button type="submit" disabled={isLoading}
-                    className="w-full md:w-auto mt-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg shadow hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-75 disabled:opacity-50">
+                    className="w-full md:w-auto mt-4 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg shadow hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-75 disabled:opacity-50">
+                {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2 inline-block" /> : null}
                 {isLoading ? 'Gerando...' : 'Gerar Relatório'}
             </button>
             </form>
          );
       case 'desempenhoEquipe':
         return (
-            <form key="form-desempenho-equipe" onSubmit={(e) => { e.preventDefault(); handleSubmitReport('desempenhoEquipe'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+            <form key="form-desempenho-equipe" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório de Desempenho de Equipes</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <div>
-                <label htmlFor="equipe_id_des" className="block text-sm font-medium text-gray-700">Equipe <span className="text-red-500">*</span></label>
-                <select id="equipe_id_des" name="equipe_id" value={desempenhoEquipeFilters.equipe_id}
-                        onChange={(e) => handleFilterChange('desempenhoEquipe', 'equipe_id', e.target.value)}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    <option value="">Selecione uma Equipe</option>
-                    {equipes.map(equipe => <option key={equipe.id} value={equipe.id}>{equipe.nome_equipe}</option>)}
-                </select>
+                  <label htmlFor="equipe_id_des" className="block text-sm font-medium text-gray-700">Equipe <span className="text-red-500">*</span></label>
+                  <select id="equipe_id_des" name="equipe_id" value={filters.equipe_id}
+                          onChange={(e) => handleFilterChange('equipe_id', e.target.value)}
+                          className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                      <option value="">Selecione uma Equipe</option>
+                      {equipes.map(equipe => <option key={equipe.id} value={equipe.id}>{equipe.nome_equipe}</option>)}
+                  </select>
                 </div>
                 <div>
-                <label htmlFor="data_inicio_des" className="block text-sm font-medium text-gray-700">Data Início (Opcional)</label>
-                <input type="date" id="data_inicio_des" name="data_inicio" value={desempenhoEquipeFilters.data_inicio}
-                        onChange={(e) => handleFilterChange('desempenhoEquipe', 'data_inicio', e.target.value)}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
+                  <label htmlFor="data_inicio_des" className="block text-sm font-medium text-gray-700">Data Início (Opcional)</label>
+                  <input type="date" id="data_inicio_des" name="data_inicio" value={filters.data_inicio}
+                          onChange={(e) => handleFilterChange('data_inicio', e.target.value)}
+                          className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
                 </div>
                 <div>
-                <label htmlFor="data_fim_des" className="block text-sm font-medium text-gray-700">Data Fim (Opcional)</label>
-                <input type="date" id="data_fim_des" name="data_fim" value={desempenhoEquipeFilters.data_fim}
-                        onChange={(e) => handleFilterChange('desempenhoEquipe', 'data_fim', e.target.value)}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
+                  <label htmlFor="data_fim_des" className="block text-sm font-medium text-gray-700">Data Fim (Opcional)</label>
+                  <input type="date" id="data_fim_des" name="data_fim" value={filters.data_fim}
+                          onChange={(e) => handleFilterChange('data_fim', e.target.value)}
+                          className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
                 </div>
-                <button type="submit" disabled={isLoading || !desempenhoEquipeFilters.equipe_id}
+                <button type="submit" disabled={isLoading || !filters.equipe_id}
                         className="px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg shadow hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-75 disabled:opacity-50">
+                {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2 inline-block" /> : null}
                 {isLoading ? 'Gerando...' : 'Gerar Relatório'}
                 </button>
             </div>
@@ -355,23 +396,20 @@ const RelatoriosPage = () => {
         );
     case 'custoGeral':
         return (
-            <form key="form-custo-geral" onSubmit={(e) => { e.preventDefault(); handleSubmitReport('custoGeral'); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+            <form key="form-custo-geral" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório Geral de Custos do Sistema</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                 <div>
-                <label htmlFor="data_inicio_cg" className="block text-sm font-medium text-gray-700">Data Início <span className="text-red-500">*</span></label>
-                <input type="date" id="data_inicio_cg" name="data_inicio" value={custoGeralFilters.data_inicio}
-                        onChange={(e) => handleFilterChange('custoGeral', 'data_inicio', e.target.value)}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
-                </div>
-                <div>
-                <label htmlFor="data_fim_cg" className="block text-sm font-medium text-gray-700">Data Fim <span className="text-red-500">*</span></label>
-                <input type="date" id="data_fim_cg" name="data_fim" value={custoGeralFilters.data_fim}
-                        onChange={(e) => handleFilterChange('custoGeral', 'data_fim', e.target.value)}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
+                  <label htmlFor="month_selector_cg" className="block text-sm font-medium text-gray-700">Mês do Relatório <span className="text-red-500">*</span></label>
+                  <MonthSelector
+                    id="month_selector_cg"
+                    name="selected_month"
+                    value={filters.selected_month}
+                    onChange={handleMonthChange}
+                  />
                 </div>
                 <button type="submit" disabled={isLoading}
-                        className="px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg shadow hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-75 disabled:opacity-50">
+                        className="self-end px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg shadow hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-75 disabled:opacity-50">
                 {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2 inline-block" /> : null}
                 {isLoading ? 'Gerando...' : 'Gerar Relatório'}
                 </button>
@@ -595,37 +633,54 @@ const RelatoriosPage = () => {
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-3xl font-semibold text-gray-800 mb-6">Página de Relatórios</h1>
 
-      <div className="mb-6 flex space-x-2 flex-wrap">
-        {/* Buttons to select report type */}
-        <button onClick={() => { setReportType('financeiroObra'); setReportData(null); setError(null); }} className={`px-4 py-2 rounded-md font-medium mb-2 ${reportType === 'financeiroObra' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
+      {/* Abas para seleção de tipo de relatório */}
+      <div className="mb-6 border-b border-gray-200">
+        <nav className="-mb-px flex space-x-4" aria-label="Tabs">
+          <button
+            onClick={() => { setActiveTab('financeiroObra'); setReportData(null); setError(null); }}
+            className={`whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm
+                        ${activeTab === 'financeiroObra'
+                          ? 'border-primary-500 text-primary-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
             Financeiro por Obra
-        </button>
-        <button onClick={() => { setReportType('geralCompras'); setReportData(null); setError(null); }} className={`px-4 py-2 rounded-md font-medium mb-2 ${reportType === 'geralCompras' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
+          </button>
+          <button
+            onClick={() => { setActiveTab('geralCompras'); setReportData(null); setError(null); }}
+            className={`whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm
+                        ${activeTab === 'geralCompras'
+                          ? 'border-primary-500 text-primary-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
             Geral de Compras
-        </button>
-        <button onClick={() => { setReportType('desempenhoEquipe'); setReportData(null); setError(null); }} className={`px-4 py-2 rounded-md font-medium mb-2 ${reportType === 'desempenhoEquipe' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
+          </button>
+          <button
+            onClick={() => { setActiveTab('desempenhoEquipe'); setReportData(null); setError(null); }}
+            className={`whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm
+                        ${activeTab === 'desempenhoEquipe'
+                          ? 'border-primary-500 text-primary-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
             Desempenho de Equipe
-        </button>
-        <button onClick={() => { setReportType('custoGeral'); setReportData(null); setError(null); }} className={`px-4 py-2 rounded-md font-medium mb-2 ${reportType === 'custoGeral' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
+          </button>
+          <button
+            onClick={() => { setActiveTab('custoGeral'); setReportData(null); setError(null); }}
+            className={`whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm
+                        ${activeTab === 'custoGeral'
+                          ? 'border-primary-500 text-primary-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
             Custo Geral do Sistema
-        </button>
-        <button
-            onClick={handleOpenMaterialPayModal}
-            className={`px-4 py-2 rounded-md font-medium mb-2 bg-blue-500 text-white hover:bg-blue-600`}
-        >
-            Pagamento de Materiais
-        </button>
-        <button
-            onClick={handleOpenLocacaoPayModal}
-            className={`px-4 py-2 rounded-md font-medium mb-2 bg-purple-500 text-white hover:bg-purple-600`}
-        >
-            Pagamento de Locações
-        </button>
+          </button>
+        </nav>
       </div>
 
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative my-4" role="alert">{error}</div>}
 
-      {renderReportForm()}
+      {/* Formulário de Filtros e Resultados do Relatório */}
+      <div className="mb-8">
+        {renderReportForm()}
+      </div>
 
       {isLoading && <p className="text-center py-4">Carregando relatório...</p>}
 
@@ -777,6 +832,25 @@ const RelatoriosPage = () => {
           )}
         </div>
       )}
+
+      {/* Seção para Ações de Exportação e Pagamento */}
+      <div className="mt-10 pt-6 border-t border-gray-200">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Ações de Exportação e Pagamento</h2>
+        <div className="flex space-x-4 flex-wrap">
+            <button
+                onClick={handleOpenMaterialPayModal}
+                className={`px-4 py-2 rounded-md font-medium mb-2 bg-blue-500 text-white hover:bg-blue-600`}
+            >
+                Pagamento de Materiais
+            </button>
+            <button
+                onClick={handleOpenLocacaoPayModal}
+                className={`px-4 py-2 rounded-md font-medium mb-2 bg-purple-500 text-white hover:bg-purple-600`}
+            >
+                Pagamento de Locações
+            </button>
+        </div>
+      </div>
 
       {/* Modal for Material Payments Report */}
       {showMaterialPayModal && (
