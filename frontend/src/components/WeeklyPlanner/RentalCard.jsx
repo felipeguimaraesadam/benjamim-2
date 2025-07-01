@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { User, Users, Tool } from 'lucide-react'; // Ícones de lucide-react
+import { User, Users, Wrench } from 'lucide-react'; // Ícones de lucide-react, substituído Tool por Wrench
 
 // Props esperadas:
 // locacao: { id, tipo, recurso_nome, valor_pagamento, ...outros dados se necessário }
@@ -38,7 +38,7 @@ function RentalCard({ locacao, onCardClick }) {
     textColor = 'text-green-800';
     borderColor = 'border-green-400';
   } else if (tipo === 'servico_externo') {
-    IconComponent = Tool;
+    IconComponent = Wrench; // Substituído Tool por Wrench
     cardColor = 'bg-orange-100 hover:bg-orange-200';
     textColor = 'text-orange-800';
     borderColor = 'border-orange-400';
