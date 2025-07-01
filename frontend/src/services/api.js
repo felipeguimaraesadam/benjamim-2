@@ -133,7 +133,7 @@ export const deleteDespesaExtra = (id) => apiClient.delete(`/despesas/${id}/`);
 export const getLocacoes = (params) => apiClient.get('/locacoes/', { params });
 export const getLocacaoById = (id) => apiClient.get(`/locacoes/${id}/`);
 export const createLocacao = (alocacaoData) => apiClient.post('/locacoes/', alocacaoData);
-export const updateLocacao = (id, alocacaoData) => apiClient.put(`/locacoes/${id}/`, alocacaoData);
+export const updateLocacao = (id, alocacaoData) => apiClient.patch(`/locacoes/${id}/`, alocacaoData); // Changed PUT to PATCH
 export const deleteLocacao = (id) => apiClient.delete(`/locacoes/${id}/`);
 export const transferFuncionarioLocacao = async (transferData) => {
   const response = await apiClient.post('/locacoes/transferir-funcionario/', transferData);
