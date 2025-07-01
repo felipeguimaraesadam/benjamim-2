@@ -1,7 +1,7 @@
 import React from 'react';
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, CalendarToday } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'; // Alterado CalendarToday para CalendarDays
 
 function WeekNavigator({ currentDate, onDateChange }) {
   const locale = ptBR;
@@ -42,7 +42,7 @@ function WeekNavigator({ currentDate, onDateChange }) {
           onClick={handleToday}
           className="p-2 mr-4 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
-          <CalendarToday size={20} className="mr-1 inline-block" />
+          <CalendarDays size={20} className="mr-1 inline-block" /> {/* Alterado CalendarToday para CalendarDays */}
           Hoje
         </button>
         <button
