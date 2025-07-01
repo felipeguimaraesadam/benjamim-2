@@ -403,12 +403,12 @@ function WeeklyPlanner({ obras, equipes }) {
           </div>
         )}
 
-        {showDragDropConfirmModal && draggedLocacao && targetDayId && (
+        {showDragDropConfirmModal && draggedLocacaoDataForModal && targetDayIdForModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
                 <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
                     <h2 className="text-xl font-semibold mb-4">Confirmar Ação</h2>
                     <p className="mb-6 text-sm text-gray-700">
-                        O que deseja fazer com a locação de "{draggedLocacao.recurso_nome}" para o dia {format(new Date(targetDayId + 'T00:00:00'), 'dd/MM/yyyy', { locale })}?
+                        O que deseja fazer com a locação de "{draggedLocacaoDataForModal.recurso_nome}" para o dia {format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}?
                     </p>
                     <div className="flex justify-end space-x-3">
                         <button
