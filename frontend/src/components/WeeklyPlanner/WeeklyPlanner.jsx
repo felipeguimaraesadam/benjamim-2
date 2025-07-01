@@ -1,32 +1,36 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { startOfWeek, endOfWeek, eachDayOfInterval, format, addDays, subDays } from 'date-fns';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import WeekNavigator from './WeekNavigator';
 import DayColumn from './DayColumn';
 import LocacaoDetailModal from '../modals/LocacaoDetailModal';
 import LocacaoForm from '../forms/LocacaoForm';
-import * as api from '../../services/api'; // API service
+import ContextMenu from '../utils/ContextMenu'; // Import ContextMenu
+import * as api from '../../services/api';
 import { DndContext } from '@dnd-kit/core';
 import { toast } from 'react-toastify';
 
-// Adicionado obras e equipes como props
 function WeeklyPlanner({ obras, equipes }) {
-  const [currentDate, setCurrentDate] = useState(new Date()); // Data de referência para a semana
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [locacoesPorDia, setLocacoesPorDia] = useState({});
   const [recursosMaisUtilizados, setRecursosMaisUtilizados] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Estados para modais
   const [selectedLocacaoIdForDetail, setSelectedLocacaoIdForDetail] = useState(null);
   const [showLocacaoFormModal, setShowLocacaoFormModal] = useState(false);
   const [locacaoFormInitialData, setLocacaoFormInitialData] = useState(null);
 
-  // Estados para Drag and Drop Modal
   const [showDragDropConfirmModal, setShowDragDropConfirmModal] = useState(false);
   const [draggedLocacao, setDraggedLocacao] = useState(null);
   const [targetDayId, setTargetDayId] = useState(null);
 
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState({
+    visible: false,
+    position: { top: 0, left: 0 },
+    locacaoId: null,
+  });
 
   const locale = ptBR;
   const weekStartsOn = 1; // Segunda-feira
@@ -227,6 +231,78 @@ function WeeklyPlanner({ obras, equipes }) {
   const weekStart = startOfWeek(currentDate, { locale, weekStartsOn });
   const daysOfWeek = eachDayOfInterval({ start: weekStart, end: endOfWeek(currentDate, { locale, weekStartsOn }) });
 
+  // Context Menu Handlers
+  const handleShowContextMenu = (locacaoId, event) => {
+    event.preventDefault();
+    setContextMenu({
+      visible: true,
+      position: { top: event.clientY, left: event.clientX },
+      locacaoId: locacaoId,
+    });
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu({ ...contextMenu, visible: false, locacaoId: null });
+  };
+
+  const handleDeleteLocacao = async (locacaoIdToDelete) => {
+    if (!locacaoIdToDelete) return;
+
+    // eslint-disable-next-line no-restricted-globals
+    if (confirm('Tem certeza que deseja excluir esta locação?')) {
+      setIsLoading(true);
+      try {
+        await api.deleteLocacao(locacaoIdToDelete);
+        toast.success('Locação excluída com sucesso!');
+        fetchWeekData(currentDate); // Refresh data
+      } catch (err) {
+        console.error("Erro ao excluir locação:", err);
+        toast.error(`Falha ao excluir locação: ${err.response?.data?.detail || err.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const contextMenuOptions = contextMenu.locacaoId ? [
+    {
+      label: 'Detalhes',
+      action: () => {
+        handleOpenLocacaoDetail(contextMenu.locacaoId);
+        handleCloseContextMenu();
+      },
+    },
+    {
+      label: 'Editar',
+      action: () => {
+        // Find the full locacao object to pass as initialData
+        let locacaoParaEditar = null;
+        for (const dayKey in locacoesPorDia) {
+          const found = locacoesPorDia[dayKey].find(l => l.id === contextMenu.locacaoId);
+          if (found) {
+            locacaoParaEditar = found;
+            break;
+          }
+        }
+        if (locacaoParaEditar) {
+          setLocacaoFormInitialData(locacaoParaEditar);
+          setShowLocacaoFormModal(true);
+        } else {
+          toast.error("Não foi possível encontrar os dados da locação para edição.");
+        }
+        handleCloseContextMenu();
+      },
+    },
+    {
+      label: 'Excluir',
+      action: () => {
+        handleDeleteLocacao(contextMenu.locacaoId);
+        handleCloseContextMenu();
+      },
+    },
+  ] : [];
+
+
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <div className="p-4 bg-white shadow-lg rounded-lg">
@@ -239,14 +315,10 @@ function WeeklyPlanner({ obras, equipes }) {
         {error && <div className="text-center p-4 text-red-600">Erro: {error}</div>}
 
         {!isLoading && !error && (
-          // Ajustado para preencher a altura e permitir scroll interno se necessário
           <div className="flex mt-4 overflow-x-auto pb-4 h-full flex-grow">
-            {/* Colunas dos Dias */}
-            {console.log('[WeeklyPlanner] Render - locacoesPorDia:', locacoesPorDia) /* LOG 4 */}
             {daysOfWeek.map(day => {
               const formattedDayId = format(day, 'yyyy-MM-dd');
               return (
-                // Reduzindo um pouco a largura mínima para melhor ajuste em telas menores
                 <div key={formattedDayId} className="flex-1 min-w-[180px] sm:min-w-[200px] md:min-w-[210px]">
                   <DayColumn
                     id={formattedDayId}
@@ -254,12 +326,12 @@ function WeeklyPlanner({ obras, equipes }) {
                     locacoes={locacoesPorDia[formattedDayId] || []}
                     onOpenLocacaoForm={handleOpenLocacaoForm}
                     onOpenLocacaoDetail={handleOpenLocacaoDetail}
+                    onShowContextMenu={handleShowContextMenu} // Pass down
                   />
                 </div>
               );
             })}
 
-            {/* Coluna de Análise */}
             <div className="flex flex-col w-64 flex-shrink-0 min-h-[300px] max-h-[calc(100vh-250px)] ml-2 mr-1 rounded-lg shadow-md bg-slate-100">
               <div className="p-3 sticky top-0 bg-slate-200 rounded-t-lg shadow z-10">
                 <h4 className="text-md font-semibold text-center text-slate-700">Recursos Mais Utilizados</h4>
@@ -292,8 +364,6 @@ function WeeklyPlanner({ obras, equipes }) {
         )}
 
         {showLocacaoFormModal && (
-          // O LocacaoForm precisa ser encapsulado em um modal aqui
-          // Por simplicidade, vou apenas renderizá-lo diretamente, mas idealmente seria um modal
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50 p-4">
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
@@ -301,11 +371,11 @@ function WeeklyPlanner({ obras, equipes }) {
               </h3>
               <LocacaoForm
                 initialData={locacaoFormInitialData}
-                obras={obras || []} // Passa as obras recebidas por props
-                equipes={equipes || []} // Passa as equipes recebidas por props
-                onSubmit={handleActualFormSubmit} // Alterado para a nova função de submit
+                obras={obras || []}
+                equipes={equipes || []}
+                onSubmit={handleActualFormSubmit}
                 onCancel={handleCloseLocacaoForm}
-                isLoading={isLoading} // Passa o estado de loading do planner
+                isLoading={isLoading}
                 onTransferSuccess={handleLocacaoTransferSuccess}
               />
             </div>
@@ -345,6 +415,14 @@ function WeeklyPlanner({ obras, equipes }) {
             </div>
         )}
 
+        {/* Render ContextMenu */}
+        {contextMenu.visible && (
+          <ContextMenu
+            position={contextMenu.position}
+            options={contextMenuOptions}
+            onClose={handleCloseContextMenu}
+          />
+        )}
       </div>
     </DndContext>
   );
