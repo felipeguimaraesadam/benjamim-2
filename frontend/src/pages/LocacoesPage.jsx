@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { toast } from 'react-toastify'; // Added toast import
 import * as api from '../services/api';
 import LocacoesTable from '../components/tables/LocacoesTable';
 import LocacaoForm from '../components/forms/LocacaoForm';
@@ -344,12 +345,26 @@ const LocacoesPage = () => {
     }
   };
 
+  const handleExportLocacaoPagamentoCSVFromModal = () => {
+    if (!reportData || reportData.length === 0) {
+      toast.info("Não há dados para exportar para CSV.");
+      return;
+    }
+    // Ensure reportData is in the correct format for exportPayrollReportToCSV
+    // exportPayrollReportToCSV expects an array of objects, where each object represents a row.
+    // The structure of `reportData` from `generateRelatorioFolhaPagamentoCSVData` is already an array of "obraData" objects.
+    exportPayrollReportToCSV(reportData, `relatorio_folha_pagamento_${reportStartDate}_a_${reportEndDate}.csv`);
+    toast.success("Relatório CSV exportado!");
+  };
+
+
   return (
     <div className="container mx-auto px-4 py-6">
       {/* Nova Seção do Weekly Planner (AGORA PRIMEIRO) */}
-      <div className="mb-8 min-h-[75vh] flex flex-col"> {/* Adicionado min-h e flex flex-col */}
+      {/* Removed min-h-[75vh] to prevent excessive empty space */}
+      <div className="mb-8 flex flex-col">
         <h2 className="text-2xl font-semibold text-gray-700 mb-4 flex-shrink-0">Planejamento Semanal de Locações</h2>
-        <div className="flex-grow"> {/* Novo wrapper para o planner ocupar espaço */}
+        <div className="flex-grow"> {/* This flex-grow is fine if the parent (flex flex-col) doesn't force a huge height */}
           <WeeklyPlanner obras={obras} equipes={equipes} />
         </div>
       </div>
@@ -507,6 +522,221 @@ const LocacoesPage = () => {
           </div>
         </div>
       )}
+
+      {/* Modal for "Relatório de Pagamento" (copied and adapted from RelatoriosPage rplModal) */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold text-gray-800">Relatório de Pagamento de Locações</h2>
+                <button onClick={handleCloseReportModal} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+
+            {/* Step 1: Date Selection */}
+            {step === 1 && (
+              <div>
+                <div className="mb-4">
+                  <label htmlFor="locWeekSelector" className="block text-sm font-medium text-gray-700 mb-1">Selecionar Semana (Opcional):</label>
+                  <select
+                    id="locWeekSelector"
+                    onChange={handleWeekSelectorChange} // Use existing handler from LocacoesPage
+                    className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Escolha uma semana...</option>
+                    {weekOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label htmlFor="locReportStartDate" className="block text-sm font-medium text-gray-700 mb-1">Data de Início <span className="text-red-500">*</span></label>
+                    <input
+                      type="date"
+                      id="locReportStartDate"
+                      value={reportStartDate}
+                      onChange={(e) => setReportStartDate(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="locReportEndDate" className="block text-sm font-medium text-gray-700 mb-1">Data de Fim <span className="text-red-500">*</span></label>
+                    <input
+                      type="date"
+                      id="locReportEndDate"
+                      value={reportEndDate}
+                      onChange={(e) => setReportEndDate(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+                {preCheckError && <p className="text-red-500 text-sm mb-3">{preCheckError}</p>}
+                <button
+                  onClick={handlePreCheck}
+                  disabled={isPreChecking || !reportStartDate || !reportEndDate}
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isPreChecking && <SpinnerIcon className="w-5 h-5 mr-2" />}
+                  {isPreChecking ? 'Verificando...' : 'Verificar Disponibilidade de Dias'}
+                </button>
+              </div>
+            )}
+
+            {/* Step 2: Pre-check Alert */}
+            {step === 2 && (
+              <div className="my-4">
+                {preCheckError && <p className="text-red-500 text-sm mb-3">{preCheckError}</p>}
+
+                {(preCheckAlertDays.length > 0 || preCheckMedicoesPendentes.length > 0) ? (
+                  <>
+                    {preCheckAlertDays.length > 0 && (
+                      <div className="p-4 mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+                        <h3 className="font-bold mb-2">Alerta: Dias Sem Locações Registradas!</h3>
+                        <p className="mb-1">Foram encontrados os seguintes dias dentro do período selecionado que não possuem nenhuma locação ativa registrada:</p>
+                        <ul className="list-disc list-inside mb-3">
+                          {preCheckAlertDays.map(day => <li key={day}>{new Date(day + 'T00:00:00Z').toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</li>)}
+                        </ul>
+                      </div>
+                    )}
+
+                    {preCheckMedicoesPendentes.length > 0 && (
+                      <div className="p-4 mb-4 bg-orange-100 border-l-4 border-orange-500 text-orange-700">
+                        <h3 className="font-bold mb-2">Alerta: Medições Pendentes!</h3>
+                        <p className="mb-1">As seguintes locações ativas no período possuem valor de pagamento zerado ou não definido e podem precisar de ajuste:</p>
+                        <ul className="list-disc list-inside mb-3 text-xs">
+                          {preCheckMedicoesPendentes.map(loc => (
+                            <li key={loc.locacao_id}>
+                              ID: {loc.locacao_id} - {loc.obra_nome} - {loc.recurso_locado} (Início: {new Date(loc.data_inicio + 'T00:00:00Z').toLocaleDateString('pt-BR', {timeZone: 'UTC'})}, Tipo: {loc.tipo_pagamento}, Valor: {loc.valor_pagamento === null ? 'NULO' : parseFloat(loc.valor_pagamento).toFixed(2)})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <p className="mb-3">Deseja gerar o relatório mesmo assim?</p>
+                    <div className="flex justify-end space-x-3">
+                       <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Voltar/Corrigir Datas</button>
+                       <button onClick={handleContinueDespiteAlert} disabled={isGeneratingReport} className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md disabled:opacity-50">
+                        {isGeneratingReport && <SpinnerIcon className="w-5 h-5 mr-2" />}
+                        {isGeneratingReport ? 'Gerando Dados...' : 'Continuar e Preparar Dados'}
+                       </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
+                    <h3 className="font-bold mb-2">Verificação Concluída</h3>
+                    <p>Nenhuma pendência (dias sem locações ou medições zeradas) encontrada no período selecionado.</p>
+                     <div className="flex justify-end space-x-3 mt-3">
+                       <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Voltar</button>
+                       <button onClick={handleGenerateReport} disabled={isGeneratingReport} className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md disabled:opacity-50">
+                        {isGeneratingReport && <SpinnerIcon className="w-5 h-5 mr-2" />}
+                        {isGeneratingReport ? 'Gerando Dados...' : 'Preparar Dados do Relatório'}
+                       </button>
+                    </div>
+                  </div>
+                )}
+                {reportError && !isGeneratingReport && <p className="text-red-500 text-sm mt-3">{reportError}</p>}
+              </div>
+            )}
+
+            {/* Step 3: Report Display and Export Options */}
+            {step === 3 && reportData && (
+              <div className="mt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-800">Relatório Gerado</h3>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleExportLocacaoPagamentoCSVFromModal} // Use new CSV handler
+                      disabled={!reportData || reportData.length === 0 || isGeneratingReport}
+                      className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300 text-sm disabled:opacity-50"
+                    >
+                      <SpinnerIcon className={`w-4 h-4 mr-1 ${isGeneratingReport && reportError === null ? 'inline-block' : 'hidden'}`} />
+                      Exportar para CSV
+                    </button>
+                    <button
+                      onClick={handleExportLocacaoPagamentoPDFFromModal} // Use existing PDF handler
+                      disabled={!reportData || reportData.length === 0 || isGeneratingReport}
+                      className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-red-300 text-sm disabled:opacity-50"
+                    >
+                      <SpinnerIcon className={`w-4 h-4 mr-1 ${isGeneratingReport && reportError === null ? 'inline-block' : 'hidden'}`} />
+                      Exportar para PDF
+                    </button>
+                  </div>
+                </div>
+                {reportError && <p className="text-red-500 text-sm mb-3">{reportError}</p>}
+                {reportData.length === 0 && <p className="text-gray-600">Nenhuma locação encontrada para o período e critérios selecionados.</p>}
+
+                {reportData.map(obraData => (
+                  <div key={obraData.obra_id || obraData.obra_nome} className="mb-8 p-4 border border-gray-200 rounded-lg shadow">
+                    <h4 className="text-xl font-semibold text-blue-700 mb-3">{obraData.obra_nome}</h4>
+                    {obraData.dias.map(diaData => (
+                      <div key={diaData.data} className="mb-4 pl-4 border-l-2 border-blue-200">
+                        <p className="text-md font-semibold text-gray-700">
+                          Data: {formatDateToDMY(diaData.data)} - Total Dia: <span className="text-blue-600 font-bold">{parseFloat(diaData.total_dia_obra).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                        </p>
+                        {diaData.locacoes_no_dia.length > 0 ? (
+                          <div className="overflow-x-auto mt-2">
+                            <table className="min-w-full text-xs text-left text-gray-600">
+                              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                  <th scope="col" className="px-3 py-2">Recurso</th>
+                                  <th scope="col" className="px-3 py-2">Tipo Pag.</th>
+                                  <th scope="col" className="px-3 py-2 text-right">Valor Dia (R$)</th>
+                                  <th scope="col" className="px-3 py-2 text-right">Valor Total Loc. (R$)</th>
+                                  <th scope="col" className="px-3 py-2">Início Loc.</th>
+                                  <th scope="col" className="px-3 py-2">Fim Loc.</th>
+                                  <th scope="col" className="px-3 py-2">Data Pag. Prev.</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {diaData.locacoes_no_dia.map(loc => (
+                                  <tr key={loc.locacao_id} className="bg-white border-b hover:bg-gray-50">
+                                    <td className="px-3 py-2">{loc.recurso_nome}</td>
+                                    <td className="px-3 py-2">{loc.tipo_pagamento_display}</td>
+                                    <td className="px-3 py-2 text-right">{parseFloat(loc.valor_diario_atribuido).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                                    <td className="px-3 py-2 text-right">{parseFloat(loc.valor_pagamento_total_locacao).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                                    <td className="px-3 py-2">{formatDateToDMY(loc.data_locacao_original_inicio)}</td>
+                                    <td className="px-3 py-2">{formatDateToDMY(loc.data_locacao_original_fim)}</td>
+                                    <td className="px-3 py-2">{loc.data_pagamento_prevista ? formatDateToDMY(loc.data_pagamento_prevista) : 'N/A'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-500 italic mt-1">Nenhuma locação com custo atribuído a este dia.</p>
+                        )}
+                      </div>
+                    ))}
+                    <p className="text-lg font-semibold text-right text-blue-700 mt-4 pt-2 border-t border-blue-200">
+                      Total para {obraData.obra_nome} no Período: <span className="text-green-600 font-bold">{parseFloat(obraData.total_obra_periodo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    </p>
+                  </div>
+                ))}
+                {reportData.length > 0 && (
+                  <div className="mt-8 pt-4 border-t-2 border-gray-300">
+                    <p className="text-xl font-bold text-right text-gray-800">
+                      Total Geral do Relatório:
+                      <span className="text-green-700 ml-2">
+                        {reportData.reduce((sum, obra) => sum + parseFloat(obra.total_obra_periodo), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                    </p>
+                  </div>
+                )}
+                 <div className="flex justify-end space-x-3 mt-6">
+                    <button onClick={() => setStep(1)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                        Gerar Novo Relatório
+                    </button>
+                 </div>
+              </div>
+            )}
+            {isGeneratingReport && step !== 3 && <p className="text-center text-gray-500 mt-4"><SpinnerIcon className="w-5 h-5 mr-2 inline" /> Gerando...</p>}
+            {reportError && step !== 3 && <p className="text-red-500 text-sm mt-3 text-center">{reportError}</p>}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
