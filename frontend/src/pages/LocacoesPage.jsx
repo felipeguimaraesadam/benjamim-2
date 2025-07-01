@@ -6,10 +6,11 @@ import LocacoesTable from '../components/tables/LocacoesTable';
 import LocacaoForm from '../components/forms/LocacaoForm';
 import LocacaoDetailModal from '../components/modals/LocacaoDetailModal';
 import PaginationControls from '../components/utils/PaginationControls';
-import { showSuccessToast, showErrorToast } from '../utils/toastUtils.js'; // Import toast utilities
-import SpinnerIcon from '../components/utils/SpinnerIcon'; // Import SpinnerIcon
-import { exportPayrollReportToCSV } from '../utils/csvExporter'; // Import CSV exporter
-import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../utils/dateUtils.js'; // Import date utils
+import { showSuccessToast, showErrorToast } from '../utils/toastUtils.js';
+import SpinnerIcon from '../components/utils/SpinnerIcon';
+import { exportPayrollReportToCSV } from '../utils/csvExporter';
+import { formatDateToDMY, getStartOfWeek, formatDateToYYYYMMDD } from '../utils/dateUtils.js';
+import WeeklyPlanner from '../components/WeeklyPlanner/WeeklyPlanner';
 
 const LocacoesPage = () => {
   const location = useLocation();
@@ -17,34 +18,28 @@ const LocacoesPage = () => {
   const [locacoes, setLocacoes] = useState([]);
   const [obras, setObras] = useState([]);
   const [equipes, setEquipes] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); // Page data loading
-  // Pagination state
+  const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const PAGE_SIZE = 10;
-  const [isLoadingForm, setIsLoadingForm] = useState(false); // Form submission
-  const [isDeleting, setIsDeleting] = useState(false); // Delete operation
-  const [error, setError] = useState(null); // General page/form errors
+  const [isLoadingForm, setIsLoadingForm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState(null);
   const [showFormModal, setShowFormModal] = useState(false);
   const [currentLocacao, setCurrentLocacao] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [locacaoToDeleteId, setLocacaoToDeleteId] = useState(null);
-
-  const [selectedLocacaoId, setSelectedLocacaoId] = useState(null); // For detail modal
-
-  // State for chart
-  const [chartData, setChartData] = useState([]); // Assuming this is still needed
-  const [selectedObraIdForChart, setSelectedObraIdForChart] = useState(''); // Empty string for "All Obras"
+  const [selectedLocacaoId, setSelectedLocacaoId] = useState(null);
+  const [chartData, setChartData] = useState([]);
+  const [selectedObraIdForChart, setSelectedObraIdForChart] = useState('');
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [chartError, setChartError] = useState(null);
-
 
   const fetchLocacoes = useCallback(async (page = 1) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Pass the page to the API call
       const response = await api.getLocacoes({ page: page });
       setLocacoes(response.data.results);
       setTotalItems(response.data.count);
@@ -62,29 +57,21 @@ const LocacoesPage = () => {
 
   const fetchObras = useCallback(async () => {
     try {
-      // For simplicity, assuming obras list for dropdowns doesn't need pagination itself.
       const response = await api.getObras();
-      // Ensure obrasData is always an array.
       const obrasData = response?.data?.results || response?.data || (Array.isArray(response) ? response : []);
       setObras(Array.isArray(obrasData) ? obrasData : []);
     } catch (err) {
       console.error("Fetch Obras for LocacaoForm/Chart Filter Error:", err);
-      setObras([]); // Set to empty array on error
+      setObras([]);
     }
   }, []);
 
-
-  const fetchChartData = useCallback(async (obraId) => { // Assuming chart data is not paginated or handled separately
+  const fetchChartData = useCallback(async (obraId) => {
     setIsLoadingChart(true);
     setChartError(null);
     try {
       const response = await api.getLocacaoCustoDiarioChart(obraId);
-      // Format date for display on Y-axis if needed, e.g., from "YYYY-MM-DD" to "DD/MM"
-      const formattedData = response.data.map(item => ({
-        ...item,
-        // date: new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-        // Keep ISO date for potential sorting or further manipulation, format in tick
-      }));
+      const formattedData = response.data.map(item => ({ ...item }));
       setChartData(formattedData);
     } catch (err) {
       setChartError(err.message || 'Falha ao buscar dados do gráfico.');
@@ -94,43 +81,34 @@ const LocacoesPage = () => {
     }
   }, []);
 
-
   const fetchEquipes = useCallback(async () => {
     try {
       const response = await api.getEquipes();
-      // Ensure equipesData is always an array.
       const equipesData = response?.data?.results || response?.data || (Array.isArray(response) ? response : []);
       setEquipes(Array.isArray(equipesData) ? equipesData : []);
     } catch (err) {
       console.error("Fetch Equipes for LocacaoForm Error:", err);
-      setEquipes([]); // Set to empty array on error
+      setEquipes([]);
     }
   }, []);
 
   useEffect(() => {
-    fetchLocacoes(currentPage); // Fetch locações for the current page
     fetchObras();
-    fetchEquipes(); // Assuming equipes also doesn't need pagination for dropdowns
+    fetchEquipes();
     fetchChartData(selectedObraIdForChart || null);
-  }, [fetchObras, fetchEquipes, fetchChartData, selectedObraIdForChart, currentPage, fetchLocacoes]);
-  // Removed fetchLocacoes from here and added currentPage to trigger refetchLocacoes directly in its own useEffect or on page change.
-  // Re-added fetchLocacoes to ensure it's called when other dependencies change if needed, will be memoized by useCallback.
+  }, [fetchObras, fetchEquipes, fetchChartData, selectedObraIdForChart]);
 
-  // useEffect for initial load and when currentPage changes for locacoes
   useEffect(() => {
     fetchLocacoes(currentPage);
   }, [currentPage, fetchLocacoes]);
 
-
   const handleObraFilterChange = (event) => {
     setSelectedObraIdForChart(event.target.value);
-    // Chart data will be refetched by its own useEffect dependency.
-    // Locacoes list is independent of this filter for now.
   };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage); // This will trigger the useEffect for fetchLocacoes
+      setCurrentPage(newPage);
     }
   };
 
@@ -146,7 +124,7 @@ const LocacoesPage = () => {
 
   const handleEdit = (locacao) => {
     setCurrentLocacao(locacao);
-    setError(null); // Clear previous errors when opening for edit
+    setError(null);
     setShowFormModal(true);
   };
 
@@ -158,13 +136,12 @@ const LocacoesPage = () => {
   const confirmDelete = async () => {
     if (!locacaoToDeleteId) return;
     setIsDeleting(true);
-    setError(null); // Clear general errors
+    setError(null);
     try {
       await api.deleteLocacao(locacaoToDeleteId);
       showSuccessToast('Locação excluída com sucesso!');
       setLocacaoToDeleteId(null);
       setShowDeleteConfirm(false);
-      // Refetch locacoes, adjust page if last item on a page was deleted
       if (locacoes.length === 1 && currentPage > 1) {
         fetchLocacoes(currentPage - 1);
       } else {
@@ -172,7 +149,7 @@ const LocacoesPage = () => {
       }
     } catch (err) {
       const errorMsg = err.message || 'Falha ao excluir locação.';
-      setError(errorMsg); // Can be shown in a general error display area if needed
+      setError(errorMsg);
       showErrorToast(errorMsg);
       console.error("Delete Locação Error:", err);
     } finally {
@@ -182,7 +159,7 @@ const LocacoesPage = () => {
 
   const handleApiSubmit = async (formData) => {
     setIsLoadingForm(true);
-    setError(null); // Clear previous form-specific errors shown in modal
+    setError(null);
     const isEditing = currentLocacao && currentLocacao.id;
     try {
       if (isEditing) {
@@ -194,11 +171,10 @@ const LocacoesPage = () => {
       }
       setShowFormModal(false);
       setCurrentLocacao(null);
-      fetchLocacoes(isEditing ? currentPage : 1); // Refetch current page on update, or first page on create
+      fetchLocacoes(isEditing ? currentPage : 1);
     } catch (err) {
       const backendErrors = err.response?.data;
       let generalMessage = err.message || (isEditing ? 'Falha ao atualizar locação.' : 'Falha ao criar locação.');
-
       if (backendErrors && typeof backendErrors === 'object') {
         if (backendErrors.funcionario_locado && backendErrors.conflict_details) {
             generalMessage = typeof backendErrors.funcionario_locado === 'string'
@@ -209,17 +185,12 @@ const LocacoesPage = () => {
             if (messages) generalMessage = messages;
         }
       }
-
-      setError(generalMessage); // This error will be displayed in the modal
-      showErrorToast(isEditing ? 'Erro ao atualizar locação.' : 'Erro ao criar locação.'); // General toast
+      setError(generalMessage);
+      showErrorToast(isEditing ? 'Erro ao atualizar locação.' : 'Erro ao criar locação.');
       console.error("API Submit Locação Error:", err.response?.data || err.message);
-
-      // Propagate for LocacaoForm to handle specific field errors if it's designed to
       if (backendErrors && typeof backendErrors === 'object') {
         throw { response: { data: backendErrors } };
       }
-      // If not handled by LocacaoForm's internal error display, the setError above will show in modal
-      // throw err; // Re-throwing might be redundant if setError and showErrorToast cover feedback
     } finally {
       setIsLoadingForm(false);
     }
@@ -228,17 +199,16 @@ const LocacoesPage = () => {
   const handleFormCancel = () => {
     setShowFormModal(false);
     setCurrentLocacao(null);
-    setError(null); // Clear any errors when form is cancelled
+    setError(null);
   };
 
   const handleTransferSuccess = useCallback(async () => {
-    setShowFormModal(false);    // Close the main form modal
-    setCurrentLocacao(null);    // Clear current locacao being edited/created
+    setShowFormModal(false);
+    setCurrentLocacao(null);
     setError(null);
-    // Consider showing a success toast for transfer if desired
-    showSuccessToast('Funcionário transferido com sucesso!'); // Added toast
-    fetchLocacoes(currentPage); // Refresh current page
-  }, [fetchLocacoes, currentPage]); // Added currentPage
+    showSuccessToast('Funcionário transferido com sucesso!');
+    fetchLocacoes(currentPage);
+  }, [fetchLocacoes, currentPage]);
 
   const handleViewDetails = (locacaoId) => {
     setSelectedLocacaoId(locacaoId);
@@ -248,10 +218,8 @@ const LocacoesPage = () => {
     setSelectedLocacaoId(null);
   };
 
-  // Custom X-axis tick formatter for vertical chart
   const formatDateTick = (tickItem) => {
-    // Assuming tickItem is the date string "YYYY-MM-DD"
-    const date = new Date(tickItem + 'T00:00:00'); // Ensure parsing as local date
+    const date = new Date(tickItem + 'T00:00:00');
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   };
 
@@ -268,7 +236,6 @@ const LocacoesPage = () => {
     return [formattedValue, "Custo Total"];
   };
 
-  // State for Payroll Report
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportStartDate, setReportStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [reportEndDate, setReportEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -278,88 +245,57 @@ const LocacoesPage = () => {
   const [reportData, setReportData] = useState(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [reportError, setReportError] = useState(null);
-  const [step, setStep] = useState(1); // 1: date selection, 2: pre-check alert, 3: report view
-  const [preCheckMedicoesPendentes, setPreCheckMedicoesPendentes] = useState([]); // New state
+  const [step, setStep] = useState(1);
+  const [preCheckMedicoesPendentes, setPreCheckMedicoesPendentes] = useState([]);
 
   const handleWeekSelectorChange = (event) => {
     const selectedWeekOffset = parseInt(event.target.value, 10);
-    if (isNaN(selectedWeekOffset)) {
-        return;
-    }
-
+    if (isNaN(selectedWeekOffset)) return;
     const today = new Date();
-    const startOfCurrentWeek = getStartOfWeek(today, 1); // Use imported function, Monday as startDay = 1
-
+    const startOfCurrentWeek = getStartOfWeek(today, 1);
     const targetMonday = new Date(startOfCurrentWeek);
     targetMonday.setDate(startOfCurrentWeek.getDate() + (selectedWeekOffset * 7));
-
     const targetSunday = new Date(targetMonday);
     targetSunday.setDate(targetMonday.getDate() + 6);
-
     setReportStartDate(formatDateToYYYYMMDD(targetMonday));
     setReportEndDate(formatDateToYYYYMMDD(targetSunday));
   };
 
   const weekOptions = [
-    { label: "Esta Semana", value: 0 },
-    { label: "Semana Passada", value: -1 },
-    { label: "2 Semanas Atrás", value: -2 },
-    { label: "3 Semanas Atrás", value: -3 },
-    { label: "4 Semanas Atrás", value: -4 },
-    { label: "5 Semanas Atrás", value: -5 },
+    { label: "Esta Semana", value: 0 }, { label: "Semana Passada", value: -1 },
+    { label: "2 Semanas Atrás", value: -2 }, { label: "3 Semanas Atrás", value: -3 },
+    { label: "4 Semanas Atrás", value: -4 }, { label: "5 Semanas Atrás", value: -5 },
   ];
 
   const handleOpenReportModal = () => {
     setShowReportModal(true);
-    setReportStartDate(new Date().toISOString().split('T')[0]);
     const today = new Date();
-    const sevenDaysAgo = new Date(today.setDate(today.getDate() - 6)); // Default to a 7-day period ending today
-    setReportStartDate(sevenDaysAgo.toISOString().split('T')[0]);
-    setReportEndDate(new Date().toISOString().split('T')[0]); // Reset today for end date
-    setPreCheckAlertDays([]);
-    setPreCheckMedicoesPendentes([]); // Reset new state
-    setReportData(null);
-    setPreCheckError(null);
-    setReportError(null);
-    setStep(1);
+    const sevenDaysAgo = new Date(new Date().setDate(today.getDate() - 6));
+    setReportStartDate(formatDateToYYYYMMDD(sevenDaysAgo));
+    setReportEndDate(formatDateToYYYYMMDD(today));
+    setPreCheckAlertDays([]); setPreCheckMedicoesPendentes([]);
+    setReportData(null); setPreCheckError(null); setReportError(null); setStep(1);
   };
 
   const handleCloseReportModal = () => {
     setShowReportModal(false);
-    // Reset all report states
-    setPreCheckAlertDays([]);
-    setPreCheckMedicoesPendentes([]); // Reset new state
-    setReportData(null);
-    setPreCheckError(null);
-    setReportError(null);
-    setStep(1);
+    setPreCheckAlertDays([]); setPreCheckMedicoesPendentes([]);
+    setReportData(null); setPreCheckError(null); setReportError(null); setStep(1);
   };
 
   const handlePreCheck = async () => {
     if (!reportStartDate || !reportEndDate) {
-        setPreCheckError("Por favor, selecione as datas de início e fim.");
-        return;
+      setPreCheckError("Por favor, selecione as datas de início e fim."); return;
     }
-    setIsPreChecking(true);
-    setPreCheckError(null);
-    setPreCheckMedicoesPendentes([]);
-    setReportData(null); // Clear previous report
+    setIsPreChecking(true); setPreCheckError(null); setPreCheckMedicoesPendentes([]); setReportData(null);
     try {
       const response = await api.getRelatorioFolhaPagamentoPreCheck(reportStartDate, reportEndDate);
       const diasSemLocacoes = response.data.dias_sem_locacoes || [];
       const medicoesPendentes = response.data.medicoes_pendentes || [];
-      setPreCheckAlertDays(diasSemLocacoes);
-      setPreCheckMedicoesPendentes(medicoesPendentes);
-
-      if (diasSemLocacoes.length > 0 || medicoesPendentes.length > 0) {
-        setStep(2); // Show alert step
-      } else {
-        // No alerts, proceed to generate report directly or enable generate button
-        setStep(2); // Still go to step 2 to give option to generate if no direct generation
-      }
+      setPreCheckAlertDays(diasSemLocacoes); setPreCheckMedicoesPendentes(medicoesPendentes);
+      setStep(2);
     } catch (err) {
-      setPreCheckError(err.response?.data?.error || err.message || 'Falha ao realizar pré-verificação.');
-      setStep(1); // Stay on date selection if error
+      setPreCheckError(err.response?.data?.error || err.message || 'Falha ao realizar pré-verificação.'); setStep(1);
     } finally {
       setIsPreChecking(false);
     }
@@ -367,42 +303,29 @@ const LocacoesPage = () => {
 
   const handleGenerateReport = async () => {
     if (!reportStartDate || !reportEndDate) {
-        setReportError("Por favor, selecione as datas de início e fim."); // Should not happen if flow is correct
-        return;
+      setReportError("Por favor, selecione as datas de início e fim."); return;
     }
-    setIsGeneratingReport(true);
-    setReportError(null);
+    setIsGeneratingReport(true); setReportError(null);
     try {
-      // Corrected function call and added obraId (though not used in this specific modal's current UI for filtering)
-      // For now, this modal in LocacoesPage doesn't have an obraId filter, so passing null.
-      // If an obraId filter were added to this modal, it would be passed here.
-      const obraId = null; // Placeholder, as this modal doesn't currently filter by obra for this report
+      const obraId = null;
       const response = await api.generateRelatorioFolhaPagamentoCSVData(reportStartDate, reportEndDate, obraId);
-      setReportData(response.data);
-      setStep(3); // Show report view
+      setReportData(response.data); setStep(3);
     } catch (err) {
       setReportError(err.response?.data?.error || err.message || 'Falha ao gerar relatório.');
-      // setStep(2); // Or back to date selection if severe
     } finally {
       setIsGeneratingReport(false);
     }
   };
 
-  const handleContinueDespiteAlert = () => {
-    handleGenerateReport(); // Proceed to generate report
-  };
+  const handleContinueDespiteAlert = () => handleGenerateReport();
 
   const handleExportLocacaoPagamentoPDFFromModal = async () => {
     if (!reportStartDate || !reportEndDate) {
-      setReportError("Datas de início e fim são obrigatórias para PDF."); // Error specific to this modal context
-      toast.warn("Datas de início e fim são obrigatórias para PDF.");
-      return;
+      setReportError("Datas de início e fim são obrigatórias para PDF.");
+      toast.warn("Datas de início e fim são obrigatórias para PDF."); return;
     }
-    // Assuming isGeneratingReport can be reused for PDF button in this modal
-    setIsGeneratingReport(true);
-    setReportError(null);
+    setIsGeneratingReport(true); setReportError(null);
     try {
-      // This modal currently does not have an obraId filter state. Pass null.
       const obraId = null;
       const response = await api.gerarRelatorioPagamentoLocacoesPDF(reportStartDate, reportEndDate, obraId);
       const blob = new Blob([response.data], { type: 'application/pdf' });
@@ -411,20 +334,16 @@ const LocacoesPage = () => {
       link.href = url;
       const filename = `Relatorio_Pagamento_Locacoes_${reportStartDate}_a_${reportEndDate}.pdf`;
       link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      document.body.appendChild(link); link.click(); link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
       const errorMessage = err.response?.data?.error || err.message || "Falha ao gerar PDF do relatório de pagamento de locações.";
-      setReportError(errorMessage); // Show error in modal
-      toast.error("Falha ao gerar PDF: " + errorMessage);
+      setReportError(errorMessage); toast.error("Falha ao gerar PDF: " + errorMessage);
     } finally {
-      setIsGeneratingReport(false); // Re-use loading state
+      setIsGeneratingReport(false);
     }
   };
 
-
   return (
     <div className="container mx-auto px-4 py-6">
       {/* Chart Section */}
@@ -441,14 +360,11 @@ const LocacoesPage = () => {
             >
               <option value="">Todas as Obras</option>
               {obras.map((obra) => (
-                <option key={obra.id} value={obra.id}>
-                  {obra.nome_obra}
-                </option>
+                <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>
               ))}
             </select>
           </div>
         </div>
-
         {isLoadingChart && <p className="text-center text-gray-500">Carregando gráfico...</p>}
         {chartError && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
@@ -461,146 +377,23 @@ const LocacoesPage = () => {
         )}
         {!isLoadingChart && !chartError && chartData.length > 0 && (
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart
-              data={chartData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 25 }} // Increased bottom margin for XAxis label
-            >
+            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 25 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="date"
-                tickFormatter={formatDateTick}
-                label={{ value: 'Data (Últimos 30 dias)', position: 'insideBottom', offset: -15, dy:10, fontSize: 12 }}
-                interval={chartData.length > 15 ? Math.floor(chartData.length / 15) : 0} // Adjust interval to prevent overlap
-                angle={chartData.length > 20 ? -30 : 0} // Angle ticks if many dates
-                textAnchor={chartData.length > 20 ? 'end' : 'middle'} // Adjust anchor for angled ticks
-                height={50} // Allocate space for angled labels if needed
-              />
-              <YAxis
-                label={{ value: 'Custo (R$)', angle: -90, position: 'insideLeft', fontSize: 12 }}
-                tickFormatter={(value) => parseFloat(value).toLocaleString('pt-BR')}
-                domain={[0, 'dataMax + 1000']} // Add some padding to max value
-              />
-              <Tooltip
-                labelFormatter={formatTooltipLabel}
-                formatter={formatTooltipValue}
-              />
+              <XAxis dataKey="date" tickFormatter={formatDateTick} label={{ value: 'Data (Últimos 30 dias)', position: 'insideBottom', offset: -15, dy:10, fontSize: 12 }} interval={chartData.length > 15 ? Math.floor(chartData.length / 15) : 0} angle={chartData.length > 20 ? -30 : 0} textAnchor={chartData.length > 20 ? 'end' : 'middle'} height={50} />
+              <YAxis label={{ value: 'Custo (R$)', angle: -90, position: 'insideLeft', fontSize: 12 }} tickFormatter={(value) => parseFloat(value).toLocaleString('pt-BR')} domain={[0, 'dataMax + 1000']} />
+              <Tooltip labelFormatter={formatTooltipLabel} formatter={formatTooltipValue} />
               <Legend wrapperStyle={{ paddingTop: '20px' }} />
               <Bar dataKey="total_cost" name="Custo Total Diário">
-                {chartData.map((entry, index) => {
-                  if (entry.total_cost === 0 && entry.has_locacoes === false) {
-                    // For zero-cost days, render a minimal height bar
-                    return <Cell key={`cell-${index}`} fill="#FFCA28" height={3} y={297} />; // y needs to be adjusted based on chart scale or use a custom bar.
-                                                                                             // This fixed height approach with Cell is tricky due to y-coordinate.
-                                                                                             // A better approach is to use a custom shape for the Bar.
-                                                                                             // For now, let's use a different fill color and rely on tooltip.
-                  }
-                  return <Cell key={`cell-${index}`} fill="#8884d8" />;
-                })}
-              </Bar>
-               {/* This is a simplified approach. For a truly minimal height bar for zero values,
-                   you might need a custom <Bar shape={...} /> component or adjust y position carefully.
-                   The current Cell approach will color the bar but it will still take normal space if not handled by Bar component itself.
-                   Recharts typically handles zero-value bars by not rendering them or rendering at baseline.
-                   We will ensure the bar is colored differently and the tooltip indicates "Sem locações".
-                */}
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-        <div className="mt-4 text-xs text-gray-500 text-center">
-            <span className="inline-block w-3 h-3 bg-[#FFCA28] mr-1 align-middle"></span>
-            <span className="align-middle">Dias sem locações (ou custo zero). Custo atribuído ao dia de início da locação.</span>
-        </div>
-      </div>
-
-import WeeklyPlanner from '../components/WeeklyPlanner/WeeklyPlanner'; // Import WeeklyPlanner
-
-// ... (imports existentes)
-
-const LocacoesPage = () => {
-  // ... (estados e hooks existentes)
-
-  // Estados para WeeklyPlanner (obras e equipes já são buscados)
-  // const [plannerObras, setPlannerObras] = useState([]); // Já temos 'obras'
-  // const [plannerEquipes, setPlannerEquipes] = useState([]); // Já temos 'equipes'
-
-  // No useEffect principal, já buscamos obras e equipes.
-  // Poderíamos passar 'obras' e 'equipes' diretamente para WeeklyPlanner.
-
-  return (
-    <div className="container mx-auto px-4 py-6">
-      {/* Chart Section */}
-      <div className="mb-8 p-4 border rounded-lg shadow bg-white">
-        {/* ... (conteúdo do gráfico existente) ... */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-semibold text-gray-700">Custo Diário de Locações (Últimos 30 dias)</h2>
-          <div className="flex items-center">
-            <label htmlFor="obraChartFilter" className="mr-2 text-sm font-medium text-gray-700">Filtrar por Obra:</label>
-            <select
-              id="obraChartFilter"
-              value={selectedObraIdForChart}
-              onChange={handleObraFilterChange}
-              className="block w-full md:w-auto pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
-            >
-              <option value="">Todas as Obras</option>
-              {obras.map((obra) => (
-                <option key={obra.id} value={obra.id}>
-                  {obra.nome_obra}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {isLoadingChart && <p className="text-center text-gray-500">Carregando gráfico...</p>}
-        {chartError && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <strong className="font-bold">Erro no gráfico: </strong>
-            <span className="block sm:inline">{chartError}</span>
-          </div>
-        )}
-        {!isLoadingChart && !chartError && chartData.length === 0 && (
-          <p className="text-center text-gray-500">Nenhum dado de locação encontrado para o período ou filtro selecionado.</p>
-        )}
-        {!isLoadingChart && !chartError && chartData.length > 0 && (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart
-              data={chartData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 25 }} // Increased bottom margin for XAxis label
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="date"
-                tickFormatter={formatDateTick}
-                label={{ value: 'Data (Últimos 30 dias)', position: 'insideBottom', offset: -15, dy:10, fontSize: 12 }}
-                interval={chartData.length > 15 ? Math.floor(chartData.length / 15) : 0} // Adjust interval to prevent overlap
-                angle={chartData.length > 20 ? -30 : 0} // Angle ticks if many dates
-                textAnchor={chartData.length > 20 ? 'end' : 'middle'} // Adjust anchor for angled ticks
-                height={50} // Allocate space for angled labels if needed
-              />
-              <YAxis
-                label={{ value: 'Custo (R$)', angle: -90, position: 'insideLeft', fontSize: 12 }}
-                tickFormatter={(value) => parseFloat(value).toLocaleString('pt-BR')}
-                domain={[0, 'dataMax + 1000']} // Add some padding to max value
-              />
-              <Tooltip
-                labelFormatter={formatTooltipLabel}
-                formatter={formatTooltipValue}
-              />
-              <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              <Bar dataKey="total_cost" name="Custo Total Diário">
-                {chartData.map((entry, index) => {
-                  if (entry.total_cost === 0 && entry.has_locacoes === false) {
-                    return <Cell key={`cell-${index}`} fill="#FFCA28" height={3} y={297} />;
-                  }
-                  return <Cell key={`cell-${index}`} fill="#8884d8" />;
-                })}
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.total_cost === 0 && entry.has_locacoes === false ? "#FFCA28" : "#8884d8"} />
+                ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         )}
         <div className="mt-4 text-xs text-gray-500 text-center">
-            <span className="inline-block w-3 h-3 bg-[#FFCA28] mr-1 align-middle"></span>
-            <span className="align-middle">Dias sem locações (ou custo zero). Custo atribuído ao dia de início da locação.</span>
+          <span className="inline-block w-3 h-3 bg-[#FFCA28] mr-1 align-middle"></span>
+          <span className="align-middle">Dias sem locações (ou custo zero). Custo atribuído ao dia de início da locação.</span>
         </div>
       </div>
 
@@ -613,19 +406,14 @@ const LocacoesPage = () => {
       {/* Seção da Tabela de Locações (Pode ser removida ou mantida conforme necessidade) */}
       <div className="flex justify-between items-center mb-6 mt-12">
         <h1 className="text-2xl font-bold text-gray-800">Listagem Detalhada de Locações</h1>
-        {/* O botão de Nova Locação agora está principalmente no DayColumn do WeeklyPlanner,
-            mas podemos manter um aqui se fizer sentido para o fluxo do usuário fora do planner.
-            Por ora, vamos assumir que o planner é a principal forma de adicionar.
-            Se for necessário, o handleAddNew original pode ser adaptado ou um novo criado.
-        */}
          <div>
             <button
-                onClick={handleOpenReportModal} // Botão de relatório mantido
+                onClick={handleOpenReportModal}
                 className="mr-3 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300"
             >
                 Relatório de Pagamento
             </button>
-             <button // Botão Nova Locação global (opcional)
+             <button
             onClick={handleAddNew}
             className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:bg-primary-300"
             >
@@ -641,239 +429,14 @@ const LocacoesPage = () => {
         </div>
       )}
 
-      {/* Payroll Report Modal */}
-      {showReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-semibold text-gray-800">Relatório de Folha de Pagamento</h2>
-                <button onClick={handleCloseReportModal} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-            </div>
-
-            {/* Step 1: Date Selection */}
-            {step === 1 && (
-              <div>
-                {/* New Week Selector */}
-                <div className="mb-4">
-                  <label htmlFor="weekSelector" className="block text-sm font-medium text-gray-700 mb-1">Selecionar Semana (Opcional):</label>
-                  <select
-                    id="weekSelector"
-                    onChange={handleWeekSelectorChange}
-                    className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                    defaultValue=""
-                  >
-                    <option value="" disabled>Escolha uma semana...</option>
-                    {weekOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Existing Date Inputs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label htmlFor="reportStartDate" className="block text-sm font-medium text-gray-700 mb-1">Data de Início:</label>
-                    <input
-                      type="date"
-                      id="reportStartDate"
-                      value={reportStartDate}
-                      onChange={(e) => setReportStartDate(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="reportEndDate" className="block text-sm font-medium text-gray-700 mb-1">Data de Fim:</label>
-                    <input
-                      type="date"
-                      id="reportEndDate"
-                      value={reportEndDate}
-                      onChange={(e) => setReportEndDate(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                    />
-                  </div>
-                </div>
-                {preCheckError && <p className="text-red-500 text-sm mb-3">{preCheckError}</p>}
-                <button
-                  onClick={handlePreCheck}
-                  disabled={isPreChecking || !reportStartDate || !reportEndDate}
-                  className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:opacity-50 flex items-center justify-center"
-                >
-                  {isPreChecking ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
-                  {isPreChecking ? 'Verificando...' : 'Verificar Disponibilidade de Dias'}
-                </button>
-              </div>
-            )}
-
-            {/* Step 2: Pre-check Alert */}
-            {step === 2 && (
-              <div className="my-4">
-                {preCheckError && <p className="text-red-500 text-sm mb-3">{preCheckError}</p>}
-
-                {(preCheckAlertDays.length > 0 || preCheckMedicoesPendentes.length > 0) ? (
-                  <>
-                    {preCheckAlertDays.length > 0 && (
-                      <div className="p-4 mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
-                        <h3 className="font-bold mb-2">Alerta: Dias Sem Locações Registradas!</h3>
-                        <p className="mb-1">Foram encontrados os seguintes dias dentro do período selecionado que não possuem nenhuma locação ativa registrada:</p>
-                        <ul className="list-disc list-inside mb-3">
-                          {preCheckAlertDays.map(day => <li key={day}>{new Date(day + 'T00:00:00').toLocaleDateString('pt-BR')}</li>)}
-                        </ul>
-                      </div>
-                    )}
-
-                    {preCheckMedicoesPendentes.length > 0 && (
-                      <div className="p-4 mb-4 bg-orange-100 border-l-4 border-orange-500 text-orange-700">
-                        <h3 className="font-bold mb-2">Alerta: Medições Pendentes!</h3>
-                        <p className="mb-1">As seguintes locações ativas no período possuem valor de pagamento zerado ou não definido e podem precisar de ajuste:</p>
-                        <ul className="list-disc list-inside mb-3 text-xs">
-                          {preCheckMedicoesPendentes.map(loc => (
-                            <li key={loc.locacao_id}>
-                              ID: {loc.locacao_id} - {loc.obra_nome} - {loc.recurso_locado} (Início: {new Date(loc.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR')}, Tipo: {loc.tipo_pagamento}, Valor: {loc.valor_pagamento === null ? 'NULO' : parseFloat(loc.valor_pagamento).toFixed(2)})
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    <p className="mb-3">Deseja gerar o relatório mesmo assim?</p>
-                    <div className="flex justify-end space-x-3">
-                       <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Voltar/Corrigir Datas</button>
-                       <button onClick={handleContinueDespiteAlert} disabled={isGeneratingReport} className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md disabled:opacity-50">
-                        {isGeneratingReport ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
-                        {isGeneratingReport ? 'Gerando...' : 'Continuar Mesmo Assim'}
-                       </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
-                    <h3 className="font-bold mb-2">Verificação Concluída</h3>
-                    <p>Nenhuma pendência (dias sem locações ou medições zeradas) encontrada no período selecionado.</p>
-                     <div className="flex justify-end space-x-3 mt-3">
-                       <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Voltar</button>
-                       <button onClick={handleGenerateReport} disabled={isGeneratingReport} className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md disabled:opacity-50">
-                        {isGeneratingReport ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
-                        {isGeneratingReport ? 'Gerando...' : 'Gerar Relatório'}
-                       </button>
-                    </div>
-                  </div>
-                )}
-                {reportError && <p className="text-red-500 text-sm mt-3">{reportError}</p>}
-              </div>
-            )}
-
-            {/* Step 3: Report Display */}
-            {step === 3 && reportData && (
-              <div className="mt-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold text-gray-800">Relatório Gerado</h3>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => exportPayrollReportToCSV(reportData, `relatorio_folha_pagamento_${reportStartDate}_a_${reportEndDate}.csv`)}
-                      disabled={!reportData || reportData.length === 0 || isGeneratingReport}
-                      className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300 text-sm disabled:opacity-50"
-                    >
-                      <SpinnerIcon className={`w-4 h-4 mr-1 ${isGeneratingReport && reportError === null ? 'inline-block' : 'hidden'}`} />
-                      Exportar para CSV
-                    </button>
-                    <button
-                      onClick={handleExportLocacaoPagamentoPDFFromModal}
-                      disabled={!reportData || reportData.length === 0 || isGeneratingReport}
-                      className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-red-300 text-sm disabled:opacity-50"
-                    >
-                      <SpinnerIcon className={`w-4 h-4 mr-1 ${isGeneratingReport && reportError === null ? 'inline-block' : 'hidden'}`} />
-                      Exportar para PDF
-                    </button>
-                  </div>
-                </div>
-                {reportData.length === 0 && <p className="text-gray-600">Nenhuma locação encontrada para o período e critérios selecionados.</p>}
-
-                {reportData.map(obraData => (
-                  <div key={obraData.obra_id} className="mb-8 p-4 border border-gray-200 rounded-lg shadow">
-                    <h4 className="text-xl font-semibold text-blue-700 mb-3">{obraData.obra_nome}</h4>
-                    {obraData.dias.map(diaData => (
-                      <div key={diaData.data} className="mb-4 pl-4 border-l-2 border-blue-200">
-                        <p className="text-md font-semibold text-gray-700">
-                          Data: {formatDateToDMY(diaData.data)} - Total Dia: <span className="text-blue-600 font-bold">{parseFloat(diaData.total_dia_obra).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                        </p>
-                        {diaData.locacoes_no_dia.length > 0 ? (
-                          <div className="overflow-x-auto mt-2">
-                            <table className="min-w-full text-xs text-left text-gray-600">
-                              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                                <tr>
-                                  <th scope="col" className="px-3 py-2">Recurso</th>
-                                  <th scope="col" className="px-3 py-2">Tipo Pag.</th>
-                                  <th scope="col" className="px-3 py-2 text-right">Valor Dia (R$)</th>
-                                  <th scope="col" className="px-3 py-2 text-right">Valor Total Loc. (R$)</th>
-                                  <th scope="col" className="px-3 py-2">Início Loc.</th>
-                                  <th scope="col" className="px-3 py-2">Fim Loc.</th>
-                                  <th scope="col" className="px-3 py-2">Data Pag. Prev.</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {diaData.locacoes_no_dia.map(loc => (
-                                  <tr key={loc.locacao_id} className="bg-white border-b hover:bg-gray-50">
-                                    <td className="px-3 py-2">{loc.recurso_nome}</td>
-                                    <td className="px-3 py-2">{loc.tipo_pagamento_display}</td>
-                                    <td className="px-3 py-2 text-right">{parseFloat(loc.valor_diario_atribuido).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                                    <td className="px-3 py-2 text-right">{parseFloat(loc.valor_pagamento_total_locacao).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                                    <td className="px-3 py-2">{formatDateToDMY(loc.data_locacao_original_inicio)}</td>
-                                    <td className="px-3 py-2">{formatDateToDMY(loc.data_locacao_original_fim)}</td>
-                                    <td className="px-3 py-2">{loc.data_pagamento_prevista ? formatDateToDMY(loc.data_pagamento_prevista) : 'N/A'}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        ) : (
-                          <p className="text-xs text-gray-500 italic mt-1">Nenhuma locação com custo atribuído a este dia.</p>
-                        )}
-                      </div>
-                    ))}
-                    <p className="text-lg font-semibold text-right text-blue-700 mt-4 pt-2 border-t border-blue-200">
-                      Total para {obraData.obra_nome} no Período: <span className="text-green-600 font-bold">{parseFloat(obraData.total_obra_periodo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                    </p>
-                  </div>
-                ))}
-
-                {reportData.length > 0 && (
-                  <div className="mt-8 pt-4 border-t-2 border-gray-300">
-                    <p className="text-xl font-bold text-right text-gray-800">
-                      Total Geral do Relatório:
-                      <span className="text-green-700 ml-2">
-                        {reportData.reduce((sum, obra) => sum + parseFloat(obra.total_obra_periodo), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </span>
-                    </p>
-                  </div>
-                )}
-                <div className="flex justify-end mt-6">
-                  <button onClick={() => setStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Gerar Novo Relatório</button>
-                </div>
-              </div>
-            )}
-            {isGeneratingReport && step !== 3 && <p className="text-center text-gray-500 mt-4">{isGeneratingReport ? <SpinnerIcon className="w-5 h-5 mr-2 inline" /> : null} Gerando relatório...</p>}
-             {reportError && step !== 3 && <p className="text-red-500 text-sm mt-3 text-center">{reportError}</p>}
-
-
-          </div>
-        </div>
-      )}
-
-
-      {error && !showFormModal && !selectedLocacaoId && ( // Only show general page error if no modal is open
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <strong className="font-bold">Erro: </strong>
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
-
       <LocacoesTable
-        locacoes={locacoes} // Now receives paginated data
+        locacoes={locacoes}
         obras={obras}
         equipes={equipes}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onViewDetails={handleViewDetails}
-        isLoading={isLoading && locacoes.length === 0} // Show table loading only if it's initial load or page change with no data yet
+        isLoading={isLoading && locacoes.length === 0}
       />
 
       <PaginationControls
@@ -897,7 +460,7 @@ const LocacoesPage = () => {
             <h2 className="text-lg font-semibold mb-4 text-gray-800">
               {currentLocacao && currentLocacao.id ? 'Editar Locação' : 'Adicionar Nova Locação'}
             </h2>
-            {error && ( // Error display specific to the modal
+            {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
                     <strong className="font-bold">Erro no formulário: </strong>
                     <span className="block sm:inline">{error}</span>
@@ -910,7 +473,7 @@ const LocacoesPage = () => {
               onSubmit={handleApiSubmit}
               onCancel={handleFormCancel}
               isLoading={isLoadingForm}
-              onTransferSuccess={handleTransferSuccess} // New prop
+              onTransferSuccess={handleTransferSuccess}
             />
           </div>
         </div>
