@@ -1003,6 +1003,48 @@ class ObraCustosPorMaterialView(APIView):
 # --- New PDF Generation View ---
 # (The placeholder GerarRelatorioPDFObraView and its specific imports from django.http.HttpResponse
 #  and django.template.loader.render_to_string that were at the end of the backup file are now effectively replaced by this)
+
+class LocacaoSemanalView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get(self, request, *args, **kwargs):
+        inicio_semana_str = request.query_params.get('inicio')
+        if not inicio_semana_str:
+            return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            inicio_semana = date.fromisoformat(inicio_semana_str)
+        except ValueError:
+            return Response({"error": "Formato de data inválido para 'inicio'. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        fim_semana = inicio_semana + timedelta(days=6)
+        print(f"[LocacaoSemanalView] Periodo: {inicio_semana_str} a {fim_semana.isoformat()}") # LOG BACKEND 1
+
+        locacoes_na_semana = Locacao_Obras_Equipes.objects.filter(
+            status_locacao='ativa'
+        ).filter(
+            # Locação começa antes ou durante o fim da semana E Locação termina depois ou durante o início da semana
+            Q(data_locacao_inicio__lte=fim_semana) & Q(data_locacao_fim__gte=inicio_semana)
+        ).select_related('obra', 'equipe', 'funcionario_locado').order_by('data_locacao_inicio')
+
+        print(f"[LocacaoSemanalView] Locações encontradas no período geral: {locacoes_na_semana.count()}") # LOG BACKEND 2
+
+        resposta_semanal = {}
+        for i in range(7):
+            dia_corrente = inicio_semana + timedelta(days=i)
+            dia_str = dia_corrente.isoformat()
+            resposta_semanal[dia_str] = []
+
+            for locacao in locacoes_na_semana:
+                # Verifica se a locação está ativa no dia_corrente
+                if locacao.data_locacao_inicio <= dia_corrente <= locacao.data_locacao_fim:
+                    serializer = LocacaoObrasEquipesSerializer(locacao, context={'request': request})
+                    resposta_semanal[dia_str].append(serializer.data)
+
+        print(f"[LocacaoSemanalView] Resposta semanal final: {resposta_semanal}") # LOG BACKEND 3
+        return Response(resposta_semanal)
+
+
 class GerarRelatorioPDFObraView(APIView):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
@@ -1090,10 +1132,64 @@ class GerarRelatorioPDFObraView(APIView):
 class GerarRelatorioPagamentoLocacoesPDFView(APIView):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
+
+class RecursosMaisUtilizadosSemanaView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
     def get(self, request, *args, **kwargs):
-        start_date_str = request.query_params.get('start_date')
-        end_date_str = request.query_params.get('end_date')
-        obra_id_str = request.query_params.get('obra_id') # Optional
+        inicio_semana_str = request.query_params.get('inicio')
+        if not inicio_semana_str:
+            return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            inicio_semana = date.fromisoformat(inicio_semana_str)
+        except ValueError:
+            return Response({"error": "Formato de data inválido para 'inicio'. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        fim_semana = inicio_semana + timedelta(days=6)
+
+        # Filtra locações que estão ativas e se sobrepõem com a semana.
+        # Uma locação se sobrepõe se: loc.inicio <= semana.fim E loc.fim >= semana.inicio
+        locacoes_na_semana = Locacao_Obras_Equipes.objects.filter(
+            status_locacao='ativa',
+            data_locacao_inicio__lte=fim_semana,  # Começa antes ou durante o fim da semana
+            data_locacao_fim__gte=inicio_semana   # Termina depois ou durante o início da semana
+        ).select_related('funcionario_locado', 'equipe')
+
+        contagem_recursos = defaultdict(int)
+
+        # Itera sobre cada dia da semana para contar cada "instância" de locação diária
+        # Isso garante que uma locação que dura vários dias seja contada para cada dia em que está ativa.
+        current_day = inicio_semana
+        while current_day <= fim_semana:
+            for locacao in locacoes_na_semana:
+                # Verifica se a locação específica está ativa no dia_corrente
+                if locacao.data_locacao_inicio <= current_day <= locacao.data_locacao_fim:
+                    if locacao.funcionario_locado:
+                        nome_recurso = f"Funcionário: {locacao.funcionario_locado.nome_completo}"
+                        contagem_recursos[nome_recurso] += 1
+                    elif locacao.equipe:
+                        nome_recurso = f"Equipe: {locacao.equipe.nome_equipe}"
+                        contagem_recursos[nome_recurso] += 1
+                    elif locacao.servico_externo and locacao.servico_externo.strip():
+                        nome_recurso = f"Serviço Externo: {locacao.servico_externo.strip()}"
+                        contagem_recursos[nome_recurso] += 1
+            current_day += timedelta(days=1)
+
+        recursos_ordenados = sorted(contagem_recursos.items(), key=lambda item: item[1], reverse=True)
+
+        resposta_formatada = [{"recurso_nome": nome, "ocorrencias": ocorrencias} for nome, ocorrencias in recursos_ordenados]
+
+        return Response(resposta_formatada)
+
+# Comentário original da view GerarRelatorioPagamentoLocacoesPDFView removido para evitar confusão com a correção acima.
+# class GerarRelatorioPagamentoLocacoesPDFView(APIView):
+#     permission_classes = [IsNivelAdmin | IsNivelGerente]
+#
+#     def get(self, request, *args, **kwargs):
+#         start_date_str = request.query_params.get('start_date')
+#         end_date_str = request.query_params.get('end_date')
+#         obra_id_str = request.query_params.get('obra_id') # Optional
 
         if not start_date_str or not end_date_str:
             return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)

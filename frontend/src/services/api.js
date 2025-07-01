@@ -133,7 +133,7 @@ export const deleteDespesaExtra = (id) => apiClient.delete(`/despesas/${id}/`);
 export const getLocacoes = (params) => apiClient.get('/locacoes/', { params });
 export const getLocacaoById = (id) => apiClient.get(`/locacoes/${id}/`);
 export const createLocacao = (alocacaoData) => apiClient.post('/locacoes/', alocacaoData);
-export const updateLocacao = (id, alocacaoData) => apiClient.put(`/locacoes/${id}/`, alocacaoData);
+export const updateLocacao = (id, alocacaoData) => apiClient.patch(`/locacoes/${id}/`, alocacaoData); // Changed PUT to PATCH
 export const deleteLocacao = (id) => apiClient.delete(`/locacoes/${id}/`);
 export const transferFuncionarioLocacao = async (transferData) => {
   const response = await apiClient.post('/locacoes/transferir-funcionario/', transferData);
@@ -146,6 +146,11 @@ export const getLocacaoCustoDiarioChart = (obraId = null) => {
   }
   return apiClient.get(url);
 };
+
+// Funções para o Weekly Planner
+export const getLocacoesDaSemana = (startDate) => apiClient.get('/locacoes/semana/', { params: { inicio: startDate } });
+export const getRecursosMaisUtilizadosSemana = (startDate) => apiClient.get('/analytics/recursos-semana/', { params: { inicio: startDate } });
+
 export const getRelatorioFolhaPagamentoPreCheck = (startDate, endDate) => apiClient.get('/relatorios/folha-pagamento/pre_check_dias_sem_locacoes/', { params: { start_date: startDate, end_date: endDate } });
 // Fetches data for CSV export (original structure: Obra -> Dia -> Locacao)
 export const generateRelatorioFolhaPagamentoCSVData = (startDate, endDate, obraId = null) => {

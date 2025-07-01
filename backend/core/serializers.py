@@ -209,6 +209,8 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
     # Não precisamos declará-lo explicitamente a menos que queiramos mudar o queryset ou outras opções.
     # funcionario_locado = serializers.PrimaryKeyRelatedField(queryset=Funcionario.objects.all(), allow_null=True, required=False)
 
+    tipo = serializers.SerializerMethodField()
+    recurso_nome = serializers.SerializerMethodField()
 
     class Meta:
         model = Locacao_Obras_Equipes
@@ -220,16 +222,37 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
             'funcionario_locado', 'funcionario_locado_nome',
             'servico_externo',
             'data_locacao_inicio', 'data_locacao_fim', 'tipo_pagamento',
-            'valor_pagamento', 'data_pagamento', 'status_locacao', 'observacoes'
+            'valor_pagamento', 'data_pagamento', 'status_locacao', 'observacoes',
+            'tipo', 'recurso_nome' # Adicionado para a nova view semanal
         ]
         read_only_fields = (
             'status_locacao',
             'obra_nome',
             'funcionario_locado_nome',
             'equipe_nome', # Adicionado aos read_only_fields
-            'equipe_details'
+            'equipe_details',
+            'tipo',
+            'recurso_nome'
         )
         # 'equipe' é para escrita, 'equipe_details' e 'equipe_nome' são para leitura.
+
+    def get_tipo(self, obj):
+        if obj.funcionario_locado:
+            return "funcionario"
+        elif obj.equipe:
+            return "equipe"
+        elif obj.servico_externo:
+            return "servico_externo"
+        return None
+
+    def get_recurso_nome(self, obj):
+        if obj.funcionario_locado:
+            return obj.funcionario_locado.nome_completo
+        elif obj.equipe:
+            return obj.equipe.nome_equipe
+        elif obj.servico_externo:
+            return obj.servico_externo
+        return None
 
     def validate_valor_pagamento(self, value):
         if value is not None and value < Decimal('0.00'):
