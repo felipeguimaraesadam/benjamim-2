@@ -33,7 +33,7 @@ function RentalCard({ locacao, onCardClick, onShowContextMenu }) {
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: dndIsDragging ? 1000 : 'auto',
+    zIndex: dndIsDragging ? 9999 : 'auto', // Increased z-index
     cursor: dndIsDragging ? 'grabbing' : 'grab',
   } : {
     cursor: 'grab',
