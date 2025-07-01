@@ -146,6 +146,11 @@ export const getLocacaoCustoDiarioChart = (obraId = null) => {
   }
   return apiClient.get(url);
 };
+
+// Funções para o Weekly Planner
+export const getLocacoesDaSemana = (startDate) => apiClient.get('/locacoes/semana/', { params: { inicio: startDate } });
+export const getRecursosMaisUtilizadosSemana = (startDate) => apiClient.get('/analytics/recursos-semana/', { params: { inicio: startDate } });
+
 export const getRelatorioFolhaPagamentoPreCheck = (startDate, endDate) => apiClient.get('/relatorios/folha-pagamento/pre_check_dias_sem_locacoes/', { params: { start_date: startDate, end_date: endDate } });
 // Fetches data for CSV export (original structure: Obra -> Dia -> Locacao)
 export const generateRelatorioFolhaPagamentoCSVData = (startDate, endDate, obraId = null) => {
