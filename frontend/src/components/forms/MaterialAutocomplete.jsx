@@ -284,12 +284,12 @@ const handleNewMaterialSubmit = async (materialFormData) => {
                 }}
             >
                 {isLoading && (
-                    <div className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-500 shadow-lg">
+                    <div className="w-full bg-white dark:bg-gray-800 border border-slate-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm text-slate-500 dark:text-gray-400 shadow-lg">
                         Buscando...
                     </div>
                 )}
                 {!isLoading && suggestions.length === 0 && inputValue.trim() !== '' && !showNewMaterialModal && (
-                    <div className="w-full bg-white border border-slate-300 rounded-md p-3 text-sm text-slate-500 shadow-lg">
+                    <div className="w-full bg-white dark:bg-gray-800 border border-slate-300 dark:border-gray-600 rounded-md p-3 text-sm text-slate-500 dark:text-gray-400 shadow-lg">
                         <span>Nenhum material encontrado com "{inputValue}".</span>
                         <button
                             type="button"
@@ -302,7 +302,7 @@ const handleNewMaterialSubmit = async (materialFormData) => {
                     </div>
                 )}
                 {suggestions.length > 0 && !showNewMaterialModal && (
-                     <ul id={`suggestions-list-${itemIndex}`} role="listbox" className="w-full bg-white border border-slate-300 rounded-md max-h-60 overflow-y-auto shadow-lg"> {/* Removed absolute, z-10, mt-1 */}
+                     <ul id={`suggestions-list-${itemIndex}`} role="listbox" className="w-full bg-white dark:bg-gray-800 border border-slate-300 dark:border-gray-600 rounded-md max-h-60 overflow-y-auto shadow-lg"> {/* Removed absolute, z-10, mt-1 */}
                         {suggestions.map((material, idx) => (
                             <li
                                 key={material.id}
@@ -312,9 +312,9 @@ const handleNewMaterialSubmit = async (materialFormData) => {
                                 aria-selected={idx === highlightedIndex}
                                 onMouseDown={() => handleSuggestionClick(material)}
                                 onMouseEnter={() => setHighlightedIndex(idx)}
-                                className={`px-3 py-2 cursor-pointer text-sm ${idx === highlightedIndex ? 'bg-primary-100 text-primary-700 font-semibold' : 'text-slate-700 hover:bg-slate-100'}`}
+                                className={`px-3 py-2 cursor-pointer text-sm ${idx === highlightedIndex ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold' : 'text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700'}`}
                             >
-                                {material.nome} <span className="text-slate-500">({material.unidade_medida})</span>
+                                {material.nome} <span className="text-slate-500 dark:text-gray-400">({material.unidade_medida})</span>
                             </li>
                         ))}
                     </ul>
@@ -335,26 +335,26 @@ const handleNewMaterialSubmit = async (materialFormData) => {
                 onBlur={handleBlur}
                 onKeyDown={handleInputKeyDown}
                 placeholder="Digite para buscar material..."
-                className={`w-full p-1.5 border ${error ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
+                className={`w-full p-1.5 border ${error ? 'border-red-500 text-red-700 dark:text-red-400' : 'border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-300'} bg-white dark:bg-gray-800 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
                 aria-autocomplete="list"
                 aria-expanded={showSuggestions && !showNewMaterialModal}
                 aria-controls={`suggestions-list-${itemIndex}`}
                 aria-activedescendant={highlightedIndex >= 0 ? `suggestion-${itemIndex}-${highlightedIndex}` : undefined}
                 autoComplete="off"
             />
-            {error && <p className="text-xs text-red-600 mt-0.5">{error}</p>}
+            {error && <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{error}</p>}
 
             {portalTarget ? createPortal(suggestionsJsx, portalTarget) : null}
 
             {showNewMaterialModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4 new-material-modal-container" role="dialog" aria-modal="true" aria-labelledby="new-material-modal-title">
-                    <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"> {/* Increased padding to p-6, max-w-lg */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"> {/* Increased padding to p-6, max-w-lg */}
                         <div className="flex justify-between items-center mb-5"> {/* Increased mb */}
-                            <h2 id="new-material-modal-title" className="text-xl font-semibold text-slate-800">Cadastrar Novo Material</h2>
-                            <button onClick={handleCloseNewMaterialModal} className="text-slate-400 hover:text-slate-600 text-3xl leading-none p-1 -mr-2 -mt-2" aria-label="Fechar modal">&times;</button>
+                            <h2 id="new-material-modal-title" className="text-xl font-semibold text-slate-800 dark:text-gray-200">Cadastrar Novo Material</h2>
+                            <button onClick={handleCloseNewMaterialModal} className="text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 text-3xl leading-none p-1 -mr-2 -mt-2" aria-label="Fechar modal">&times;</button>
                         </div>
                         {newMaterialError && (
-                             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-4 text-sm" role="alert"> {/* Increased padding */}
+                             <div className="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 dark:border-red-600 text-red-700 dark:text-red-300 p-4 rounded mb-4 text-sm" role="alert"> {/* Increased padding */}
                                 <p><span className="font-bold">Erro:</span> {newMaterialError}</p>
                             </div>
                         )}

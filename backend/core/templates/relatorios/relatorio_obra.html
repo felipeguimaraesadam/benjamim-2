@@ -55,7 +55,9 @@
         .cover-page-content .emission-date { margin-top: 60px; font-size: 11pt; color: #555;}
 
         body { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 10pt; color: #333; line-height: 1.4; }
-        .content-body { page-break-before: always; } /* Start main content on a new page */
+        .content-body { 
+    page-break-before: {% if not is_simple_report %}always{% else %}auto{% endif %};
+} /* Start main content on a new page */
 
         h1, h2, h3, h4 { font-weight: bold; color: #000; margin-top: 1.2em; margin-bottom: 0.6em; }
         h1.main-title { font-size: 18pt; text-align: center; margin-bottom: 1em; color: #222;}
@@ -86,8 +88,8 @@
     </style>
 </head>
 <body>
+    {% if not is_simple_report %}
     <div class="cover-page-content">
-        {# Add logo here if available, e.g. <img src="file://{{ MEDIA_ROOT }}/logo.png" alt="Logo"> #}
         <h1>Relatório Detalhado de Obra</h1>
         <h2>{{ obra.nome_obra }}</h2>
         <p><strong>Cliente:</strong> {{ obra.cliente_nome|default:"Não informado" }}</p>
@@ -95,19 +97,40 @@
         <p><strong>Cidade:</strong> {{ obra.cidade }}</p>
         <p class="emission-date">Data de Emissão do Relatório: {{ data_emissao|date:"d/m/Y" }}</p>
     </div>
+    {% endif %}
+
+
+
+    {% if is_simple_report %}
+    <div class="simple-report-container">
+        <div class="report-header">
+            <div class="logo">SGO</div>
+            <div class="title-block">
+                <h1>{{ obra.nome_obra }}</h1>
+                <p>Relatório Simplificado de Obra</p>
+            </div>
+        </div>
+    {% endif %}
 
     <div class="content-body">
-        <h1 class="main-title">Detalhes da Obra</h1>
 
         <section class="section">
             <h2 class="section-title">1. Resumo da Obra</h2>
             <table class="avoid-break">
-                <tr><th style="width:30%;">Status</th><td>{{ obra.get_status_display }}</td></tr>
-                <tr><th>Responsável</th><td>{{ obra.responsavel.nome_completo|default:"Não atribuído" }}</td></tr>
-                <tr><th>Data de Início</th><td>{{ obra.data_inicio|date:"d/m/Y"|default:"N/A" }}</td></tr>
-                <tr><th>Previsão de Término</th><td>{{ obra.data_prevista_fim|date:"d/m/Y"|default:"N/A" }}</td></tr>
-                <tr><th>Data Real de Fim</th><td>{{ obra.data_real_fim|date:"d/m/Y"|default:"N/A" }}</td></tr>
-                <tr><th>Área (m²)</th><td>{{ obra.area_metragem|floatformat:"2"|default:"N/A" }} m²</td></tr>
+                <thead>
+                    <tr>
+                        <th style="width:30%;">Item</th>
+                        <th>Detalhe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Status</td><td>{{ obra.get_status_display }}</td></tr>
+                    <tr><td>Responsável</td><td>{{ obra.responsavel.nome_completo|default:"Não atribuído" }}</td></tr>
+                    <tr><td>Data de Início</td><td>{{ obra.data_inicio|date:"d/m/Y"|default:"N/A" }}</td></tr>
+                    <tr><td>Previsão de Término</td><td>{{ obra.data_prevista_fim|date:"d/m/Y"|default:"N/A" }}</td></tr>
+                    <tr><td>Data Real de Fim</td><td>{{ obra.data_real_fim|date:"d/m/Y"|default:"N/A" }}</td></tr>
+                    <tr><td>Área (m²)</td><td>{{ obra.area_metragem|floatformat:"2"|default:"N/A" }} m²</td></tr>
+                </tbody>
             </table>
         </section>
 
@@ -126,6 +149,14 @@
             </table>
         </section>
 
+        {% if is_simple_report %}
+        <div class="report-footer">
+            Relatório gerado em {{ data_emissao|date:"d/m/Y H:i" }} pelo Sistema de Gestão de Obras (SGO).
+        </div>
+    </div>
+    {% endif %}
+
+        {% if not is_simple_report %}
         <section class="section">
             <h2 class="section-title">3. Detalhamento de Custos</h2>
 
@@ -239,8 +270,9 @@
                 <p>Nenhuma despesa extra registrada para esta obra.</p>
             {% endif %}
         </section>
+        {% endif %}
 
-        {% if fotos %}
+        {% if fotos and not is_simple_report %}
         <section class="section avoid-break"> {# Try to keep this section on one page if possible, or start new if long #}
             <h2 class="section-title">4. Galeria de Fotos</h2>
             <div class="photo-gallery">

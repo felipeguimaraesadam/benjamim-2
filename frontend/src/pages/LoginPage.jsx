@@ -30,16 +30,16 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-xl rounded-xl">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 shadow-xl rounded-xl">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-primary-600">SGO</h1>
-          <p className="mt-2 text-sm text-gray-600">Bem-vindo! Faça login para continuar.</p>
+          <h1 className="text-3xl font-bold text-primary-600 dark:text-primary-400">SGO</h1>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">Bem-vindo! Faça login para continuar.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="login" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="login" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Login
             </label>
             <input
@@ -56,7 +56,7 @@ const LoginPage = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Senha
             </label>
             <input
@@ -73,7 +73,7 @@ const LoginPage = () => {
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-md text-sm">
               {error}
             </div>
           )}
@@ -99,9 +99,9 @@ const LoginPage = () => {
           </div>
         </form>
 
-        <p className="text-sm text-center text-gray-600">
+        <p className="text-sm text-center text-gray-600 dark:text-gray-300">
           Não tem uma conta?{' '}
-          <Link to="/registrar" className="font-medium text-primary-600 hover:text-primary-500">
+          <Link to="/registrar" className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
             Registre-se aqui
           </Link>
         </p>

@@ -74,25 +74,25 @@ function RentalCard({
   }
 
   let IconComponent;
-  let cardColor = 'bg-gray-100';
-  let textColor = 'text-gray-800';
-  let borderColor = 'border-gray-300';
+  let cardColor = 'bg-gray-100 dark:bg-gray-700';
+  let textColor = 'text-gray-800 dark:text-gray-200';
+  let borderColor = 'border-gray-300 dark:border-gray-600';
 
   if (tipo === 'funcionario') {
     IconComponent = User;
-    cardColor = 'bg-blue-100 hover:bg-blue-200';
-    textColor = 'text-blue-800';
-    borderColor = 'border-blue-400';
+    cardColor = 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/40';
+    textColor = 'text-blue-800 dark:text-blue-200';
+    borderColor = 'border-blue-400 dark:border-blue-600';
   } else if (tipo === 'equipe') {
     IconComponent = Users;
-    cardColor = 'bg-green-100 hover:bg-green-200';
-    textColor = 'text-green-800';
-    borderColor = 'border-green-400';
+    cardColor = 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/40';
+    textColor = 'text-green-800 dark:text-green-200';
+    borderColor = 'border-green-400 dark:border-green-600';
   } else if (tipo === 'servico_externo') {
     IconComponent = Wrench;
-    cardColor = 'bg-orange-100 hover:bg-orange-200';
-    textColor = 'text-orange-800';
-    borderColor = 'border-orange-400';
+    cardColor = 'bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/40';
+    textColor = 'text-orange-800 dark:text-orange-200';
+    borderColor = 'border-orange-400 dark:border-orange-600';
   }
 
   const handleMouseDown = (event) => {

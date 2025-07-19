@@ -54,11 +54,11 @@ const DashboardPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6">Dashboard</h1>
 
-      {isLoadingStats && <p className="text-center text-gray-600">Carregando estatísticas...</p>}
+      {isLoadingStats && <p className="text-center text-gray-600 dark:text-gray-400">Carregando estatísticas...</p>}
       {errorStats && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+        <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative mb-6" role="alert">
           <strong className="font-bold">Erro ao carregar estatísticas: </strong>
           <span className="block sm:inline">{errorStats}</span>
         </div>
@@ -67,25 +67,25 @@ const DashboardPage = () => {
       {stats && !isLoadingStats && !errorStats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Card for Obras em Andamento */}
-          <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center text-center">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center text-center">
             <BuildingIcon />
-            <h3 className="text-md font-medium text-gray-600 mb-1">Obras em Andamento</h3>
+            <h3 className="text-md font-medium text-gray-600 dark:text-gray-300 mb-1">Obras em Andamento</h3>
             <p className="text-3xl font-bold text-primary-600">{stats.obras_em_andamento}</p>
           </div>
 
           {/* Card for Custo Total Mês Corrente */}
-          <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center text-center">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center text-center">
             <MoneyIcon />
-            <h3 className="text-md font-medium text-gray-600 mb-1">Custo Total do Mês</h3>
+            <h3 className="text-md font-medium text-gray-600 dark:text-gray-300 mb-1">Custo Total do Mês</h3>
             <p className="text-3xl font-bold text-primary-600">
               R$ {parseFloat(stats.custo_total_mes_corrente).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
 
           {/* Card for Total de Funcionários */}
-          <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center text-center">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center text-center">
             <UsersIcon />
-            <h3 className="text-md font-medium text-gray-600 mb-1">Total de Funcionários</h3>
+            <h3 className="text-md font-medium text-gray-600 dark:text-gray-300 mb-1">Total de Funcionários</h3>
             <p className="text-3xl font-bold text-primary-600">{stats.total_funcionarios}</p>
           </div>
         </div>
@@ -96,41 +96,41 @@ const DashboardPage = () => {
 
       {/* Quick Access Section */}
       <div className="mt-10">
-        <h2 className="text-2xl font-semibold text-gray-700 mb-5">Acesso Rápido</h2>
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-5">Acesso Rápido</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Shortcut to Obras */}
           <Link
             to="/obras"
-            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 hover:bg-primary-50 group"
+            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-gray-700 group"
           >
             <BuildingIcon className="w-7 h-7 mr-4 text-primary-500 group-hover:text-primary-600 transition-colors" />
             <div>
               <h3 className="text-lg font-semibold group-hover:text-primary-600 transition-colors">Gerenciar Obras</h3>
-              <p className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors">Visualizar e cadastrar obras.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">Visualizar e cadastrar obras.</p>
             </div>
           </Link>
 
           {/* Shortcut to Funcionários */}
           <Link
             to="/funcionarios"
-            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 hover:bg-primary-50 group"
+            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-gray-700 group"
           >
             <UsersIcon className="w-7 h-7 mr-4 text-primary-500 group-hover:text-primary-600 transition-colors" />
             <div>
               <h3 className="text-lg font-semibold group-hover:text-primary-600 transition-colors">Gerenciar Funcionários</h3>
-              <p className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors">Administrar quadro de funcionários.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">Administrar quadro de funcionários.</p>
             </div>
           </Link>
 
           {/* Shortcut to Relatórios */}
           <Link
             to="/relatorios"
-            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 hover:bg-primary-50 group"
+            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-gray-700 group"
           >
             <ChartBarIcon className="w-7 h-7 mr-4 text-primary-500 group-hover:text-primary-600 transition-colors" />
             <div>
               <h3 className="text-lg font-semibold group-hover:text-primary-600 transition-colors">Ver Relatórios</h3>
-              <p className="text-sm text-gray-500 group-hover:text-gray-600 transition-colors">Analisar dados e informações.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">Analisar dados e informações.</p>
             </div>
           </Link>
         </div>

@@ -160,25 +160,25 @@ const MateriaisPage = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Gestão de Materiais</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Gestão de Materiais</h1>
         <button
           onClick={handleAddNew}
-          className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:bg-primary-300"
+          className="bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-400 disabled:bg-primary-300 dark:disabled:bg-primary-700"
         >
           Adicionar Novo Material
         </button>
       </div>
 
       {/* Low Stock Alerts Display */}
-      {isLoadingLowStockAlerts && !lowStockAlertsError && <p className="text-center text-gray-500 my-4">Carregando alertas de estoque...</p>}
+      {isLoadingLowStockAlerts && !lowStockAlertsError && <p className="text-center text-gray-500 dark:text-gray-400 my-4">Carregando alertas de estoque...</p>}
       {lowStockAlertsError && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4" role="alert">
+        <div className="bg-red-100 dark:bg-red-900 border-l-4 border-red-500 dark:border-red-400 text-red-700 dark:text-red-200 p-4 my-4" role="alert">
           <p className="font-bold">Erro ao Carregar Alertas de Estoque:</p>
           <p>{lowStockAlertsError}</p>
         </div>
       )}
       {!isLoadingLowStockAlerts && lowStockAlerts.length > 0 && (
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4" role="alert">
+        <div className="bg-yellow-100 dark:bg-yellow-900 border-l-4 border-yellow-500 dark:border-yellow-400 text-yellow-700 dark:text-yellow-200 p-4 my-4" role="alert">
           <p className="font-bold">Alerta de Estoque Baixo!</p>
           <p>Os seguintes materiais atingiram ou estão abaixo do nível mínimo de estoque:</p>
           <ul className="list-disc ml-5 mt-2">
@@ -199,7 +199,7 @@ const MateriaisPage = () => {
       )}
 
       {!isLoading && error && materiais.length === 0 && ( // Show error prominently if it prevented initial load
-         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative my-4 text-center" role="alert">
+         <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative my-4 text-center" role="alert">
           <strong className="font-bold">Erro ao carregar materiais: </strong>
           <span className="block sm:inline">{error}</span>
         </div>
@@ -226,7 +226,7 @@ const MateriaisPage = () => {
 
       {/* General error display, if not related to initial load and modal isn't up */}
       {error && !showFormModal && !isLoading && materiais.length > 0 && (
-         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative my-4" role="alert">
+         <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative my-4" role="alert">
           <strong className="font-bold">Ocorreu um erro: </strong>
           <span className="block sm:inline">{error}</span>
         </div>
@@ -238,12 +238,12 @@ const MateriaisPage = () => {
       {/* The actual Form Modal is rendered below. PaginationControls are rendered with the table. */}
       {showFormModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
               {currentMaterial ? 'Editar Material' : 'Adicionar Novo Material'}
             </h2>
             {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative mb-4" role="alert">
                     <strong className="font-bold">Erro: </strong>
                     <span className="block sm:inline">{error}</span>
                 </div>
@@ -261,14 +261,14 @@ const MateriaisPage = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Confirmar Exclusão</h2>
-            <p className="mb-6">Tem certeza que deseja excluir este material? Esta ação não pode ser desfeita.</p>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Confirmar Exclusão</h2>
+            <p className="mb-6 text-gray-700 dark:text-gray-300">Tem certeza que deseja excluir este material? Esta ação não pode ser desfeita.</p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50"
+                className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-500 disabled:opacity-50"
               >
                 Cancelar
               </button>

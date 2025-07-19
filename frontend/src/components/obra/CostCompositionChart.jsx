@@ -3,7 +3,11 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 
 const CostCompositionChart = ({ custosPorCategoria }) => {
   if (!custosPorCategoria) {
-    return <p className="text-center text-gray-500 dark:text-gray-400 py-10">Dados de custos por categoria não disponíveis.</p>;
+    return (
+      <div className="p-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+        <p className="text-center text-gray-500 dark:text-gray-400 py-10">Dados de custos por categoria não disponíveis.</p>
+      </div>
+    );
   }
 
   const data = [
@@ -18,7 +22,7 @@ const CostCompositionChart = ({ custosPorCategoria }) => {
 
   if (data.length === 0) {
     return (
-      <div className="p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800 h-full flex flex-col justify-center items-center min-h-[300px]">
+      <div className="p-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg h-full flex flex-col justify-center items-center min-h-[300px]">
         <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-200">Composição dos Custos Totais</h3>
         <p className="text-center text-gray-500 dark:text-gray-400 py-10">Não há composição de custos para exibir.</p>
       </div>
@@ -48,8 +52,8 @@ const CostCompositionChart = ({ custosPorCategoria }) => {
 
   return (
     // Card principal do gráfico
-    <div className="p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
-      <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-100">Composição dos Custos Totais</h3>
+    <div className="p-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+      <h3 className="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-200">Composição dos Custos Totais</h3>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie

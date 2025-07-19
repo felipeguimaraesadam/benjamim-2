@@ -162,13 +162,15 @@ const ObrasPage = () => {
     setError(null); // Clear form-specific errors
   };
 
+  
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Gestão de Obras</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Gestão de Obras</h1>
         <button
           onClick={handleAddNew}
-          className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:bg-primary-300"
+          className="bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-400 disabled:bg-primary-300 dark:disabled:bg-primary-700"
         >
           Adicionar Nova Obra
         </button>
@@ -178,7 +180,7 @@ const ObrasPage = () => {
 
       {/* Page level error display (for fetch errors mainly) */}
       {error && !isLoading && !showFormModal && obras.length === 0 && (
-         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4 text-center" role="alert">
+         <div className="bg-red-100 dark:bg-red-900 border-l-4 border-red-500 dark:border-red-400 text-red-700 dark:text-red-200 p-4 my-4 text-center" role="alert">
           <p className="font-bold">Falha ao Carregar Dados</p>
           <p>{error}</p>
         </div>
@@ -187,7 +189,7 @@ const ObrasPage = () => {
       {/* Loading spinner for initial page load */}
       {isLoading && obras.length === 0 && (
         <div className="flex justify-center items-center min-h-[300px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 dark:border-primary-400"></div>
         </div>
       )}
 
@@ -215,12 +217,12 @@ const ObrasPage = () => {
       {/* Form Modal */}
       {showFormModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
               {currentObra ? 'Editar Obra' : 'Adicionar Nova Obra'}
             </h2>
             {error && ( // Display error specific to form submission attempt
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative mb-4" role="alert">
                     <strong className="font-bold">Erro: </strong>
                     <span className="block sm:inline">{error}</span>
                 </div>
@@ -238,21 +240,21 @@ const ObrasPage = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Confirmar Exclusão</h2>
-            <p className="mb-6">Tem certeza que deseja excluir esta obra? Esta ação não pode ser desfeita.</p>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Confirmar Exclusão</h2>
+            <p className="mb-6 text-gray-700 dark:text-gray-300">Tem certeza que deseja excluir esta obra? Esta ação não pode ser desfeita.</p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50"
+                className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-500 disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={isDeleting}
-                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50 flex items-center justify-center"
+                className="bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-400 disabled:opacity-50 flex items-center justify-center"
               >
                 {isDeleting ? <SpinnerIcon className="w-5 h-5 mr-2"/> : null}
                 {isDeleting ? 'Excluindo...' : 'Excluir'}

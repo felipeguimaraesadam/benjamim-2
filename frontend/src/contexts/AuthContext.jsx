@@ -10,6 +10,46 @@ export const AuthProvider = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken') || null);
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
 
+  const refreshAuthToken = async () => {
+    if (!refreshToken) {
+      setIsLoading(false); // Ensure loading stops if no refresh token
+      return logout(); // or simply return if no refresh token
+    }
+
+    // Set loading true if not already, for UI feedback during refresh
+    // setIsLoading(true); // Could be problematic if called during initial load's setIsLoading(false)
+
+    try {
+      const response = await apiClient.post('/token/refresh/', {
+        refresh: refreshToken,
+      });
+      const { access, refresh: newRefreshToken } = response.data; // Backend might or might not return a new refresh token
+
+      localStorage.setItem('accessToken', access);
+      if (newRefreshToken) { // If backend provides a new refresh token (e.g. with rotation)
+          localStorage.setItem('refreshToken', newRefreshToken);
+          setRefreshToken(newRefreshToken);
+      }
+      setAccessToken(access);
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+
+      const decodedToken = jwtDecode(access);
+      setUser({
+        id: decodedToken.user_id,
+        login: decodedToken.login,
+        nome_completo: decodedToken.nome_completo,
+        nivel_acesso: decodedToken.nivel_acesso
+      });
+      // setIsLoading(false); // Set loading false after successful refresh
+      return access; // Return new access token
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      logout(); // Important: logout if refresh fails
+      // setIsLoading(false); // Set loading false after failed refresh
+      return null;
+    }
+  };
+
   useEffect(() => {
     const initializeAuth = async () => {
       if (accessToken) {
@@ -43,7 +83,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(false);
     };
     initializeAuth();
-  }, []); // Run only once on mount
+  }, [refreshToken]); // Add refreshToken to dependency array
 
   const login = async (loginUsername, password) => {
     try {
@@ -94,46 +134,6 @@ export const AuthProvider = ({ children }) => {
     delete apiClient.defaults.headers.common['Authorization'];
     // Navigate to login or home page can be handled by the component calling logout
     // or by ProtectedRoute redirecting.
-  };
-
-  const refreshAuthToken = async () => {
-    if (!refreshToken) {
-      setIsLoading(false); // Ensure loading stops if no refresh token
-      return logout(); // or simply return if no refresh token
-    }
-
-    // Set loading true if not already, for UI feedback during refresh
-    // setIsLoading(true); // Could be problematic if called during initial load's setIsLoading(false)
-
-    try {
-      const response = await apiClient.post('/token/refresh/', {
-        refresh: refreshToken,
-      });
-      const { access, refresh: newRefreshToken } = response.data; // Backend might or might not return a new refresh token
-
-      localStorage.setItem('accessToken', access);
-      if (newRefreshToken) { // If backend provides a new refresh token (e.g. with rotation)
-          localStorage.setItem('refreshToken', newRefreshToken);
-          setRefreshToken(newRefreshToken);
-      }
-      setAccessToken(access);
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${access}`;
-
-      const decodedToken = jwtDecode(access);
-      setUser({
-        id: decodedToken.user_id,
-        login: decodedToken.login,
-        nome_completo: decodedToken.nome_completo,
-        nivel_acesso: decodedToken.nivel_acesso
-      });
-      // setIsLoading(false); // Set loading false after successful refresh
-      return access; // Return new access token
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      logout(); // Important: logout if refresh fails
-      // setIsLoading(false); // Set loading false after failed refresh
-      return null;
-    }
   };
 
   // Expose a function to attempt refresh, can be used by interceptor later

@@ -110,12 +110,19 @@ function WeeklyPlanner({ obras, equipes }) {
     const isEditing = locacaoFormInitialData && locacaoFormInitialData.id;
 
     try {
+      let response;
       if (isEditing) {
-        await api.updateLocacao(locacaoFormInitialData.id, formDataFromForm);
+        response = await api.updateLocacao(locacaoFormInitialData.id, formDataFromForm);
         toast.success("Locação atualizada com sucesso!");
       } else {
-        await api.createLocacao(formDataFromForm);
-        toast.success("Locação criada com sucesso!");
+        response = await api.createLocacao(formDataFromForm);
+        // Check if multiple rentals were created (multi-day rental)
+        const createdRentals = response.data;
+        if (Array.isArray(createdRentals) && createdRentals.length > 1) {
+          toast.success(`${createdRentals.length} locações criadas com sucesso (uma para cada dia)!`);
+        } else {
+          toast.success("Locação criada com sucesso!");
+        }
       }
       handleLocacaoFormSubmitSuccess(); // Fecha modal e recarrega
     } catch (err) {
@@ -219,6 +226,8 @@ function WeeklyPlanner({ obras, equipes }) {
         data_locacao_fim: targetDayIdForModal,
         equipe: draggedLocacaoDataForModal.equipe?.id || null,
         funcionario_locado: draggedLocacaoDataForModal.funcionario_locado?.id || null,
+        // Preserve servico_externo if it exists
+        servico_externo: draggedLocacaoDataForModal.servico_externo || null,
       };
       delete newLocacaoData.id;
       delete newLocacaoData.obra_nome;
@@ -229,8 +238,14 @@ function WeeklyPlanner({ obras, equipes }) {
       delete newLocacaoData.tipo;
       delete newLocacaoData.recurso_nome;
 
-      await api.createLocacao(newLocacaoData);
-      toast.success(`Locação de ${draggedLocacaoDataForModal.recurso_nome} duplicada para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
+      const response = await api.createLocacao(newLocacaoData);
+      // Check if multiple rentals were created (though unlikely for single day duplication)
+      const createdRentals = response.data;
+      if (Array.isArray(createdRentals) && createdRentals.length > 1) {
+        toast.success(`${createdRentals.length} locações de ${draggedLocacaoDataForModal.recurso_nome} duplicadas para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
+      } else {
+        toast.success(`Locação de ${draggedLocacaoDataForModal.recurso_nome} duplicada para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
+      }
       fetchWeekData(currentDate);
     } catch (error) {
       console.error("Erro ao duplicar locação:", error.response?.data || error.message);
@@ -315,6 +330,7 @@ function WeeklyPlanner({ obras, equipes }) {
         handleDeleteLocacao(contextMenu.locacaoId);
         handleCloseContextMenu();
       },
+      className: 'text-red-600 hover:bg-red-50',
     },
   ] : [];
 
@@ -325,14 +341,14 @@ function WeeklyPlanner({ obras, equipes }) {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="p-4 bg-white shadow-lg rounded-lg">
+      <div className="p-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg">
         <WeekNavigator
           currentDate={currentDate}
           onDateChange={handleDateChange}
         />
 
-        {isLoading && <div className="text-center p-4">Carregando dados da semana...</div>}
-        {error && <div className="text-center p-4 text-red-600">Erro: {error}</div>}
+        {isLoading && <div className="text-center p-4 text-gray-600 dark:text-gray-300">Carregando dados da semana...</div>}
+        {error && <div className="text-center p-4 text-red-600 dark:text-red-400">Erro: {error}</div>}
 
         {!isLoading && !error && (
           <div className="flex mt-4 overflow-x-auto pb-4 h-full flex-grow">
@@ -353,22 +369,22 @@ function WeeklyPlanner({ obras, equipes }) {
               );
             })}
 
-            <div className="flex flex-col w-64 flex-shrink-0 min-h-[300px] max-h-[calc(100vh-250px)] ml-2 mr-1 rounded-lg shadow-md bg-slate-100">
-              <div className="p-3 sticky top-0 bg-slate-200 rounded-t-lg shadow z-10">
-                <h4 className="text-md font-semibold text-center text-slate-700">Recursos Mais Utilizados</h4>
-                <p className="text-sm text-center text-slate-500">Nesta Semana</p>
+            <div className="flex flex-col w-64 flex-shrink-0 min-h-[300px] max-h-[calc(100vh-250px)] ml-2 mr-1 rounded-lg shadow-md bg-slate-100 dark:bg-gray-700">
+              <div className="p-3 sticky top-0 bg-slate-200 dark:bg-gray-600 rounded-t-lg shadow z-10">
+                <h4 className="text-md font-semibold text-center text-slate-700 dark:text-gray-200">Recursos Mais Utilizados</h4>
+                <p className="text-sm text-center text-slate-500 dark:text-gray-300">Nesta Semana</p>
               </div>
               <div className="flex-grow overflow-y-auto p-4 space-y-2">
                 {recursosMaisUtilizados.length > 0 ? (
-                  <ul className="text-sm text-slate-700 space-y-1">
+                  <ul className="text-sm text-slate-700 dark:text-gray-200 space-y-1">
                     {recursosMaisUtilizados.map((recurso, index) => (
-                      <li key={index} className="p-2 bg-white rounded shadow-sm">
-                        <span className="font-medium">{recurso.recurso_nome}</span>: <span className="font-semibold text-indigo-600">{recurso.ocorrencias}</span> {recurso.ocorrencias > 1 ? 'alocações' : 'alocação'}
+                      <li key={index} className="p-2 bg-white dark:bg-gray-600 rounded shadow-sm">
+                        <span className="font-medium">{recurso.recurso_nome}</span>: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{recurso.ocorrencias}</span> {recurso.ocorrencias > 1 ? 'alocações' : 'alocação'}
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <div className="text-center text-sm text-gray-400 pt-4">
+                  <div className="text-center text-sm text-gray-400 dark:text-gray-500 pt-4">
                     Nenhum recurso utilizado nesta semana.
                   </div>
                 )}
@@ -386,8 +402,8 @@ function WeeklyPlanner({ obras, equipes }) {
 
         {showLocacaoFormModal && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
                 {locacaoFormInitialData?.id ? 'Editar Locação' : 'Adicionar Nova Locação'}
               </h3>
               <LocacaoForm
@@ -405,29 +421,29 @@ function WeeklyPlanner({ obras, equipes }) {
 
         {showDragDropConfirmModal && draggedLocacaoDataForModal && targetDayIdForModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-                <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-                    <h2 className="text-xl font-semibold mb-4">Confirmar Ação</h2>
-                    <p className="mb-6 text-sm text-gray-700">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Confirmar Ação</h2>
+                    <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
                         O que deseja fazer com a locação de "{draggedLocacaoDataForModal.recurso_nome}" para o dia {format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}?
                     </p>
                     <div className="flex justify-end space-x-3">
                         <button
                             onClick={closeDragDropConfirmModal}
-                            className="py-2 px-4 text-sm font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300"
+                            className="py-2 px-4 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
                         >
                             Cancelar
                         </button>
                         <button
                             onClick={handleDuplicateLocacao}
                             disabled={isLoading}
-                            className="py-2 px-4 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+                            className="py-2 px-4 text-sm font-medium text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 rounded-md disabled:opacity-50"
                         >
                             {isLoading ? 'Duplicando...' : 'Duplicar'}
                         </button>
                         <button
                             onClick={handleMoveLocacao}
                             disabled={isLoading}
-                            className="py-2 px-4 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50"
+                            className="py-2 px-4 text-sm font-medium text-white bg-primary-600 dark:bg-primary-700 hover:bg-primary-700 dark:hover:bg-primary-600 rounded-md disabled:opacity-50"
                         >
                             {isLoading ? 'Movendo...' : 'Mover'}
                         </button>

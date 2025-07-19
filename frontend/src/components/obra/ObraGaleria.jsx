@@ -50,7 +50,7 @@ function ObraGaleria({ obraId, newFoto }) {
     };
 
     if (!obraId) {
-        return <p className="text-gray-600">ID da Obra não especificado para carregar a galeria.</p>;
+        return <p className="text-gray-600 dark:text-gray-400">ID da Obra não especificado para carregar a galeria.</p>;
     }
 
     if (isLoading) {
@@ -60,15 +60,15 @@ function ObraGaleria({ obraId, newFoto }) {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <p className="ml-3 text-gray-700">Carregando fotos...</p>
+                <p className="ml-3 text-gray-700 dark:text-gray-300">Carregando fotos...</p>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="my-6 p-4 bg-red-50 border border-red-300 rounded-md text-center">
-                <p className="text-sm text-red-700">{error}</p>
+            <div className="my-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-600 rounded-md text-center">
+                <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
                 <button
                     onClick={fetchFotos}
                     className="mt-2 px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700"
@@ -82,12 +82,12 @@ function ObraGaleria({ obraId, newFoto }) {
     // A verificação de fotos.length === 0 continua válida, pois `fotos` no estado sempre será uma array.
     if (fotos.length === 0 && !isLoading && !error) { // Adicionado !isLoading e !error para mostrar apenas se não houver erro e não estiver carregando
         return (
-            <div className="my-6 p-6 border-2 border-dashed border-gray-300 rounded-lg text-center">
+            <div className="my-6 p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center">
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhuma foto adicionada ainda.</h3>
-                <p className="mt-1 text-sm text-gray-500">Seja o primeiro a adicionar uma foto para esta obra!</p>
+                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Nenhuma foto adicionada ainda.</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Seja o primeiro a adicionar uma foto para esta obra!</p>
             </div>
         );
     }
@@ -121,7 +121,7 @@ function ObraGaleria({ obraId, newFoto }) {
                     onClick={closeModal} // Close modal on backdrop click
                 >
                     <div
-                        className="relative bg-white p-4 rounded-lg shadow-xl max-w-3xl max-h-[90vh]"
+                        className="relative bg-white dark:bg-gray-800 p-4 rounded-lg shadow-xl max-w-3xl max-h-[90vh]"
                         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside image/modal content
                     >
                         <img
@@ -130,11 +130,11 @@ function ObraGaleria({ obraId, newFoto }) {
                             className="max-w-full max-h-[80vh] object-contain rounded"
                         />
                         {selectedFoto.descricao && (
-                            <p className="mt-2 text-center text-gray-700">{selectedFoto.descricao}</p>
+                            <p className="mt-2 text-center text-gray-700 dark:text-gray-200">{selectedFoto.descricao}</p>
                         )}
                         <button
                             onClick={closeModal}
-                            className="absolute top-2 right-2 bg-white rounded-full p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            className="absolute top-2 right-2 bg-white dark:bg-gray-700 rounded-full p-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
                             aria-label="Fechar modal"
                         >
                             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

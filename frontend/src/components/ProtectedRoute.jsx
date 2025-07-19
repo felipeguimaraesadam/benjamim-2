@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 // Add a prop for admin routes
-const ProtectedRoute = ({ isAdminRoute = false }) => {
+const ProtectedRoute = ({ children, isAdminRoute = false }) => {
   const auth = useAuth();
   const location = useLocation();
 
@@ -34,7 +34,7 @@ const ProtectedRoute = ({ isAdminRoute = false }) => {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  return <Outlet />; // User is authenticated and has necessary permissions
+  return children ? children : <Outlet />; // Render children if passed, otherwise Outlet
 };
 
 export default ProtectedRoute;

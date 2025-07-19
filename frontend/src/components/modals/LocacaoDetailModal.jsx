@@ -4,8 +4,8 @@ import { formatDateToDMY } from '../../utils/dateUtils'; // Assuming this utilit
 
 const DetailItem = ({ label, value }) => (
   <div className="mb-3">
-    <p className="text-sm font-medium text-gray-500">{label}</p>
-    <p className="text-md text-gray-900">{value || 'N/A'}</p>
+    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+    <p className="text-md text-gray-900 dark:text-gray-200">{value || 'N/A'}</p>
   </div>
 );
 
@@ -70,21 +70,21 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4 transition-opacity duration-300 ease-in-out">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Detalhes da Locação</h2>
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Detalhes da Locação</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
             aria-label="Fechar modal"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </div>
 
-        {isLoading && <div className="text-center py-4">Carregando detalhes...</div>}
+        {isLoading && <div className="text-center py-4 text-gray-600 dark:text-gray-400">Carregando detalhes...</div>}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded relative mb-4" role="alert">
             <strong className="font-bold">Erro: </strong>
             <span className="block sm:inline">{error}</span>
           </div>
@@ -109,7 +109,7 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
         <div className="mt-6 flex justify-end">
           <button
             onClick={onClose}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
+            className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:focus:ring-gray-500 transition-colors"
           >
             Fechar
           </button>

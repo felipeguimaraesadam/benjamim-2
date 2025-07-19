@@ -216,3 +216,36 @@ class FotoObra(models.Model):
 
     def __str__(self):
         return f"Foto de {self.obra.nome_obra} ({self.id})"
+
+
+class Backup(models.Model):
+    TIPO_BACKUP_CHOICES = [
+        ('manual', 'Manual'),
+        ('automatico', 'Automático'),
+    ]
+    
+    filename = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    tipo = models.CharField(max_length=20, choices=TIPO_BACKUP_CHOICES, default='manual')
+    size_bytes = models.BigIntegerField(default=0)
+    description = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Backup {self.filename} - {self.created_at.strftime('%d/%m/%Y %H:%M')}"
+
+
+class BackupSettings(models.Model):
+    auto_backup_enabled = models.BooleanField(default=True)
+    backup_time = models.TimeField(default='02:00:00')  # 2:00 AM
+    retention_days = models.PositiveIntegerField(default=30)
+    max_backups = models.PositiveIntegerField(default=10)
+    
+    class Meta:
+        verbose_name = 'Configuração de Backup'
+        verbose_name_plural = 'Configurações de Backup'
+    
+    def __str__(self):
+        return f"Configurações de Backup - Auto: {self.auto_backup_enabled}"

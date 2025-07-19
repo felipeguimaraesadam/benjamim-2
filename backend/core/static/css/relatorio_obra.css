@@ -18,10 +18,89 @@
 */
 
 body {
-    font-family: 'Arial', 'Helvetica', sans-serif; /* Changed font for broader compatibility */
+    font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
     font-size: 10pt;
-    color: #333333; /* Dark gray for text */
-    line-height: 1.4;
+    color: #333; /* Darker text for better contrast */
+    line-height: 1.6;
+}
+
+.simple-report-container {
+    border: 1px solid #ccc;
+    padding: 1.5cm;
+    height: calc(29.7cm - 3cm); /* A4 height minus padding */
+    width: calc(21cm - 3cm); /* A4 width minus padding */
+    box-sizing: border-box;
+    position: relative;
+    background-color: #fdfdfd;
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Align items to the top */
+    border-bottom: 3px solid #28a745; /* Green accent color */
+    padding-bottom: 15px;
+    margin-bottom: 40px; /* More space after header */
+}
+
+.report-header .logo {
+    font-size: 26pt;
+    font-weight: bold;
+    color: #28a745; /* Green accent color */
+}
+
+.report-header .title-block {
+    text-align: right;
+}
+
+.report-header h1 {
+    margin: 0;
+    font-size: 20pt;
+    color: #333;
+    font-weight: bold;
+}
+
+.report-header p {
+    margin: 0;
+    font-size: 12pt;
+    color: #666;
+}
+
+.report-footer {
+    position: absolute;
+    bottom: 1cm;
+    left: 1.5cm;
+    right: 1.5cm;
+    text-align: center;
+    font-size: 9pt;
+    color: #777;
+    border-top: 1px solid #eee;
+    padding-top: 8px;
+}
+
+.header-placeholder {
+    height: 60px; /* Same height as the header */
+}
+
+.header {
+    position: running(header);
+    height: 60px;
+    background-color: #f8f8f8;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 20px;
+    text-align: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 16pt;
+    color: #333;
+}
+
+.header p {
+    margin: 0;
+    font-size: 10pt;
+    color: #666;
 }
 
 .cover-page-content {
@@ -46,12 +125,13 @@ h1.main-title {
 }
 
 h2.section-title {
-    font-size: 15pt;
-    border-bottom: 1.5px solid #bdc3c7; /* Slightly thicker border */
-    padding-bottom: 0.3em;
-    margin-top: 1.8em; /* More space before section */
-    margin-bottom: 1em;
-    color: #34495e;
+    font-size: 16pt; /* Larger section titles */
+    color: #2c3e50;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #28a745; /* Green accent color */
+    padding-bottom: 8px;
+    font-weight: bold;
 }
 
 h3.subsection-title {
@@ -84,17 +164,71 @@ tr {
 }
 
 th, td {
-    border: 1px solid #bdc3c7; /* Lighter gray for borders */
-    padding: 6px 8px; /* Slightly more padding */
+    padding: 12px 10px; /* More vertical padding */
     text-align: left;
-    vertical-align: top;
-    word-wrap: break-word; /* Help prevent overflow */
+    vertical-align: middle;
+    border: none; /* Remove all borders */
+}
+
+table {
+    border-collapse: separate; /* Use separate to allow for spacing */
+    border-spacing: 0 4px; /* Add vertical spacing between rows */
 }
 
 th {
-    background-color: #ecf0f1; /* Light gray background for headers */
+    background-color: #28a745; /* Green background for headers */
+    color: #ffffff; /* White text on green background */
     font-weight: bold;
-    color: #2c3e50; /* Dark blue/gray for header text */
+    text-transform: uppercase;
+    font-size: 9pt;
+    letter-spacing: 0.5px;
+}
+
+/* Add rounded corners to the first and last header cells */
+th:first-child {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+th:last-child {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+td {
+    background-color: #f8f9fa; /* Light gray for data cells */
+}
+
+/* Add rounded corners to the first and last data cells in each row */
+tr td:first-child {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+tr td:last-child {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+/* Remove background for financial summary to make it stand out */
+.financial-summary td {
+    background-color: #ffffff;
+    border-bottom: 1px solid #eee;
+}
+
+.financial-summary th {
+    background-color: transparent;
+    color: #333;
+    text-transform: none;
+    font-size: 10pt;
+    letter-spacing: normal;
+    border-bottom: 1px solid #eee;
+    font-weight: normal;
+}
+
+.financial-summary tr:last-child th,
+.financial-summary tr:last-child td {
+    border-bottom: none;
 }
 
 .financial-summary td:nth-child(2),
@@ -103,13 +237,15 @@ th {
 }
 
 .balance-positive {
-    color: #27ae60; /* Green for positive balance */
+    color: #28a745; /* Brighter Green */
     font-weight: bold;
+    font-size: 11pt;
 }
 
 .balance-negative {
-    color: #c0392b; /* Red for negative balance */
+    color: #dc3545; /* Brighter Red */
     font-weight: bold;
+    font-size: 11pt;
 }
 
 .photo-gallery {

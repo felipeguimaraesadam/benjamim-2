@@ -17,9 +17,9 @@ const ObraDetailHeader = ({ obra, formatDate }) => {
       </div>
 
       {/* Main Details Section */}
-      <div className="bg-white shadow-xl rounded-lg p-6 mb-8">
+      <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 mb-8">
         <div className="flex flex-wrap justify-between items-start mb-4">
-          <h1 className="text-3xl font-bold text-gray-800">{obra.nome_obra}</h1>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">{obra.nome_obra}</h1>
           {/* Action Buttons Moved Up for better visibility */}
           <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
             <Link
@@ -38,9 +38,9 @@ const ObraDetailHeader = ({ obra, formatDate }) => {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-x-6 gap-y-4 mb-4 text-gray-700">
+        <div className="grid md:grid-cols-2 gap-x-6 gap-y-4 mb-4 text-gray-700 dark:text-gray-200">
           <p><strong>Endereço:</strong> {obra.endereco_completo || `${obra.logradouro || ''}, ${obra.numero || ''}`}, {obra.bairro || ''}, {obra.cidade || ''} - {obra.estado || ''}, CEP: {obra.cep || ''}</p>
-          <p><strong>Status:</strong> <span className={`px-3 py-1 text-sm font-semibold rounded-full ${obra.status === 'Em Andamento' ? 'bg-yellow-100 text-yellow-800' : obra.status === 'Concluída' ? 'bg-green-100 text-green-800' : obra.status === 'Planejada' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>{obra.status}</span></p>
+          <p><strong>Status:</strong> <span className={`px-3 py-1 text-sm font-semibold rounded-full ${obra.status === 'Em Andamento' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' : obra.status === 'Concluída' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : obra.status === 'Planejada' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}>{obra.status}</span></p>
           <p><strong>Data de Início:</strong> {formatDate(obra.data_inicio)}</p>
           <p><strong>Previsão de Término:</strong> {formatDate(obra.data_prevista_fim)}</p>
           {obra.data_real_fim && <p><strong>Data de Conclusão:</strong> {formatDate(obra.data_real_fim)}</p>}
@@ -49,8 +49,8 @@ const ObraDetailHeader = ({ obra, formatDate }) => {
         </div>
         {obra.descricao && (
           <div className="mt-4">
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">Descrição do Projeto</h2>
-            <p className="text-gray-600 whitespace-pre-line">{obra.descricao}</p>
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">Descrição do Projeto</h2>
+            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">{obra.descricao}</p>
           </div>
         )}
       </div>

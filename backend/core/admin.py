@@ -9,6 +9,8 @@ from .models import (
     Compra,
     Despesa_Extra,
     Ocorrencia_Funcionario,
+    Backup,
+    BackupSettings,
 )
 
 admin.site.register(Usuario)
@@ -20,3 +22,5 @@ admin.site.register(Material)
 admin.site.register(Compra)
 admin.site.register(Despesa_Extra)
 admin.site.register(Ocorrencia_Funcionario)
+admin.site.register(Backup)
+admin.site.register(BackupSettings)

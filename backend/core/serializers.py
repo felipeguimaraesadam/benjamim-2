@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra
+from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra, Backup, BackupSettings
 from django.db.models import Sum, Q
 from decimal import Decimal
 
@@ -67,95 +67,15 @@ class ObraNestedSerializer(serializers.ModelSerializer):
 
 
 class ObraSerializer(serializers.ModelSerializer):
-    responsavel_nome = serializers.CharField(source='responsavel.nome_completo', read_only=True, allow_null=True)
-    custo_total_realizado = serializers.SerializerMethodField()
-    balanco_financeiro = serializers.SerializerMethodField()
-    custos_por_categoria = serializers.SerializerMethodField()
-    custo_por_metro = serializers.SerializerMethodField()
-    gastos_por_categoria_material_obra = serializers.SerializerMethodField()
+    responsavel_nome = serializers.CharField(source='responsavel.nome_completo', read_only=True)
 
     class Meta:
         model = Obra
         fields = [
             'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
             'data_inicio', 'data_prevista_fim', 'data_real_fim',
-            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem', 'custo_por_metro',
-            'custo_total_realizado', 'balanco_financeiro', 'custos_por_categoria',
-            'gastos_por_categoria_material_obra' # Added new field
+            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem'
         ]
-
-    def get_gastos_por_categoria_material_obra(self, obj):
-        # obj is the Obra instance
-        print(f"[DEBUG ObraSerializer] Calculating get_gastos_por_categoria_material_obra for Obra ID: {obj.id}")
-
-        custos_agregados = ItemCompra.objects.filter(compra__obra=obj) \
-            .values('categoria_uso') \
-            .annotate(total_valor_categoria=Sum('valor_total_item')) \
-            .order_by('categoria_uso')
-
-        resultado_formatado = {}
-        for item in custos_agregados:
-            categoria = item['categoria_uso'] if item['categoria_uso'] else 'Não Especificada'
-            # Ensure the value is Decimal, default to Decimal('0.00') if None
-            valor = item['total_valor_categoria'] if item['total_valor_categoria'] is not None else Decimal('0.00')
-            resultado_formatado[categoria] = valor
-
-        print(f"[DEBUG ObraSerializer] Gastos por Categoria Material for Obra ID {obj.id}: {resultado_formatado}")
-        return resultado_formatado
-
-    def get_custo_por_metro(self, obj):
-        # Debug print
-        print(f"[DEBUG] Calculating custo_por_metro for Obra ID: {obj.id}, Area: {obj.area_metragem}")
-
-        if obj.area_metragem and obj.area_metragem > Decimal('0.00'):
-            custo_realizado = self.get_custo_total_realizado(obj)
-            if custo_realizado is not None:
-                result = (custo_realizado / obj.area_metragem).quantize(Decimal('0.01'))
-                print(f"[DEBUG] Cust_realizado: {custo_realizado}, Area: {obj.area_metragem}, Result: {result}")
-                return result
-            else:
-                print(f"[DEBUG] Custo_realizado is None for Obra ID: {obj.id}")
-                return Decimal('0.00')
-        else:
-            print(f"[DEBUG] Area_metragem is zero or None for Obra ID: {obj.id}")
-            return Decimal('0.00')
-
-    def get_custo_total_realizado(self, obj):
-        # obj is the Obra instance
-        total_compras = obj.compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
-        total_despesas = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
-
-        # Calculate total from Locacoes
-        # Ensure Locacao_Obras_Equipes model is imported
-        total_locacoes = Locacao_Obras_Equipes.objects.filter(obra=obj).aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
-
-        return total_compras + total_despesas + total_locacoes
-
-    def get_balanco_financeiro(self, obj):
-        custo_realizado = self.get_custo_total_realizado(obj) # Reuse the already calculated value
-        orcamento = obj.orcamento_previsto if obj.orcamento_previsto is not None else Decimal('0.00')
-        return orcamento - custo_realizado
-
-    def get_custos_por_categoria(self, obj):
-        print(f"[DEBUG ObraSerializer] Calculating get_custos_por_categoria for Obra ID: {obj.id}")
-        total_compras = obj.compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
-        total_despesas = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
-
-        # Calculate total from Locacoes (can reuse logic or recalculate)
-        total_locacoes = Locacao_Obras_Equipes.objects.filter(obra=obj).aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
-
-        # Costs for 'servicos' and 'equipes' were previously assumed to be 0.
-        # 'total_locacoes' now represents the cost for allocated resources.
-        # We can rename 'equipes' to 'locacoes' or add it as a new category.
-        # Let's add it as 'locacoes' for clarity.
-        data_to_return = {
-            'materiais': total_compras,
-            'despesas_extras': total_despesas,
-            'locacoes': total_locacoes, # New category for locação costs
-            'servicos': Decimal('0.00') # Assuming this is for other types of services not covered by locacao
-        }
-        print(f"[DEBUG ObraSerializer] Custos por Categoria for Obra ID {obj.id}: {data_to_return}")
-        return data_to_return
 
 # Novo Serializer Básico para Funcionário
 class FuncionarioBasicSerializer(serializers.ModelSerializer):
@@ -194,21 +114,10 @@ class EquipeComMembrosBasicSerializer(serializers.ModelSerializer):
 
 
 class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
-    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True, allow_null=True)
-    equipe_nome = serializers.CharField(source='equipe.nome_equipe', read_only=True, allow_null=True) # Readicionado
-    funcionario_locado_nome = serializers.CharField(source='funcionario_locado.nome_completo', read_only=True, allow_null=True)
-
-    # Campo para escrita do ID da equipe (se houver equipe)
-    equipe = serializers.PrimaryKeyRelatedField(queryset=Equipe.objects.all(), allow_null=True, required=False)
-    # Campo para leitura dos detalhes da equipe, incluindo membros
+    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)
+    equipe_nome = serializers.CharField(source='equipe.nome_equipe', read_only=True)
+    funcionario_locado_nome = serializers.CharField(source='funcionario_locado.nome_completo', read_only=True)
     equipe_details = EquipeComMembrosBasicSerializer(source='equipe', read_only=True)
-
-    # Campo para escrita do ID do funcionário (se houver funcionário individual)
-    # O campo funcionario_locado já existe no modelo e é um ForeignKey.
-    # O ModelSerializer já o tratará como um PrimaryKeyRelatedField por padrão.
-    # Não precisamos declará-lo explicitamente a menos que queiramos mudar o queryset ou outras opções.
-    # funcionario_locado = serializers.PrimaryKeyRelatedField(queryset=Funcionario.objects.all(), allow_null=True, required=False)
-
     tipo = serializers.SerializerMethodField()
     recurso_nome = serializers.SerializerMethodField()
 
@@ -616,3 +525,23 @@ class EquipeDetailSerializer(serializers.ModelSerializer):
             obra__isnull=False
         ).select_related('obra').order_by('-data_locacao_inicio')
         return EquipeLocacaoSerializer(locacoes, many=True, context=self.context).data
+
+
+class BackupSerializer(serializers.ModelSerializer):
+    size_mb = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Backup
+        fields = ['id', 'filename', 'created_at', 'tipo', 'size_bytes', 'size_mb', 'description']
+        read_only_fields = ['id', 'created_at', 'size_bytes']
+    
+    def get_size_mb(self, obj):
+        if obj.size_bytes:
+            return round(obj.size_bytes / (1024 * 1024), 2)
+        return 0
+
+
+class BackupSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BackupSettings
+        fields = ['id', 'auto_backup_enabled', 'backup_time', 'retention_days', 'max_backups']

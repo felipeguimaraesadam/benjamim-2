@@ -3,9 +3,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 const TopMaterialsChart = ({ custosMaterial, materialError }) => {
   return (
-    <div className="bg-white shadow-lg rounded-lg p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Visão Geral: Top Materiais por Custo</h2>
-      {materialError && <p className="text-red-500 text-sm mb-2">Erro: {materialError}</p>}
+    <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200 border-b dark:border-gray-600 pb-2">Visão Geral: Top Materiais por Custo</h2>
+      {materialError && <p className="text-red-500 dark:text-red-400 text-sm mb-2">Erro: {materialError}</p>}
       {custosMaterial && custosMaterial.length > 0 ? (
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={custosMaterial.slice(0, 10)} layout="vertical" margin={{ top: 5, right: 30, left: 120, bottom: 5 }}>
@@ -18,7 +18,7 @@ const TopMaterialsChart = ({ custosMaterial, materialError }) => {
           </BarChart>
         </ResponsiveContainer>
       ) : (
-        !materialError && <p className="text-gray-500 text-sm">Nenhuma compra registrada para este gráfico.</p>
+        !materialError && <p className="text-gray-500 dark:text-gray-400 text-sm">Nenhuma compra registrada para este gráfico.</p>
       )}
     </div>
   );

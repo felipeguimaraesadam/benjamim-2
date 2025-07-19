@@ -1,8 +1,16 @@
-# Database
-db.sqlite3
-*.sqlite3
+# Arquivos de ambiente
+.env
 
-# Virtual Environment
+# Banco de dados
+db.sqlite3
+
+# Ambientes virtuais
 .venv/
 venv/
-*.env
+
+# Arquivos de cache do Python
+__pycache__/
+*.pyc
+
+# Arquivos de mídia
+/media/

@@ -64,9 +64,7 @@ const ObraLaborCostsTable = ({ locacoesEquipe, onRemoverLocacao, removingLocacao
   }
 
   return (
-    // O div wrapper da tabela não precisa de bg ou shadow, pois é parte do card pai (ObraLaborTabContent)
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600"> {/* Divisor de linha um pouco mais claro no dark */}
+    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600"> {/* Divisor de linha um pouco mais claro no dark */}
         {/* Cabeçalho da tabela: um cinza um pouco mais claro que o fundo do card no dark mode */}
         <thead className="bg-gray-50 dark:bg-gray-750">
           <tr>
@@ -133,7 +131,6 @@ const ObraLaborCostsTable = ({ locacoesEquipe, onRemoverLocacao, removingLocacao
           })}
         </tbody>
       </table>
-    </div>
   );
 };
 

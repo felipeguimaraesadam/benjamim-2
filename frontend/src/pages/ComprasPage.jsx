@@ -252,11 +252,11 @@ const ComprasPage = () => {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"> {/* Increased py */}
             { (currentCompra || isAddingNew) ? (
                 <>
-                    <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
                         {currentCompra && currentCompra.id ? 'Editar Compra' : 'Registrar Nova Compra'}
                     </h1>
                     {error && (
-                        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-md relative mb-5 flex items-center" role="alert">
+                        <div className="bg-red-100 dark:bg-red-900 border-l-4 border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded-md relative mb-5 flex items-center" role="alert">
                             <AlertIcon type="error" />
                             <div>
                                 <strong className="font-bold">Erro: </strong>
@@ -275,7 +275,7 @@ const ComprasPage = () => {
             ) : (
                 <>
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                        <h1 className="text-2xl font-semibold text-gray-900">Gestão de Compras</h1>
+                        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Gestão de Compras</h1>
                         <button
                             onClick={handleAddNewCompraClick}
                             className="bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2.5 px-5 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
@@ -285,11 +285,11 @@ const ComprasPage = () => {
                     </div>
 
                     {/* Filter Section */}
-                    <div className="my-4 p-4 border rounded-md bg-gray-50 shadow">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-3">Filtrar Compras</h2>
+                    <div className="my-4 p-4 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 shadow">
+                        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">Filtrar Compras</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                             <div>
-                                <label htmlFor="dataInicio" className="block text-sm font-medium text-gray-700">Data Início</label>
+                                <label htmlFor="dataInicio" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Data Início</label>
                                 <input
                                     type="date"
                                     id="dataInicio"
@@ -299,7 +299,7 @@ const ComprasPage = () => {
                                 />
                             </div>
                             <div>
-                                <label htmlFor="dataFim" className="block text-sm font-medium text-gray-700">Data Fim</label>
+                                <label htmlFor="dataFim" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Data Fim</label>
                                 <input
                                     type="date"
                                     id="dataFim"
@@ -309,7 +309,7 @@ const ComprasPage = () => {
                                 />
                             </div>
                             <div>
-                                <label htmlFor="fornecedor" className="block text-sm font-medium text-gray-700">Fornecedor</label>
+                                <label htmlFor="fornecedor" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fornecedor</label>
                                 <input
                                     type="text"
                                     id="fornecedor"
@@ -328,7 +328,7 @@ const ComprasPage = () => {
                                 </button>
                                 <button
                                     onClick={handleClearFilters}
-                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors w-full sm:w-auto"
+                                    className="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-semibold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors w-full sm:w-auto"
                                 >
                                     Limpar
                                 </button>
@@ -345,7 +345,7 @@ const ComprasPage = () => {
 
             {/* Error display for fetch errors if not loading and no form is open */}
             {error && !isLoading && !currentCompra && !isAddingNew && (
-                 <div className="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-md relative mb-5 flex items-center" role="alert">
+                 <div className="bg-red-100 dark:bg-red-900 border-l-4 border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded-md relative mb-5 flex items-center" role="alert">
                             <AlertIcon type="error" />
                             <div>
                                 <strong className="font-bold">Erro: </strong>
@@ -380,14 +380,14 @@ const ComprasPage = () => {
 
             {showDeleteConfirm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
-                    <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-                        <h2 className="text-xl font-semibold text-gray-800 mb-5">Confirmar Exclusão</h2>
-                        <p className="mb-6 text-gray-600">Tem certeza que deseja excluir esta compra? Esta ação não pode ser desfeita.</p>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-5">Confirmar Exclusão</h2>
+                        <p className="mb-6 text-gray-600 dark:text-gray-300">Tem certeza que deseja excluir esta compra? Esta ação não pode ser desfeita.</p>
                         <div className="flex justify-end space-x-4">
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
                         disabled={isDeleting}
-                                className="py-2.5 px-5 text-sm font-medium text-gray-700 bg-slate-100 rounded-md border border-slate-300 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 disabled:opacity-60 transition-colors"
+                                className="py-2.5 px-5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-slate-100 dark:bg-gray-600 rounded-md border border-slate-300 dark:border-gray-500 hover:bg-slate-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 disabled:opacity-60 transition-colors"
                             >
                                 Cancelar
                             </button>

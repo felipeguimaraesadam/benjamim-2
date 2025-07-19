@@ -274,16 +274,16 @@ const RelatoriosPage = () => {
   };
 
   const renderReportForm = () => {
-    if (isInitialLoading) return <p className="text-center text-gray-600">Carregando filtros...</p>;
+    if (isInitialLoading) return <p className="text-center text-gray-600 dark:text-gray-400">Carregando filtros...</p>;
 
     switch (activeTab) { // Modificado de reportType para activeTab
       case 'financeiroObra':
         return (
-          <form key="form-financeiro-obra" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório Financeiro da Obra</h2>
+          <form key="form-financeiro-obra" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6 space-y-4">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Relatório Financeiro da Obra</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="obra_id_fin" className="block text-sm font-medium text-gray-700">Obra <span className="text-red-500">*</span></label>
+                <label htmlFor="obra_id_fin" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Obra <span className="text-red-500">*</span></label>
                 <select id="obra_id_fin" name="obra_id" value={filters.obra_id}
                         onChange={(e) => handleFilterChange('obra_id', e.target.value)}
                         className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
@@ -292,7 +292,7 @@ const RelatoriosPage = () => {
                 </select>
               </div>
               <div>
-                <label htmlFor="month_selector_fin" className="block text-sm font-medium text-gray-700">Mês do Relatório <span className="text-red-500">*</span></label>
+                <label htmlFor="month_selector_fin" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mês do Relatório <span className="text-red-500">*</span></label>
                 <MonthSelector
                   id="month_selector_fin"
                   name="selected_month"
@@ -310,11 +310,11 @@ const RelatoriosPage = () => {
         );
       case 'geralCompras':
          return (
-            <form key="form-geral-compras" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório Geral de Compras</h2>
+            <form key="form-geral-compras" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6 space-y-4">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Relatório Geral de Compras</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="month_selector_comp" className="block text-sm font-medium text-gray-700">Mês do Relatório <span className="text-red-500">*</span></label>
+                  <label htmlFor="month_selector_comp" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mês do Relatório <span className="text-red-500">*</span></label>
                   <MonthSelector
                     id="month_selector_comp"
                     name="selected_month"
@@ -323,7 +323,7 @@ const RelatoriosPage = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="obra_id_comp" className="block text-sm font-medium text-gray-700">Obra (Opcional)</label>
+                  <label htmlFor="obra_id_comp" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Obra (Opcional)</label>
                   <select id="obra_id_comp" name="obra_id" value={filters.obra_id}
                           onChange={(e) => handleFilterChange('obra_id', e.target.value)}
                           className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
@@ -332,7 +332,7 @@ const RelatoriosPage = () => {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="material_id_comp" className="block text-sm font-medium text-gray-700">Material (Opcional)</label>
+                  <label htmlFor="material_id_comp" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Material (Opcional)</label>
                   <select id="material_id_comp" name="material_id" value={filters.material_id}
                           onChange={(e) => handleFilterChange('material_id', e.target.value)}
                           className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
@@ -350,11 +350,11 @@ const RelatoriosPage = () => {
          );
       case 'desempenhoEquipe':
         return (
-            <form key="form-desempenho-equipe" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório de Desempenho de Equipes</h2>
+            <form key="form-desempenho-equipe" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6 space-y-4">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Relatório de Desempenho de Equipes</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <div>
-                  <label htmlFor="equipe_id_des" className="block text-sm font-medium text-gray-700">Equipe <span className="text-red-500">*</span></label>
+                  <label htmlFor="equipe_id_des" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Equipe <span className="text-red-500">*</span></label>
                   <select id="equipe_id_des" name="equipe_id" value={filters.equipe_id}
                           onChange={(e) => handleFilterChange('equipe_id', e.target.value)}
                           className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
@@ -363,13 +363,13 @@ const RelatoriosPage = () => {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="data_inicio_des" className="block text-sm font-medium text-gray-700">Data Início (Opcional)</label>
+                  <label htmlFor="data_inicio_des" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Data Início (Opcional)</label>
                   <input type="date" id="data_inicio_des" name="data_inicio" value={filters.data_inicio}
                           onChange={(e) => handleFilterChange('data_inicio', e.target.value)}
                           className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
                 </div>
                 <div>
-                  <label htmlFor="data_fim_des" className="block text-sm font-medium text-gray-700">Data Fim (Opcional)</label>
+                  <label htmlFor="data_fim_des" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Data Fim (Opcional)</label>
                   <input type="date" id="data_fim_des" name="data_fim" value={filters.data_fim}
                           onChange={(e) => handleFilterChange('data_fim', e.target.value)}
                           className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"/>
@@ -384,11 +384,11 @@ const RelatoriosPage = () => {
         );
     case 'custoGeral':
         return (
-            <form key="form-custo-geral" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Relatório Geral de Custos do Sistema</h2>
+            <form key="form-custo-geral" onSubmit={(e) => { e.preventDefault(); handleGenerateReport(); }} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6 space-y-4">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Relatório Geral de Custos do Sistema</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                 <div>
-                  <label htmlFor="month_selector_cg" className="block text-sm font-medium text-gray-700">Mês do Relatório <span className="text-red-500">*</span></label>
+                  <label htmlFor="month_selector_cg" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mês do Relatório <span className="text-red-500">*</span></label>
                   <MonthSelector
                     id="month_selector_cg"
                     name="selected_month"
@@ -713,17 +713,17 @@ const RelatoriosPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <h1 className="text-3xl font-semibold text-gray-800 mb-6">Página de Relatórios</h1>
+      <h1 className="text-3xl font-semibold text-gray-800 dark:text-gray-100 mb-6">Página de Relatórios</h1>
 
       {/* Abas para seleção de tipo de relatório */}
-      <div className="mb-6 border-b border-gray-200">
+      <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-4" aria-label="Tabs">
           <button
             onClick={() => { setActiveTab('financeiroObra'); setReportData(null); setError(null); }}
             className={`whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm
                         ${activeTab === 'financeiroObra'
-                          ? 'border-primary-500 text-primary-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                          ? 'border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                          : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}`}
           >
             Financeiro por Obra
           </button>
@@ -731,8 +731,8 @@ const RelatoriosPage = () => {
             onClick={() => { setActiveTab('geralCompras'); setReportData(null); setError(null); }}
             className={`whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm
                         ${activeTab === 'geralCompras'
-                          ? 'border-primary-500 text-primary-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                          ? 'border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                          : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}`}
           >
             Geral de Compras
           </button>
@@ -740,8 +740,8 @@ const RelatoriosPage = () => {
             onClick={() => { setActiveTab('desempenhoEquipe'); setReportData(null); setError(null); }}
             className={`whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm
                         ${activeTab === 'desempenhoEquipe'
-                          ? 'border-primary-500 text-primary-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                          ? 'border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                          : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}`}
           >
             Desempenho de Equipe
           </button>
@@ -749,26 +749,26 @@ const RelatoriosPage = () => {
             onClick={() => { setActiveTab('custoGeral'); setReportData(null); setError(null); }}
             className={`whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm
                         ${activeTab === 'custoGeral'
-                          ? 'border-primary-500 text-primary-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                          ? 'border-primary-500 text-primary-600 dark:border-primary-400 dark:text-primary-400'
+                          : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}`}
           >
             Custo Geral do Sistema
           </button>
         </nav>
       </div>
 
-      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative my-4" role="alert">{error}</div>}
+      {error && <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative my-4" role="alert">{error}</div>}
 
       {/* Formulário de Filtros e Resultados do Relatório */}
       <div className="mb-8">
         {renderReportForm()}
       </div>
 
-      {isLoading && <p className="text-center py-4">Carregando relatório...</p>}
+      {isLoading && <p className="text-center py-4 text-gray-600 dark:text-gray-400">Carregando relatório...</p>}
 
       {reportData && !isLoading && (
-        <div className="bg-white p-6 rounded-lg shadow mt-6">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">Resultados do Relatório</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mt-6">
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Resultados do Relatório</h3>
           {/* Display logic for 'financeiroObra' */}
           {reportData.type === 'financeiroObra' && (
             <div className="space-y-2">
@@ -916,8 +916,8 @@ const RelatoriosPage = () => {
       )}
 
       {/* Seção para Ações de Exportação e Pagamento */}
-      <div className="mt-10 pt-6 border-t border-gray-200">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Ações de Exportação e Pagamento</h2>
+      <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-600">
+        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Ações de Exportação e Pagamento</h2>
         <div className="flex space-x-4 flex-wrap">
             <button
                 onClick={handleOpenMaterialPayModal}
@@ -937,10 +937,10 @@ const RelatoriosPage = () => {
       {/* Modal for Material Payments Report */}
       {showMaterialPayModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800">Relatório de Pagamento de Materiais</h2>
-              <button onClick={handleCloseMaterialPayModal} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Relatório de Pagamento de Materiais</h2>
+              <button onClick={handleCloseMaterialPayModal} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">&times;</button>
             </div>
 
             {/* Step 1: Filters */}
@@ -948,7 +948,7 @@ const RelatoriosPage = () => {
               <div className="space-y-4">
                 {/* Week Selector for Material Payments Report */}
                 <div className="mb-4">
-                  <label htmlFor="mpWeekSelector" className="block text-sm font-medium text-gray-700 mb-1">Selecionar Semana (Opcional):</label>
+                  <label htmlFor="mpWeekSelector" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Selecionar Semana (Opcional):</label>
                   <select
                     id="mpWeekSelector"
                     onChange={handleMaterialPayWeekSelectorChange}
@@ -964,18 +964,18 @@ const RelatoriosPage = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="mpStartDate" className="block text-sm font-medium text-gray-700">Data Início Pagamento <span className="text-red-500">*</span></label>
+                    <label htmlFor="mpStartDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Data Início Pagamento <span className="text-red-500">*</span></label>
                     <input type="date" id="mpStartDate" value={mpStartDate} onChange={(e) => setMpStartDate(e.target.value)}
                            className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"/>
                   </div>
                   <div>
-                    <label htmlFor="mpEndDate" className="block text-sm font-medium text-gray-700">Data Fim Pagamento <span className="text-red-500">*</span></label>
+                    <label htmlFor="mpEndDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Data Fim Pagamento <span className="text-red-500">*</span></label>
                     <input type="date" id="mpEndDate" value={mpEndDate} onChange={(e) => setMpEndDate(e.target.value)}
                            className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"/>
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="mpObraId" className="block text-sm font-medium text-gray-700">Obra (Opcional)</label>
+                  <label htmlFor="mpObraId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Obra (Opcional)</label>
                   <select id="mpObraId" value={mpObraId} onChange={(e) => setMpObraId(e.target.value)}
                           className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
                     <option value="">Todas as Obras</option> {/* mpObras is now just 'obras' */}
@@ -983,12 +983,12 @@ const RelatoriosPage = () => {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="mpFornecedor" className="block text-sm font-medium text-gray-700">Fornecedor (Opcional)</label>
+                  <label htmlFor="mpFornecedor" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fornecedor (Opcional)</label>
                   <input type="text" id="mpFornecedor" value={mpFornecedor} onChange={(e) => setMpFornecedor(e.target.value)}
                          placeholder="Nome parcial do fornecedor"
                          className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"/>
                 </div>
-                {mpPreCheckError && <p className="text-red-500 text-sm">{mpPreCheckError}</p>}
+                {mpPreCheckError && <p className="text-red-500 dark:text-red-400 text-sm">{mpPreCheckError}</p>}
                 <button onClick={handleMpPreCheck} disabled={mpIsPreChecking || !mpStartDate || !mpEndDate}
                         className="w-full mt-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center">
                   {mpIsPreChecking && <SpinnerIcon className="w-5 h-5 mr-2"/>}
@@ -1091,17 +1091,17 @@ const RelatoriosPage = () => {
       {/* NEW Modal for Relatório de Pagamento de Locações */}
       {showRplModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"> {/* Max-width can be adjusted */}
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-semibold text-gray-800">Relatório de Pagamento de Locações</h2>
-                <button onClick={handleCloseRplModal} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Relatório de Pagamento de Locações</h2>
+              <button onClick={handleCloseRplModal} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">&times;</button>
             </div>
 
             {/* Step 1: Date Selection */}
             {rplStep === 1 && (
               <div>
                 <div className="mb-4">
-                  <label htmlFor="rplWeekSelector" className="block text-sm font-medium text-gray-700 mb-1">Selecionar Semana (Opcional):</label>
+                  <label htmlFor="rplWeekSelector" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Selecionar Semana (Opcional):</label>
                   <select
                     id="rplWeekSelector"
                     onChange={handleRplWeekSelectorChange}
@@ -1117,7 +1117,7 @@ const RelatoriosPage = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label htmlFor="rplStartDate" className="block text-sm font-medium text-gray-700 mb-1">Data de Início <span className="text-red-500">*</span></label>
+                    <label htmlFor="rplStartDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Início <span className="text-red-500">*</span></label>
                     <input
                       type="date"
                       id="rplStartDate"
@@ -1127,7 +1127,7 @@ const RelatoriosPage = () => {
                     />
                   </div>
                   <div>
-                    <label htmlFor="rplEndDate" className="block text-sm font-medium text-gray-700 mb-1">Data de Fim <span className="text-red-500">*</span></label>
+                    <label htmlFor="rplEndDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Fim <span className="text-red-500">*</span></label>
                     <input
                       type="date"
                       id="rplEndDate"
@@ -1137,7 +1137,7 @@ const RelatoriosPage = () => {
                     />
                   </div>
                 </div>
-                {rplPreCheckError && <p className="text-red-500 text-sm mb-3">{rplPreCheckError}</p>}
+                {rplPreCheckError && <p className="text-red-500 dark:text-red-400 text-sm mb-3">{rplPreCheckError}</p>}
                 <button
                   onClick={handleRplPreCheck}
                   disabled={rplIsPreChecking || !rplStartDate || !rplEndDate}
@@ -1152,12 +1152,12 @@ const RelatoriosPage = () => {
             {/* Step 2: Pre-check Alert */}
             {rplStep === 2 && (
               <div className="my-4">
-                {rplPreCheckError && <p className="text-red-500 text-sm mb-3">{rplPreCheckError}</p>}
+                {rplPreCheckError && <p className="text-red-500 dark:text-red-400 text-sm mb-3">{rplPreCheckError}</p>}
 
                 {(rplPreCheckAlertDays.length > 0 || rplPreCheckMedicoesPendentes.length > 0) ? (
                   <>
                     {rplPreCheckAlertDays.length > 0 && (
-                      <div className="p-4 mb-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+                      <div className="p-4 mb-4 bg-yellow-100 dark:bg-yellow-900 border-l-4 border-yellow-500 text-yellow-700 dark:text-yellow-200">
                         <h3 className="font-bold mb-2">Alerta: Dias Sem Locações Registradas!</h3>
                         <p className="mb-1">Foram encontrados os seguintes dias dentro do período selecionado que não possuem nenhuma locação ativa registrada:</p>
                         <ul className="list-disc list-inside mb-3">
@@ -1167,7 +1167,7 @@ const RelatoriosPage = () => {
                     )}
 
                     {rplPreCheckMedicoesPendentes.length > 0 && (
-                      <div className="p-4 mb-4 bg-orange-100 border-l-4 border-orange-500 text-orange-700">
+                      <div className="p-4 mb-4 bg-orange-100 dark:bg-orange-900 border-l-4 border-orange-500 text-orange-700 dark:text-orange-200">
                         <h3 className="font-bold mb-2">Alerta: Medições Pendentes!</h3>
                         <p className="mb-1">As seguintes locações ativas no período possuem valor de pagamento zerado ou não definido e podem precisar de ajuste:</p>
                         <ul className="list-disc list-inside mb-3 text-xs">
@@ -1181,7 +1181,7 @@ const RelatoriosPage = () => {
                     )}
                     <p className="mb-3">Deseja gerar o relatório mesmo assim?</p>
                     <div className="flex justify-end space-x-3">
-                       <button onClick={() => setRplStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Voltar/Corrigir Datas</button>
+                       <button onClick={() => setRplStep(1)} className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 font-medium py-2 px-4 rounded-md">Voltar/Corrigir Datas</button>
                        <button onClick={handleRplContinueDespiteAlert} disabled={rplIsGeneratingReport} className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md disabled:opacity-50">
                         {rplIsGeneratingReport && <SpinnerIcon className="w-5 h-5 mr-2" />}
                         {rplIsGeneratingReport ? 'Gerando Dados...' : 'Continuar e Preparar Dados'}
@@ -1189,11 +1189,11 @@ const RelatoriosPage = () => {
                     </div>
                   </>
                 ) : (
-                  <div className="p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
+                  <div className="p-4 bg-green-100 dark:bg-green-900 border-l-4 border-green-500 text-green-700 dark:text-green-200">
                     <h3 className="font-bold mb-2">Verificação Concluída</h3>
                     <p>Nenhuma pendência (dias sem locações ou medições zeradas) encontrada no período selecionado.</p>
                      <div className="flex justify-end space-x-3 mt-3">
-                       <button onClick={() => setRplStep(1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md">Voltar</button>
+                       <button onClick={() => setRplStep(1)} className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 font-medium py-2 px-4 rounded-md">Voltar</button>
                        <button onClick={handleRplPrepareAndShowReportData} disabled={rplIsGeneratingReport} className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md disabled:opacity-50">
                         {rplIsGeneratingReport && <SpinnerIcon className="w-5 h-5 mr-2" />}
                         {rplIsGeneratingReport ? 'Gerando Dados...' : 'Preparar Dados do Relatório'}
@@ -1201,7 +1201,7 @@ const RelatoriosPage = () => {
                     </div>
                   </div>
                 )}
-                {rplReportError && !rplIsGeneratingReport && <p className="text-red-500 text-sm mt-3">{rplReportError}</p>}
+                {rplReportError && !rplIsGeneratingReport && <p className="text-red-500 dark:text-red-400 text-sm mt-3">{rplReportError}</p>}
               </div>
             )}
 
@@ -1209,7 +1209,7 @@ const RelatoriosPage = () => {
             {rplStep === 3 && rplReportData && (
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold text-gray-800">Relatório Gerado</h3>
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Relatório Gerado</h3>
                   <div className="flex space-x-2">
                     <button
                       onClick={handleRplExportCSV}
@@ -1229,22 +1229,22 @@ const RelatoriosPage = () => {
                     </button>
                   </div>
                 </div>
-                {rplReportError && <p className="text-red-500 text-sm mb-3">{rplReportError}</p>}
-                {rplReportData.length === 0 && <p className="text-gray-600">Nenhuma locação encontrada para o período e critérios selecionados.</p>}
+                {rplReportError && <p className="text-red-500 dark:text-red-400 text-sm mb-3">{rplReportError}</p>}
+                {rplReportData.length === 0 && <p className="text-gray-600 dark:text-gray-400">Nenhuma locação encontrada para o período e critérios selecionados.</p>}
 
                 {/* Displaying the report data - adapted from LocacoesPage */}
                 {rplReportData.map(obraData => (
-                  <div key={obraData.obra_id || obraData.obra_nome} className="mb-8 p-4 border border-gray-200 rounded-lg shadow">
-                    <h4 className="text-xl font-semibold text-blue-700 mb-3">{obraData.obra_nome}</h4>
+                  <div key={obraData.obra_id || obraData.obra_nome} className="mb-8 p-4 border border-gray-200 dark:border-gray-600 rounded-lg shadow dark:bg-gray-700">
+                    <h4 className="text-xl font-semibold text-blue-700 dark:text-blue-400 mb-3">{obraData.obra_nome}</h4>
                     {obraData.dias.map(diaData => (
-                      <div key={diaData.data} className="mb-4 pl-4 border-l-2 border-blue-200">
-                        <p className="text-md font-semibold text-gray-700">
-                          Data: {formatDateToDMY(diaData.data)} - Total Dia: <span className="text-blue-600 font-bold">{parseFloat(diaData.total_dia_obra).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      <div key={diaData.data} className="mb-4 pl-4 border-l-2 border-blue-200 dark:border-blue-600">
+                        <p className="text-md font-semibold text-gray-700 dark:text-gray-300">
+                          Data: {formatDateToDMY(diaData.data)} - Total Dia: <span className="text-blue-600 dark:text-blue-400 font-bold">{parseFloat(diaData.total_dia_obra).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                         </p>
                         {diaData.locacoes_no_dia.length > 0 ? (
                           <div className="overflow-x-auto mt-2">
-                            <table className="min-w-full text-xs text-left text-gray-600">
-                              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                            <table className="min-w-full text-xs text-left text-gray-600 dark:text-gray-300">
+                              <thead className="text-xs text-gray-700 dark:text-gray-300 uppercase bg-gray-50 dark:bg-gray-700">
                                 <tr>
                                   <th scope="col" className="px-3 py-2">Recurso</th>
                                   <th scope="col" className="px-3 py-2">Tipo Pag.</th>
@@ -1257,49 +1257,49 @@ const RelatoriosPage = () => {
                               </thead>
                               <tbody>
                                 {diaData.locacoes_no_dia.map(loc => (
-                                  <tr key={loc.locacao_id} className="bg-white border-b hover:bg-gray-50">
-                                    <td className="px-3 py-2">{loc.recurso_nome}</td>
-                                    <td className="px-3 py-2">{loc.tipo_pagamento_display}</td>
-                                    <td className="px-3 py-2 text-right">{parseFloat(loc.valor_diario_atribuido).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                                    <td className="px-3 py-2 text-right">{parseFloat(loc.valor_pagamento_total_locacao).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                                    <td className="px-3 py-2">{formatDateToDMY(loc.data_locacao_original_inicio)}</td>
-                                    <td className="px-3 py-2">{formatDateToDMY(loc.data_locacao_original_fim)}</td>
-                                    <td className="px-3 py-2">{loc.data_pagamento_prevista ? formatDateToDMY(loc.data_pagamento_prevista) : 'N/A'}</td>
+                                  <tr key={loc.locacao_id} className="bg-white dark:bg-gray-800 border-b dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{loc.recurso_nome}</td>
+                                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{loc.tipo_pagamento_display}</td>
+                                    <td className="px-3 py-2 text-right text-gray-900 dark:text-gray-100">{parseFloat(loc.valor_diario_atribuido).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                                    <td className="px-3 py-2 text-right text-gray-900 dark:text-gray-100">{parseFloat(loc.valor_pagamento_total_locacao).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{formatDateToDMY(loc.data_locacao_original_inicio)}</td>
+                                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{formatDateToDMY(loc.data_locacao_original_fim)}</td>
+                                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{loc.data_pagamento_prevista ? formatDateToDMY(loc.data_pagamento_prevista) : 'N/A'}</td>
                                   </tr>
                                 ))}
                               </tbody>
                             </table>
                           </div>
                         ) : (
-                          <p className="text-xs text-gray-500 italic mt-1">Nenhuma locação com custo atribuído a este dia.</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-1">Nenhuma locação com custo atribuído a este dia.</p>
                         )}
                       </div>
                     ))}
-                    <p className="text-lg font-semibold text-right text-blue-700 mt-4 pt-2 border-t border-blue-200">
-                      Total para {obraData.obra_nome} no Período: <span className="text-green-600 font-bold">{parseFloat(obraData.total_obra_periodo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    <p className="text-lg font-semibold text-right text-blue-700 dark:text-blue-400 mt-4 pt-2 border-t border-blue-200 dark:border-blue-600">
+                      Total para {obraData.obra_nome} no Período: <span className="text-green-600 dark:text-green-400 font-bold">{parseFloat(obraData.total_obra_periodo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </p>
                   </div>
                 ))}
                 {rplReportData.length > 0 && (
-                  <div className="mt-8 pt-4 border-t-2 border-gray-300">
-                    <p className="text-xl font-bold text-right text-gray-800">
+                  <div className="mt-8 pt-4 border-t-2 border-gray-300 dark:border-gray-600">
+                    <p className="text-xl font-bold text-right text-gray-800 dark:text-gray-100">
                       Total Geral do Relatório:
-                      <span className="text-green-700 ml-2">
+                      <span className="text-green-700 dark:text-green-400 ml-2">
                         {rplReportData.reduce((sum, obra) => sum + parseFloat(obra.total_obra_periodo), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </span>
                     </p>
                   </div>
                 )}
                  <div className="flex justify-end space-x-3 mt-6">
-                    <button onClick={() => setRplStep(1)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                    <button onClick={() => setRplStep(1)} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500">
                         Gerar Novo Relatório
                     </button>
                  </div>
               </div>
             )}
             {/* Feedback de carregamento para etapas que não sejam a 3 (onde os botões de exportação têm seus próprios spinners) */}
-            {rplIsGeneratingReport && rplStep !== 3 && <p className="text-center text-gray-500 mt-4"><SpinnerIcon className="w-5 h-5 mr-2 inline" /> Gerando...</p>}
-            {rplReportError && rplStep !== 3 && <p className="text-red-500 text-sm mt-3 text-center">{rplReportError}</p>}
+            {rplIsGeneratingReport && rplStep !== 3 && <p className="text-center text-gray-500 dark:text-gray-400 mt-4"><SpinnerIcon className="w-5 h-5 mr-2 inline" /> Gerando...</p>}
+            {rplReportError && rplStep !== 3 && <p className="text-red-500 dark:text-red-400 text-sm mt-3 text-center">{rplReportError}</p>}
           </div>
         </div>
       )}

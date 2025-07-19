@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 // Placeholder icons - replace with actual icons from a library like react-icons or Heroicons
 // Hamburger Icon for mobile
@@ -22,10 +23,11 @@ const DespesasIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" v
 const AlocacoesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-6.75 3h9m-9 3h9M3.75 3.75h16.5v16.5H3.75V3.75z" /></svg>; // Calendar or schedule icon
 const OcorrenciasIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>; // Warning/alert icon
 const RelatoriosIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 100 15 7.5 7.5 0 000-15zM21 21l-5.197-5.197M10.5 10.5V15m0 0V10.5m0 4.5H15m-4.5 0H6" /></svg>; // Chart/graph icon
+const BackupIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" /></svg>; // Database icon
 
 // Helper for group headers
 const NavGroupHeader = ({ title }) => (
-  <div className="px-3 pt-4 pb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+  <div className="px-3 pt-4 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
     {title}
   </div>
 );
@@ -40,8 +42,8 @@ const NavLink = ({ to, icon, children, onClick }) => {
       onClick={onClick} // Added onClick prop
       className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-150 ease-in-out
                   ${isActive
-                    ? 'bg-primary-500 text-white shadow-md'
-                    : 'text-gray-600 hover:bg-primary-50 hover:text-primary-600'
+                    ? 'bg-primary-500 text-white shadow-md dark:bg-primary-600'
+                    : 'text-gray-600 hover:bg-primary-50 hover:text-primary-600 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-primary-400'
                   }`}
     >
       {icon}
@@ -75,7 +77,7 @@ const Navegacao = () => {
     <>
       {/* Hamburger Button - visible only on small screens */}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 p-2 text-gray-600 hover:text-primary-600"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         aria-label="Abrir menu" // Added attribute
       >
@@ -84,12 +86,12 @@ const Navegacao = () => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 h-screen bg-white shadow-lg flex flex-col p-4 space-y-2
+        className={`fixed inset-y-0 left-0 z-40 w-64 h-screen bg-white dark:bg-gray-800 shadow-lg flex flex-col p-4 space-y-2
                    transform transition-transform duration-300 ease-in-out md:translate-x-0
                    ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="text-center py-6">
-          <Link to="/" onClick={closeMobileMenu} className="text-2xl font-bold text-primary-600">
+          <Link to="/" onClick={closeMobileMenu} className="text-2xl font-bold text-primary-600 dark:text-primary-400">
             SGO
           </Link>
         </div>
@@ -117,20 +119,22 @@ const Navegacao = () => {
             <>
               <NavGroupHeader title="Administração" />
               <NavLink to="/usuarios" icon={<UsersIcon />} onClick={closeMobileMenu}>Usuários</NavLink>
+              <NavLink to="/backup" icon={<BackupIcon />} onClick={closeMobileMenu}>Backup</NavLink>
             </>
           )}
         </nav>
 
-        <div className="pt-2 border-t border-gray-200">
-        <button
-          onClick={handleLogout} // handleLogout already calls closeMobileMenu
-          className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-150 ease-in-out"
-        >
-          <ArrowLeftOnRectangleIcon />
-          <span className="font-medium">Sair</span>
-        </button>
-      </div>
-      <div className="text-center py-2 text-xs text-gray-500">
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
+          <ThemeToggle onClick={closeMobileMenu} />
+          <button
+            onClick={handleLogout} // handleLogout already calls closeMobileMenu
+            className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 dark:text-gray-300 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-all duration-150 ease-in-out"
+          >
+            <ArrowLeftOnRectangleIcon />
+            <span className="font-medium">Sair</span>
+          </button>
+        </div>
+      <div className="text-center py-2 text-xs text-gray-500 dark:text-gray-400">
         <p>{user?.nome_completo} ({user?.nivel_acesso})</p>
       </div>
     </div>

@@ -193,9 +193,17 @@ export const deleteOcorrencia = (id) => apiClient.delete(`/ocorrencias/${id}/`);
 
 // --- Usuario Service Functions ---
 export const getUsuarios = (params) => apiClient.get('/usuarios/', { params });
-export const createUsuario = (userData) => apiClient.post('/usuarios/', userData);
+export const createUsuario = (userData) => apiClient.post('/register/', userData);
 export const updateUsuario = (id, userData) => apiClient.put(`/usuarios/${id}/`, userData);
 export const deleteUsuario = (id) => apiClient.delete(`/usuarios/${id}/`);
+
+// --- Backup Service Functions ---
+export const getBackups = () => apiClient.get('/backups/');
+export const createBackup = (description = '') => apiClient.post('/backups/', { description });
+export const restoreBackup = (backupId) => apiClient.post(`/backups/${backupId}/restore/`);
+export const deleteBackup = (backupId) => apiClient.delete(`/backups/${backupId}/`);
+export const getBackupSettings = () => apiClient.get('/backup-settings/');
+export const updateBackupSettings = (settings) => apiClient.put('/backup-settings/1/', settings);
 
 // --- FotoObra Service Functions ---
 export const getFotosObra = (obraId) => apiClient.get('/fotosobras/', { params: { obra_id: obraId } });
@@ -203,8 +211,10 @@ export const uploadFotoObra = (formData) => apiClient.post('/fotosobras/', formD
 export const deleteFotoObra = (fotoId) => apiClient.delete(`/fotosobras/${fotoId}/`);
 
 // --- PDF Report Service Functions ---
-export const gerarRelatorioPDFObra = (obraId) => {
+export const gerarRelatorioPDFObra = (obraId, isSimple = false) => {
+  const params = { is_simple: isSimple };
   return apiClient.get(`/obras/${obraId}/gerar-relatorio-pdf/`, {
+    params,
     responseType: 'blob', // Crucial for handling file download
   });
 };
