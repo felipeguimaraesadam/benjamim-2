@@ -67,9 +67,32 @@ if errorlevel 1 (
     goto :eof
 )
 
-REM 7. Activate virtual environment and run PyInstaller
+REM 7. Check and setup virtual environment
+echo [INFO] Checking virtual environment...
+if not exist ".venv" (
+    echo [INFO] Virtual environment not found. Creating virtual environment...
+    python -m venv .venv
+    if errorlevel 1 (
+        echo [ERROR] Failed to create virtual environment. Check if Python is installed.
+        cd ..
+        goto :eof
+    )
+    echo [INFO] Virtual environment created successfully.
+    echo [INFO] Installing dependencies...
+    call .venv\Scripts\activate.bat
+    pip install -r requirements.txt
+    if errorlevel 1 (
+        echo [ERROR] Failed to install dependencies.
+        cd ..
+        goto :eof
+    )
+) else (
+    echo [INFO] Virtual environment found.
+)
+
+REM 8. Activate virtual environment and run PyInstaller
 echo [INFO] Activating virtual environment and running PyInstaller...
-call .\..\backend\.venv\Scripts\activate.bat
+call .venv\Scripts\activate.bat
 if errorlevel 1 (
     echo [ERROR] Failed to activate virtual environment.
     goto :eof
