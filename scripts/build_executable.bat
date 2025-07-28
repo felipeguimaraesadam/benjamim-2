@@ -97,6 +97,7 @@ python -m PyInstaller --name "%EXECUTABLE_NAME%" ^
     --noconfirm ^
     --add-data "sgo_core;sgo_core" ^
     --add-data "core;core" ^
+    --add-data ".env;." ^
     --add-data "db.sqlite3;." ^
     --add-data "%DJANGO_STATIC_DIR_NAME%;%DJANGO_STATIC_DIR_NAME%" ^
     %HIDDEN_IMPORTS% ^
