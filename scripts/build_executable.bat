@@ -67,8 +67,13 @@ if errorlevel 1 (
     goto :eof
 )
 
-REM 7. Run PyInstaller
-echo [INFO] Running PyInstaller...
+REM 7. Activate virtual environment and run PyInstaller
+echo [INFO] Activating virtual environment and running PyInstaller...
+call .\..\backend\.venv\Scripts\activate.bat
+if errorlevel 1 (
+    echo [ERROR] Failed to activate virtual environment.
+    goto :eof
+)
 
 REM Ensure db.sqlite3 is in the backend directory or adjust path if needed.
 REM PyInstaller by default includes files in the same directory as the main script (manage.py)
@@ -87,7 +92,7 @@ set "HIDDEN_IMPORTS=--hidden-import=django.contrib.staticfiles.apps.StaticFilesC
 
 REM --onedir is generally more reliable for Django projects.
 REM --noconfirm will overwrite output directory without asking.
-.\.venv\Scripts\python.exe -m PyInstaller --name "%EXECUTABLE_NAME%" ^
+python -m PyInstaller --name "%EXECUTABLE_NAME%" ^
     --onedir ^
     --noconfirm ^
     --add-data "sgo_core;sgo_core" ^
