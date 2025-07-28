@@ -7,10 +7,10 @@ ECHO.
 ECHO [INFO] Iniciando servidor do Backend (Django)...
 ECHO        Aguarde, uma nova janela sera aberta e minimizada.
 
-start "SGO Backend - Django (Ctrl+C para parar)" cmd /c "cd backend && python manage.py runserver && pause"
+start "SGO Backend - Django (Ctrl+C para parar)" cmd /c "cd backend && .venv\Scripts\activate.bat && python manage.py runserver && pause"
 IF ERRORLEVEL 1 (
     ECHO [ERRO] Nao foi possivel iniciar o servidor do backend.
-    ECHO Verifique se o Python esta instalado e as dependencias estao disponiveis no sistema.
+    ECHO Verifique se o ambiente virtual '.venv' existe em 'backend/' e se as dependencias estao instaladas.
     GOTO:END
 )
 
