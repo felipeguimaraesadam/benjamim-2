@@ -108,3 +108,13 @@ env/
 
 # Custom
 /scripts/.venv/
+
+# PyInstaller build outputs (too large for Git)
+dist_pyinstaller/
+build_pyinstaller/
+backend/build/
+backend/dist/
+*.exe
+*.app
+*.dmg
+*.pkg
