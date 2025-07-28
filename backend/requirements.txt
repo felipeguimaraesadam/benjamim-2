@@ -7,3 +7,4 @@ WeasyPrint
 python-decouple
 whitenoise
 waitress
+pyinstaller
