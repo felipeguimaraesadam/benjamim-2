@@ -19,7 +19,14 @@ IF ERRORLEVEL 1 (
 )
 echo.
 
-echo Verificando Python...
+echo Ativando ambiente virtual...
+CALL .venv\Scripts\activate.bat
+IF ERRORLEVEL 1 (
+    ECHO [ERRO] Ambiente virtual nao encontrado em 'backend\.venv'.
+    ECHO Execute 'scripts\config.bat' primeiro para configurar o ambiente.
+    PAUSE
+    EXIT /B 1
+)
 echo.
 echo Iniciando o comando 'createsuperuser'...
 echo Por favor, siga as instrucoes no terminal para criar seu superusuario.
