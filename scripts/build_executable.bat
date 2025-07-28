@@ -115,7 +115,7 @@ set "HIDDEN_IMPORTS=--hidden-import=django.contrib.staticfiles.apps.StaticFilesC
 
 REM --onedir is generally more reliable for Django projects.
 REM --noconfirm will overwrite output directory without asking.
-python -m PyInstaller SGO_Gestao_Obras.spec --noconfirm --distpath "..\%PYINSTALLER_DIST_DIR%"
+python -m PyInstaller "..\scripts\SGO_Gestao_Obras.spec" --noconfirm --distpath "..\%PYINSTALLER_DIST_DIR%"
 
 if errorlevel 1 (
     echo [ERROR] PyInstaller failed. Check the output above for details.
