@@ -87,18 +87,19 @@ set "HIDDEN_IMPORTS=--hidden-import=django.contrib.staticfiles.apps.StaticFilesC
 
 REM --onedir is generally more reliable for Django projects.
 REM --noconfirm will overwrite output directory without asking.
-pyinstaller manage.py ^
-    --name "%EXECUTABLE_NAME%" ^
+pyinstaller --name "%EXECUTABLE_NAME%" ^
     --onedir ^
     --noconfirm ^
-    %DJANGO_STATIC_DATA_ARG% ^
     --add-data "sgo_core;sgo_core" ^
     --add-data "core;core" ^
     --add-data "db.sqlite3;." ^
+    --add-data "%DJANGO_STATIC_DIR_NAME%;%DJANGO_STATIC_DIR_NAME%" ^
     %HIDDEN_IMPORTS% ^
+    --hidden-import=waitress ^
     --distpath "..\%PYINSTALLER_DIST_DIR%" ^
     --workpath "pyinstaller_build" ^
-    --specpath "pyinstaller_spec"
+    --specpath "pyinstaller_spec" ^
+    manage.py run_waitress
 
 if errorlevel 1 (
     echo [ERROR] PyInstaller failed. Check the output above for details.
