@@ -1,12 +1,5 @@
 @echo off
-echo Ativando ambiente virtual (venv)...
-CALL backend\.venv\Scripts\activate.bat
-
-IF ERRORLEVEL 1 (
-    echo ERRO: Falha ao ativar o ambiente virtual. Verifique se o venv existe em backend\.venv
-    pause
-    exit /b 1
-)
+echo Verificando Python e dependencias...
 
 echo Instalando dependencias do projeto a partir de backend/requirements.txt...
 python -m pip install -r backend/requirements.txt

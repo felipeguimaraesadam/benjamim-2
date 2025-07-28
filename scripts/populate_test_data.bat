@@ -6,8 +6,7 @@ echo.
 
 cd /d "%~dp0.."
 
-echo Ativando ambiente virtual...
-call venv\Scripts\activate.bat
+echo Verificando Python...
 
 echo.
 echo Executando script de populacao...
