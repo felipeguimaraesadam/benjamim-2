@@ -101,11 +101,11 @@ if errorlevel 1 (
 )
 
 echo [INFO] PyInstaller finished successfully.
-echo [INFO] Executable and associated files are in: %cd%\..\PYINSTALLER_DIST_DIR%\%EXECUTABLE_NAME%
+echo [INFO] Executable and associated files are in: %cd%\..\%PYINSTALLER_DIST_DIR%\%EXECUTABLE_NAME%
 
 REM Copy .env file to the distribution directory
 echo [INFO] Copying .env file to distribution directory...
-copy /Y ".env" "..\dist_pyinstaller\%EXECUTABLE_NAME%\"
+copy /Y ".env" "..\%PYINSTALLER_DIST_DIR%\SGO_Gestao_Obras\"
 if errorlevel 1 (
     echo [ERROR] Failed to copy .env file.
     cd ..
