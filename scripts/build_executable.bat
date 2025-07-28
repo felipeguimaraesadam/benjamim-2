@@ -92,18 +92,7 @@ set "HIDDEN_IMPORTS=--hidden-import=django.contrib.staticfiles.apps.StaticFilesC
 
 REM --onedir is generally more reliable for Django projects.
 REM --noconfirm will overwrite output directory without asking.
-python -m PyInstaller --name "%EXECUTABLE_NAME%" ^
-    --onedir ^
-    --noconfirm ^
-    --add-data "sgo_core;sgo_core" ^
-    --add-data "core;core" ^
-    --add-data ".env;." ^
-    --add-data "db.sqlite3;." ^
-    --add-data "%DJANGO_STATIC_DIR_NAME%;%DJANGO_STATIC_DIR_NAME%" ^
-    %HIDDEN_IMPORTS% ^
-    --hidden-import=waitress ^
-    --distpath "..\%PYINSTALLER_DIST_DIR%" ^
-    run_executable.py
+python -m PyInstaller SGO_Gestao_Obras.spec --noconfirm --distpath "..\%PYINSTALLER_DIST_DIR%"
 
 if errorlevel 1 (
     echo [ERROR] PyInstaller failed. Check the output above for details.
@@ -113,6 +102,15 @@ if errorlevel 1 (
 
 echo [INFO] PyInstaller finished successfully.
 echo [INFO] Executable and associated files are in: %cd%\..\PYINSTALLER_DIST_DIR%\%EXECUTABLE_NAME%
+
+REM Copy .env file to the distribution directory
+echo [INFO] Copying .env file to distribution directory...
+copy /Y ".env" "..\dist_pyinstaller\%EXECUTABLE_NAME%\"
+if errorlevel 1 (
+    echo [ERROR] Failed to copy .env file.
+    cd ..
+    goto :eof
+)
 
 REM Navigate back to root
 cd ..

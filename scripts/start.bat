@@ -7,7 +7,7 @@ ECHO.
 ECHO [INFO] Iniciando servidor do Backend (Django)...
 ECHO        Aguarde, uma nova janela sera aberta e minimizada.
 
-start "SGO Backend" /min cmd /c "cd backend && .venv\Scripts\activate.bat && python manage.py runserver && pause"
+start "SGO Backend - Django (Ctrl+C para parar)" cmd /c "cd backend && .venv\Scripts\activate.bat && python manage.py runserver && pause"
 IF ERRORLEVEL 1 (
     ECHO [ERRO] Nao foi possivel iniciar o servidor do backend.
     ECHO Verifique se o ambiente virtual '.venv' existe em 'backend/' e se as dependencias estao instaladas.
@@ -18,7 +18,7 @@ ECHO.
 ECHO [INFO] Iniciando servidor do Frontend (Vite/React)...
 ECHO        Aguarde, uma nova janela sera aberta e o navegador devera iniciar automaticamente.
 
-start "SGO Frontend" /min cmd /c "cd frontend && npm run dev && pause"
+start "SGO Frontend - Vite (Ctrl+C para parar)" cmd /c "cd frontend && npm run dev && pause"
 IF ERRORLEVEL 1 (
     ECHO [ERRO] Nao foi possivel iniciar o servidor do frontend.
     ECHO Verifique se a pasta 'node_modules' existe em 'frontend/'.
