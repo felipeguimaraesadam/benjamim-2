@@ -1059,15 +1059,11 @@ class FotoObraViewSet(viewsets.ModelViewSet):
         if obra_id: return self.queryset.filter(obra__id=obra_id) # type: ignore
         return self.queryset # type: ignore
     def create(self, request, *args, **kwargs):
-        final_data = request.POST.copy()
-        if 'obra_id' in final_data and 'obra' not in final_data:
-            final_data['obra'] = final_data.pop('obra_id') # type: ignore
-        for key, file_obj in request.FILES.items(): # type: ignore
-            final_data[key] = file_obj # type: ignore
-        serializer = self.get_serializer(data=final_data) # type: ignore
-        serializer.is_valid(raise_exception=True) # type: ignore
-        self.perform_create(serializer) # type: ignore
-        headers = self.get_success_headers(serializer.data) # type: ignore
+        # Corrigido para lidar com 'obra' como um ID, que é o que o serializer espera.
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     def perform_create(self, serializer):
         serializer.save()

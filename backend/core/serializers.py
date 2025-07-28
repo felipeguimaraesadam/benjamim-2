@@ -276,9 +276,15 @@ class FotoObraSerializer(serializers.ModelSerializer):
         read_only_fields = ['uploaded_at']
 
     def validate_obra(self, value):
-        # Ensure the obra exists
-        if not Obra.objects.filter(pk=value.id).exists():
-            raise serializers.ValidationError("Obra specified does not exist.")
+        # The 'value' is the Obra instance itself, as DRF handles the pk-to-instance conversion.
+        # The check `Obra.objects.filter(pk=value.id).exists()` is redundant if the instance is already fetched.
+        # If the frontend sends just an ID, DRF's default behavior for PrimaryKeyRelatedField handles it.
+        # This custom validation can be simplified or removed if default behavior is sufficient.
+        # However, to be explicit and safe:
+        if not isinstance(value, Obra):
+            raise serializers.ValidationError("Invalid Obra instance provided.")
+        if not Obra.objects.filter(pk=value.pk).exists():
+            raise serializers.ValidationError(f"Obra with ID {value.pk} does not exist.")
         return value
 
     def create(self, validated_data):

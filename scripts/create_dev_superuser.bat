@@ -1,4 +1,6 @@
 @echo off
+rem Muda o diretorio para a raiz do projeto (um nivel acima da pasta scripts)
+cd /d "%~dp0.."
 echo ==========================================================
 echo [SGO] CRIACAO DE SUPERUSUARIO DE DESENVOLVIMENTO
 echo ==========================================================

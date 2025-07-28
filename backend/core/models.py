@@ -1,6 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from decimal import Decimal
+import os
+from uuid import uuid4
+
+def obra_foto_path(instance, filename):
+    """Generates a unique path for uploaded obra photos, ensuring the filename is not too long."""
+    ext = filename.split('.')[-1]
+    # Generate a unique name using UUID and truncate if necessary
+    filename_base = f"{uuid4().hex}"
+    filename = f"{filename_base}.{ext}"
+    return os.path.join('fotos_obras', str(instance.obra.id), filename)
 
 CATEGORIA_USO_CHOICES = [
     ('Geral', 'Geral'), ('Eletrica', 'Elétrica'), ('Hidraulica', 'Hidráulica'),
@@ -210,7 +220,7 @@ class Ocorrencia_Funcionario(models.Model):
 
 class FotoObra(models.Model):
     obra = models.ForeignKey(Obra, related_name='fotos', on_delete=models.CASCADE)
-    imagem = models.ImageField(upload_to='fotos_obras/')
+    imagem = models.ImageField(upload_to=obra_foto_path)
     descricao = models.CharField(max_length=255, blank=True, null=True) # Optional description
     uploaded_at = models.DateTimeField(auto_now_add=True)
 

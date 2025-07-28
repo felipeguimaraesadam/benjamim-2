@@ -31,7 +31,13 @@ function ObraFotosUpload({ obraId, onUploadSuccess }) {
         }
 
         const formData = new FormData();
-        formData.append('imagem', imagem);
+
+        // Generate a shorter, unique filename on the client-side
+        const fileExtension = imagem.name.split('.').pop();
+        const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
+        const renamedFile = new File([imagem], uniqueName, { type: imagem.type });
+
+        formData.append('imagem', renamedFile);
         formData.append('descricao', descricao);
         formData.append('obra', obraId);
 

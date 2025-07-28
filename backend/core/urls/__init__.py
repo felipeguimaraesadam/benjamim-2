@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from ..views import (
     CreateUsuarioView, UsuarioViewSet, FuncionarioViewSet, EquipeViewSet,
     LocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
-    DespesaExtraViewSet, OcorrenciaFuncionarioViewSet,
+    DespesaExtraViewSet, OcorrenciaFuncionarioViewSet, FotoObraViewSet,
     DashboardStatsView, FuncionarioDetailView, EquipeDetailView,
     MaterialDetailAPIView, LocacaoSemanalView,
     RecursosMaisUtilizadosSemanaView, BackupViewSet, BackupSettingsViewSet
@@ -20,6 +20,7 @@ router.register(r'despesas', DespesaExtraViewSet, basename='despesaextra')
 router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
 router.register(r'backups', BackupViewSet)
 router.register(r'backup-settings', BackupSettingsViewSet)
+router.register(r'fotosobras', FotoObraViewSet, basename='foto-obra')
 
 urlpatterns = [
     path('register/', CreateUsuarioView.as_view(), name='create-user'),
