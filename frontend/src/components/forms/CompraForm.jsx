@@ -640,7 +640,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         payload: [createNewEmptyItem()],
       });
     }
-  }, [initialData]);
+  }, [initialData, obras]);
 
   // Synchronize dataPagamento with dataCompra if dataPagamento is not manually set
   useEffect(() => {

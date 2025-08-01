@@ -118,23 +118,14 @@ const ObraAutocomplete = React.memo(
 
           try {
             setIsLoading(true);
-            const response = await api.getObras();
-            console.log('API Response:', response);
+            const response = await api.getObras({ search: searchTerm });
             const obras = response.data ? (Array.isArray(response.data) ? response.data : response.data.results) : [];
             if (!Array.isArray(obras)) {
               console.error('Expected obras to be an array, but got:', obras);
               setSuggestions([]);
               return;
             }
-            const filteredObras = obras.filter(obra => {
-              const searchLower = searchTerm.toLowerCase();
-              return (
-                obra.nome_obra.toLowerCase().includes(searchLower) ||
-                (obra.endereco && obra.endereco.toLowerCase().includes(searchLower)) ||
-                (obra.endereco_completo && obra.endereco_completo.toLowerCase().includes(searchLower))
-              );
-            });
-            setSuggestions(filteredObras.slice(0, 10)); // Limit to 10 suggestions
+            setSuggestions(obras.slice(0, 10)); // Limit to 10 suggestions
           } catch (error) {
             console.error('Erro ao buscar obras:', error);
             setSuggestions([]);

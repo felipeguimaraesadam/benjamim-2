@@ -377,6 +377,7 @@ class CompraViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        instance.tipo = request.data.get('tipo', instance.tipo)
         instance.obra_id = request.data.get('obra', instance.obra_id)
         instance.fornecedor = request.data.get('fornecedor', instance.fornecedor)
         instance.data_compra = request.data.get('data_compra', instance.data_compra)
@@ -448,19 +449,9 @@ class CompraViewSet(viewsets.ModelViewSet):
         compra = self.get_object()
         if compra.tipo == 'ORCAMENTO':
             compra.tipo = 'COMPRA'
-            compra.status_orcamento = 'APROVADO'
             compra.save()
             return Response({'status': 'orçamento aprovado'})
         return Response({'status': 'compra já aprovada'}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=['post'])
-    def reject(self, request, pk=None):
-        compra = self.get_object()
-        if compra.tipo == 'ORCAMENTO':
-            compra.status_orcamento = 'REJEITADO'
-            compra.save()
-            return Response({'status': 'orçamento rejeitado'})
-        return Response({'status': 'não é um orçamento'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DespesaExtraViewSet(viewsets.ModelViewSet):
