@@ -121,7 +121,7 @@ function WeeklyPlanner({ obras, equipes }) {
       '[WeeklyPlanner] handleLocacaoFormSubmitSuccess - Chamando fetchWeekData com currentDate:',
       currentDate
     ); // LOG 3
-    fetchWeekData(currentDate); // Re-fetch data
+    fetchWeekData(currentDate, selectedObra?.id); // Re-fetch data
     // O toast de sucesso será movido para handleActualFormSubmit
   };
 
@@ -176,7 +176,7 @@ function WeeklyPlanner({ obras, equipes }) {
 
   const handleLocacaoTransferSuccess = () => {
     handleCloseLocacaoForm(); // Fecha o formulário se a transferência foi iniciada por ele
-    fetchWeekData(currentDate); // Re-fetch data
+    fetchWeekData(currentDate, selectedObra?.id); // Re-fetch data
     toast.success('Funcionário transferido e nova locação criada com sucesso!');
   };
 
@@ -240,7 +240,7 @@ function WeeklyPlanner({ obras, equipes }) {
       toast.success(
         `Locação de ${draggedLocacaoDataForModal.recurso_nome} movida para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`
       );
-      fetchWeekData(currentDate);
+      fetchWeekData(currentDate, selectedObra?.id);
     } catch (error) {
       console.error('Erro ao mover locação:', error);
       toast.error(
@@ -311,7 +311,7 @@ function WeeklyPlanner({ obras, equipes }) {
           `Locação de ${loc.recurso_nome} duplicada para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`
         );
       }
-      fetchWeekData(currentDate);
+      fetchWeekData(currentDate, selectedObra?.id);
     } catch (error) {
       console.error(
         'Erro ao duplicar locação:',
@@ -357,7 +357,7 @@ function WeeklyPlanner({ obras, equipes }) {
       try {
         await api.deleteLocacao(locacaoIdToDelete);
         toast.success('Locação excluída com sucesso!');
-        fetchWeekData(currentDate); // Refresh data
+        fetchWeekData(currentDate, selectedObra?.id); // Refresh data
       } catch (err) {
         console.error('Erro ao excluir locação:', err);
         toast.error(
