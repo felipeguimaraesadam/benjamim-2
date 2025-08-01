@@ -5,14 +5,14 @@ const ContextMenu = ({ position, options, onClose }) => {
   const [adjustedPosition, setAdjustedPosition] = useState(position);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         onClose();
       }
     };
 
     const timerId = setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
     }, 0);
 
     return () => {
@@ -43,7 +43,6 @@ const ContextMenu = ({ position, options, onClose }) => {
     }
   }, [position, options]); // Re-calculate if position or options change (options might change menu size)
 
-
   return (
     <div
       ref={menuRef}
@@ -51,10 +50,10 @@ const ContextMenu = ({ position, options, onClose }) => {
         top: `${adjustedPosition.top}px`,
         left: `${adjustedPosition.left}px`,
         position: 'fixed',
-        visibility: menuRef.current ? 'visible' : 'hidden' // Hide until position is calculated
+        visibility: menuRef.current ? 'visible' : 'hidden', // Hide until position is calculated
       }}
       className="z-50 bg-white shadow-lg rounded-md p-1 border border-gray-200 min-w-[150px]"
-      onClick={(e) => e.stopPropagation()}
+      onClick={e => e.stopPropagation()}
     >
       <ul className="divide-y divide-gray-100">
         {options.map((option, index) => (

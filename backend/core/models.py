@@ -1,6 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from decimal import Decimal
+import os
+from uuid import uuid4
+
+def obra_foto_path(instance, filename):
+    """Generates a unique path for uploaded obra photos, ensuring the filename is not too long."""
+    ext = filename.split('.')[-1]
+    # Generate a unique name using UUID and truncate if necessary
+    filename_base = f"{uuid4().hex}"
+    filename = f"{filename_base}.{ext}"
+    return os.path.join('fotos_obras', str(instance.obra.id), filename)
 
 CATEGORIA_USO_CHOICES = [
     ('Geral', 'Geral'), ('Eletrica', 'Elétrica'), ('Hidraulica', 'Hidráulica'),
@@ -159,6 +169,18 @@ class Compra(models.Model):
     data_pagamento = models.DateField(null=True, blank=True, verbose_name="Data de Pagamento")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
+    TIPO_CHOICES = [
+        ('COMPRA', 'Compra'),
+        ('ORCAMENTO', 'Orçamento'),
+    ]
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='COMPRA', verbose_name="Tipo")
+    STATUS_ORCAMENTO_CHOICES = [
+        ('PENDENTE', 'Pendente'),
+        ('APROVADO', 'Aprovado'),
+        ('REJEITADO', 'Rejeitado'),
+    ]
+    status_orcamento = models.CharField(max_length=10, choices=STATUS_ORCAMENTO_CHOICES, default='PENDENTE', null=True, blank=True, verbose_name="Status do Orçamento")
+
 
     def __str__(self):
         return f"Compra para {self.obra.nome_obra} em {self.data_compra}"
@@ -210,9 +232,42 @@ class Ocorrencia_Funcionario(models.Model):
 
 class FotoObra(models.Model):
     obra = models.ForeignKey(Obra, related_name='fotos', on_delete=models.CASCADE)
-    imagem = models.ImageField(upload_to='fotos_obras/')
+    imagem = models.ImageField(upload_to=obra_foto_path)
     descricao = models.CharField(max_length=255, blank=True, null=True) # Optional description
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Foto de {self.obra.nome_obra} ({self.id})"
+
+
+class Backup(models.Model):
+    TIPO_BACKUP_CHOICES = [
+        ('manual', 'Manual'),
+        ('automatico', 'Automático'),
+    ]
+    
+    filename = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    tipo = models.CharField(max_length=20, choices=TIPO_BACKUP_CHOICES, default='manual')
+    size_bytes = models.BigIntegerField(default=0)
+    description = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Backup {self.filename} - {self.created_at.strftime('%d/%m/%Y %H:%M')}"
+
+
+class BackupSettings(models.Model):
+    auto_backup_enabled = models.BooleanField(default=True)
+    backup_time = models.TimeField(default='02:00:00')  # 2:00 AM
+    retention_days = models.PositiveIntegerField(default=30)
+    max_backups = models.PositiveIntegerField(default=10)
+    
+    class Meta:
+        verbose_name = 'Configuração de Backup'
+        verbose_name_plural = 'Configurações de Backup'
+    
+    def __str__(self):
+        return f"Configurações de Backup - Auto: {self.auto_backup_enabled}"

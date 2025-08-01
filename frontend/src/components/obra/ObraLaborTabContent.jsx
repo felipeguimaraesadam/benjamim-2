@@ -11,12 +11,11 @@ const ObraLaborTabContent = ({
   onRemoverLocacao,
   locacaoError,
   removingLocacaoId,
-  isLoading
+  isLoading,
 }) => {
-
   return (
     // Card principal para esta aba
-    <div className="bg-white shadow-lg rounded-lg p-4 md:p-6 dark:bg-gray-800">
+    <div className="bg-white shadow-lg rounded-lg p-4 md:p-6 dark:bg-gray-800 overflow-x-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b pb-3 dark:border-gray-700">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2 sm:mb-0">
           Mão de Obra / Serviços Contratados
@@ -35,7 +34,12 @@ const ObraLaborTabContent = ({
 
       {locacaoError && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md text-sm dark:bg-red-800 dark:text-red-200 dark:border-red-700">
-          <p><strong>Erro ao carregar dados de mão de obra:</strong> {typeof locacaoError === 'string' ? locacaoError : locacaoError.message || 'Erro desconhecido.'}</p>
+          <p>
+            <strong>Erro ao carregar dados de mão de obra:</strong>{' '}
+            {typeof locacaoError === 'string'
+              ? locacaoError
+              : locacaoError.message || 'Erro desconhecido.'}
+          </p>
         </div>
       )}
 

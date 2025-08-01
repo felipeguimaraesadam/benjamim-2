@@ -26,38 +26,44 @@ const EquipesPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [equipeToDeleteId, setEquipeToDeleteId] = useState(null);
 
-  const fetchPageData = useCallback(async (page = 1) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Fetch paginated equipes
-      const equipesResponse = await api.getEquipes({ page });
-      setEquipes(equipesResponse.data.results);
-      setTotalItems(equipesResponse.data.count);
-      setTotalPages(Math.ceil(equipesResponse.data.count / PAGE_SIZE));
-      setCurrentPage(page);
+  const fetchPageData = useCallback(
+    async (page = 1) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Fetch paginated equipes
+        const equipesResponse = await api.getEquipes({ page });
+        setEquipes(equipesResponse.data.results);
+        setTotalItems(equipesResponse.data.count);
+        setTotalPages(Math.ceil(equipesResponse.data.count / PAGE_SIZE));
+        setCurrentPage(page);
 
-      // Fetch all funcionarios (assuming not too many for dropdowns, or handle pagination for them separately if needed)
-      // This might lead to fetching funcionarios multiple times if page changes, consider optimizing if it's an issue.
-      // A common optimization is to fetch funcionarios once on mount or store in a context/global state.
-      // For this task, keeping it simple as per existing structure.
-      const funcionariosResponse = await api.getFuncionarios(); // Assuming getFuncionarios fetches all for now
-      setFuncionarios(funcionariosResponse.data.results || funcionariosResponse.data); // Handle if getFuncionarios is also paginated
-    } catch (err) {
-      const errorMsg = err.message || 'Falha ao buscar dados. Tente novamente.';
-      setError(errorMsg);
-      showErrorToast(errorMsg);
-      console.error("Fetch Equipes/Funcionarios Error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [PAGE_SIZE]);
+        // Fetch all funcionarios (assuming not too many for dropdowns, or handle pagination for them separately if needed)
+        // This might lead to fetching funcionarios multiple times if page changes, consider optimizing if it's an issue.
+        // A common optimization is to fetch funcionarios once on mount or store in a context/global state.
+        // For this task, keeping it simple as per existing structure.
+        const funcionariosResponse = await api.getFuncionarios(); // Assuming getFuncionarios fetches all for now
+        setFuncionarios(
+          funcionariosResponse.data.results || funcionariosResponse.data
+        ); // Handle if getFuncionarios is also paginated
+      } catch (err) {
+        const errorMsg =
+          err.message || 'Falha ao buscar dados. Tente novamente.';
+        setError(errorMsg);
+        showErrorToast(errorMsg);
+        console.error('Fetch Equipes/Funcionarios Error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [PAGE_SIZE]
+  );
 
   useEffect(() => {
     fetchPageData(currentPage);
   }, [currentPage, fetchPageData]);
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = newPage => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
     }
@@ -69,13 +75,13 @@ const EquipesPage = () => {
     setError(null);
   };
 
-  const handleEdit = (equipe) => {
+  const handleEdit = equipe => {
     setCurrentEquipe(equipe);
     setShowFormModal(true);
     setError(null);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = id => {
     setEquipeToDeleteId(id);
     setShowDeleteConfirm(true);
   };
@@ -98,13 +104,13 @@ const EquipesPage = () => {
       const errorMsg = err.message || 'Falha ao excluir equipe.';
       setError(errorMsg);
       showErrorToast(errorMsg);
-      console.error("Delete Equipe Error:", err);
+      console.error('Delete Equipe Error:', err);
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const handleFormSubmit = async (formData) => {
+  const handleFormSubmit = async formData => {
     setIsLoadingForm(true);
     setError(null); // Clear previous modal errors
     const isEditing = currentEquipe && currentEquipe.id;
@@ -126,16 +132,21 @@ const EquipesPage = () => {
         errorMessage = errorData;
       } else if (typeof errorData === 'object' && errorData !== null) {
         errorMessage = Object.entries(errorData)
-          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+          .map(
+            ([key, value]) =>
+              `${key}: ${Array.isArray(value) ? value.join(', ') : value}`
+          )
           .join('; ');
       } else if (err.message) {
         errorMessage = err.message;
       }
-      errorMessage = errorMessage || (isEditing ? 'Falha ao atualizar equipe.' : 'Falha ao criar equipe.');
+      errorMessage =
+        errorMessage ||
+        (isEditing ? 'Falha ao atualizar equipe.' : 'Falha ao criar equipe.');
 
       setError(errorMessage); // Set error to be displayed in the modal
       showErrorToast(errorMessage); // Show general toast
-      console.error("Form Submit Equipe Error:", errorData || err.message);
+      console.error('Form Submit Equipe Error:', errorData || err.message);
     } finally {
       setIsLoadingForm(false);
     }
@@ -159,12 +170,19 @@ const EquipesPage = () => {
         </button>
       </div>
 
-      {error && !isLoading && !showFormModal && !showDeleteConfirm && equipes.length === 0 && (
-         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4 text-center" role="alert">
-          <p className="font-bold">Falha ao Carregar Dados</p>
-          <p>{error}</p>
-        </div>
-      )}
+      {error &&
+        !isLoading &&
+        !showFormModal &&
+        !showDeleteConfirm &&
+        equipes.length === 0 && (
+          <div
+            className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4 text-center"
+            role="alert"
+          >
+            <p className="font-bold">Falha ao Carregar Dados</p>
+            <p>{error}</p>
+          </div>
+        )}
 
       {isLoading && equipes.length === 0 && (
         <div className="flex justify-center items-center min-h-[300px]">
@@ -201,10 +219,13 @@ const EquipesPage = () => {
               {currentEquipe ? 'Editar Equipe' : 'Adicionar Nova Equipe'}
             </h2>
             {error && ( // Display error specific to form submission attempt inside modal
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <strong className="font-bold">Erro: </strong>
-                    <span className="block sm:inline">{error}</span>
-                </div>
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+                role="alert"
+              >
+                <strong className="font-bold">Erro: </strong>
+                <span className="block sm:inline">{error}</span>
+              </div>
             )}
             {/*
               Pass funcionarios to EquipeForm if it doesn't fetch them internally.
@@ -228,7 +249,10 @@ const EquipesPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">Confirmar Exclusão</h2>
-            <p className="mb-6">Tem certeza que deseja excluir esta equipe? Esta ação não pode ser desfeita.</p>
+            <p className="mb-6">
+              Tem certeza que deseja excluir esta equipe? Esta ação não pode ser
+              desfeita.
+            </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
@@ -242,7 +266,7 @@ const EquipesPage = () => {
                 disabled={isDeleting}
                 className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50 flex items-center justify-center"
               >
-                {isDeleting ? <SpinnerIcon className="w-5 h-5 mr-2"/> : null}
+                {isDeleting ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
                 {isDeleting ? 'Excluindo...' : 'Excluir'}
               </button>
             </div>

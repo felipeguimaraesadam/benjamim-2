@@ -42,7 +42,8 @@ function WeekNavigator({ currentDate, onDateChange }) {
           onClick={handleToday}
           className="p-2 mr-4 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
-          <CalendarDays size={20} className="mr-1 inline-block" /> {/* Alterado CalendarToday para CalendarDays */}
+          <CalendarDays size={20} className="mr-1 inline-block" />{' '}
+          {/* Alterado CalendarToday para CalendarDays */}
           Hoje
         </button>
         <button

@@ -30,23 +30,26 @@ const MateriaisPage = () => {
   const [isLoadingLowStockAlerts, setIsLoadingLowStockAlerts] = useState(false);
   const [lowStockAlertsError, setLowStockAlertsError] = useState(null);
 
-  const fetchMateriais = useCallback(async (page = 1) => {
-    setIsLoading(true); // Start loading before API call
-    setError(null);
-    try {
-      const response = await api.getMateriais({ page });
-      setMateriais(response.data.results);
-      setTotalItems(response.data.count);
-      setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
-      setCurrentPage(page);
-    } catch (err) {
-      setError(err.message || 'Falha ao buscar materiais. Tente novamente.');
-      showErrorToast('Falha ao buscar materiais.'); // Show toast on fetch error
-      console.error("Fetch Materiais Error:", err);
-    } finally {
-      setIsLoading(false); // Stop loading after API call
-    }
-  }, [PAGE_SIZE]);
+  const fetchMateriais = useCallback(
+    async (page = 1) => {
+      setIsLoading(true); // Start loading before API call
+      setError(null);
+      try {
+        const response = await api.getMateriais({ page });
+        setMateriais(response.data.results);
+        setTotalItems(response.data.count);
+        setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
+        setCurrentPage(page);
+      } catch (err) {
+        setError(err.message || 'Falha ao buscar materiais. Tente novamente.');
+        showErrorToast('Falha ao buscar materiais.'); // Show toast on fetch error
+        console.error('Fetch Materiais Error:', err);
+      } finally {
+        setIsLoading(false); // Stop loading after API call
+      }
+    },
+    [PAGE_SIZE]
+  );
 
   const fetchLowStockAlerts = useCallback(async () => {
     setIsLoadingLowStockAlerts(true);
@@ -55,8 +58,10 @@ const MateriaisPage = () => {
       const response = await api.getMateriaisAlertaEstoqueBaixo();
       setLowStockAlerts(response.data || []);
     } catch (err) {
-      setLowStockAlertsError(err.message || 'Falha ao buscar alertas de estoque baixo.');
-      console.error("Fetch Low Stock Alerts Error:", err);
+      setLowStockAlertsError(
+        err.message || 'Falha ao buscar alertas de estoque baixo.'
+      );
+      console.error('Fetch Low Stock Alerts Error:', err);
     } finally {
       setIsLoadingLowStockAlerts(false);
     }
@@ -69,7 +74,7 @@ const MateriaisPage = () => {
   // Note: fetchMateriais and fetchLowStockAlerts are memoized by useCallback.
   // currentPage change will trigger this useEffect.
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = newPage => {
     if (newPage >= 1 && newPage <= totalPages) {
       // fetchMateriais will be called by the useEffect above when currentPage changes
       setCurrentPage(newPage);
@@ -82,13 +87,13 @@ const MateriaisPage = () => {
     setError(null);
   };
 
-  const handleEdit = (material) => {
+  const handleEdit = material => {
     setCurrentMaterial(material);
     setShowFormModal(true);
     setError(null);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = id => {
     setMaterialToDeleteId(id);
     setShowDeleteConfirm(true);
   };
@@ -107,17 +112,20 @@ const MateriaisPage = () => {
       fetchMateriais(currentPage);
       fetchLowStockAlerts(); // Also refresh low stock alerts
     } catch (err) {
-      const errorMsg = err.response?.data?.detail || err.message || 'Falha ao excluir material.';
+      const errorMsg =
+        err.response?.data?.detail ||
+        err.message ||
+        'Falha ao excluir material.';
       showErrorToast(errorMsg);
       // setError(errorMsg); // Set general error or a specific delete error state
-      console.error("Delete Material Error:", err);
+      console.error('Delete Material Error:', err);
     } finally {
       setIsDeleting(false); // Stop deleting loader
       // setIsLoading(false); // This was for general loading, ensure it's handled if needed
     }
   };
 
-  const handleFormSubmit = async (formData) => {
+  const handleFormSubmit = async formData => {
     setIsLoadingForm(true);
     setError(null); // Clear previous form-specific errors shown in modal
     try {
@@ -133,14 +141,26 @@ const MateriaisPage = () => {
       fetchMateriais(currentPage); // Refetch current page to see changes
       fetchLowStockAlerts(); // Also refresh low stock alerts
     } catch (err) {
-      const errorMsg = err.response?.data?.nome?.[0] ||
-                       err.response?.data?.detail ||
-                       (typeof err.response?.data === 'object' ? Object.values(err.response.data).flat().join('; ') : null) ||
-                       err.message ||
-                       (currentMaterial ? 'Falha ao atualizar material.' : 'Falha ao criar material.');
+      const errorMsg =
+        err.response?.data?.nome?.[0] ||
+        err.response?.data?.detail ||
+        (typeof err.response?.data === 'object'
+          ? Object.values(err.response.data).flat().join('; ')
+          : null) ||
+        err.message ||
+        (currentMaterial
+          ? 'Falha ao atualizar material.'
+          : 'Falha ao criar material.');
       setError(errorMsg); // This error is for the modal
-      showErrorToast(currentMaterial ? 'Erro ao atualizar material.' : 'Erro ao criar material.'); // General toast
-      console.error("Form Submit Material Error:", err.response?.data || err.message);
+      showErrorToast(
+        currentMaterial
+          ? 'Erro ao atualizar material.'
+          : 'Erro ao criar material.'
+      ); // General toast
+      console.error(
+        'Form Submit Material Error:',
+        err.response?.data || err.message
+      );
     } finally {
       // setIsLoadingForm(false) is handled by the MaterialForm itself now if we pass isSubmitting
       // For this parent page, we don't need setIsLoadingForm if the form handles its own submit state.
@@ -160,31 +180,47 @@ const MateriaisPage = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Gestão de Materiais</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
+          Gestão de Materiais
+        </h1>
         <button
           onClick={handleAddNew}
-          className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:bg-primary-300"
+          className="bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-400 disabled:bg-primary-300 dark:disabled:bg-primary-700"
         >
           Adicionar Novo Material
         </button>
       </div>
 
       {/* Low Stock Alerts Display */}
-      {isLoadingLowStockAlerts && !lowStockAlertsError && <p className="text-center text-gray-500 my-4">Carregando alertas de estoque...</p>}
+      {isLoadingLowStockAlerts && !lowStockAlertsError && (
+        <p className="text-center text-gray-500 dark:text-gray-400 my-4">
+          Carregando alertas de estoque...
+        </p>
+      )}
       {lowStockAlertsError && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4" role="alert">
+        <div
+          className="bg-red-100 dark:bg-red-900 border-l-4 border-red-500 dark:border-red-400 text-red-700 dark:text-red-200 p-4 my-4"
+          role="alert"
+        >
           <p className="font-bold">Erro ao Carregar Alertas de Estoque:</p>
           <p>{lowStockAlertsError}</p>
         </div>
       )}
       {!isLoadingLowStockAlerts && lowStockAlerts.length > 0 && (
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4" role="alert">
+        <div
+          className="bg-yellow-100 dark:bg-yellow-900 border-l-4 border-yellow-500 dark:border-yellow-400 text-yellow-700 dark:text-yellow-200 p-4 my-4"
+          role="alert"
+        >
           <p className="font-bold">Alerta de Estoque Baixo!</p>
-          <p>Os seguintes materiais atingiram ou estão abaixo do nível mínimo de estoque:</p>
+          <p>
+            Os seguintes materiais atingiram ou estão abaixo do nível mínimo de
+            estoque:
+          </p>
           <ul className="list-disc ml-5 mt-2">
             {lowStockAlerts.map(material => (
               <li key={material.id}>
-                {material.nome} (Estoque Atual: {material.quantidade_em_estoque}, Mínimo Definido: {material.nivel_minimo_estoque})
+                {material.nome} (Estoque Atual: {material.quantidade_em_estoque}
+                , Mínimo Definido: {material.nivel_minimo_estoque})
               </li>
             ))}
           </ul>
@@ -193,60 +229,71 @@ const MateriaisPage = () => {
 
       {/* Main content: table or loading spinner */}
       {isLoading && materiais.length === 0 && !error && (
-         <div className="flex justify-center items-center min-h-[300px]">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+        <div className="flex justify-center items-center min-h-[300px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
         </div>
       )}
 
-      {!isLoading && error && materiais.length === 0 && ( // Show error prominently if it prevented initial load
-         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative my-4 text-center" role="alert">
-          <strong className="font-bold">Erro ao carregar materiais: </strong>
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
+      {!isLoading &&
+        error &&
+        materiais.length === 0 && ( // Show error prominently if it prevented initial load
+          <div
+            className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative my-4 text-center"
+            role="alert"
+          >
+            <strong className="font-bold">Erro ao carregar materiais: </strong>
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
 
-      {(!isLoading || materiais.length > 0) && !error && ( // Show table if not loading initial data OR if data is present, and no major error
-        <>
-          <MateriaisTable
-            materiais={materiais}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            // isLoading prop for table might be used for per-row actions later, but page isLoading handles main table load
-            lowStockAlerts={lowStockAlerts}
-          />
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            totalItems={totalItems}
-            itemsPerPage={PAGE_SIZE}
-          />
-        </>
-      )}
+      {(!isLoading || materiais.length > 0) &&
+        !error && ( // Show table if not loading initial data OR if data is present, and no major error
+          <>
+            <MateriaisTable
+              materiais={materiais}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              // isLoading prop for table might be used for per-row actions later, but page isLoading handles main table load
+              lowStockAlerts={lowStockAlerts}
+            />
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={totalItems}
+              itemsPerPage={PAGE_SIZE}
+            />
+          </>
+        )}
 
       {/* General error display, if not related to initial load and modal isn't up */}
       {error && !showFormModal && !isLoading && materiais.length > 0 && (
-         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative my-4" role="alert">
+        <div
+          className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative my-4"
+          role="alert"
+        >
           <strong className="font-bold">Ocorreu um erro: </strong>
           <span className="block sm:inline">{error}</span>
         </div>
       )}
-
 
       {/* Form Modal */}
       {/* This duplicated block of props was causing the syntax error. It's removed. */}
       {/* The actual Form Modal is rendered below. PaginationControls are rendered with the table. */}
       {showFormModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
               {currentMaterial ? 'Editar Material' : 'Adicionar Novo Material'}
             </h2>
             {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <strong className="font-bold">Erro: </strong>
-                    <span className="block sm:inline">{error}</span>
-                </div>
+              <div
+                className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative mb-4"
+                role="alert"
+              >
+                <strong className="font-bold">Erro: </strong>
+                <span className="block sm:inline">{error}</span>
+              </div>
             )}
             <MaterialForm
               initialData={currentMaterial}
@@ -261,14 +308,19 @@ const MateriaisPage = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Confirmar Exclusão</h2>
-            <p className="mb-6">Tem certeza que deseja excluir este material? Esta ação não pode ser desfeita.</p>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
+              Confirmar Exclusão
+            </h2>
+            <p className="mb-6 text-gray-700 dark:text-gray-300">
+              Tem certeza que deseja excluir este material? Esta ação não pode
+              ser desfeita.
+            </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-gray-300 disabled:opacity-50"
+                className="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-gray-300 dark:focus:ring-gray-500 disabled:opacity-50"
               >
                 Cancelar
               </button>

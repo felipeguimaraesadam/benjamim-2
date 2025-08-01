@@ -1,5 +1,5 @@
 // frontend/src/utils/dateUtils.js
-export const formatDateToDMY = (dateString) => {
+export const formatDateToDMY = dateString => {
   if (!dateString) return 'N/A';
   // dateString is expected to be 'YYYY-MM-DD' or a full ISO string from which date part can be extracted.
   // If it's a full ISO string, let's ensure we only take the date part first.
@@ -16,7 +16,8 @@ export const formatDateToDMY = (dateString) => {
   return actualDateString; // Fallback for unexpected format
 };
 
-export const getStartOfWeek = (date, startDay = 1) => { // startDay: 1 for Monday, 0 for Sunday
+export const getStartOfWeek = (date, startDay = 1) => {
+  // startDay: 1 for Monday, 0 for Sunday
   const d = new Date(date);
   d.setHours(0, 0, 0, 0); // Normalize time to start of day to avoid DST issues with setDate
   const day = d.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
@@ -31,12 +32,12 @@ export const getStartOfWeek = (date, startDay = 1) => { // startDay: 1 for Monda
   return d;
 };
 
-export const formatDateToYYYYMMDD = (date) => {
+export const formatDateToYYYYMMDD = date => {
   if (!date) return '';
   // Ensure 'date' is a Date object. If it's a string, convert it.
   // Be mindful of timezone: new Date('YYYY-MM-DD') can parse as UTC.
   // If 'date' is already a Date object, this is fine.
-  const d = (date instanceof Date) ? new Date(date.valueOf()) : new Date(date);
+  const d = date instanceof Date ? new Date(date.valueOf()) : new Date(date);
 
   // To prevent timezone shifts when only date is relevant, use UTC methods for date parts
   // if the input 'date' could be a string like 'YYYY-MM-DD' interpreted as UTC.

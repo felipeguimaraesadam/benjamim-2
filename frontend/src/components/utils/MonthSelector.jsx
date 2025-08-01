@@ -31,19 +31,19 @@ const MonthSelector = ({ value, onChange, id, name, className }) => {
     }
   }, [value]); // Reage a mudanças no valor vindo do pai
 
-  const handleInputChange = (event) => {
+  const handleInputChange = event => {
     const newMonthYear = event.target.value;
     setCurrentMonthYear(newMonthYear);
     handleDateChange(newMonthYear);
   };
 
-  const handleDateChange = (monthYear) => {
+  const handleDateChange = monthYear => {
     if (monthYear) {
       const [year, month] = monthYear.split('-').map(Number);
       const firstDay = new Date(year, month - 1, 1);
       const lastDay = new Date(year, month, 0); // Dia 0 do próximo mês é o último dia do mês atual
 
-      const formatDate = (date) => {
+      const formatDate = date => {
         const d = new Date(date);
         let day = '' + d.getDate();
         let mo = '' + (d.getMonth() + 1);
@@ -58,7 +58,7 @@ const MonthSelector = ({ value, onChange, id, name, className }) => {
       onChange({
         startDate: formatDate(firstDay),
         endDate: formatDate(lastDay),
-        monthYear: monthYear // Também retorna o valor YYYY-MM para o input
+        monthYear: monthYear, // Também retorna o valor YYYY-MM para o input
       });
     }
   };

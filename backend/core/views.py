@@ -17,20 +17,55 @@ from django.http import HttpResponse, Http404 # Http404 added, HttpResponse was 
 from django.template.loader import render_to_string # Was present
 from django.conf import settings
 import os
-from weasyprint import HTML, CSS
+from .utils import generate_pdf_response
 # from weasyprint.fonts import FontConfiguration # Optional
 
-from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra
+from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra, Backup, BackupSettings
 from .serializers import (
     UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer,
     LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer,
     DespesaExtraSerializer, OcorrenciaFuncionarioSerializer,
-    ItemCompraSerializer,
+    ItemCompraSerializer, EquipeComMembrosBasicSerializer,
     FotoObraSerializer, FuncionarioDetailSerializer,
-    EquipeDetailSerializer, MaterialDetailSerializer, CompraReportSerializer
+    EquipeDetailSerializer, MaterialDetailSerializer, CompraReportSerializer,
+    BackupSerializer, BackupSettingsSerializer
 )
 from .permissions import IsNivelAdmin, IsNivelGerente
+
+class LocacaoSemanalView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get(self, request, *args, **kwargs):
+        inicio_str = request.query_params.get('inicio')
+        if not inicio_str:
+            return Response({"error": "O parâmetro 'inicio' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            data_inicio = datetime.strptime(inicio_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        data_fim = data_inicio + timedelta(days=6)
+
+        locacoes = Locacao_Obras_Equipes.objects.filter(
+            data_locacao_inicio__lte=data_fim,
+            data_locacao_fim__gte=data_inicio
+        ).select_related('obra', 'equipe', 'funcionario_locado')
+
+        serializer = LocacaoObrasEquipesSerializer(locacoes, many=True)
+        return Response(serializer.data)
 # django.db.models.Sum, Count, F, Decimal are already imported in the backup content
+
+class CreateUsuarioView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = UsuarioSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     """
@@ -45,9 +80,11 @@ class ObraViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows obras to be viewed or edited.
     """
-    queryset = Obra.objects.all()
     serializer_class = ObraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get_queryset(self):
+        return Obra.objects.select_related('responsavel').all()
 
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
@@ -78,8 +115,11 @@ class EquipeViewSet(viewsets.ModelViewSet):
     API endpoint that allows equipes to be viewed or edited.
     """
     queryset = Equipe.objects.all()
-    serializer_class = EquipeSerializer
+    serializer_class = EquipeComMembrosBasicSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get_queryset(self):
+        return Equipe.objects.prefetch_related('membros').select_related('lider').all()
 
 
 # New EquipeDetailView
@@ -104,9 +144,58 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     serializer_class = LocacaoObrasEquipesSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
+    def create(self, request, *args, **kwargs):
+        """
+        Custom create method that automatically splits multi-day rentals into individual daily rentals.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+        
+        data_inicio = validated_data['data_locacao_inicio']
+        data_fim = validated_data.get('data_locacao_fim', data_inicio)
+        
+        # If it's a single day rental, create normally
+        if data_inicio == data_fim:
+            locacao = serializer.save()
+            headers = self.get_success_headers(serializer.data)
+            return Response(self.get_serializer(locacao).data, status=status.HTTP_201_CREATED, headers=headers)
+        
+        # For multi-day rentals, create individual daily rentals
+        created_locacoes = []
+        current_date = data_inicio
+        
+        with transaction.atomic():
+            while current_date <= data_fim:
+                # Create a copy of validated_data for each day
+                daily_data = validated_data.copy()
+                daily_data['data_locacao_inicio'] = current_date
+                daily_data['data_locacao_fim'] = current_date
+                
+                # Create individual daily rental
+                locacao = Locacao_Obras_Equipes.objects.create(**daily_data)
+                created_locacoes.append(locacao)
+                
+                current_date += timedelta(days=1)
+        
+        # Return the list of created rentals
+        response_data = self.get_serializer(created_locacoes, many=True).data
+        headers = self.get_success_headers(response_data)
+        return Response({
+            'message': f'{len(created_locacoes)} locações diárias criadas com sucesso.',
+            'locacoes': response_data
+        }, status=status.HTTP_201_CREATED, headers=headers)
+
     def get_queryset(self):
         today = timezone.now().date()
-        queryset = Locacao_Obras_Equipes.objects.annotate(
+        queryset = Locacao_Obras_Equipes.objects.select_related(
+            'obra', 
+            'equipe', 
+            'funcionario_locado',
+            'equipe__lider'
+        ).prefetch_related(
+            'equipe__membros'
+        ).annotate(
             status_order_group=Case(
                 When(status_locacao='cancelada', then=Value(3)),
                 When(Q(status_locacao='ativa') &
@@ -353,6 +442,25 @@ class CompraViewSet(viewsets.ModelViewSet):
         instance.save()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        compra = self.get_object()
+        if compra.tipo == 'ORCAMENTO':
+            compra.tipo = 'COMPRA'
+            compra.status_orcamento = 'APROVADO'
+            compra.save()
+            return Response({'status': 'orçamento aprovado'})
+        return Response({'status': 'compra já aprovada'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        compra = self.get_object()
+        if compra.tipo == 'ORCAMENTO':
+            compra.status_orcamento = 'REJEITADO'
+            compra.save()
+            return Response({'status': 'orçamento rejeitado'})
+        return Response({'status': 'não é um orçamento'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DespesaExtraViewSet(viewsets.ModelViewSet):
@@ -970,15 +1078,11 @@ class FotoObraViewSet(viewsets.ModelViewSet):
         if obra_id: return self.queryset.filter(obra__id=obra_id) # type: ignore
         return self.queryset # type: ignore
     def create(self, request, *args, **kwargs):
-        final_data = request.POST.copy()
-        if 'obra_id' in final_data and 'obra' not in final_data:
-            final_data['obra'] = final_data.pop('obra_id') # type: ignore
-        for key, file_obj in request.FILES.items(): # type: ignore
-            final_data[key] = file_obj # type: ignore
-        serializer = self.get_serializer(data=final_data) # type: ignore
-        serializer.is_valid(raise_exception=True) # type: ignore
-        self.perform_create(serializer) # type: ignore
-        headers = self.get_success_headers(serializer.data) # type: ignore
+        # Corrigido para lidar com 'obra' como um ID, que é o que o serializer espera.
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     def perform_create(self, serializer):
         serializer.save()
@@ -1049,55 +1153,55 @@ class GerarRelatorioPDFObraView(APIView):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get(self, request, pk, format=None):
+        is_simple_report = request.query_params.get('is_simple', 'false').lower() == 'true'
+
         try:
-            obra_instance = Obra.objects.select_related('responsavel').get(pk=pk) # type: ignore
-        except Obra.DoesNotExist: # type: ignore
+            obra_instance = Obra.objects.select_related('responsavel').get(pk=pk)
+        except Obra.DoesNotExist:
             raise Http404("Obra não encontrada")
 
-        compras = Compra.objects.filter(obra=obra_instance).prefetch_related('itens__material').order_by('data_compra', 'nota_fiscal') # type: ignore
-        despesas_extras = Despesa_Extra.objects.filter(obra=obra_instance).order_by('data') # type: ignore
-        locacoes = Locacao_Obras_Equipes.objects.filter(obra=obra_instance).select_related( # type: ignore
+        compras = Compra.objects.filter(obra=obra_instance).prefetch_related('itens__material').order_by('data_compra', 'nota_fiscal')
+        despesas_extras = Despesa_Extra.objects.filter(obra=obra_instance).order_by('data')
+        locacoes = Locacao_Obras_Equipes.objects.filter(obra=obra_instance).select_related(
             'equipe__lider',
             'funcionario_locado'
         ).prefetch_related(
             'equipe__membros'
         ).order_by('data_locacao_inicio')
-        fotos_qs = FotoObra.objects.filter(obra=obra_instance).order_by('uploaded_at') # type: ignore
+        fotos_qs = FotoObra.objects.filter(obra=obra_instance).order_by('uploaded_at')
 
         fotos_for_context = []
         if fotos_qs:
             for foto_obj in fotos_qs:
                 try:
-                    abs_path = foto_obj.imagem.path # type: ignore
-                    # Replace backslashes with forward slashes for file URI
+                    abs_path = foto_obj.imagem.path
                     path_with_fwd_slashes = abs_path.replace('\\', '/')
                     file_uri = f"file:///{path_with_fwd_slashes}"
                     fotos_for_context.append({
                         'uri': file_uri,
-                        'description': foto_obj.descricao, # type: ignore
+                        'description': foto_obj.descricao,
                         'original_path': abs_path
                     })
-                except Exception as e_img:
-                    # Optionally, log this error to server logs instead of print
-                    pass # Silently pass or log e_img for server-side review
+                except Exception:
+                    pass
 
         custo_total_materiais = sum(c.valor_total_liquido for c in compras if c.valor_total_liquido) or Decimal('0.00')
         custo_total_despesas_extras = sum(de.valor for de in despesas_extras if de.valor) or Decimal('0.00')
         custo_total_locacoes = sum(loc.valor_pagamento for loc in locacoes if loc.valor_pagamento) or Decimal('0.00')
 
         custo_total_realizado = custo_total_materiais + custo_total_despesas_extras + custo_total_locacoes
-        balanco_financeiro = (obra_instance.orcamento_previsto or Decimal('0.00')) - custo_total_realizado # type: ignore
+        balanco_financeiro = (obra_instance.orcamento_previsto or Decimal('0.00')) - custo_total_realizado
 
         custo_por_m2 = Decimal('0.00')
-        if obra_instance.area_metragem and obra_instance.area_metragem > 0: # type: ignore
-            custo_por_m2 = custo_total_realizado / obra_instance.area_metragem # type: ignore
+        if obra_instance.area_metragem and obra_instance.area_metragem > 0:
+            custo_por_m2 = custo_total_realizado / obra_instance.area_metragem
 
         context = {
             'obra': obra_instance,
             'compras': compras,
             'despesas_extras': despesas_extras,
             'locacoes': locacoes,
-            'fotos': fotos_for_context, # Use the new list with processed URIs
+            'fotos': fotos_for_context,
             'data_emissao': timezone.now(),
             'custo_total_materiais': custo_total_materiais,
             'custo_total_despesas_extras': custo_total_despesas_extras,
@@ -1105,27 +1209,17 @@ class GerarRelatorioPDFObraView(APIView):
             'custo_total_realizado': custo_total_realizado,
             'balanco_financeiro': balanco_financeiro,
             'custo_por_m2': custo_por_m2,
-            'MEDIA_ROOT': settings.MEDIA_ROOT, # type: ignore
+            'MEDIA_ROOT': settings.MEDIA_ROOT,
+            'is_simple_report': is_simple_report, # Passa a flag para o template
         }
 
-        html_string = render_to_string('relatorios/relatorio_obra.html', context) # type: ignore
+        # O template pode usar a flag 'is_simple_report' para mostrar/ocultar seções
+        template_path = 'relatorios/relatorio_obra.html'
+        css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_obra.css')
+        clean_obra_nome = "".join([c if c.isalnum() else "_" for c in obra_instance.nome_obra])
+        filename = f'Relatorio_Obra_{clean_obra_nome}_{obra_instance.id}.pdf'
 
-        css_file_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_obra.css') # type: ignore
-
-        stylesheets = []
-        if os.path.exists(css_file_path):
-            stylesheets.append(CSS(filename=css_file_path))
-        else:
-            print(f"WARNING: PDF CSS file not found at {css_file_path}")
-
-        html_obj = HTML(string=html_string, base_url=request.build_absolute_uri('/')) # type: ignore
-        pdf_file = html_obj.write_pdf(stylesheets=stylesheets) # type: ignore
-
-        response = HttpResponse(pdf_file, content_type='application/pdf') # type: ignore
-        clean_obra_nome = "".join([c if c.isalnum() else "_" for c in obra_instance.nome_obra]) # type: ignore
-        response['Content-Disposition'] = f'attachment; filename="Relatorio_Obra_{clean_obra_nome}_{obra_instance.id}.pdf"' # type: ignore
-
-        return response
+        return generate_pdf_response(template_path, context, css_path, filename)
 
 
 # View para gerar PDF do Relatório de Pagamento de Locações
@@ -1190,7 +1284,7 @@ class GerarRelatorioPagamentoLocacoesPDFView(APIView):
     def get(self, request, *args, **kwargs):
         start_date_str = request.query_params.get('start_date')
         end_date_str = request.query_params.get('end_date')
-        obra_id_str = request.query_params.get('obra_id') # Optional
+        obra_id_str = request.query_params.get('obra_id')
 
         if not start_date_str or not end_date_str:
             return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
@@ -1203,22 +1297,13 @@ class GerarRelatorioPagamentoLocacoesPDFView(APIView):
         if start_date_obj > end_date_obj:
             return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch data using the new method in RelatorioFolhaPagamentoViewSet
-        # Create an instance of the viewset to call its method
         folha_pagamento_viewset = RelatorioFolhaPagamentoViewSet()
-        # Mock a request object if necessary for the viewset method, or pass None if it handles it
-        # For simplicity, assuming the method can be called directly or with a basic request context
+        response_data = folha_pagamento_viewset.generate_report_data_for_pdf(request)
 
-        # Need to pass the original request to the viewset method for query_params
-        # Construct a new request or adapt the existing one if the viewset method relies on it.
-        # For this case, `generate_report_data_for_pdf` reads from `request.query_params`
-        # So, we can directly call it.
-        response_data = folha_pagamento_viewset.generate_report_data_for_pdf(request) # Pass the current request
+        if response_data.status_code != 200:
+             return Response(response_data.data, status=response_data.status_code)
 
-        if response_data.status_code != 200: # Check if data fetching was successful
-             return Response(response_data.data, status=response_data.status_code) # type: ignore
-
-        context = response_data.data # This is the dict with {periodo, recursos_pagamentos, total_geral_periodo}
+        context = response_data.data
         context['data_emissao'] = timezone.now()
         context['start_date_filter'] = start_date_obj
         context['end_date_filter'] = end_date_obj
@@ -1229,28 +1314,191 @@ class GerarRelatorioPagamentoLocacoesPDFView(APIView):
             except (Obra.DoesNotExist, ValueError):
                 context['obra_filter_nome'] = None
 
+        template_path = 'relatorios/relatorio_pagamento_locacoes.html'
+        css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_pagamento_locacoes.css')
+        filename = f'Relatorio_Pagamento_Locacoes_{start_date_str}_a_{end_date_str}.pdf'
 
-        html_string = render_to_string('relatorios/relatorio_pagamento_locacoes.html', context)
-
-        css_file_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_pagamento_locacoes.css')
-        stylesheets = []
-        if os.path.exists(css_file_path):
-            stylesheets.append(CSS(filename=css_file_path))
-        else:
-            # Fallback or default styles if specific CSS is missing
-            # print(f"WARNING: PDF CSS file not found at {css_file_path}")
-            # Example: add a generic bootstrap or simple style
-            # default_css = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_obra.css') # Using obra's css as fallback
-            # if os.path.exists(default_css):
-            # stylesheets.append(CSS(filename=default_css))
-            pass
-
-
-        html_obj = HTML(string=html_string, base_url=request.build_absolute_uri('/'))
-        pdf_file = html_obj.write_pdf(stylesheets=stylesheets)
+        return generate_pdf_response(template_path, context, css_path, filename)
 
         response = HttpResponse(pdf_file, content_type='application/pdf')
         filename = f"Relatorio_Pagamento_Locacoes_{start_date_str}_a_{end_date_str}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         return response
+
+
+class BackupViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para gerenciar backups do banco de dados.
+    """
+    queryset = Backup.objects.all()
+    serializer_class = BackupSerializer
+    permission_classes = [IsNivelAdmin]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'backups': serializer.data})
+    
+    def create(self, request, *args, **kwargs):
+        """
+        Cria um novo backup manual do banco de dados.
+        """
+        import subprocess
+        import os
+        from django.conf import settings
+        from django.utils import timezone
+        
+        try:
+            # Gerar nome do arquivo de backup
+            timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+            filename = f'backup_manual_{timestamp}.sql'
+            backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+            
+            # Criar diretório de backups se não existir
+            os.makedirs(backup_dir, exist_ok=True)
+            
+            backup_path = os.path.join(backup_dir, filename)
+            
+            # Comando para criar backup (SQLite)
+            db_path = settings.DATABASES['default']['NAME']
+            
+            # Para SQLite, fazemos uma cópia do arquivo
+            import shutil
+            shutil.copy2(db_path, backup_path)
+            
+            # Obter tamanho do arquivo
+            file_size = os.path.getsize(backup_path)
+            
+            # Criar registro no banco
+            backup = Backup.objects.create(
+                filename=filename,
+                tipo='manual',
+                size_bytes=file_size,
+                description=request.data.get('description', '')
+            )
+            
+            serializer = self.get_serializer(backup)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao criar backup: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        """
+        Restaura o banco de dados a partir de um backup.
+        """
+        try:
+            backup = self.get_object()
+            backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+            backup_path = os.path.join(backup_dir, backup.filename)
+            
+            if not os.path.exists(backup_path):
+                return Response(
+                    {'error': 'Arquivo de backup não encontrado'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Para SQLite, substituímos o arquivo atual
+            db_path = settings.DATABASES['default']['NAME']
+            
+            # Fazer backup do estado atual antes de restaurar
+            current_timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+            current_backup_filename = f'backup_pre_restore_{current_timestamp}.sql'
+            current_backup_path = os.path.join(backup_dir, current_backup_filename)
+            
+            import shutil
+            shutil.copy2(db_path, current_backup_path)
+            
+            # Criar registro do backup automático
+            current_backup_size = os.path.getsize(current_backup_path)
+            Backup.objects.create(
+                filename=current_backup_filename,
+                tipo='automatico',
+                size_bytes=current_backup_size,
+                description=f'Backup automático antes da restauração de {backup.filename}'
+            )
+            
+            # Restaurar o backup
+            shutil.copy2(backup_path, db_path)
+            
+            return Response(
+                {'message': 'Backup restaurado com sucesso'}, 
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao restaurar backup: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        Remove um backup (arquivo e registro).
+        """
+        try:
+            backup = self.get_object()
+            backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+            backup_path = os.path.join(backup_dir, backup.filename)
+            
+            # Remover arquivo físico se existir
+            if os.path.exists(backup_path):
+                os.remove(backup_path)
+            
+            # Remover registro do banco
+            backup.delete()
+            
+            return Response(status=status.HTTP_204_NO_CONTENT)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao remover backup: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class BackupSettingsViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para gerenciar configurações de backup.
+    """
+    queryset = BackupSettings.objects.all()
+    serializer_class = BackupSettingsSerializer
+    permission_classes = [IsNivelAdmin]
+    
+    def get_object(self):
+        """
+        Retorna ou cria a única instância de configurações.
+        """
+        settings_obj, created = BackupSettings.objects.get_or_create(
+            id=1,
+            defaults={
+                'auto_backup_enabled': True,
+                'backup_time': '02:00:00',
+                'retention_days': 30,
+                'max_backups': 10
+            }
+        )
+        return settings_obj
+    
+    def list(self, request, *args, **kwargs):
+        """
+        Retorna as configurações de backup.
+        """
+        settings_obj = self.get_object()
+        serializer = self.get_serializer(settings_obj)
+        return Response(serializer.data)
+    
+    def update(self, request, *args, **kwargs):
+        """
+        Atualiza as configurações de backup.
+        """
+        settings_obj = self.get_object()
+        serializer = self.get_serializer(settings_obj, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

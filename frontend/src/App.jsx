@@ -1,126 +1,68 @@
-import React from 'react';
-import {
-  createBrowserRouter,
-  RouterProvider,
-  Outlet // Outlet is mainly for Layout, not directly here if Layout handles it.
-} from 'react-router-dom';
-
-// Layout component
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
-import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminLayout from './components/AdminLayout';
+import { useAuth } from './contexts/AuthContext';
 
-// Page components
-import LoginPage from './pages/LoginPage';
+// Import pages
 import DashboardPage from './pages/DashboardPage';
+import LoginPage from './pages/LoginPage';
 import ObrasPage from './pages/ObrasPage';
+import ObraDetailPage from './pages/ObraDetailPage';
 import FuncionariosPage from './pages/FuncionariosPage';
-import OcorrenciasPage from './pages/OcorrenciasPage'; // Import OcorrenciasPage
 import EquipesPage from './pages/EquipesPage';
 import MateriaisPage from './pages/MateriaisPage';
-import RelatoriosPage from './pages/RelatoriosPage';
-import DespesasExtrasPage from './pages/DespesasExtrasPage';
 import LocacoesPage from './pages/LocacoesPage';
-import ComprasPage from './pages/ComprasPage'; // Import ComprasPage
-import UsuariosPage from './pages/UsuariosPage'; // Import UsuariosPage
-import ObraDetailPage from './pages/ObraDetailPage'; // Import ObraDetailPage
-import FuncionarioDetailPage from './pages/FuncionarioDetailPage'; // Import FuncionarioDetailPage
-import EquipeDetailPage from './pages/EquipeDetailPage'; // Import EquipeDetailPage
-import MaterialDetailPage from './pages/MaterialDetailPage'; // Import MaterialDetailPage
-
-const router = createBrowserRouter([
-  {
-    // General authenticated routes
-    element: <ProtectedRoute />,
-    children: [
-      {
-        path: '/',
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <DashboardPage />,
-          },
-          {
-            path: 'obras',
-            element: <ObrasPage />,
-          },
-          {
-            path: 'funcionarios',
-            element: <FuncionariosPage />,
-          },
-          {
-            path: 'ocorrencias',
-            element: <OcorrenciasPage />,
-          },
-          {
-            path: 'equipes',
-            element: <EquipesPage />,
-          },
-          {
-            path: 'materiais',
-            element: <MateriaisPage />,
-          },
-          {
-            path: 'relatorios',
-            element: <RelatoriosPage />,
-          },
-          {
-            path: 'despesas',
-            element: <DespesasExtrasPage />,
-          },
-          {
-            path: 'locacoes',
-            element: <LocacoesPage />,
-          },
-          {
-            path: 'compras',
-            element: <ComprasPage />,
-          },
-          {
-            path: 'obras/:id', // Dynamic route for work ID
-            element: <ObraDetailPage />,
-          },
-          {
-            path: 'funcionarios/:id', // Dynamic route for funcionario ID
-            element: <FuncionarioDetailPage />,
-          },
-          {
-            path: 'equipes/:id', // Dynamic route for equipe ID
-            element: <EquipeDetailPage />,
-          },
-          {
-            path: 'materiais/:id', // Dynamic route for material ID
-            element: <MaterialDetailPage />,
-          }
-        ],
-      }
-    ]
-  },
-  {
-    // Admin-specific routes
-    element: <ProtectedRoute isAdminRoute={true} />,
-    children: [
-      {
-        path: '/usuarios', // Path for admin user management
-        element: <Layout />, // Still use the main layout
-        children: [
-          {
-            index: true,
-            element: <UsuariosPage />,
-          }
-        ]
-      }
-      // Add other admin-only routes here if needed
-    ]
-  },
-  {
-    path: '/login',
-    element: <LoginPage />,
-  },
-]);
+import ComprasPage from './pages/ComprasPage';
+import DespesasExtrasPage from './pages/DespesasExtrasPage';
+import OcorrenciasPage from './pages/OcorrenciasPage';
+import RelatoriosPage from './pages/RelatoriosPage';
+import UsuariosPage from './pages/UsuariosPage';
+import BackupPage from './pages/BackupPage';
+import ErrorTestPage from './pages/ErrorTestPage';
 
 function App() {
-  return <RouterProvider router={router} />;
+  const { user } = useAuth();
+
+  return (
+    <Router>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DashboardPage />} />
+          <Route path="obras">
+            <Route index element={<ObrasPage />} />
+            <Route path=":id" element={<ObraDetailPage />} />
+          </Route>
+          <Route path="funcionarios" element={<FuncionariosPage />} />
+          <Route path="equipes" element={<EquipesPage />} />
+          <Route path="materiais" element={<MateriaisPage />} />
+          <Route path="locacoes" element={<LocacoesPage />} />
+          <Route path="compras" element={<ComprasPage />} />
+          <Route path="despesas" element={<DespesasExtrasPage />} />
+          <Route path="ocorrencias" element={<OcorrenciasPage />} />
+          <Route path="relatorios" element={<RelatoriosPage />} />
+
+          {/* Admin Routes */}
+          <Route element={<AdminLayout />}>
+            <Route path="usuarios" element={<UsuariosPage />} />
+            <Route path="backup" element={<BackupPage />} />
+            <Route path="error-tests" element={<ErrorTestPage />} />
+          </Route>
+        </Route>
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;

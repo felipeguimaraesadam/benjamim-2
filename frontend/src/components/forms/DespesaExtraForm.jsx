@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 // Explicitly importing SpinnerIcon for clarity and to ensure re-processing
 import SpinnerIcon from '../utils/SpinnerIcon';
 
-const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading }) => {
+const DespesaExtraForm = ({
+  initialData,
+  obras,
+  onSubmit,
+  onCancel,
+  isLoading,
+}) => {
   const [formData, setFormData] = useState({
     descricao: '',
     valor: '',
@@ -11,7 +17,12 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
     obra: '',
   });
 
-  const categoriasDespesa = ['Alimentação', 'Transporte', 'Ferramentas', 'Outros'];
+  const categoriasDespesa = [
+    'Alimentação',
+    'Transporte',
+    'Ferramentas',
+    'Outros',
+  ];
 
   useEffect(() => {
     if (initialData) {
@@ -19,7 +30,9 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
         descricao: initialData.descricao || '',
         valor: initialData.valor || '',
         // Ensure date is formatted as YYYY-MM-DD for the input type="date"
-        data: initialData.data ? new Date(initialData.data).toISOString().split('T')[0] : '',
+        data: initialData.data
+          ? new Date(initialData.data).toISOString().split('T')[0]
+          : '',
         categoria: initialData.categoria || 'Outros',
         obra: initialData.obra || '', // Assuming 'obra' stores the ID
       });
@@ -36,12 +49,12 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
     }
   }, [initialData, obras]);
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
     // Ensure 'valor' is a number and 'obra' is an integer ID
     const dataToSubmit = {
@@ -55,7 +68,12 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="obra" className="block text-sm font-medium text-gray-900">Obra Associada</label>
+        <label
+          htmlFor="obra"
+          className="block text-sm font-medium text-gray-900"
+        >
+          Obra Associada
+        </label>
         <select
           name="obra"
           id="obra"
@@ -65,14 +83,22 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
           className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
         >
           <option value="">Selecione uma Obra</option>
-          {obras && obras.map(obra => (
-            <option key={obra.id} value={obra.id}>{obra.nome_obra}</option>
-          ))}
+          {obras &&
+            obras.map(obra => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nome_obra}
+              </option>
+            ))}
         </select>
       </div>
 
       <div>
-        <label htmlFor="descricao" className="block text-sm font-medium text-gray-900">Descrição</label>
+        <label
+          htmlFor="descricao"
+          className="block text-sm font-medium text-gray-900"
+        >
+          Descrição
+        </label>
         <textarea
           name="descricao"
           id="descricao"
@@ -86,7 +112,12 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="valor" className="block text-sm font-medium text-gray-900">Valor (R$)</label>
+          <label
+            htmlFor="valor"
+            className="block text-sm font-medium text-gray-900"
+          >
+            Valor (R$)
+          </label>
           <input
             type="number"
             name="valor"
@@ -99,7 +130,12 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
           />
         </div>
         <div>
-          <label htmlFor="data" className="block text-sm font-medium text-gray-900">Data</label>
+          <label
+            htmlFor="data"
+            className="block text-sm font-medium text-gray-900"
+          >
+            Data
+          </label>
           <input
             type="date"
             name="data"
@@ -113,7 +149,12 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
       </div>
 
       <div>
-        <label htmlFor="categoria" className="block text-sm font-medium text-gray-900">Categoria</label>
+        <label
+          htmlFor="categoria"
+          className="block text-sm font-medium text-gray-900"
+        >
+          Categoria
+        </label>
         <select
           name="categoria"
           id="categoria"
@@ -123,7 +164,9 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
           className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
         >
           {categoriasDespesa.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
           ))}
         </select>
       </div>
@@ -142,8 +185,12 @@ const DespesaExtraForm = ({ initialData, obras, onSubmit, onCancel, isLoading })
           disabled={isLoading}
           className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300 flex items-center justify-center"
         >
-          {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2"/> : null}
-          {isLoading ? 'Salvando...' : (initialData ? 'Atualizar Despesa' : 'Adicionar Despesa')}
+          {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
+          {isLoading
+            ? 'Salvando...'
+            : initialData
+              ? 'Atualizar Despesa'
+              : 'Adicionar Despesa'}
         </button>
       </div>
     </form>

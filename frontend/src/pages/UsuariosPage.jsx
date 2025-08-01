@@ -23,12 +23,15 @@ const UsuariosPage = () => {
       const response = await api.getUsuarios();
       // Ensure users is always an array. Adapt based on expected API response structure.
       // Common patterns: response.data.results, response.data, or just response
-      const usersData = response.data?.results || response.data || (Array.isArray(response) ? response : []);
+      const usersData =
+        response.data?.results ||
+        response.data ||
+        (Array.isArray(response) ? response : []);
       setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       setError(err.message || 'Falha ao buscar usuários. Tente novamente.');
       setUsers([]); // Ensure users is an empty array on error
-      console.error("Fetch Usuarios Error:", err);
+      console.error('Fetch Usuarios Error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -44,13 +47,13 @@ const UsuariosPage = () => {
     setShowFormModal(true);
   };
 
-  const handleEdit = (user) => {
+  const handleEdit = user => {
     setCurrentUser(user);
     setError(null);
     setShowFormModal(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = id => {
     setUserToDeleteId(id);
     setShowDeleteConfirm(true);
   };
@@ -65,14 +68,16 @@ const UsuariosPage = () => {
       setShowDeleteConfirm(false);
       await fetchUsuarios(); // Re-fetch
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Falha ao excluir usuário.');
-      console.error("Delete Usuario Error:", err.response?.data || err.message);
+      setError(
+        err.response?.data?.detail || err.message || 'Falha ao excluir usuário.'
+      );
+      console.error('Delete Usuario Error:', err.response?.data || err.message);
       // Stop loading if delete failed before fetchUsuarios
       if (!showFormModal) setIsLoading(false);
     }
   };
 
-  const handleFormSubmit = async (formData) => {
+  const handleFormSubmit = async formData => {
     setIsLoadingForm(true);
     setError(null);
     try {
@@ -85,12 +90,21 @@ const UsuariosPage = () => {
       setCurrentUser(null);
       await fetchUsuarios(); // Re-fetch
     } catch (err) {
-      const errorMessage = err.response?.data?.detail ||
-                           (Array.isArray(err.response?.data) && err.response?.data.map(e => e.msg || (typeof e === 'string' ? e : JSON.stringify(e))).join(', ')) ||
-                           err.message ||
-                           (currentUser ? 'Falha ao atualizar usuário.' : 'Falha ao criar usuário.');
+      const errorMessage =
+        err.response?.data?.detail ||
+        (Array.isArray(err.response?.data) &&
+          err.response?.data
+            .map(e => e.msg || (typeof e === 'string' ? e : JSON.stringify(e)))
+            .join(', ')) ||
+        err.message ||
+        (currentUser
+          ? 'Falha ao atualizar usuário.'
+          : 'Falha ao criar usuário.');
       setError(errorMessage);
-      console.error("Form Submit Usuario Error:", err.response?.data || err.message || err);
+      console.error(
+        'Form Submit Usuario Error:',
+        err.response?.data || err.message || err
+      );
     } finally {
       setIsLoadingForm(false);
     }
@@ -106,14 +120,27 @@ const UsuariosPage = () => {
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center">
-          <h1 className="text-3xl font-bold text-gray-800">Gestão de Usuários</h1>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Gestão de Usuários
+          </h1>
           <button
             onClick={() => setShowHelpModal(true)}
             className="ml-4 p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
             title="Ajuda sobre Permissões"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-gray-600">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6 text-gray-600"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+              />
             </svg>
           </button>
         </div>
@@ -126,7 +153,10 @@ const UsuariosPage = () => {
       </div>
 
       {error && !showFormModal && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
+        >
           <strong className="font-bold">Erro: </strong>
           <span className="block sm:inline">{error}</span>
         </div>
@@ -142,15 +172,20 @@ const UsuariosPage = () => {
       {/* Form Modal */}
       {showFormModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"> {/* Adjusted max-w-lg for user form */}
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            {' '}
+            {/* Adjusted max-w-lg for user form */}
             <h2 className="text-lg font-semibold mb-4 text-gray-800">
               {currentUser ? 'Editar Usuário' : 'Adicionar Novo Usuário'}
             </h2>
             {error && ( // Display error specific to form submission attempt
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <strong className="font-bold">Erro: </strong>
-                    <span className="block sm:inline">{error}</span>
-                </div>
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+                role="alert"
+              >
+                <strong className="font-bold">Erro: </strong>
+                <span className="block sm:inline">{error}</span>
+              </div>
             )}
             <UsuarioForm
               initialData={currentUser}
@@ -167,7 +202,10 @@ const UsuariosPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">Confirmar Exclusão</h2>
-            <p className="mb-6">Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.</p>
+            <p className="mb-6">
+              Tem certeza que deseja excluir este usuário? Esta ação não pode
+              ser desfeita.
+            </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
@@ -193,31 +231,62 @@ const UsuariosPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Níveis de Permissão</h2>
+              <h2 className="text-xl font-semibold text-gray-800">
+                Níveis de Permissão
+              </h2>
               <button
                 onClick={() => setShowHelpModal(false)}
                 className="p-1 rounded-full hover:bg-gray-200"
                 title="Fechar"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
             <div className="text-sm text-gray-700 space-y-3">
-              <p><strong>Administrador (admin):</strong></p>
+              <p>
+                <strong>Administrador (admin):</strong>
+              </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li>Acesso total a todas as funcionalidades do sistema.</li>
                 <li>Pode gerenciar obras, finanças, equipes, materiais.</li>
-                <li>Pode gerenciar usuários (criar, editar, excluir, definir nível de acesso).</li>
+                <li>
+                  Pode gerenciar usuários (criar, editar, excluir, definir nível
+                  de acesso).
+                </li>
                 <li>Pode visualizar todos os relatórios.</li>
               </ul>
-              <p><strong>Gerente (gerente):</strong></p>
+              <p>
+                <strong>Gerente (gerente):</strong>
+              </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
-                <li>Acesso limitado às funcionalidades operacionais e de gerenciamento de obras.</li>
-                <li>Pode criar e gerenciar obras, compras, despesas, alocações, ocorrências.</li>
-                <li>Pode visualizar relatórios relevantes à gestão de obras.</li>
-                <li>Não pode gerenciar usuários ou acessar configurações administrativas do sistema.</li>
+                <li>
+                  Acesso limitado às funcionalidades operacionais e de
+                  gerenciamento de obras.
+                </li>
+                <li>
+                  Pode criar e gerenciar obras, compras, despesas, alocações,
+                  ocorrências.
+                </li>
+                <li>
+                  Pode visualizar relatórios relevantes à gestão de obras.
+                </li>
+                <li>
+                  Não pode gerenciar usuários ou acessar configurações
+                  administrativas do sistema.
+                </li>
               </ul>
             </div>
             <div className="mt-6 text-right">

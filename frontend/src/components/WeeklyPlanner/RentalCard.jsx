@@ -17,7 +17,7 @@ function RentalCard({
   onCardClick,
   onShowContextMenu,
   activeDragItemId = null, // ID of the globally dragged item
-  isDraggingOverlay = false // Is this instance for the overlay?
+  isDraggingOverlay = false, // Is this instance for the overlay?
 }) {
   const { id, tipo, recurso_nome, valor_pagamento } = locacao;
   const draggableId = `rental-${id}`;
@@ -33,7 +33,7 @@ function RentalCard({
     listeners,
     setNodeRef,
     transform,
-    isDragging: dndIsDragging
+    isDragging: dndIsDragging,
   } = useDraggable({
     id: draggableId,
     data: { locacao },
@@ -41,7 +41,8 @@ function RentalCard({
   });
 
   // Determine if the original source item is being dragged
-  const isSourceItemDragging = dndIsDragging && draggableId === activeDragItemId;
+  const isSourceItemDragging =
+    dndIsDragging && draggableId === activeDragItemId;
 
   useEffect(() => {
     if (!isDraggingOverlay && !dndIsDragging) {
@@ -58,44 +59,50 @@ function RentalCard({
       zIndex: 9999, // Ensure overlay card is on top
       // Opacity can be full here, or match the source item's dragging opacity if preferred
       // opacity: 0.75, // Example: if you want the overlay to also be slightly transparent
-      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', // Example shadow
+      boxShadow:
+        '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', // Example shadow
     };
   } else {
     // Style for the original card
-    style = transform ? {
-      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-      zIndex: isSourceItemDragging ? 9999 : 'auto',
-      cursor: isSourceItemDragging ? 'grabbing' : 'grab',
-      visibility: isSourceItemDragging ? 'hidden' : 'visible', // Hide original when it's being dragged via overlay
-    } : {
-      cursor: 'grab',
-      visibility: 'visible',
-    };
+    style = transform
+      ? {
+          transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+          zIndex: isSourceItemDragging ? 9999 : 'auto',
+          cursor: isSourceItemDragging ? 'grabbing' : 'grab',
+          visibility: isSourceItemDragging ? 'hidden' : 'visible', // Hide original when it's being dragged via overlay
+        }
+      : {
+          cursor: 'grab',
+          visibility: 'visible',
+        };
   }
 
   let IconComponent;
-  let cardColor = 'bg-gray-100';
-  let textColor = 'text-gray-800';
-  let borderColor = 'border-gray-300';
+  let cardColor = 'bg-gray-100 dark:bg-gray-700';
+  let textColor = 'text-gray-800 dark:text-gray-200';
+  let borderColor = 'border-gray-300 dark:border-gray-600';
 
   if (tipo === 'funcionario') {
     IconComponent = User;
-    cardColor = 'bg-blue-100 hover:bg-blue-200';
-    textColor = 'text-blue-800';
-    borderColor = 'border-blue-400';
+    cardColor =
+      'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/40';
+    textColor = 'text-blue-800 dark:text-blue-200';
+    borderColor = 'border-blue-400 dark:border-blue-600';
   } else if (tipo === 'equipe') {
     IconComponent = Users;
-    cardColor = 'bg-green-100 hover:bg-green-200';
-    textColor = 'text-green-800';
-    borderColor = 'border-green-400';
+    cardColor =
+      'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/40';
+    textColor = 'text-green-800 dark:text-green-200';
+    borderColor = 'border-green-400 dark:border-green-600';
   } else if (tipo === 'servico_externo') {
     IconComponent = Wrench;
-    cardColor = 'bg-orange-100 hover:bg-orange-200';
-    textColor = 'text-orange-800';
-    borderColor = 'border-orange-400';
+    cardColor =
+      'bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/40';
+    textColor = 'text-orange-800 dark:text-orange-200';
+    borderColor = 'border-orange-400 dark:border-orange-600';
   }
 
-  const handleMouseDown = (event) => {
+  const handleMouseDown = event => {
     // Ignore if not left click
     if (event.button !== 0) return;
 
@@ -104,14 +111,15 @@ function RentalCard({
     mouseDownPositionRef.current = { x: event.clientX, y: event.clientY };
 
     timerRef.current = setTimeout(() => {
-      if (!isDraggingRef.current && onShowContextMenu) {
+      if (!isDraggingRef.current) {
+        // A long press still happened, which should prevent a 'click' action,
+        // but we no longer show the context menu here.
         longPressOrDragHappenedRef.current = true;
-        onShowContextMenu(id, event);
       }
     }, LONG_PRESS_DURATION);
   };
 
-  const handleMouseUp = (event) => {
+  const handleMouseUp = event => {
     // Ignore if not left click
     if (event.button !== 0) return;
 
@@ -121,8 +129,9 @@ function RentalCard({
     // isDraggingRef is reset by dnd-kit or handleMouseMove if drag didn't start
   };
 
-  const handleMouseMove = (event) => {
-    if (timerRef.current || dndIsDragging) { // Only check if timer is active or dnd is already dragging
+  const handleMouseMove = event => {
+    if (timerRef.current || dndIsDragging) {
+      // Only check if timer is active or dnd is already dragging
       const deltaX = Math.abs(event.clientX - mouseDownPositionRef.current.x);
       const deltaY = Math.abs(event.clientY - mouseDownPositionRef.current.y);
 
@@ -135,10 +144,11 @@ function RentalCard({
     }
   };
 
-  const handleClick = (event) => {
+  const handleClick = event => {
     // This click is part of the dnd-kit listeners, so it might fire after drag
     // We rely on longPressOrDragHappenedRef which is set by our mouse listeners or dndIsDragging effect
-    if (dndIsDragging || isDraggingRef.current) { // If dnd is active or our local drag detection is true
+    if (dndIsDragging || isDraggingRef.current) {
+      // If dnd is active or our local drag detection is true
       longPressOrDragHappenedRef.current = true;
     }
 
@@ -151,18 +161,17 @@ function RentalCard({
     // Let's ensure it's reset after any click processing.
     // setTimeout is used to ensure this reset happens after any potential event propagation for this click.
     setTimeout(() => {
-        longPressOrDragHappenedRef.current = false;
-        isDraggingRef.current = false; // also reset isDraggingRef
+      longPressOrDragHappenedRef.current = false;
+      isDraggingRef.current = false; // also reset isDraggingRef
     }, 0);
   };
 
-  const handleContextMenu = (event) => {
+  const handleContextMenu = event => {
     event.preventDefault();
     if (onShowContextMenu) {
       onShowContextMenu(id, event);
     }
   };
-
 
   // Combine dnd-kit listeners with our custom mouse event handlers
   // dnd-kit listeners should be spread directly.
@@ -176,17 +185,20 @@ function RentalCard({
   // React will invoke both if they are separate props.
 
   // Do not attach interactive handlers if this card is in the overlay
-  const eventHandlers = isDraggingOverlay ? {} : {
-    onMouseDown: handleMouseDown,
-    onMouseUp: handleMouseUp,
-    onMouseMove: handleMouseMove,
-    onClick: handleClick,
-    onContextMenu: handleContextMenu,
-    ...listeners, // dnd-kit listeners only for the source item
-  };
+  const eventHandlers = isDraggingOverlay
+    ? {}
+    : {
+        onMouseDown: handleMouseDown,
+        onMouseUp: handleMouseUp,
+        onMouseMove: handleMouseMove,
+        onClick: handleClick,
+        onContextMenu: handleContextMenu,
+        ...listeners, // dnd-kit listeners only for the source item
+      };
 
   // Determine class names, applying opacity if it's the source item being dragged
-  const currentDndIsDragging = !isDraggingOverlay && dndIsDragging && draggableId === activeDragItemId;
+  const currentDndIsDragging =
+    !isDraggingOverlay && dndIsDragging && draggableId === activeDragItemId;
   const opacityClass = currentDndIsDragging ? 'opacity-50' : ''; // Or use style.visibility for complete hiding
 
   // If using visibility: 'hidden' for the source item, we don't need opacityClass.
@@ -204,7 +216,7 @@ function RentalCard({
       // Removed opacityClass as visibility is handled in style
       role="button"
       tabIndex={isDraggingOverlay ? -1 : 0} // Overlay card is not focusable
-      onKeyDown={(e) => {
+      onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault(); // Prevent scrolling if space is pressed
           handleClick(e);
@@ -217,12 +229,20 @@ function RentalCard({
       }}
     >
       <div className="flex items-center mb-1">
-        {IconComponent && <IconComponent size={18} className="mr-2 flex-shrink-0" />}
-        <span className="font-semibold text-sm truncate" title={recurso_nome}>{recurso_nome}</span>
+        {IconComponent && (
+          <IconComponent size={18} className="mr-2 flex-shrink-0" />
+        )}
+        <span className="font-semibold text-sm truncate" title={recurso_nome}>
+          {recurso_nome}
+        </span>
       </div>
       {valor_pagamento != null && (
         <div className="text-xs">
-          Valor: {Number(valor_pagamento).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          Valor:{' '}
+          {Number(valor_pagamento).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          })}
         </div>
       )}
     </div>
