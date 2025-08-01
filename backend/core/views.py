@@ -354,7 +354,7 @@ class CompraViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Compra.objects.all().select_related('obra').order_by('-data_compra')
-        obra_id = self.request.query_params.get('obra_id')
+        obra_id = self.request.query_params.get('obra_id') or self.request.query_params.get('obra')
         if obra_id:
             queryset = queryset.filter(obra_id=obra_id)
         data_inicio_str = self.request.query_params.get('data_inicio')
