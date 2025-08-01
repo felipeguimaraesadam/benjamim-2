@@ -1234,6 +1234,7 @@ class RecursosMaisUtilizadosSemanaView(APIView):
 
     def get(self, request, *args, **kwargs):
         inicio_semana_str = request.query_params.get('inicio')
+        obra_id = request.query_params.get('obra_id')
         if not inicio_semana_str:
             return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
