@@ -4,7 +4,9 @@ import { formatDateToDMY } from '../../utils/dateUtils'; // Assuming this utilit
 
 const DetailItem = ({ label, value }) => (
   <div className="mb-3">
-    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+      {label}
+    </p>
     <p className="text-md text-gray-900 dark:text-gray-200">{value || 'N/A'}</p>
   </div>
 );
@@ -14,7 +16,7 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchLocacaoDetails = useCallback(async (id) => {
+  const fetchLocacaoDetails = useCallback(async id => {
     if (!id) return;
     setIsLoading(true);
     setError(null);
@@ -40,31 +42,40 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
     }
   }, [locacaoId, fetchLocacaoDetails]);
 
-  const formatCurrency = (value) => {
+  const formatCurrency = value => {
     if (value === null || value === undefined) return 'N/A';
     const number = parseFloat(value);
-    return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return number.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
   };
 
-  const formatTipoPagamento = (tipo) => {
+  const formatTipoPagamento = tipo => {
     if (!tipo) return 'N/A';
     switch (tipo) {
-      case 'diaria': return 'Diária';
-      case 'metro': return 'Por Metro';
-      case 'empreitada': return 'Empreitada';
-      default: return tipo.charAt(0).toUpperCase() + tipo.slice(1);
+      case 'diaria':
+        return 'Diária';
+      case 'metro':
+        return 'Por Metro';
+      case 'empreitada':
+        return 'Empreitada';
+      default:
+        return tipo.charAt(0).toUpperCase() + tipo.slice(1);
     }
   };
 
-  const getRecursoLocado = (loc) => {
+  const getRecursoLocado = loc => {
     if (!loc) return 'N/A';
     if (loc.equipe_nome) return `Equipe: ${loc.equipe_nome}`;
-    if (loc.funcionario_locado_nome) return `Funcionário: ${loc.funcionario_locado_nome}`;
+    if (loc.funcionario_locado_nome)
+      return `Funcionário: ${loc.funcionario_locado_nome}`;
     if (loc.servico_externo) return `Serviço Externo: ${loc.servico_externo}`;
     return 'N/A';
   };
 
-  if (!locacaoId) { // Or some other prop to control visibility, but typically driven by parent through locacaoId
+  if (!locacaoId) {
+    // Or some other prop to control visibility, but typically driven by parent through locacaoId
     return null;
   }
 
@@ -72,19 +83,41 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4 transition-opacity duration-300 ease-in-out">
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Detalhes da Locação</h2>
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+            Detalhes da Locação
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
             aria-label="Fechar modal"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
           </button>
         </div>
 
-        {isLoading && <div className="text-center py-4 text-gray-600 dark:text-gray-400">Carregando detalhes...</div>}
+        {isLoading && (
+          <div className="text-center py-4 text-gray-600 dark:text-gray-400">
+            Carregando detalhes...
+          </div>
+        )}
         {error && (
-          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded relative mb-4" role="alert">
+          <div
+            className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded relative mb-4"
+            role="alert"
+          >
             <strong className="font-bold">Erro: </strong>
             <span className="block sm:inline">{error}</span>
           </div>
@@ -93,15 +126,41 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
         {locacao && !isLoading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
             <DetailItem label="Obra" value={locacao.obra_nome} />
-            <DetailItem label="Recurso Locado" value={getRecursoLocado(locacao)} />
-            <DetailItem label="Data de Início" value={formatDateToDMY(locacao.data_locacao_inicio)} />
-            <DetailItem label="Data de Fim" value={formatDateToDMY(locacao.data_locacao_fim)} />
-            <DetailItem label="Tipo de Pagamento" value={formatTipoPagamento(locacao.tipo_pagamento)} />
-            <DetailItem label="Valor do Pagamento" value={formatCurrency(locacao.valor_pagamento)} />
-            <DetailItem label="Data Prev. Pagamento" value={formatDateToDMY(locacao.data_pagamento)} />
-            <DetailItem label="Status" value={locacao.status_locacao ? locacao.status_locacao.charAt(0).toUpperCase() + locacao.status_locacao.slice(1) : 'N/A'} />
+            <DetailItem
+              label="Recurso Locado"
+              value={getRecursoLocado(locacao)}
+            />
+            <DetailItem
+              label="Data de Início"
+              value={formatDateToDMY(locacao.data_locacao_inicio)}
+            />
+            <DetailItem
+              label="Data de Fim"
+              value={formatDateToDMY(locacao.data_locacao_fim)}
+            />
+            <DetailItem
+              label="Tipo de Pagamento"
+              value={formatTipoPagamento(locacao.tipo_pagamento)}
+            />
+            <DetailItem
+              label="Valor do Pagamento"
+              value={formatCurrency(locacao.valor_pagamento)}
+            />
+            <DetailItem
+              label="Data Prev. Pagamento"
+              value={formatDateToDMY(locacao.data_pagamento)}
+            />
+            <DetailItem
+              label="Status"
+              value={
+                locacao.status_locacao
+                  ? locacao.status_locacao.charAt(0).toUpperCase() +
+                    locacao.status_locacao.slice(1)
+                  : 'N/A'
+              }
+            />
             <div className="md:col-span-2">
-                <DetailItem label="Observações" value={locacao.observacoes} />
+              <DetailItem label="Observações" value={locacao.observacoes} />
             </div>
           </div>
         )}

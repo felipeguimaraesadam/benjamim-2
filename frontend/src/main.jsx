@@ -7,7 +7,17 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 import { ToastContainer } from 'react-toastify'; // Import ToastContainer
-import 'react-toastify/dist/ReactToastify.css';  // Import CSS for react-toastify
+import 'react-toastify/dist/ReactToastify.css'; // Import CSS for react-toastify
+
+// Inicializa o serviço de monitoramento de erros
+import './services/errorMonitoring.js';
+
+// Log de inicialização da aplicação
+console.log('SGO Frontend iniciado:', {
+  timestamp: new Date().toISOString(),
+  environment: import.meta.env.MODE,
+  version: '1.0.0'
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

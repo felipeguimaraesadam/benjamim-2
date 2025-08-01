@@ -14,7 +14,15 @@ import { PlusCircle } from 'lucide-react';
 // onShowContextMenu: function(locacaoId, event) - para mostrar o menu de contexto
 // activeDragItemId: string | null - ID of the currently dragged item globally
 
-function DayColumn({ id, date, locacoes, onOpenLocacaoForm, onOpenLocacaoDetail, onShowContextMenu, activeDragItemId }) {
+function DayColumn({
+  id,
+  date,
+  locacoes,
+  onOpenLocacaoForm,
+  onOpenLocacaoDetail,
+  onShowContextMenu,
+  activeDragItemId,
+}) {
   const { setNodeRef, isOver } = useDroppable({
     id: id, // ID da coluna, que será a data YYYY-MM-DD
   });
@@ -58,7 +66,7 @@ function DayColumn({ id, date, locacoes, onOpenLocacaoForm, onOpenLocacaoDetail,
       {/* Lista de Cards de Locação */}
       <div className="flex-grow overflow-y-auto p-2 space-y-2">
         {locacoes && locacoes.length > 0 ? (
-          locacoes.map((locacao) => (
+          locacoes.map(locacao => (
             <RentalCard
               key={locacao.id}
               locacao={locacao}

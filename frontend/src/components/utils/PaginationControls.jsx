@@ -6,20 +6,20 @@ const PaginationControls = ({
   totalPages,
   onPageChange,
   totalItems,
-  itemsPerPage // Included prop, though not used in this basic version for calculation
+  itemsPerPage, // Included prop, though not used in this basic version for calculation
 }) => {
   // Don't render controls if there's only one page or no pages
   if (totalPages <= 1) {
     // Optionally, still show total items if desired even for a single page
     if (totalItems !== undefined && totalPages === 1) {
-        return (
-            <div className="flex items-center justify-center mt-4 py-3">
-                <div className="text-sm text-gray-700">
-                    Total de itens: <span className="font-medium">{totalItems}</span>
-                    {itemsPerPage && ` (${itemsPerPage} por página)`}
-                </div>
-            </div>
-        );
+      return (
+        <div className="flex items-center justify-center mt-4 py-3">
+          <div className="text-sm text-gray-700">
+            Total de itens: <span className="font-medium">{totalItems}</span>
+            {itemsPerPage && ` (${itemsPerPage} por página)`}
+          </div>
+        </div>
+      );
     }
     return null;
   }
@@ -30,9 +30,12 @@ const PaginationControls = ({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between mt-4 py-3 bg-white px-4 sm:px-6 border-t border-gray-200">
       <div className="text-sm text-gray-700 mb-2 sm:mb-0">
-        Página <span className="font-medium">{currentPage}</span> de <span className="font-medium">{totalPages}</span>
+        Página <span className="font-medium">{currentPage}</span> de{' '}
+        <span className="font-medium">{totalPages}</span>
         {totalItems !== undefined && (
-          <span className="hidden sm:inline-block ml-2">| Total de itens: <span className="font-medium">{totalItems}</span></span>
+          <span className="hidden sm:inline-block ml-2">
+            | Total de itens: <span className="font-medium">{totalItems}</span>
+          </span>
         )}
       </div>
       <div className="flex space-x-2">

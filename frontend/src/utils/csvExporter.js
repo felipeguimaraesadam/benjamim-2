@@ -12,13 +12,18 @@ export const exportDataToCsv = (data, filename = 'export.csv') => {
   }
 
   // Helper to escape CSV special characters
-  const escapeCsvValue = (value) => {
-    if (value == null) { // Handles undefined and null
+  const escapeCsvValue = value => {
+    if (value == null) {
+      // Handles undefined and null
       return '';
     }
     const stringValue = String(value);
     // If value contains comma, newline, or double quote, enclose in double quotes
-    if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
+    if (
+      stringValue.includes(',') ||
+      stringValue.includes('\n') ||
+      stringValue.includes('"')
+    ) {
       // Escape double quotes within the value by doubling them
       return `"${stringValue.replace(/"/g, '""')}"`;
     }
@@ -74,7 +79,10 @@ import { formatDateToDMY } from './dateUtils'; // Ensure this path is correct re
  * @param {Array<Object>} reportData - The report data, array of obra objects.
  * @param {string} filename - The desired filename for the CSV.
  */
-export const exportPayrollReportToCSV = (reportData, filename = 'relatorio_folha_pagamento.csv') => {
+export const exportPayrollReportToCSV = (
+  reportData,
+  filename = 'relatorio_folha_pagamento.csv'
+) => {
   if (!reportData || reportData.length === 0) {
     console.warn('No data provided for payroll report export.');
     alert('Não há dados para exportar.');
@@ -82,34 +90,38 @@ export const exportPayrollReportToCSV = (reportData, filename = 'relatorio_folha
   }
 
   const headers = [
-    "Obra",
-    "Data Específica do Relatório",
-    "Recurso Locado",
-    "Tipo Pagamento",
-    "Valor Atribuído ao Dia (R$)",
-    "Valor Total Original da Locação (R$)",
-    "Data Início Locação Original",
-    "Data Fim Locação Original",
-    "Data Pagamento Prevista"
+    'Obra',
+    'Data Específica do Relatório',
+    'Recurso Locado',
+    'Tipo Pagamento',
+    'Valor Atribuído ao Dia (R$)',
+    'Valor Total Original da Locação (R$)',
+    'Data Início Locação Original',
+    'Data Fim Locação Original',
+    'Data Pagamento Prevista',
   ];
 
-  let csvContent = headers.join(";") + "\r\n";
+  let csvContent = headers.join(';') + '\r\n';
 
   // Helper to safely format values and escape for CSV
-  const formatValue = (value) => {
+  const formatValue = value => {
     if (value === null || value === undefined) return '';
     let strValue = String(value);
     // Escape double quotes and enclose in double quotes if value contains separator, newline or quote
-    if (strValue.includes(';') || strValue.includes('\n') || strValue.includes('"')) {
+    if (
+      strValue.includes(';') ||
+      strValue.includes('\n') ||
+      strValue.includes('"')
+    ) {
       return `"${strValue.replace(/"/g, '""')}"`;
     }
     return strValue;
   };
 
-  const formatCurrencyForCSV = (value) => {
+  const formatCurrencyForCSV = value => {
     if (value === null || value === undefined) return '';
     return String(parseFloat(value).toFixed(2)).replace('.', ',');
-  }
+  };
 
   reportData.forEach(obraData => {
     csvContent += `"${formatValue(obraData.obra_nome)}";;;;;;;\r\n`; // Obra Name Header Row
@@ -130,72 +142,103 @@ export const exportPayrollReportToCSV = (reportData, filename = 'relatorio_folha
               formatCurrencyForCSV(loc.valor_pagamento_total_locacao),
               formatDateToDMY(loc.data_locacao_original_inicio),
               formatDateToDMY(loc.data_locacao_original_fim),
-              loc.data_pagamento_prevista ? formatDateToDMY(loc.data_pagamento_prevista) : ''
+              loc.data_pagamento_prevista
+                ? formatDateToDMY(loc.data_pagamento_prevista)
+                : '',
             ];
-            csvContent += row.join(";") + "\r\n";
+            csvContent += row.join(';') + '\r\n';
           });
         }
-         // Daily total row
-         csvContent += `;"Total Dia ${formatDateToDMY(diaData.data)}";"";"";"${formatCurrencyForCSV(diaData.total_dia_obra)}";"";"";"";""\r\n`;
+        // Daily total row
+        csvContent += `;"Total Dia ${formatDateToDMY(diaData.data)}";"";"";"${formatCurrencyForCSV(diaData.total_dia_obra)}";"";"";"";""\r\n`;
       });
     }
     // Obra Total Row
     const obraTotalRow = [
-        `"Total para ${formatValue(obraData.obra_nome)}"`,
-        "", "", "", "", // Empty cells
-        formatCurrencyForCSV(obraData.total_obra_periodo), // Total obra
-        "", "", ""
+      `"Total para ${formatValue(obraData.obra_nome)}"`,
+      '',
+      '',
+      '',
+      '', // Empty cells
+      formatCurrencyForCSV(obraData.total_obra_periodo), // Total obra
+      '',
+      '',
+      '',
     ];
-    csvContent += obraTotalRow.join(";") + "\r\n";
-    csvContent += "\r\n"; // Add an empty line between obras for readability
+    csvContent += obraTotalRow.join(';') + '\r\n';
+    csvContent += '\r\n'; // Add an empty line between obras for readability
   });
 
   // Grand Total Row
-  const grandTotal = reportData.reduce((sum, obra) => sum + parseFloat(obra.total_obra_periodo), 0);
+  const grandTotal = reportData.reduce(
+    (sum, obra) => sum + parseFloat(obra.total_obra_periodo),
+    0
+  );
   const grandTotalRow = [
-    "TOTAL GERAL DO RELATÓRIO", "", "", "", "",
+    'TOTAL GERAL DO RELATÓRIO',
+    '',
+    '',
+    '',
+    '',
     String(grandTotal.toFixed(2)).replace('.', ','),
-    ""
+    '',
   ];
-  csvContent += grandTotalRow.join(";") + "\r\n";
+  csvContent += grandTotalRow.join(';') + '\r\n';
 
   // Adding BOM for UTF-8 to help Excel open CSVs with special characters correctly
   const bom = '\uFEFF';
-  const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement("a");
+  const blob = new Blob([bom + csvContent], {
+    type: 'text/csv;charset=utf-8;',
+  });
+  const link = document.createElement('a');
 
   link.href = URL.createObjectURL(blob);
-  link.setAttribute("download", filename);
+  link.setAttribute('download', filename);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(link.href);
 };
 
-
 // Helper to safely format values and escape for CSV, used by Material Payments Report
-const formatCsvValue = (value) => {
+const formatCsvValue = value => {
   if (value === null || value === undefined) return '';
   let strValue = String(value);
-  if (strValue.includes(';') || strValue.includes('\n') || strValue.includes('"')) {
+  if (
+    strValue.includes(';') ||
+    strValue.includes('\n') ||
+    strValue.includes('"')
+  ) {
     return `"${strValue.replace(/"/g, '""')}"`;
   }
   return strValue;
 };
 
-export const exportMaterialPaymentsReportToCSV = (reportPayload, filename = 'relatorio_pagamento_materiais.csv') => {
-  if (!reportPayload || !reportPayload.report_data || reportPayload.report_data.length === 0) {
+export const exportMaterialPaymentsReportToCSV = (
+  reportPayload,
+  filename = 'relatorio_pagamento_materiais.csv'
+) => {
+  if (
+    !reportPayload ||
+    !reportPayload.report_data ||
+    reportPayload.report_data.length === 0
+  ) {
     alert('Não há dados para exportar.');
     return;
   }
   const obrasData = reportPayload.report_data;
 
   const headers = [
-    "Obra", "Fornecedor", "ID Compra", "Data Compra",
-    "Data Pagamento", "Nota Fiscal", "Valor Líquido Pago (R$)"
+    'Obra',
+    'Fornecedor',
+    'ID Compra',
+    'Data Compra',
+    'Data Pagamento',
+    'Nota Fiscal',
+    'Valor Líquido Pago (R$)',
   ];
 
-  let csvRows = [headers.join(";")];
+  let csvRows = [headers.join(';')];
 
   obrasData.forEach(obra => {
     obra.fornecedores.forEach(fornecedor => {
@@ -207,31 +250,40 @@ export const exportMaterialPaymentsReportToCSV = (reportPayload, filename = 'rel
           compra.data_compra ? formatDateToDMY(compra.data_compra) : '',
           compra.data_pagamento ? formatDateToDMY(compra.data_pagamento) : '', // This is data_pagamento from Compra itself
           formatCsvValue(compra.nota_fiscal),
-          String(parseFloat(compra.valor_total_liquido).toFixed(2)).replace('.', ',')
+          String(parseFloat(compra.valor_total_liquido).toFixed(2)).replace(
+            '.',
+            ','
+          ),
         ];
-        csvRows.push(row.join(";"));
+        csvRows.push(row.join(';'));
       });
     });
   });
 
   // Add totals at the end
-  csvRows.push(""); // Blank line
+  csvRows.push(''); // Blank line
   obrasData.forEach(obra => {
-     obra.fornecedores.forEach(fornecedor => {
-         csvRows.push(`Total para ${formatCsvValue(obra.obra_nome)} - ${formatCsvValue(fornecedor.fornecedor_nome)};;;;;;${String(parseFloat(fornecedor.total_fornecedor_na_obra).toFixed(2)).replace('.', ',')}`);
-     });
-     csvRows.push(`Total Geral para Obra ${formatCsvValue(obra.obra_nome)};;;;;;${String(parseFloat(obra.total_obra).toFixed(2)).replace('.', ',')}`);
-     csvRows.push(""); // Blank line
+    obra.fornecedores.forEach(fornecedor => {
+      csvRows.push(
+        `Total para ${formatCsvValue(obra.obra_nome)} - ${formatCsvValue(fornecedor.fornecedor_nome)};;;;;;${String(parseFloat(fornecedor.total_fornecedor_na_obra).toFixed(2)).replace('.', ',')}`
+      );
+    });
+    csvRows.push(
+      `Total Geral para Obra ${formatCsvValue(obra.obra_nome)};;;;;;${String(parseFloat(obra.total_obra).toFixed(2)).replace('.', ',')}`
+    );
+    csvRows.push(''); // Blank line
   });
-  csvRows.push(`TOTAL GERAL DO RELATÓRIO;;;;;;${String(parseFloat(reportPayload.total_geral_relatorio).toFixed(2)).replace('.', ',')}`);
+  csvRows.push(
+    `TOTAL GERAL DO RELATÓRIO;;;;;;${String(parseFloat(reportPayload.total_geral_relatorio).toFixed(2)).replace('.', ',')}`
+  );
 
   const bom = '\uFEFF';
-  const csvString = csvRows.join("\r\n");
+  const csvString = csvRows.join('\r\n');
   const blob = new Blob([bom + csvString], { type: 'text/csv;charset=utf-8;' });
 
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.setAttribute("download", filename);
+  link.setAttribute('download', filename);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

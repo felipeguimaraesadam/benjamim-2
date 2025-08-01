@@ -19,8 +19,12 @@ const MaterialDetailPage = () => {
         const response = await getMaterialDetailsById(id);
         setMaterialDetails(response.data);
       } catch (err) {
-        console.error("Erro ao buscar detalhes do material:", err);
-        setError(err.response?.data?.error || err.message || "Erro ao buscar detalhes do material.");
+        console.error('Erro ao buscar detalhes do material:', err);
+        setError(
+          err.response?.data?.error ||
+            err.message ||
+            'Erro ao buscar detalhes do material.'
+        );
       } finally {
         setIsLoading(false);
       }
@@ -31,7 +35,7 @@ const MaterialDetailPage = () => {
     }
   }, [id]);
 
-  const formatNumber = (value) => {
+  const formatNumber = value => {
     if (value === null || value === undefined) return 'N/A';
     // Assuming it might be a string from backend, ensure it's a number for formatting
     const num = parseFloat(value);
@@ -51,14 +55,20 @@ const MaterialDetailPage = () => {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+          role="alert"
+        >
           <strong className="font-bold">Erro!</strong>
           <span className="block sm:inline"> {error}</span>
         </div>
         <div className="mt-4">
-            <Link to="/materiais" className="text-blue-500 hover:text-blue-700 transition duration-300">
-                &larr; Voltar para lista de materiais
-            </Link>
+          <Link
+            to="/materiais"
+            className="text-blue-500 hover:text-blue-700 transition duration-300"
+          >
+            &larr; Voltar para lista de materiais
+          </Link>
         </div>
       </div>
     );
@@ -66,14 +76,17 @@ const MaterialDetailPage = () => {
 
   if (!materialDetails) {
     return (
-        <div className="container mx-auto px-4 py-6 text-center">
-            <p>Nenhum detalhe do material encontrado.</p>
-            <div className="mt-4">
-                <Link to="/materiais" className="text-blue-500 hover:text-blue-700 transition duration-300">
-                    &larr; Voltar para lista de materiais
-                </Link>
-            </div>
+      <div className="container mx-auto px-4 py-6 text-center">
+        <p>Nenhum detalhe do material encontrado.</p>
+        <div className="mt-4">
+          <Link
+            to="/materiais"
+            className="text-blue-500 hover:text-blue-700 transition duration-300"
+          >
+            &larr; Voltar para lista de materiais
+          </Link>
         </div>
+      </div>
     );
   }
 
@@ -93,19 +106,35 @@ const MaterialDetailPage = () => {
 
       {/* Dados do Material */}
       <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Dados do Material</h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
+          Dados do Material
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <p><strong>Nome:</strong> {materialDetails.nome}</p>
-          <p><strong>Unidade de Medida:</strong> {materialDetails.unidade_medida}</p>
-          <p><strong>Quantidade em Estoque:</strong> {formatNumber(materialDetails.quantidade_em_estoque)}</p>
-          <p><strong>Nível Mínimo de Estoque:</strong> {formatNumber(materialDetails.nivel_minimo_estoque)}</p>
+          <p>
+            <strong>Nome:</strong> {materialDetails.nome}
+          </p>
+          <p>
+            <strong>Unidade de Medida:</strong> {materialDetails.unidade_medida}
+          </p>
+          <p>
+            <strong>Quantidade em Estoque:</strong>{' '}
+            {formatNumber(materialDetails.quantidade_em_estoque)}
+          </p>
+          <p>
+            <strong>Nível Mínimo de Estoque:</strong>{' '}
+            {formatNumber(materialDetails.nivel_minimo_estoque)}
+          </p>
         </div>
       </div>
 
       {/* Histórico de Compras */}
       <div className="bg-white shadow rounded-lg p-6 mt-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Histórico de Compras</h2>
-        <MaterialPurchaseHistoryTable purchaseHistory={materialDetails?.purchase_history} />
+        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
+          Histórico de Compras
+        </h2>
+        <MaterialPurchaseHistoryTable
+          purchaseHistory={materialDetails?.purchase_history}
+        />
       </div>
     </div>
   );

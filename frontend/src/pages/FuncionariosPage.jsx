@@ -25,30 +25,34 @@ const FuncionariosPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [funcionarioToDeleteId, setFuncionarioToDeleteId] = useState(null);
 
-  const fetchFuncionarios = useCallback(async (page = 1) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await api.getFuncionarios({ page });
-      setFuncionarios(response.data.results);
-      setTotalItems(response.data.count);
-      setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
-      setCurrentPage(page);
-    } catch (err) {
-      const errorMsg = err.message || 'Falha ao buscar funcionários. Tente novamente.';
-      setError(errorMsg);
-      showErrorToast(errorMsg);
-      console.error("Fetch Funcionarios Error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [PAGE_SIZE]);
+  const fetchFuncionarios = useCallback(
+    async (page = 1) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await api.getFuncionarios({ page });
+        setFuncionarios(response.data.results);
+        setTotalItems(response.data.count);
+        setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
+        setCurrentPage(page);
+      } catch (err) {
+        const errorMsg =
+          err.message || 'Falha ao buscar funcionários. Tente novamente.';
+        setError(errorMsg);
+        showErrorToast(errorMsg);
+        console.error('Fetch Funcionarios Error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [PAGE_SIZE]
+  );
 
   useEffect(() => {
     fetchFuncionarios(currentPage);
   }, [currentPage, fetchFuncionarios]);
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = newPage => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
     }
@@ -60,13 +64,13 @@ const FuncionariosPage = () => {
     setError(null); // Clear any previous errors when opening form
   };
 
-  const handleEdit = (funcionario) => {
+  const handleEdit = funcionario => {
     setCurrentFuncionario(funcionario);
     setShowFormModal(true);
     setError(null); // Clear any previous errors
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = id => {
     setFuncionarioToDeleteId(id);
     setShowDeleteConfirm(true);
   };
@@ -89,13 +93,13 @@ const FuncionariosPage = () => {
       const errorMsg = err.message || 'Falha ao excluir funcionário.';
       setError(errorMsg);
       showErrorToast(errorMsg);
-      console.error("Delete Funcionario Error:", err);
+      console.error('Delete Funcionario Error:', err);
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const handleFormSubmit = async (formData) => {
+  const handleFormSubmit = async formData => {
     setIsLoadingForm(true);
     setError(null); // Clear previous modal errors
     const isEditing = currentFuncionario && currentFuncionario.id;
@@ -116,7 +120,6 @@ const FuncionariosPage = () => {
       setTimeout(() => {
         fetchFuncionarios(isEditing ? currentPage : 1);
       }, 200); // 200 milissegundos de atraso
-
     } catch (err) {
       // Handle more specific backend errors if available (e.g., from a DRF serializer)
       const errorData = err.response?.data;
@@ -126,16 +129,23 @@ const FuncionariosPage = () => {
       } else if (typeof errorData === 'object' && errorData !== null) {
         // Concatenate all error messages from the error object
         errorMessage = Object.entries(errorData)
-          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+          .map(
+            ([key, value]) =>
+              `${key}: ${Array.isArray(value) ? value.join(', ') : value}`
+          )
           .join('; ');
       } else if (err.message) {
         errorMessage = err.message;
       }
-      errorMessage = errorMessage || (isEditing ? 'Falha ao atualizar funcionário.' : 'Falha ao criar funcionário.');
+      errorMessage =
+        errorMessage ||
+        (isEditing
+          ? 'Falha ao atualizar funcionário.'
+          : 'Falha ao criar funcionário.');
 
       setError(errorMessage); // Set error to be displayed in the modal
       showErrorToast(errorMessage); // Show general toast
-      console.error("Form Submit Funcionario Error:", errorData || err.message);
+      console.error('Form Submit Funcionario Error:', errorData || err.message);
     } finally {
       setIsLoadingForm(false);
     }
@@ -150,7 +160,9 @@ const FuncionariosPage = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Gestão de Funcionários</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
+          Gestão de Funcionários
+        </h1>
         <button
           onClick={handleAddNew}
           className="bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-400 disabled:bg-primary-300 dark:disabled:bg-primary-700"
@@ -160,12 +172,19 @@ const FuncionariosPage = () => {
       </div>
 
       {/* Page level error display, not within modal context */}
-      {error && !isLoading && !showFormModal && !showDeleteConfirm && funcionarios.length === 0 && (
-         <div className="bg-red-100 dark:bg-red-900 border-l-4 border-red-500 dark:border-red-400 text-red-700 dark:text-red-200 p-4 my-4 text-center" role="alert">
-          <p className="font-bold">Falha ao Carregar Dados</p>
-          <p>{error}</p>
-        </div>
-      )}
+      {error &&
+        !isLoading &&
+        !showFormModal &&
+        !showDeleteConfirm &&
+        funcionarios.length === 0 && (
+          <div
+            className="bg-red-100 dark:bg-red-900 border-l-4 border-red-500 dark:border-red-400 text-red-700 dark:text-red-200 p-4 my-4 text-center"
+            role="alert"
+          >
+            <p className="font-bold">Falha ao Carregar Dados</p>
+            <p>{error}</p>
+          </div>
+        )}
 
       {isLoading && funcionarios.length === 0 && (
         <div className="flex justify-center items-center min-h-[300px]">
@@ -198,13 +217,18 @@ const FuncionariosPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
-              {currentFuncionario ? 'Editar Funcionário' : 'Adicionar Novo Funcionário'}
+              {currentFuncionario
+                ? 'Editar Funcionário'
+                : 'Adicionar Novo Funcionário'}
             </h2>
             {error && ( // Display error specific to form submission attempt inside modal
-                <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative mb-4" role="alert">
-                    <strong className="font-bold">Erro: </strong>
-                    <span className="block sm:inline">{error}</span>
-                </div>
+              <div
+                className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative mb-4"
+                role="alert"
+              >
+                <strong className="font-bold">Erro: </strong>
+                <span className="block sm:inline">{error}</span>
+              </div>
             )}
             <FuncionarioForm
               initialData={currentFuncionario}
@@ -220,8 +244,13 @@ const FuncionariosPage = () => {
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Confirmar Exclusão</h2>
-            <p className="mb-6 text-gray-700 dark:text-gray-300">Tem certeza que deseja excluir este funcionário? Esta ação não pode ser desfeita.</p>
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
+              Confirmar Exclusão
+            </h2>
+            <p className="mb-6 text-gray-700 dark:text-gray-300">
+              Tem certeza que deseja excluir este funcionário? Esta ação não
+              pode ser desfeita.
+            </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
@@ -235,7 +264,7 @@ const FuncionariosPage = () => {
                 disabled={isDeleting}
                 className="bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-400 disabled:opacity-50 flex items-center justify-center"
               >
-                {isDeleting ? <SpinnerIcon className="w-5 h-5 mr-2"/> : null}
+                {isDeleting ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
                 {isDeleting ? 'Excluindo...' : 'Excluir'}
               </button>
             </div>

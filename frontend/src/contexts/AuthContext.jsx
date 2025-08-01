@@ -6,8 +6,12 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken') || null);
-  const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken') || null);
+  const [accessToken, setAccessToken] = useState(
+    localStorage.getItem('accessToken') || null
+  );
+  const [refreshToken, setRefreshToken] = useState(
+    localStorage.getItem('refreshToken') || null
+  );
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
 
   const refreshAuthToken = async () => {
@@ -26,9 +30,10 @@ export const AuthProvider = ({ children }) => {
       const { access, refresh: newRefreshToken } = response.data; // Backend might or might not return a new refresh token
 
       localStorage.setItem('accessToken', access);
-      if (newRefreshToken) { // If backend provides a new refresh token (e.g. with rotation)
-          localStorage.setItem('refreshToken', newRefreshToken);
-          setRefreshToken(newRefreshToken);
+      if (newRefreshToken) {
+        // If backend provides a new refresh token (e.g. with rotation)
+        localStorage.setItem('refreshToken', newRefreshToken);
+        setRefreshToken(newRefreshToken);
       }
       setAccessToken(access);
       apiClient.defaults.headers.common['Authorization'] = `Bearer ${access}`;
@@ -38,7 +43,7 @@ export const AuthProvider = ({ children }) => {
         id: decodedToken.user_id,
         login: decodedToken.login,
         nome_completo: decodedToken.nome_completo,
-        nivel_acesso: decodedToken.nivel_acesso
+        nivel_acesso: decodedToken.nivel_acesso,
       });
       // setIsLoading(false); // Set loading false after successful refresh
       return access; // Return new access token
@@ -62,10 +67,11 @@ export const AuthProvider = ({ children }) => {
               id: decodedToken.user_id,
               login: decodedToken.login,
               nome_completo: decodedToken.nome_completo,
-              nivel_acesso: decodedToken.nivel_acesso
+              nivel_acesso: decodedToken.nivel_acesso,
               // Add any other relevant user fields from your token
             });
-            apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+            apiClient.defaults.headers.common['Authorization'] =
+              `Bearer ${accessToken}`;
           } else {
             // Access token expired, try to refresh
             if (refreshToken) {
@@ -76,7 +82,7 @@ export const AuthProvider = ({ children }) => {
             }
           }
         } catch (error) {
-          console.error("Error decoding token on initial load:", error);
+          console.error('Error decoding token on initial load:', error);
           logout(); // Clear corrupted token or state
         }
       }
@@ -91,7 +97,7 @@ export const AuthProvider = ({ children }) => {
         login: loginUsername,
         type_login: typeof loginUsername,
         password: password, // Be cautious logging passwords in production
-        type_password: typeof password
+        type_password: typeof password,
       });
       const response = await apiClient.post('/token/', {
         login: loginUsername, // Ensure this matches backend expectation (login vs username)
@@ -111,7 +117,7 @@ export const AuthProvider = ({ children }) => {
         id: decodedToken.user_id,
         login: decodedToken.login,
         nome_completo: decodedToken.nome_completo,
-        nivel_acesso: decodedToken.nivel_acesso
+        nivel_acesso: decodedToken.nivel_acesso,
       });
       return true;
     } catch (error) {
@@ -119,9 +125,11 @@ export const AuthProvider = ({ children }) => {
       logout(); // Clear any partial state
       // Consider throwing error or returning more specific error info
       if (error.response && error.response.status === 401) {
-        throw new Error("Credenciais inválidas. Verifique seu login e senha.");
+        throw new Error('Credenciais inválidas. Verifique seu login e senha.');
       }
-      throw new Error("Erro ao tentar fazer login. Tente novamente mais tarde.");
+      throw new Error(
+        'Erro ao tentar fazer login. Tente novamente mais tarde.'
+      );
     }
   };
 
@@ -136,16 +144,6 @@ export const AuthProvider = ({ children }) => {
     // or by ProtectedRoute redirecting.
   };
 
-  // Expose a function to attempt refresh, can be used by interceptor later
-  // This is a simplified version. A full interceptor would queue requests.
-  const attemptRefreshAndRetry = async (failedRequest) => {
-    const newAccessToken = await refreshAuthToken();
-    if (newAccessToken) {
-      failedRequest.config.headers['Authorization'] = 'Bearer ' + newAccessToken;
-      return apiClient(failedRequest.config); // Retry the original request
-    }
-    return Promise.reject(new Error("Token refresh failed, user logged out."));
-  };
 
 
   const contextValue = {
@@ -161,15 +159,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined && process.env.NODE_ENV !== 'test') { // Allow undefined in tests
+  if (context === undefined && import.meta.env.MODE !== 'test') {
+    // Allow undefined in tests
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
