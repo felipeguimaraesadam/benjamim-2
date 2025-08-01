@@ -37,6 +37,11 @@ REM --- ETAPA 2: CONFIGURANDO BACKEND ---
 ECHO [ETAPA 2/4] Configurando o backend Django...
 cd backend
 
+IF NOT EXIST .env (
+    ECHO    - Criando arquivo de ambiente .env a partir do exemplo...
+    copy .env.example .env
+)
+
 IF NOT EXIST .venv GOTO CREATE_VENV
 GOTO VENV_EXISTS
 :CREATE_VENV
