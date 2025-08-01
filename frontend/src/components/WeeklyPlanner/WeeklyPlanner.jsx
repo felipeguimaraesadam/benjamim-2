@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import ObraAutocomplete from '../forms/ObraAutocomplete';
 import WeekNavigator from './WeekNavigator';
 import DayColumn from './DayColumn';
 import LocacaoDetailModal from '../modals/LocacaoDetailModal';
@@ -17,6 +18,7 @@ function WeeklyPlanner({ obras, equipes }) {
   const [recursosMaisUtilizados, setRecursosMaisUtilizados] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedObra, setSelectedObra] = useState(null);
 
   const [selectedLocacaoIdForDetail, setSelectedLocacaoIdForDetail] =
     useState(null);
@@ -46,29 +48,31 @@ function WeeklyPlanner({ obras, equipes }) {
   const weekStartsOn = 1; // Segunda-feira
 
   const fetchWeekData = useCallback(
-    async dateForWeek => {
+    async (dateForWeek, obraId) => {
       setIsLoading(true);
       setError(null);
       const weekStart = startOfWeek(dateForWeek, { locale, weekStartsOn });
       const formattedStartDate = format(weekStart, 'yyyy-MM-dd');
       console.log(
         '[WeeklyPlanner] fetchWeekData - StartDate para API:',
-        formattedStartDate
-      ); // LOG 1
+        formattedStartDate,
+        'Obra ID:',
+        obraId
+      );
 
       try {
         const [locacoesRes, recursosRes] = await Promise.all([
-          api.getLocacoesDaSemana(formattedStartDate),
-          api.getRecursosMaisUtilizadosSemana(formattedStartDate),
+          api.getLocacoesDaSemana(formattedStartDate, obraId),
+          api.getRecursosMaisUtilizadosSemana(formattedStartDate, obraId),
         ]);
         console.log(
           '[WeeklyPlanner] fetchWeekData - Locações recebidas:',
           locacoesRes.data
-        ); // LOG 2
+        );
         setLocacoesPorDia(locacoesRes.data || {});
         setRecursosMaisUtilizados(recursosRes.data || []);
       } catch (err) {
-        console.error('[WeeklyPlanner] Erro ao buscar dados da semana:', err); // LOG Erro
+        console.error('[WeeklyPlanner] Erro ao buscar dados da semana:', err);
         setError(err.message || 'Falha ao buscar dados da semana.');
         setLocacoesPorDia({});
         setRecursosMaisUtilizados([]);
@@ -81,8 +85,8 @@ function WeeklyPlanner({ obras, equipes }) {
   );
 
   useEffect(() => {
-    fetchWeekData(currentDate);
-  }, [currentDate, fetchWeekData]);
+    fetchWeekData(currentDate, selectedObra?.id);
+  }, [currentDate, selectedObra, fetchWeekData]);
 
   const handleDateChange = newDate => {
     setCurrentDate(newDate);
@@ -417,6 +421,18 @@ function WeeklyPlanner({ obras, equipes }) {
       onDragCancel={handleDragCancel}
     >
       <div className="p-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
+            Planejamento Semanal de Locações
+          </h2>
+          <div className="w-1/3">
+            <ObraAutocomplete
+              value={selectedObra}
+              onObraSelect={setSelectedObra}
+              placeholder="Filtrar por obra..."
+            />
+          </div>
+        </div>
         <WeekNavigator
           currentDate={currentDate}
           onDateChange={handleDateChange}

@@ -37,6 +37,8 @@ class LocacaoSemanalView(APIView):
 
     def get(self, request, *args, **kwargs):
         inicio_str = request.query_params.get('inicio')
+        obra_id = request.query_params.get('obra_id')
+
         if not inicio_str:
             return Response({"error": "O parâmetro 'inicio' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -51,6 +53,9 @@ class LocacaoSemanalView(APIView):
             data_locacao_inicio__lte=data_fim,
             data_locacao_fim__gte=data_inicio
         ).select_related('obra', 'equipe', 'funcionario_locado')
+
+        if obra_id:
+            locacoes = locacoes.filter(obra_id=obra_id)
 
         serializer = LocacaoObrasEquipesSerializer(locacoes, many=True)
         return Response(serializer.data)
@@ -1107,6 +1112,8 @@ class LocacaoSemanalView(APIView):
 
     def get(self, request, *args, **kwargs):
         inicio_semana_str = request.query_params.get('inicio')
+        obra_id = request.query_params.get('obra_id')
+
         if not inicio_semana_str:
             return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1237,13 +1244,14 @@ class RecursosMaisUtilizadosSemanaView(APIView):
 
         fim_semana = inicio_semana + timedelta(days=6)
 
-        # Filtra locações que estão ativas e se sobrepõem com a semana.
-        # Uma locação se sobrepõe se: loc.inicio <= semana.fim E loc.fim >= semana.inicio
         locacoes_na_semana = Locacao_Obras_Equipes.objects.filter(
             status_locacao='ativa',
-            data_locacao_inicio__lte=fim_semana,  # Começa antes ou durante o fim da semana
-            data_locacao_fim__gte=inicio_semana   # Termina depois ou durante o início da semana
+            data_locacao_inicio__lte=fim_semana,
+            data_locacao_fim__gte=inicio_semana
         ).select_related('funcionario_locado', 'equipe')
+
+        if obra_id:
+            locacoes_na_semana = locacoes_na_semana.filter(obra_id=obra_id)
 
         contagem_recursos = defaultdict(int)
 
