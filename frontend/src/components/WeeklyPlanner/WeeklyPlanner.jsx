@@ -252,36 +252,22 @@ function WeeklyPlanner({ obras, equipes }) {
     if (!draggedLocacaoDataForModal || !targetDayIdForModal) return;
     setIsLoading(true);
     try {
-      const {
-        id,
-        obra_nome,
-        equipe_details,
-        status_locacao,
-        tipo,
-        recurso_nome,
-        ...restOfLocacao
-      } = draggedLocacaoDataForModal;
+      const loc = draggedLocacaoDataForModal;
 
+      // Build the payload from scratch to avoid sending unwanted fields.
       const newLocacaoData = {
-        ...restOfLocacao,
-        obra:
-          draggedLocacaoDataForModal.obra.id || draggedLocacaoDataForModal.obra,
+        obra: loc.obra.id || loc.obra,
         data_locacao_inicio: targetDayIdForModal,
         data_locacao_fim: targetDayIdForModal,
-        equipe: draggedLocacaoDataForModal.equipe?.id || null,
-        funcionario_locado:
-          draggedLocacaoDataForModal.funcionario_locado?.id || null,
-        // Preserve servico_externo if it exists
-        servico_externo: draggedLocacaoDataForModal.servico_externo || null,
+        valor_diaria: loc.valor_diaria,
+        custo_total_estimado: loc.custo_total_estimado,
+        observacoes: loc.observacoes,
+
+        // The backend requires one of these three fields.
+        equipe: loc.equipe?.id || null,
+        funcionario_locado: loc.funcionario_locado?.id || null,
+        servico_externo: loc.servico_externo || null,
       };
-      delete newLocacaoData.id;
-      delete newLocacaoData.obra_nome;
-      delete newLocacaoData.equipe_details;
-      delete newLocacaoData.equipe_nome;
-      delete newLocacaoData.funcionario_locado_nome;
-      delete newLocacaoData.status_locacao;
-      delete newLocacaoData.tipo;
-      delete newLocacaoData.recurso_nome;
 
       const response = await api.createLocacao(newLocacaoData);
       // Check if multiple rentals were created (though unlikely for single day duplication)

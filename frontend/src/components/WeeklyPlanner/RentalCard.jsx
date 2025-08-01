@@ -111,9 +111,10 @@ function RentalCard({
     mouseDownPositionRef.current = { x: event.clientX, y: event.clientY };
 
     timerRef.current = setTimeout(() => {
-      if (!isDraggingRef.current && onShowContextMenu) {
+      if (!isDraggingRef.current) {
+        // A long press still happened, which should prevent a 'click' action,
+        // but we no longer show the context menu here.
         longPressOrDragHappenedRef.current = true;
-        onShowContextMenu(id, event);
       }
     }, LONG_PRESS_DURATION);
   };
