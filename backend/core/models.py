@@ -169,6 +169,18 @@ class Compra(models.Model):
     data_pagamento = models.DateField(null=True, blank=True, verbose_name="Data de Pagamento")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
+    TIPO_CHOICES = [
+        ('COMPRA', 'Compra'),
+        ('ORCAMENTO', 'Orçamento'),
+    ]
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='COMPRA', verbose_name="Tipo")
+    STATUS_ORCAMENTO_CHOICES = [
+        ('PENDENTE', 'Pendente'),
+        ('APROVADO', 'Aprovado'),
+        ('REJEITADO', 'Rejeitado'),
+    ]
+    status_orcamento = models.CharField(max_length=10, choices=STATUS_ORCAMENTO_CHOICES, default='PENDENTE', null=True, blank=True, verbose_name="Status do Orçamento")
+
 
     def __str__(self):
         return f"Compra para {self.obra.nome_obra} em {self.data_compra}"

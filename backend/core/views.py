@@ -443,6 +443,25 @@ class CompraViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        compra = self.get_object()
+        if compra.tipo == 'ORCAMENTO':
+            compra.tipo = 'COMPRA'
+            compra.status_orcamento = 'APROVADO'
+            compra.save()
+            return Response({'status': 'orçamento aprovado'})
+        return Response({'status': 'compra já aprovada'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        compra = self.get_object()
+        if compra.tipo == 'ORCAMENTO':
+            compra.status_orcamento = 'REJEITADO'
+            compra.save()
+            return Response({'status': 'orçamento rejeitado'})
+        return Response({'status': 'não é um orçamento'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class DespesaExtraViewSet(viewsets.ModelViewSet):
     serializer_class = DespesaExtraSerializer

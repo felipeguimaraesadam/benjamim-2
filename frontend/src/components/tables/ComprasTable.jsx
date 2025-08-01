@@ -69,42 +69,23 @@ const ComprasTable = ({
   }
 
   const getContextMenuItems = (compra) => {
-    if (!compra || !compra.id || typeof compra.tipo !== 'string') {
-      // Return a default or empty set of items if compra is invalid
-      return [
-        { label: 'Visualizar', onClick: () => onViewDetails(compra), icon: <Eye size={16} /> },
-        { label: 'Editar', onClick: () => onEdit(compra), icon: <Pencil size={16} /> },
-        { label: 'Excluir', onClick: () => onDelete(compra.id), icon: <Trash2 size={16} /> },
-      ];
+    if (!compra || !compra.id) {
+      return [];
     }
-    const isOrcamento = compra.tipo.toUpperCase() === 'ORCAMENTO';
-    const isPendente = compra.status_orcamento === 'PENDENTE';
+    const isOrcamento = compra.tipo === 'ORCAMENTO';
 
     const items = [
       { label: 'Visualizar', onClick: () => onViewDetails(compra), icon: <Eye size={16} /> },
       { label: 'Editar', onClick: () => onEdit(compra), icon: <Pencil size={16} /> },
       { label: 'Duplicar', onClick: () => onDuplicate(compra), icon: <Copy size={16} /> },
-      {
-        label: isOrcamento ? 'Mudar para Compra' : 'Mudar para Orçamento',
-        onClick: () => onToggleStatus(compra.id, 'tipo'),
-        icon: isOrcamento ? <ToggleRight size={16} /> : <ToggleLeft size={16} />
-      },
     ];
 
     if (isOrcamento) {
-      if (isPendente) {
-        items.push({ 
-          label: 'Aprovar Orçamento',
-          onClick: () => onApprove(compra.id),
-          icon: <CheckCircle size={16} />
-        });
-      } else {
-        items.push({
-          label: 'Marcar como Pendente',
-          onClick: () => onToggleStatus(compra.id, 'status'),
-          icon: <ToggleLeft size={16} />
-        });
-      }
+      items.push({
+        label: 'Aprovar Orçamento',
+        onClick: () => onApprove(compra.id),
+        icon: <CheckCircle size={16} />
+      });
     }
 
     items.push({ label: 'Excluir', onClick: () => onDelete(compra.id), icon: <Trash2 size={16} /> });
@@ -153,8 +134,7 @@ const ComprasTable = ({
         <tbody>
           {compras.map(compra => {
             if (!compra || !compra.id) return null;
-            const isOrcamento = typeof compra.tipo === 'string' && compra.tipo.toUpperCase() === 'ORCAMENTO';
-            const isPendente = compra.status_orcamento === 'PENDENTE';
+            const isOrcamento = compra.tipo === 'ORCAMENTO';
             const rowClass = isOrcamento
               ? 'bg-yellow-100 dark:bg-yellow-900'
               : 'bg-white dark:bg-gray-800';
@@ -169,7 +149,7 @@ const ComprasTable = ({
                   {`${compra.itens?.length || 0} itens`}
                 </td>
                 <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                  {compra.obra_details?.nome_obra || 'N/A'}
+                  {compra.obra?.nome_obra || 'N/A'}
                 </td>
                 <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                   {formatCurrency(compra.valor_total_liquido)}
@@ -205,7 +185,7 @@ const ComprasTable = ({
                   >
                     <Pencil size={18} />
                   </button>
-                  {isOrcamento && isPendente && (
+                  {isOrcamento && (
                     <button
                       onClick={() => onApprove(compra.id)}
                       className="text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-400 disabled:text-gray-400 dark:disabled:text-gray-600"

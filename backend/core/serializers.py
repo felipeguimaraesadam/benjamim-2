@@ -369,7 +369,9 @@ class CompraSerializer(serializers.ModelSerializer):
             'observacoes',
             'itens',
             'created_at',
-            'updated_at'
+            'updated_at',
+            'tipo',
+            'status_orcamento'
         ]
         # Removido extra_kwargs para 'obra' se houvesse.
         # Mantido extra_kwargs para outros campos, se necessário.
