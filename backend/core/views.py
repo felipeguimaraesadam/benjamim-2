@@ -377,6 +377,7 @@ class CompraViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        instance.tipo = request.data.get('tipo', instance.tipo)
         instance.obra_id = request.data.get('obra', instance.obra_id)
         instance.fornecedor = request.data.get('fornecedor', instance.fornecedor)
         instance.data_compra = request.data.get('data_compra', instance.data_compra)

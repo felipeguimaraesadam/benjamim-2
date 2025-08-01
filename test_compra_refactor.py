@@ -86,5 +86,53 @@ def test_approve_orcamento_flow():
     assert updated_compra.get('tipo') == 'COMPRA', f"Compra {orcamento_id} did not change type to 'COMPRA' after approval."
     assert 'status_orcamento' not in updated_compra, f"'status_orcamento' field found in compra with ID {orcamento_id} after approval."
 
+def test_update_compra_tipo():
+    """
+    Tests that the 'tipo' field can be updated from COMPRA to ORCAMENTO and back.
+    """
+    time.sleep(5)
+    token = get_auth_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 1. Find a 'COMPRA' to update
+    response = requests.get(f"{API_BASE_URL}/compras/", headers=headers)
+    assert response.status_code == 200
+    compras = response.json().get('results', [])
+    compra_to_update = next((c for c in compras if c.get('tipo') == 'COMPRA'), None)
+
+    if compra_to_update is None:
+        pytest.skip("No 'COMPRA' found to test the update flow.")
+
+    compra_id = compra_to_update['id']
+
+    # The full object is needed for the PUT request
+    full_compra_response = requests.get(f"{API_BASE_URL}/compras/{compra_id}/", headers=headers)
+    assert full_compra_response.status_code == 200
+    full_compra_data = full_compra_response.json()
+
+    # 2. Change tipo to ORCAMENTO and update
+    full_compra_data['tipo'] = 'ORCAMENTO'
+    # The API expects the 'obra' field to be an integer ID, not a nested object
+    if isinstance(full_compra_data.get('obra'), dict):
+        full_compra_data['obra'] = full_compra_data['obra']['id']
+
+    update_to_orcamento_response = requests.put(f"{API_BASE_URL}/compras/{compra_id}/", headers=headers, json=full_compra_data)
+    assert update_to_orcamento_response.status_code == 200, f"Failed to update to ORCAMENTO. Body: {update_to_orcamento_response.text}"
+
+    # 3. Verify the change
+    get_updated_response = requests.get(f"{API_BASE_URL}/compras/{compra_id}/", headers=headers)
+    assert get_updated_response.status_code == 200
+    assert get_updated_response.json()['tipo'] == 'ORCAMENTO'
+
+    # 4. Change back to COMPRA and verify
+    full_compra_data['tipo'] = 'COMPRA'
+    update_to_compra_response = requests.put(f"{API_BASE_URL}/compras/{compra_id}/", headers=headers, json=full_compra_data)
+    assert update_to_compra_response.status_code == 200, f"Failed to update back to COMPRA. Body: {update_to_compra_response.text}"
+
+    get_final_response = requests.get(f"{API_BASE_URL}/compras/{compra_id}/", headers=headers)
+    assert get_final_response.status_code == 200
+    assert get_final_response.json()['tipo'] == 'COMPRA'
+
+
 if __name__ == "__main__":
     pytest.main()
