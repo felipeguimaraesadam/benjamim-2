@@ -57,8 +57,19 @@ class LocacaoSemanalView(APIView):
         if obra_id:
             locacoes = locacoes.filter(obra_id=obra_id)
 
-        serializer = LocacaoObrasEquipesSerializer(locacoes, many=True)
-        return Response(serializer.data)
+        resposta_semanal = {}
+        for i in range(7):
+            dia_corrente = data_inicio + timedelta(days=i)
+            dia_str = dia_corrente.isoformat()
+            resposta_semanal[dia_str] = []
+
+            for locacao in locacoes:
+                # Verifica se a locação está ativa no dia_corrente
+                if locacao.data_locacao_inicio <= dia_corrente <= locacao.data_locacao_fim:
+                    serializer = LocacaoObrasEquipesSerializer(locacao, context={'request': request})
+                    resposta_semanal[dia_str].append(serializer.data)
+
+        return Response(resposta_semanal)
 # django.db.models.Sum, Count, F, Decimal are already imported in the backup content
 
 class CreateUsuarioView(APIView):
