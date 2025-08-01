@@ -123,9 +123,6 @@ const ComprasTable = ({
             <th scope="col" className="px-6 py-3">
               Tipo
             </th>
-            <th scope="col" className="px-6 py-3">
-              Status
-            </th>
             <th scope="col" className="px-6 py-3 text-center">
               Ações
             </th>
@@ -162,9 +159,6 @@ const ComprasTable = ({
                 </td>
                 <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                   {compra.tipo}
-                </td>
-                <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                  {compra.status_orcamento || 'N/A'}
                 </td>
                 <td className="px-6 py-4 text-center flex items-center justify-center space-x-2">
                   <button

@@ -448,19 +448,9 @@ class CompraViewSet(viewsets.ModelViewSet):
         compra = self.get_object()
         if compra.tipo == 'ORCAMENTO':
             compra.tipo = 'COMPRA'
-            compra.status_orcamento = 'APROVADO'
             compra.save()
             return Response({'status': 'orçamento aprovado'})
         return Response({'status': 'compra já aprovada'}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=['post'])
-    def reject(self, request, pk=None):
-        compra = self.get_object()
-        if compra.tipo == 'ORCAMENTO':
-            compra.status_orcamento = 'REJEITADO'
-            compra.save()
-            return Response({'status': 'orçamento rejeitado'})
-        return Response({'status': 'não é um orçamento'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DespesaExtraViewSet(viewsets.ModelViewSet):
