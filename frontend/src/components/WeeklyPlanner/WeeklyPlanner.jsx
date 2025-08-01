@@ -254,31 +254,57 @@ function WeeklyPlanner({ obras, equipes }) {
     try {
       const loc = draggedLocacaoDataForModal;
 
-      // Build the payload from scratch to avoid sending unwanted fields.
+      // Build the payload from scratch, mirroring LocacaoForm.jsx logic for robustness.
       const newLocacaoData = {
-        obra: loc.obra.id || loc.obra,
+        obra: parseInt(loc.obra.id || loc.obra, 10),
         data_locacao_inicio: targetDayIdForModal,
-        data_locacao_fim: targetDayIdForModal,
-        valor_diaria: loc.valor_diaria,
-        custo_total_estimado: loc.custo_total_estimado,
+        data_locacao_fim: targetDayIdForModal, // Duplication is for a single day
+
+        // Include payment and other fields from the source allocation
+        tipo_pagamento: loc.tipo_pagamento,
+        valor_pagamento: loc.valor_pagamento
+          ? parseFloat(loc.valor_pagamento)
+          : null,
+        data_pagamento: null, // A new allocation should not inherit the payment date
         observacoes: loc.observacoes,
 
-        // The backend requires one of these three fields.
-        equipe: loc.equipe?.id || null,
-        funcionario_locado: loc.funcionario_locado?.id || null,
-        servico_externo: loc.servico_externo || null,
+        // Set the correct resource, ensuring others are null
+        equipe: null,
+        funcionario_locado: null,
+        servico_externo: null,
       };
 
+      if (loc.tipo === 'equipe' && loc.equipe) {
+        newLocacaoData.equipe = parseInt(loc.equipe.id || loc.equipe, 10);
+      } else if (loc.tipo === 'funcionario' && loc.funcionario_locado) {
+        newLocacaoData.funcionario_locado = parseInt(
+          loc.funcionario_locado.id || loc.funcionario_locado,
+          10
+        );
+      } else if (loc.tipo === 'servico_externo' && loc.servico_externo) {
+        newLocacaoData.servico_externo = loc.servico_externo;
+      }
+
+      // Final check to prevent an obviously invalid request
+      if (
+        !newLocacaoData.equipe &&
+        !newLocacaoData.funcionario_locado &&
+        !newLocacaoData.servico_externo
+      ) {
+        throw new Error(
+          'Não foi possível determinar o recurso (equipe, funcionário ou serviço) para duplicar.'
+        );
+      }
+
       const response = await api.createLocacao(newLocacaoData);
-      // Check if multiple rentals were created (though unlikely for single day duplication)
       const createdRentals = response.data;
       if (Array.isArray(createdRentals) && createdRentals.length > 1) {
         toast.success(
-          `${createdRentals.length} locações de ${draggedLocacaoDataForModal.recurso_nome} duplicadas para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`
+          `${createdRentals.length} locações de ${loc.recurso_nome} duplicadas para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`
         );
       } else {
         toast.success(
-          `Locação de ${draggedLocacaoDataForModal.recurso_nome} duplicada para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`
+          `Locação de ${loc.recurso_nome} duplicada para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`
         );
       }
       fetchWeekData(currentDate);
