@@ -22,7 +22,7 @@ from .utils import generate_pdf_response
 
 from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra, Backup, BackupSettings
 from .serializers import (
-    UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer,
+    UsuarioSerializer, ObraSerializer, ObraDetailSerializer, FuncionarioSerializer, EquipeSerializer,
     LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer,
     DespesaExtraSerializer, OcorrenciaFuncionarioSerializer,
     ItemCompraSerializer, EquipeComMembrosBasicSerializer,
@@ -79,11 +79,25 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 class ObraViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows obras to be viewed or edited.
+    Uses ObraSerializer for list view and ObraDetailSerializer for detail view.
     """
-    serializer_class = ObraSerializer
+    queryset = Obra.objects.all()
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return ObraDetailSerializer
+        return ObraSerializer
+
     def get_queryset(self):
+        # Prefetch related data for efficiency in the detail view
+        if self.action == 'retrieve':
+            return Obra.objects.select_related('responsavel').prefetch_related(
+                'compras__itens__material',
+                'despesas_extras',
+                'locacao_obras_equipes_set__equipe__membros',
+                'locacao_obras_equipes_set__funcionario_locado'
+            ).all()
         return Obra.objects.select_related('responsavel').all()
 
 
