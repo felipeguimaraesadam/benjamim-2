@@ -300,13 +300,16 @@ export const updateBackupSettings = settings =>
   apiClient.put('/backup-settings/1/', settings);
 
 // --- FotoObra Service Functions ---
-export const getFotosObra = obraId =>
-  apiClient.get('/fotosobras/', { params: { obra_id: obraId } });
+export const getFotosByObraId = async (obraId) => {
+  const response = await apiClient.get('/fotosobras/', { params: { obra_id: obraId } });
+  // Handle paginated or non-paginated response
+  return response.data.results || response.data;
+};
 export const uploadFotoObra = formData =>
   apiClient.post('/fotosobras/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
-export const deleteFotoObra = fotoId =>
+export const deleteFoto = fotoId =>
   apiClient.delete(`/fotosobras/${fotoId}/`);
 
 // --- PDF Report Service Functions ---
