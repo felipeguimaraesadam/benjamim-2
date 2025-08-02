@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ComprasTable from '../components/tables/ComprasTable';
 import CompraForm from '../components/forms/CompraForm';
 import CompraItensModal from '../components/modals/CompraItensModal';
@@ -20,6 +20,7 @@ const AlertIcon = ({ type = 'error', className = "w-5 h-5 mr-2" }) => {
 const ComprasPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { id: urlId } = useParams(); // Get ID from URL
   const [compras, setCompras] = useState([]);
   const [isLoading, setIsLoading] = useState(false); // For page data
   const [isLoadingForm, setIsLoadingForm] = useState(false); // For form submission
@@ -148,6 +149,13 @@ const ComprasPage = () => {
     };
     fetchObras();
   }, []);
+
+  // Effect to handle editing from URL
+  useEffect(() => {
+    if (urlId) {
+      handleEditCompra({ id: urlId });
+    }
+  }, [urlId]);
 
   useEffect(() => {
     const obraIdFromState = location.state?.obraIdParaNovaCompra;
