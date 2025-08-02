@@ -383,7 +383,7 @@ const Navegacao = () => {
             icon={<AlocacoesIcon />}
             onClick={closeMobileMenu}
           >
-            Locações
+            Locais
           </NavLink>
           <NavLink
             to="/ocorrencias"

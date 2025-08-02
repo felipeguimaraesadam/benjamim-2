@@ -49,13 +49,15 @@ class LocacaoSemanalView(APIView):
 
         data_fim = data_inicio + timedelta(days=6)
 
-        locacoes = Locacao_Obras_Equipes.objects.filter(
-            data_locacao_inicio__lte=data_fim,
-            data_locacao_fim__gte=data_inicio
-        ).select_related('obra', 'equipe', 'funcionario_locado')
+        locacoes_qs = Locacao_Obras_Equipes.objects.select_related('obra', 'equipe', 'funcionario_locado')
 
         if obra_id:
-            locacoes = locacoes.filter(obra_id=obra_id)
+            locacoes_qs = locacoes_qs.filter(obra_id=obra_id)
+
+        locacoes = locacoes_qs.filter(
+            data_locacao_inicio__lte=data_fim,
+            data_locacao_fim__gte=data_inicio
+        )
 
         resposta_semanal = {}
         for i in range(7):
