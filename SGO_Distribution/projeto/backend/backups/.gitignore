@@ -1,8 +1,0 @@
-# Ignore all backup files
-*.db
-*.sqlite3
-*.sql
-*.backup
-
-# But keep this directory
-!.gitignore
