@@ -92,8 +92,8 @@ const FinancialDashboard = ({ obra }) => {
             Custo por m²
           </h3>
           <p className="text-xl font-bold text-purple-900 dark:text-purple-100">
-            {obra.custo_m2
-              ? formatCurrency(obra.custo_m2)
+            {obra.custo_por_metro
+              ? formatCurrency(obra.custo_por_metro)
               : 'N/A'}
           </p>
         </div>

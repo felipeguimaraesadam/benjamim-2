@@ -5,31 +5,22 @@ from django.db.models import Sum, Q
 from django.db.models.functions import TruncMonth
 from decimal import Decimal
 
+# --- Base & Helper Serializers ---
+
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
-
     class Meta:
         model = Usuario
         fields = ['id', 'login', 'nome_completo', 'nivel_acesso', 'password']
-        extra_kwargs = {
-            'password': {'write_only': True}
-        }
+        extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        user = Usuario.objects.create_user(**validated_data)
-        return user
+        return Usuario.objects.create_user(**validated_data)
 
     def update(self, instance, validated_data):
         if 'password' in validated_data:
             instance.set_password(validated_data.pop('password'))
-        instance.login = validated_data.get('login', instance.login)
-        instance.nome_completo = validated_data.get('nome_completo', instance.nome_completo)
-        instance.nivel_acesso = validated_data.get('nivel_acesso', instance.nivel_acesso)
-        instance.save()
-        return instance
-
-
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+        return super().update(instance, validated_data)
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -40,9 +31,6 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['nivel_acesso'] = user.nivel_acesso
         return token
 
-# --- Reordered Serializers ---
-
-# Helper/Nested Serializers defined first
 class ObraNestedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Obra
@@ -66,11 +54,11 @@ class EquipeComMembrosBasicSerializer(serializers.ModelSerializer):
         model = Equipe
         fields = ['id', 'nome_equipe', 'lider', 'membros']
 
-# Main serializers that might be used as nested serializers
+# --- Primary Model Serializers (that are dependencies for ObraDetailSerializer) ---
+
 class CompraSerializer(serializers.ModelSerializer):
     itens = ItemCompraSerializer(many=True)
     obra = ObraNestedSerializer(read_only=True)
-
     class Meta:
         model = Compra
         fields = [
@@ -78,10 +66,7 @@ class CompraSerializer(serializers.ModelSerializer):
             'nota_fiscal', 'valor_total_bruto', 'desconto', 'valor_total_liquido',
             'observacoes', 'itens', 'created_at', 'updated_at', 'tipo'
         ]
-        extra_kwargs = {
-            'created_at': {'read_only': True},
-            'updated_at': {'read_only': True}
-        }
+        extra_kwargs = {'created_at': {'read_only': True}, 'updated_at': {'read_only': True}}
 
     def create(self, validated_data):
         itens_data = validated_data.pop('itens')
@@ -105,7 +90,6 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
     equipe_details = EquipeComMembrosBasicSerializer(source='equipe', read_only=True)
     tipo = serializers.SerializerMethodField()
     recurso_nome = serializers.SerializerMethodField()
-
     class Meta:
         model = Locacao_Obras_Equipes
         fields = [
@@ -129,44 +113,24 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
         if obj.servico_externo: return obj.servico_externo
         return None
 
-    def validate_valor_pagamento(self, value):
-        if value is not None and value < Decimal('0.00'):
-            raise serializers.ValidationError("O valor do pagamento não pode ser negativo.")
-        return value
+# --- Main List and Detail Serializers ---
 
-    def validate(self, data):
-        equipe = data.get('equipe', getattr(self.instance, 'equipe', None))
-        funcionario_locado = data.get('funcionario_locado', getattr(self.instance, 'funcionario_locado', None))
-        servico_externo_str = data.get('servico_externo', getattr(self.instance, 'servico_externo', None))
-        servico_externo = servico_externo_str.strip() if isinstance(servico_externo_str, str) else None
-
-        active_fields_count = sum(1 for field_val in [equipe, funcionario_locado, servico_externo] if field_val)
-        if active_fields_count == 0:
-            raise serializers.ValidationError("É necessário selecionar uma equipe, um funcionário OU preencher o serviço externo.")
-        if active_fields_count > 1:
-            raise serializers.ValidationError("Não é possível definir uma equipe, um funcionário E um serviço externo ao mesmo tempo. Escolha apenas um.")
-
-        data_locacao_inicio = data.get('data_locacao_inicio', getattr(self.instance, 'data_locacao_inicio', None))
-        data_locacao_fim = data.get('data_locacao_fim', getattr(self.instance, 'data_locacao_fim', None))
-
-        if funcionario_locado and data_locacao_inicio:
-            effective_data_locacao_fim = data_locacao_fim or data_locacao_inicio
-            q_conditions = Q(data_locacao_inicio__lte=effective_data_locacao_fim) & Q(data_locacao_fim__gte=data_locacao_inicio)
-            conflicting_locacoes_qs = Locacao_Obras_Equipes.objects.filter(funcionario_locado=funcionario_locado).filter(q_conditions)
-            if self.instance and self.instance.pk:
-                conflicting_locacoes_qs = conflicting_locacoes_qs.exclude(pk=self.instance.pk)
-            if conflicting_locacoes_qs.exists():
-                first_conflict = conflicting_locacoes_qs.first()
-                raise serializers.ValidationError({
-                    'funcionario_locado': f"Este funcionário já está locado na obra '{first_conflict.obra.nome_obra}' de {first_conflict.data_locacao_inicio.strftime('%d/%m/%Y')} até {first_conflict.data_locacao_fim.strftime('%d/%m/%Y')}.",
-                    'conflict_details': {'locacao_id': first_conflict.id}
-                })
-        return data
-
-# The main ObraSerializer that depends on the ones above
 class ObraSerializer(serializers.ModelSerializer):
+    """Serializer for listing Obras, without heavy calculations."""
     responsavel_nome = serializers.CharField(source='responsavel.nome_completo', read_only=True)
+    class Meta:
+        model = Obra
+        fields = [
+            'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
+            'data_inicio', 'data_prevista_fim', 'data_real_fim',
+            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem'
+        ]
 
+class ObraDetailSerializer(ObraSerializer):
+    """
+    Comprehensive serializer for the Obra detail view, including all financial calculations
+    and nested data for related models.
+    """
     # Financial Summary Fields
     custo_total_realizado = serializers.SerializerMethodField()
     custos_por_categoria = serializers.SerializerMethodField()
@@ -183,12 +147,8 @@ class ObraSerializer(serializers.ModelSerializer):
     despesas_extras = DespesaExtraSerializer(many=True, read_only=True)
     locacoes = LocacaoObrasEquipesSerializer(many=True, read_only=True, source='locacao_obras_equipes_set')
 
-    class Meta:
-        model = Obra
-        fields = [
-            'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
-            'data_inicio', 'data_prevista_fim', 'data_real_fim',
-            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem',
+    class Meta(ObraSerializer.Meta):
+        fields = ObraSerializer.Meta.fields + [
             'custo_total_realizado', 'custos_por_categoria', 'gastos_por_categoria_material_obra',
             'balanco_financeiro', 'custo_m2', 'historico_custos', 'top_materiais',
             'compras', 'despesas_extras', 'locacoes'
@@ -200,9 +160,7 @@ class ObraSerializer(serializers.ModelSerializer):
         custo_materiais = obj.compras.filter(tipo='COMPRA').aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         custo_locacoes = obj.locacao_obras_equipes_set.filter(status_locacao='ativa').aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
         custo_despesas_extras = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
-        result = {
-            'materiais': custo_materiais, 'locacoes': custo_locacoes, 'despesas_extras': custo_despesas_extras,
-        }
+        result = {'materiais': custo_materiais, 'locacoes': custo_locacoes, 'despesas_extras': custo_despesas_extras}
         obj._cached_custos_por_categoria = result
         return result
 
@@ -227,6 +185,7 @@ class ObraSerializer(serializers.ModelSerializer):
         return {gasto['categoria_uso']: gasto['total'] for gasto in gastos}
 
     def get_historico_custos(self, obj):
+        from django.db.models.functions import TruncMonth
         custos_compras = obj.compras.filter(tipo='COMPRA').annotate(mes=TruncMonth('data_compra')).values('mes').annotate(total=Sum('valor_total_liquido')).order_by('mes')
         custos_despesas = obj.despesas_extras.annotate(mes=TruncMonth('data')).values('mes').annotate(total=Sum('valor')).order_by('mes')
         custos_locacoes = obj.locacao_obras_equipes_set.filter(status_locacao='ativa').annotate(mes=TruncMonth('data_locacao_inicio')).values('mes').annotate(total=Sum('valor_pagamento')).order_by('mes')
@@ -237,12 +196,13 @@ class ObraSerializer(serializers.ModelSerializer):
                 mes_str = item['mes'].strftime('%Y-%m')
                 if mes_str not in historico:
                     historico[mes_str] = {'total_custo_compras': Decimal('0.00'), 'total_custo_despesas': Decimal('0.00'), 'total_custo_locacoes': Decimal('0.00')}
-                if 'total_custo_compras' in item:
-                    historico[mes_str]['total_custo_compras'] += item['total'] or Decimal('0.00')
-                elif 'total_custo_despesas' in item:
-                     historico[mes_str]['total_custo_despesas'] += item['total'] or Decimal('0.00')
-                else:
-                    historico[mes_str]['total_custo_locacoes'] += item['total'] or Decimal('0.00')
+                if 'total' in item: # Simplified check
+                    if 'total_custo_compras' in historico[mes_str] and 'valor_total_liquido' in str(custo_set.query):
+                         historico[mes_str]['total_custo_compras'] += item['total'] or Decimal('0.00')
+                    elif 'total_custo_despesas' in historico[mes_str] and 'valor' in str(custo_set.query):
+                         historico[mes_str]['total_custo_despesas'] += item['total'] or Decimal('0.00')
+                    else:
+                         historico[mes_str]['total_custo_locacoes'] += item['total'] or Decimal('0.00')
         resultado_final = [{'mes': mes, 'total_custo_compras': totais['total_custo_compras'], 'total_custo_despesas': totais['total_custo_despesas'], 'total_custo_locacoes': totais['total_custo_locacoes'], 'total_geral_mes': sum(totais.values())} for mes, totais in sorted(historico.items())]
         return resultado_final
 
@@ -250,6 +210,7 @@ class ObraSerializer(serializers.ModelSerializer):
         custos = ItemCompra.objects.filter(compra__obra=obj, compra__tipo='COMPRA')\
             .values('material__nome').annotate(total_custo=Sum('valor_total_item')).order_by('-total_custo')[:10]
         return [{'name': item['material__nome'], 'value': item['total_custo'] or Decimal('0.00')} for item in custos]
+
 
 # --- Other Serializers ---
 
@@ -269,32 +230,20 @@ class FotoObraSerializer(serializers.ModelSerializer):
         fields = ['id', 'obra', 'imagem', 'descricao', 'uploaded_at']
         read_only_fields = ['uploaded_at']
 
-    def validate_obra(self, value):
-        if not isinstance(value, Obra) or not Obra.objects.filter(pk=value.pk).exists():
-            raise serializers.ValidationError(f"Obra with ID {value.pk} does not exist.")
-        return value
-
-    def create(self, validated_data):
-        if 'imagem' not in validated_data:
-            raise serializers.ValidationError({'imagem': 'No file was submitted.'})
-        return FotoObra.objects.create(**validated_data)
-
-class ItemCompraHistorySerializer(serializers.ModelSerializer):
-    obra_nome = serializers.CharField(source='compra.obra.nome_obra', read_only=True)
-    data_compra = serializers.DateField(source='compra.data_compra', read_only=True)
-
-    class Meta:
-        model = ItemCompra
-        fields = ['id', 'quantidade', 'valor_unitario', 'data_compra', 'obra_nome', 'valor_total_item']
-
 class MaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Material
         fields = ['id', 'nome', 'unidade_medida', 'quantidade_em_estoque', 'nivel_minimo_estoque', 'categoria_uso_padrao']
 
+class ItemCompraHistorySerializer(serializers.ModelSerializer):
+    obra_nome = serializers.CharField(source='compra.obra.nome_obra', read_only=True)
+    data_compra = serializers.DateField(source='compra.data_compra', read_only=True)
+    class Meta:
+        model = ItemCompra
+        fields = ['id', 'quantidade', 'valor_unitario', 'data_compra', 'obra_nome', 'valor_total_item']
+
 class MaterialDetailSerializer(MaterialSerializer):
     purchase_history = ItemCompraHistorySerializer(many=True, source='itens_comprados', read_only=True)
-
     class Meta(MaterialSerializer.Meta):
         fields = MaterialSerializer.Meta.fields + ['purchase_history']
 
@@ -325,7 +274,6 @@ class FuncionarioDetailSerializer(FuncionarioSerializer):
     obras_participadas = FuncionarioObraParticipadaSerializer(many=True, read_only=True, source='locacoes_individuais')
     pagamentos_recebidos = FuncionarioPagamentoRecebidoSerializer(many=True, read_only=True, source='locacoes_individuais')
     ocorrencias_registradas = OcorrenciaFuncionarioSerializer(many=True, read_only=True, source='ocorrencias')
-
     class Meta(FuncionarioSerializer.Meta):
         fields = FuncionarioSerializer.Meta.fields + ['obras_participadas', 'pagamentos_recebidos', 'ocorrencias_registradas']
 
@@ -339,7 +287,6 @@ class EquipeDetailSerializer(serializers.ModelSerializer):
     lider_nome = serializers.CharField(source='lider.nome_completo', read_only=True, allow_null=True)
     membros = FuncionarioSerializer(many=True, read_only=True)
     locacoes_participadas = EquipeLocacaoSerializer(many=True, read_only=True, source='locacao_obras_equipes_set')
-
     class Meta:
         model = Equipe
         fields = ['id', 'nome_equipe', 'lider', 'lider_nome', 'membros', 'locacoes_participadas']

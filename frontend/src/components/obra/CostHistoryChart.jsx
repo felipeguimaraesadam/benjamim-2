@@ -10,15 +10,16 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const CostHistoryChart = ({ historicoCustos, isLoading }) => {
+const CostHistoryChart = ({ historicoCustos, custosError }) => {
   return (
     <div className="bg-white shadow-lg rounded-lg p-6 lg:col-span-2">
       <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">
         Visão Geral: Histórico de Custos Mensais
       </h2>
-      {isLoading ? (
-        <p className="text-gray-500 text-sm">Carregando histórico...</p>
-      ) : historicoCustos && historicoCustos.length > 0 ? (
+      {custosError && (
+        <p className="text-red-500 text-sm mb-2">Erro: {custosError}</p>
+      )}
+      {historicoCustos && historicoCustos.length > 0 ? (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart
             data={historicoCustos}
@@ -51,13 +52,6 @@ const CostHistoryChart = ({ historicoCustos, isLoading }) => {
             />
             <Line
               type="monotone"
-              dataKey="total_custo_locacoes"
-              name="Mão de Obra/Serviços"
-              stroke="#ffc658"
-              activeDot={{ r: 6 }}
-            />
-            <Line
-              type="monotone"
               dataKey="total_geral_mes"
               name="Custo Total Mensal"
               stroke="#ff7300"
@@ -67,9 +61,11 @@ const CostHistoryChart = ({ historicoCustos, isLoading }) => {
           </LineChart>
         </ResponsiveContainer>
       ) : (
-        <p className="text-gray-500 text-sm">
-          Não há dados de custos mensais para exibir o histórico.
-        </p>
+        !custosError && (
+          <p className="text-gray-500 text-sm">
+            Não há dados de custos mensais para exibir o histórico.
+          </p>
+        )
       )}
     </div>
   );

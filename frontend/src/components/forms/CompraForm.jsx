@@ -915,7 +915,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           valor_unitario: parseFloat(
             String(item.valorUnitario).replace(',', '.')
           ),
-          categoria_uso: item.categoria_uso || 'Geral', // Default to 'Geral' if not set
+          categoria_uso: item.categoria_uso || null, // Added categoria_uso
         }));
       if (itemsToSubmit.length === 0 && !(initialData && initialData.id)) {
         setErrors(prev => ({
