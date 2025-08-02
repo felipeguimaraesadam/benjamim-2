@@ -103,29 +103,34 @@ const ObraDetailPage = () => {
   if (errorObra) return <div className="p-4 text-center"><p className="text-red-500">Erro ao carregar dados da obra: {errorObra}</p></div>;
   if (!obra && !isLoadingObra) return <div className="p-4 text-center"><p>Obra não encontrada.</p></div>;
 
-  // Debug log for obra data
-  if (obra) {
-    console.log('[DEBUG ObraDetailPage] obra data for charts:', obra);
-  }
+  // The console log that was here was causing spam and has been removed.
 
-  // Chart data preparation
-  const orcamentoVsGastoDataObra = obra ? [
+  // DEBUG: Log the specific data for the third chart when `obra` data changes.
+  useEffect(() => {
+    if (obra) {
+      console.log('[DEBUG] Data for Gastos por Categoria de Material:', obra.gastos_por_categoria_material_obra);
+    }
+  }, [obra]);
+
+
+  // Chart data preparation memoized to prevent re-renders
+  const orcamentoVsGastoDataObra = useMemo(() => (obra ? [
       { name: 'Orçamento Previsto', value: parseFloat(obra.orcamento_previsto) || 0 },
       { name: 'Custo Total Realizado', value: parseFloat(obra.custo_total_realizado) || 0 },
-  ] : [];
+  ] : []), [obra]);
 
-  const composicaoGastosDataObra = obra && obra.custos_por_categoria ? [
+  const composicaoGastosDataObra = useMemo(() => (obra && obra.custos_por_categoria ? [
       { name: 'Materiais (Compras)', value: parseFloat(obra.custos_por_categoria.materiais) || 0 },
       { name: 'Locações/Serviços', value: parseFloat(obra.custos_por_categoria.locacoes) || 0 },
       { name: 'Despesas Extras', value: parseFloat(obra.custos_por_categoria.despesas_extras) || 0 },
-  ].filter(item => item.value > 0) : [];
+  ].filter(item => item.value > 0) : []), [obra]);
 
-  const gastosPorCategoriaMaterialDataObra = obra && obra.gastos_por_categoria_material_obra ?
+  const gastosPorCategoriaMaterialDataObra = useMemo(() => (obra && obra.gastos_por_categoria_material_obra ?
       Object.entries(obra.gastos_por_categoria_material_obra).map(([key, value]) => ({
           name: key,
           value: parseFloat(value) || 0,
       })).filter(entry => entry.value > 0)
-      : [];
+      : []), [obra]);
 
   // Colors for charts
   const COLORS_PIE_OBRA = ['#0088FE', '#FF8042'];
