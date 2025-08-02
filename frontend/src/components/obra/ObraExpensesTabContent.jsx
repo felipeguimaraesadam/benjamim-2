@@ -5,7 +5,6 @@ import ObraDespesasExtrasTable from '../tables/ObraDespesasExtrasTable'; // Assu
 const ObraExpensesTabContent = ({
   despesasExtrasObra,
   isLoading,
-  despesasExtrasObraError,
   obraId,
   obraNome,
 }) => {
@@ -23,15 +22,9 @@ const ObraExpensesTabContent = ({
           + Adicionar Despesa Extra
         </Link>
       </div>
-      {despesasExtrasObraError && (
-        <p className="text-red-500 text-sm mb-2">
-          Erro: {despesasExtrasObraError}
-        </p>
-      )}
       <ObraDespesasExtrasTable
         despesas={despesasExtrasObra}
-        isLoading={isLoading} // Pass isLoading specific to despesasExtrasObra if available
-        error={despesasExtrasObraError}
+        isLoading={isLoading}
       />
     </div>
   );

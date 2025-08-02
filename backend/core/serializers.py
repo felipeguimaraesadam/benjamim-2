@@ -81,6 +81,10 @@ class ObraSerializer(serializers.ModelSerializer):
     historico_custos = serializers.SerializerMethodField()
     top_materiais = serializers.SerializerMethodField()
 
+    # Nested data for tabs
+    compras = CompraSerializer(many=True, read_only=True)
+    despesas_extras = DespesaExtraSerializer(many=True, read_only=True)
+
 
     class Meta:
         model = Obra
@@ -90,7 +94,9 @@ class ObraSerializer(serializers.ModelSerializer):
             'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem',
             # Financial and chart fields
             'custo_total_realizado', 'custos_por_categoria', 'gastos_por_categoria_material_obra',
-            'balanco_financeiro', 'custo_m2', 'historico_custos', 'top_materiais'
+            'balanco_financeiro', 'custo_m2', 'historico_custos', 'top_materiais',
+            # Nested tab data
+            'compras', 'despesas_extras'
         ]
 
     def get_custos_por_categoria(self, obj):

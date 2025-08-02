@@ -5,7 +5,6 @@ import ObraCompletaComprasTable from '../tables/ObraCompletaComprasTable'; // As
 const ObraPurchasesTabContent = ({
   todasCompras,
   isLoading,
-  todasComprasError,
   obraId,
   obraNome,
 }) => {
@@ -23,13 +22,9 @@ const ObraPurchasesTabContent = ({
           + Adicionar Nova Compra
         </Link>
       </div>
-      {todasComprasError && (
-        <p className="text-red-500 text-sm mb-2">Erro: {todasComprasError}</p>
-      )}
       <ObraCompletaComprasTable
         compras={todasCompras}
-        isLoading={isLoading} // Pass isLoading specific to todasCompras if available
-        error={todasComprasError}
+        isLoading={isLoading}
       />
     </div>
   );

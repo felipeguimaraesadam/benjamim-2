@@ -35,13 +35,13 @@ const ObraDetailPage = () => {
   // If direct fetch was needed: const { data: custosCategoria, ... } = useApiData(api.getObraCustosPorCategoria, obraApiParams, [], true);
 
   // const { data: custosMaterial, isLoading: isLoadingCustosMaterial, error: errorCustosMaterial, fetchData: fetchCustosMaterial } = useApiData(api.getObraCustosPorMaterial, obraApiParams, [], true);
-  const { data: todasAsComprasBruto, isLoading: isLoadingTodasAsCompras, error: errorTodasAsCompras, fetchData: fetchTodasAsCompras } = useApiData(api.getObraComprasDetalhes, obraApiParams, [], true);
+  // const { data: todasAsComprasBruto, isLoading: isLoadingTodasAsCompras, error: errorTodasAsCompras, fetchData: fetchTodasAsCompras } = useApiData(api.getObraComprasDetalhes, obraApiParams, [], true);
 
-  const { data: despesasExtrasObra, isLoading: isLoadingDespesasExtras, error: errorDespesasExtras, fetchData: fetchDespesasExtras } = useApiData(api.getDespesasExtras, obraQueryObjParams, [], true);
+  // const { data: despesasExtrasObra, isLoading: isLoadingDespesasExtras, error: errorDespesasExtras, fetchData: fetchDespesasExtras } = useApiData(api.getDespesasExtras, obraQueryObjParams, [], true);
 
   const actualTodasAsCompras = useMemo(() => {
-      return todasAsComprasBruto?.compras || (Array.isArray(todasAsComprasBruto) ? todasAsComprasBruto : []);
-  }, [todasAsComprasBruto]);
+      return obra?.compras || [];
+  }, [obra]);
 
   // Derived state for comprasEstoque (removed)
   // const comprasEstoque = useMemo(() => {
@@ -222,9 +222,8 @@ const ObraDetailPage = () => {
         {/* EquipesLocadasList component removed - component not found */}
 
         <ObraPurchasesTabContent
-          todasCompras={actualTodasAsCompras}
-          isLoading={isLoadingTodasAsCompras}
-          todasComprasError={errorTodasAsCompras}
+          todasCompras={obra?.compras || []}
+          isLoading={isLoadingObra}
           obraId={obra.id}
           obraNome={obra.nome_obra}
         />
@@ -236,9 +235,8 @@ const ObraDetailPage = () => {
         </div>
 
         <ObraExpensesTabContent
-          despesasExtrasObra={despesasExtrasObra}
-          isLoading={isLoadingDespesasExtras}
-          despesasExtrasObraError={errorDespesasExtras}
+          despesasExtrasObra={obra?.despesas_extras || []}
+          isLoading={isLoadingObra}
           obraId={obra.id}
           obraNome={obra.nome_obra}
         />
