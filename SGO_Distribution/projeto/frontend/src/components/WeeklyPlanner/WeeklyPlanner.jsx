@@ -11,7 +11,7 @@ import * as api from '../../services/api';
 import { DndContext, DragOverlay } from '@dnd-kit/core'; // Import DragOverlay
 import { toast } from 'react-toastify';
 
-function WeeklyPlanner({ obras, equipes }) {
+function WeeklyPlanner() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [locacoesPorDia, setLocacoesPorDia] = useState({});
   const [recursosMaisUtilizados, setRecursosMaisUtilizados] = useState([]);
@@ -408,8 +408,6 @@ function WeeklyPlanner({ obras, equipes }) {
               </h3>
               <LocacaoForm
                 initialData={locacaoFormInitialData}
-                obras={obras || []}
-                equipes={equipes || []}
                 onSubmit={handleActualFormSubmit}
                 onCancel={handleCloseLocacaoForm}
                 isLoading={isLoading}

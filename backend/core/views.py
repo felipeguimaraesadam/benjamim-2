@@ -37,8 +37,6 @@ class LocacaoSemanalView(APIView):
 
     def get(self, request, *args, **kwargs):
         inicio_str = request.query_params.get('inicio')
-        obra_id = request.query_params.get('obra_id')
-
         if not inicio_str:
             return Response({"error": "O parâmetro 'inicio' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -49,29 +47,13 @@ class LocacaoSemanalView(APIView):
 
         data_fim = data_inicio + timedelta(days=6)
 
-        locacoes_qs = Locacao_Obras_Equipes.objects.select_related('obra', 'equipe', 'funcionario_locado')
-
-        if obra_id:
-            locacoes_qs = locacoes_qs.filter(obra_id=obra_id)
-
-        locacoes = locacoes_qs.filter(
+        locacoes = Locacao_Obras_Equipes.objects.filter(
             data_locacao_inicio__lte=data_fim,
             data_locacao_fim__gte=data_inicio
-        )
+        ).select_related('obra', 'equipe', 'funcionario_locado')
 
-        resposta_semanal = {}
-        for i in range(7):
-            dia_corrente = data_inicio + timedelta(days=i)
-            dia_str = dia_corrente.isoformat()
-            resposta_semanal[dia_str] = []
-
-            for locacao in locacoes:
-                # Verifica se a locação está ativa no dia_corrente
-                if locacao.data_locacao_inicio <= dia_corrente and (locacao.data_locacao_fim is None or dia_corrente <= locacao.data_locacao_fim):
-                    serializer = LocacaoObrasEquipesSerializer(locacao, context={'request': request})
-                    resposta_semanal[dia_str].append(serializer.data)
-
-        return Response(resposta_semanal)
+        serializer = LocacaoObrasEquipesSerializer(locacoes, many=True)
+        return Response(serializer.data)
 # django.db.models.Sum, Count, F, Decimal are already imported in the backup content
 
 class CreateUsuarioView(APIView):
@@ -372,7 +354,7 @@ class CompraViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Compra.objects.all().select_related('obra').order_by('-data_compra')
-        obra_id = self.request.query_params.get('obra_id') or self.request.query_params.get('obra')
+        obra_id = self.request.query_params.get('obra_id')
         if obra_id:
             queryset = queryset.filter(obra_id=obra_id)
         data_inicio_str = self.request.query_params.get('data_inicio')
@@ -390,9 +372,6 @@ class CompraViewSet(viewsets.ModelViewSet):
         fornecedor = self.request.query_params.get('fornecedor')
         if fornecedor:
             queryset = queryset.filter(fornecedor__icontains=fornecedor)
-        tipo = self.request.query_params.get('tipo')
-        if tipo:
-            queryset = queryset.filter(tipo=tipo)
         return queryset
 
     def update(self, request, *args, **kwargs):
@@ -1125,8 +1104,6 @@ class LocacaoSemanalView(APIView):
 
     def get(self, request, *args, **kwargs):
         inicio_semana_str = request.query_params.get('inicio')
-        obra_id = request.query_params.get('obra_id')
-
         if not inicio_semana_str:
             return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1247,7 +1224,6 @@ class RecursosMaisUtilizadosSemanaView(APIView):
 
     def get(self, request, *args, **kwargs):
         inicio_semana_str = request.query_params.get('inicio')
-        obra_id = request.query_params.get('obra_id')
         if not inicio_semana_str:
             return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1258,14 +1234,13 @@ class RecursosMaisUtilizadosSemanaView(APIView):
 
         fim_semana = inicio_semana + timedelta(days=6)
 
+        # Filtra locações que estão ativas e se sobrepõem com a semana.
+        # Uma locação se sobrepõe se: loc.inicio <= semana.fim E loc.fim >= semana.inicio
         locacoes_na_semana = Locacao_Obras_Equipes.objects.filter(
             status_locacao='ativa',
-            data_locacao_inicio__lte=fim_semana,
-            data_locacao_fim__gte=inicio_semana
+            data_locacao_inicio__lte=fim_semana,  # Começa antes ou durante o fim da semana
+            data_locacao_fim__gte=inicio_semana   # Termina depois ou durante o início da semana
         ).select_related('funcionario_locado', 'equipe')
-
-        if obra_id:
-            locacoes_na_semana = locacoes_na_semana.filter(obra_id=obra_id)
 
         contagem_recursos = defaultdict(int)
 
