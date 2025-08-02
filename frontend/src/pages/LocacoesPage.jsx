@@ -60,14 +60,12 @@ const LocacoesPage = () => {
       try {
         const params = { page };
         if (obraId) {
-          // The backend expects the parameter to be 'obra'
-          params.obra = obraId;
+          params.obra_id = obraId;
         }
         const response = await api.getLocacoes(params);
         setLocacoes(response.data.results);
         setTotalItems(response.data.count);
         setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
-        // Only update the page number if it's different, to avoid potential re-renders
         if (currentPage !== page) {
           setCurrentPage(page);
         }
@@ -80,7 +78,7 @@ const LocacoesPage = () => {
         setIsLoading(false);
       }
     },
-    [PAGE_SIZE, currentPage] // Add currentPage to dependencies
+    [PAGE_SIZE, currentPage]
   );
 
   const fetchObras = useCallback(async () => {
@@ -132,7 +130,6 @@ const LocacoesPage = () => {
     fetchChartData(selectedObraIdForChart || null);
   }, [fetchObras, fetchEquipes, fetchChartData, selectedObraIdForChart]);
 
-  // This effect handles data fetching for the table based on the current page and selected obra.
   useEffect(() => {
     fetchLocacoes(currentPage, selectedObra?.id);
   }, [currentPage, selectedObra, fetchLocacoes]);
@@ -177,11 +174,8 @@ const LocacoesPage = () => {
       showSuccessToast('Locação excluída com sucesso!');
       setLocacaoToDeleteId(null);
       setShowDeleteConfirm(false);
-
-      // After deleting, refetch the data for the current page and filter
       const newPage = locacoes.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
       fetchLocacoes(newPage, selectedObra?.id);
-
     } catch (err) {
       const errorMsg = err.message || 'Falha ao excluir locação.';
       setError(errorMsg);
@@ -214,10 +208,8 @@ const LocacoesPage = () => {
       }
       setShowFormModal(false);
       setCurrentLocacao(null);
-      // After submit, refetch the data, going to page 1 if it was a new creation
       const pageToFetch = isEditing ? currentPage : 1;
       fetchLocacoes(pageToFetch, selectedObra?.id);
-
     } catch (err) {
       const backendErrors = err.response?.data;
       let generalMessage =
@@ -266,7 +258,6 @@ const LocacoesPage = () => {
     setCurrentLocacao(null);
     setError(null);
     showSuccessToast('Funcionário transferido com sucesso!');
-    // After transfer, refetch the current page with the current filter
     fetchLocacoes(currentPage, selectedObra?.id);
   }, [fetchLocacoes, currentPage, selectedObra]);
 
@@ -494,7 +485,6 @@ const LocacoesPage = () => {
               value={selectedObra}
               onObraSelect={obra => {
                 setSelectedObra(obra);
-                // When a filter is selected, we should go back to the first page of results.
                 if (currentPage !== 1) {
                   setCurrentPage(1);
                 }

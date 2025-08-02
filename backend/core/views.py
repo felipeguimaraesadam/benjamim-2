@@ -1104,6 +1104,7 @@ class LocacaoSemanalView(APIView):
 
     def get(self, request, *args, **kwargs):
         inicio_semana_str = request.query_params.get('inicio')
+        obra_id_str = request.query_params.get('obra_id')
         if not inicio_semana_str:
             return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1121,6 +1122,9 @@ class LocacaoSemanalView(APIView):
             # Locação começa antes ou durante o fim da semana E Locação termina depois ou durante o início da semana
             Q(data_locacao_inicio__lte=fim_semana) & Q(data_locacao_fim__gte=inicio_semana)
         ).select_related('obra', 'equipe', 'funcionario_locado').order_by('data_locacao_inicio')
+
+        if obra_id_str:
+            locacoes_na_semana = locacoes_na_semana.filter(obra_id=obra_id_str)
 
         print(f"[LocacaoSemanalView] Locações encontradas no período geral: {locacoes_na_semana.count()}") # LOG BACKEND 2
 
@@ -1224,6 +1228,7 @@ class RecursosMaisUtilizadosSemanaView(APIView):
 
     def get(self, request, *args, **kwargs):
         inicio_semana_str = request.query_params.get('inicio')
+        obra_id_str = request.query_params.get('obra_id')
         if not inicio_semana_str:
             return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1241,6 +1246,9 @@ class RecursosMaisUtilizadosSemanaView(APIView):
             data_locacao_inicio__lte=fim_semana,  # Começa antes ou durante o fim da semana
             data_locacao_fim__gte=inicio_semana   # Termina depois ou durante o início da semana
         ).select_related('funcionario_locado', 'equipe')
+
+        if obra_id_str:
+            locacoes_na_semana = locacoes_na_semana.filter(obra_id=obra_id_str)
 
         contagem_recursos = defaultdict(int)
 
