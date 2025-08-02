@@ -65,7 +65,7 @@ class LocacaoSemanalView(APIView):
 
             for locacao in locacoes:
                 # Verifica se a locação está ativa no dia_corrente
-                if locacao.data_locacao_inicio <= dia_corrente <= locacao.data_locacao_fim:
+                if locacao.data_locacao_inicio <= dia_corrente and (locacao.data_locacao_fim is None or dia_corrente <= locacao.data_locacao_fim):
                     serializer = LocacaoObrasEquipesSerializer(locacao, context={'request': request})
                     resposta_semanal[dia_str].append(serializer.data)
 
