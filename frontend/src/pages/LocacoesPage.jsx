@@ -54,15 +54,21 @@ const LocacoesPage = () => {
   const [selectedObra, setSelectedObra] = useState(null);
 
   const fetchLocacoes = useCallback(
-    async (page = 1) => {
+    async (page = 1, obraId = null) => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await api.getLocacoes({ page: page });
+        const params = { page };
+        if (obraId) {
+          params.obra_id = obraId;
+        }
+        const response = await api.getLocacoes(params);
         setLocacoes(response.data.results);
         setTotalItems(response.data.count);
         setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
-        setCurrentPage(page);
+        if (currentPage !== page) {
+          setCurrentPage(page);
+        }
       } catch (err) {
         const errorMsg = err.message || 'Falha ao buscar locações.';
         setError(errorMsg);
@@ -72,7 +78,7 @@ const LocacoesPage = () => {
         setIsLoading(false);
       }
     },
-    [PAGE_SIZE]
+    [PAGE_SIZE, currentPage]
   );
 
   const fetchObras = useCallback(async () => {
@@ -125,8 +131,8 @@ const LocacoesPage = () => {
   }, [fetchObras, fetchEquipes, fetchChartData, selectedObraIdForChart]);
 
   useEffect(() => {
-    fetchLocacoes(currentPage);
-  }, [currentPage, fetchLocacoes]);
+    fetchLocacoes(currentPage, selectedObra?.id);
+  }, [currentPage, selectedObra, fetchLocacoes]);
 
   const handleObraFilterChange = event => {
     setSelectedObraIdForChart(event.target.value);
@@ -168,11 +174,8 @@ const LocacoesPage = () => {
       showSuccessToast('Locação excluída com sucesso!');
       setLocacaoToDeleteId(null);
       setShowDeleteConfirm(false);
-      if (locacoes.length === 1 && currentPage > 1) {
-        fetchLocacoes(currentPage - 1);
-      } else {
-        fetchLocacoes(currentPage);
-      }
+      const newPage = locacoes.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+      fetchLocacoes(newPage, selectedObra?.id);
     } catch (err) {
       const errorMsg = err.message || 'Falha ao excluir locação.';
       setError(errorMsg);
@@ -194,7 +197,6 @@ const LocacoesPage = () => {
         showSuccessToast('Locação atualizada com sucesso!');
       } else {
         response = await api.createLocacao(formData);
-        // Check if multiple rentals were created (multi-day rental)
         const createdRentals = response.data;
         if (Array.isArray(createdRentals) && createdRentals.length > 1) {
           showSuccessToast(
@@ -206,7 +208,8 @@ const LocacoesPage = () => {
       }
       setShowFormModal(false);
       setCurrentLocacao(null);
-      fetchLocacoes(isEditing ? currentPage : 1);
+      const pageToFetch = isEditing ? currentPage : 1;
+      fetchLocacoes(pageToFetch, selectedObra?.id);
     } catch (err) {
       const backendErrors = err.response?.data;
       let generalMessage =
@@ -255,8 +258,8 @@ const LocacoesPage = () => {
     setCurrentLocacao(null);
     setError(null);
     showSuccessToast('Funcionário transferido com sucesso!');
-    fetchLocacoes(currentPage);
-  }, [fetchLocacoes, currentPage]);
+    fetchLocacoes(currentPage, selectedObra?.id);
+  }, [fetchLocacoes, currentPage, selectedObra]);
 
   const handleViewDetails = locacaoId => {
     setSelectedLocacaoId(locacaoId);
@@ -480,7 +483,12 @@ const LocacoesPage = () => {
           <div className="w-1/3">
             <ObraAutocomplete
               value={selectedObra}
-              onObraSelect={setSelectedObra}
+              onObraSelect={obra => {
+                setSelectedObra(obra);
+                if (currentPage !== 1) {
+                  setCurrentPage(1);
+                }
+              }}
               placeholder="Filtrar por obra..."
             />
           </div>
@@ -488,7 +496,7 @@ const LocacoesPage = () => {
         <div className="flex-grow">
           {' '}
           {/* This flex-grow is fine if the parent (flex flex-col) doesn't force a huge height */}
-          <WeeklyPlanner />
+          <WeeklyPlanner selectedObra={selectedObra} />
         </div>
       </div>
 
