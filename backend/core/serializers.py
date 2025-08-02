@@ -68,14 +68,60 @@ class ObraNestedSerializer(serializers.ModelSerializer):
 
 class ObraSerializer(serializers.ModelSerializer):
     responsavel_nome = serializers.CharField(source='responsavel.nome_completo', read_only=True)
+    custo_total_realizado = serializers.SerializerMethodField()
+    custos_por_categoria = serializers.SerializerMethodField()
+    gastos_por_categoria_material_obra = serializers.SerializerMethodField()
+    balanco_financeiro = serializers.SerializerMethodField()
+    custo_m2 = serializers.SerializerMethodField()
 
     class Meta:
         model = Obra
         fields = [
             'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
             'data_inicio', 'data_prevista_fim', 'data_real_fim',
-            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem'
+            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem',
+            'custo_total_realizado', 'custos_por_categoria', 'gastos_por_categoria_material_obra',
+            'balanco_financeiro', 'custo_m2'
         ]
+
+    def get_custos_por_categoria(self, obj):
+        # This method is now cached on the object to avoid re-querying for each method
+        if hasattr(obj, '_cached_custos_por_categoria'):
+            return obj._cached_custos_por_categoria
+
+        custo_materiais = obj.compras.filter(tipo='COMPRA').aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
+        custo_locacoes = obj.locacao_obras_equipes_set.filter(status_locacao='ativa').aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
+        custo_despesas_extras = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        result = {
+            'materiais': custo_materiais,
+            'locacoes': custo_locacoes,
+            'despesas_extras': custo_despesas_extras,
+        }
+        obj._cached_custos_por_categoria = result
+        return result
+
+    def get_custo_total_realizado(self, obj):
+        custos = self.get_custos_por_categoria(obj)
+        return sum(custos.values())
+
+    def get_balanco_financeiro(self, obj):
+        orcamento = obj.orcamento_previsto or Decimal('0.00')
+        custo_total = self.get_custo_total_realizado(obj)
+        return orcamento - custo_total
+
+    def get_custo_m2(self, obj):
+        if not obj.area_metragem or obj.area_metragem == 0:
+            return Decimal('0.00')
+        custo_total = self.get_custo_total_realizado(obj)
+        return custo_total / obj.area_metragem
+
+    def get_gastos_por_categoria_material_obra(self, obj):
+        gastos = ItemCompra.objects.filter(compra__obra=obj, compra__tipo='COMPRA', categoria_uso__isnull=False)\
+            .values('categoria_uso')\
+            .annotate(total=Sum('valor_total_item'))\
+            .order_by('-total')
+        return {gasto['categoria_uso']: gasto['total'] for gasto in gastos}
 
 # Novo Serializer Básico para Funcionário
 class FuncionarioBasicSerializer(serializers.ModelSerializer):

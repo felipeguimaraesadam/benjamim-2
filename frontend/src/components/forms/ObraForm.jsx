@@ -174,11 +174,11 @@ const ObraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           : null,
         cliente_nome: formData.cliente_nome.trim() || null,
         orcamento_previsto: formData.orcamento_previsto
-          ? parseFloat(String(formData.orcamento_previsto).replace(',', '.'))
+          ? parseFloat(formData.orcamento_previsto)
           : null,
         area_metragem: formData.area_metragem
-          ? parseFloat(String(formData.area_metragem).replace(',', '.'))
-          : null,
+          ? parseFloat(formData.area_metragem)
+          : null, // Process area_metragem
       };
       console.log('[DEBUG ObraForm handleSubmit] formData:', dataToSubmit);
       // console.log('handleSubmit | dataToSubmit:', dataToSubmit); // Original console.log replaced by the one above
