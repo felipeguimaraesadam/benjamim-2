@@ -48,7 +48,12 @@ function App() {
           <Route path="equipes" element={<EquipesPage />} />
           <Route path="materiais" element={<MateriaisPage />} />
           <Route path="locacoes" element={<LocacoesPage />} />
-          <Route path="compras" element={<ComprasPage />} />
+          <Route path="compras">
+            <Route index element={<ComprasPage />} />
+            <Route path="editar/:id" element={<ComprasPage />} />
+            {/* Assuming there will be a detail page for Compras */}
+            {/* <Route path=":id" element={<CompraDetailPage />} /> */}
+          </Route>
           <Route path="despesas" element={<DespesasExtrasPage />} />
           <Route path="ocorrencias" element={<OcorrenciasPage />} />
           <Route path="relatorios" element={<RelatoriosPage />} />
