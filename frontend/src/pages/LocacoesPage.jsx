@@ -26,6 +26,7 @@ import {
   formatDateToYYYYMMDD,
 } from '../utils/dateUtils.js';
 import WeeklyPlanner from '../components/WeeklyPlanner/WeeklyPlanner';
+import ObraAutocomplete from '../components/forms/ObraAutocomplete';
 
 const LocacoesPage = () => {
   const location = useLocation();
@@ -50,6 +51,7 @@ const LocacoesPage = () => {
   const [selectedObraIdForChart, setSelectedObraIdForChart] = useState('');
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [chartError, setChartError] = useState(null);
+  const [selectedObra, setSelectedObra] = useState(null);
 
   const fetchLocacoes = useCallback(
     async (page = 1) => {
@@ -471,13 +473,22 @@ const LocacoesPage = () => {
       {/* Nova Seção do Weekly Planner (AGORA PRIMEIRO) */}
       {/* Removed min-h-[75vh] to prevent excessive empty space */}
       <div className="mb-8 flex flex-col">
-        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4 flex-shrink-0">
-          Planejamento Semanal de Locações
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
+            Planejamento Semanal de Locações
+          </h2>
+          <div className="w-1/3">
+            <ObraAutocomplete
+              value={selectedObra}
+              onObraSelect={setSelectedObra}
+              placeholder="Filtrar por obra..."
+            />
+          </div>
+        </div>
         <div className="flex-grow">
           {' '}
           {/* This flex-grow is fine if the parent (flex flex-col) doesn't force a huge height */}
-          <WeeklyPlanner obras={obras} equipes={equipes} />
+          <WeeklyPlanner />
         </div>
       </div>
 

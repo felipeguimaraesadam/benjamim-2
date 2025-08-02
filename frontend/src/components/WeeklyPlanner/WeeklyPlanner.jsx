@@ -11,7 +11,7 @@ import * as api from '../../services/api';
 import { DndContext, DragOverlay } from '@dnd-kit/core'; // Import DragOverlay
 import { toast } from 'react-toastify';
 
-function WeeklyPlanner() {
+function WeeklyPlanner({ selectedObra }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [locacoesPorDia, setLocacoesPorDia] = useState({});
   const [recursosMaisUtilizados, setRecursosMaisUtilizados] = useState([]);
@@ -42,7 +42,7 @@ function WeeklyPlanner() {
   const locale = ptBR;
   const weekStartsOn = 1; // Segunda-feira
 
-  const fetchWeekData = useCallback(async (dateForWeek) => {
+  const fetchWeekData = useCallback(async (dateForWeek, obraId) => {
     setIsLoading(true);
     setError(null);
     const weekStart = startOfWeek(dateForWeek, { locale, weekStartsOn });
@@ -51,8 +51,8 @@ function WeeklyPlanner() {
 
     try {
       const [locacoesRes, recursosRes] = await Promise.all([
-        api.getLocacoesDaSemana(formattedStartDate),
-        api.getRecursosMaisUtilizadosSemana(formattedStartDate)
+        api.getLocacoesDaSemana(formattedStartDate, obraId),
+        api.getRecursosMaisUtilizadosSemana(formattedStartDate, obraId)
       ]);
       console.log('[WeeklyPlanner] fetchWeekData - Locações recebidas:', locacoesRes.data); // LOG 2
       setLocacoesPorDia(locacoesRes.data || {});
@@ -69,8 +69,8 @@ function WeeklyPlanner() {
   }, [locale, weekStartsOn]);
 
   useEffect(() => {
-    fetchWeekData(currentDate);
-  }, [currentDate, fetchWeekData]);
+    fetchWeekData(currentDate, selectedObra?.id);
+  }, [currentDate, selectedObra, fetchWeekData]);
 
   const handleDateChange = (newDate) => {
     setCurrentDate(newDate);
@@ -97,7 +97,7 @@ function WeeklyPlanner() {
   const handleLocacaoFormSubmitSuccess = () => { // Renomear para indicar que é APÓS o submit real
     handleCloseLocacaoForm();
     console.log('[WeeklyPlanner] handleLocacaoFormSubmitSuccess - Chamando fetchWeekData com currentDate:', currentDate); // LOG 3
-    fetchWeekData(currentDate); // Re-fetch data
+    fetchWeekData(currentDate, selectedObra?.id); // Re-fetch data
     // O toast de sucesso será movido para handleActualFormSubmit
   };
 
@@ -141,7 +141,7 @@ function WeeklyPlanner() {
 
   const handleLocacaoTransferSuccess = () => {
     handleCloseLocacaoForm(); // Fecha o formulário se a transferência foi iniciada por ele
-    fetchWeekData(currentDate); // Re-fetch data
+    fetchWeekData(currentDate, selectedObra?.id); // Re-fetch data
     toast.success("Funcionário transferido e nova locação criada com sucesso!");
   };
 
@@ -203,7 +203,7 @@ function WeeklyPlanner() {
       };
       await api.updateLocacao(draggedLocacaoDataForModal.id, updatedData);
       toast.success(`Locação de ${draggedLocacaoDataForModal.recurso_nome} movida para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
-      fetchWeekData(currentDate);
+      fetchWeekData(currentDate, selectedObra?.id);
     } catch (error) {
       console.error("Erro ao mover locação:", error);
       toast.error(`Erro ao mover locação: ${error.response?.data?.detail || error.message}`);
@@ -246,7 +246,7 @@ function WeeklyPlanner() {
       } else {
         toast.success(`Locação de ${draggedLocacaoDataForModal.recurso_nome} duplicada para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
       }
-      fetchWeekData(currentDate);
+      fetchWeekData(currentDate, selectedObra?.id);
     } catch (error) {
       console.error("Erro ao duplicar locação:", error.response?.data || error.message);
       const errorMsg = error.response?.data && typeof error.response.data === 'object'
@@ -285,7 +285,7 @@ function WeeklyPlanner() {
       try {
         await api.deleteLocacao(locacaoIdToDelete);
         toast.success('Locação excluída com sucesso!');
-        fetchWeekData(currentDate); // Refresh data
+        fetchWeekData(currentDate, selectedObra?.id); // Refresh data
       } catch (err) {
         console.error("Erro ao excluir locação:", err);
         toast.error(`Falha ao excluir locação: ${err.response?.data?.detail || err.message}`);
