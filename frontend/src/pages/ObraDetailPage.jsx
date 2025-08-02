@@ -68,6 +68,21 @@ const ObraDetailPage = () => {
   const COLORS_PIE_OBRA = ['#0088FE', '#FF8042'];
   const COLORS_CATEGORIES_OBRA = ['#8884d8', '#82ca9d', '#ffc658', '#FF8042', '#0088FE', '#00C49F', '#FFBB28', '#FF7777'];
 
+  // Flatten the purchases data for the table component
+  const comprasFlat = useMemo(() => {
+    if (!obra?.compras) return [];
+    return obra.compras.flatMap(compra =>
+      compra.itens.map(item => ({
+        ...item,
+        compra_id: compra.id, // Add compra_id for linking
+        data_compra: compra.data_compra,
+        fornecedor: compra.fornecedor,
+        nota_fiscal: compra.nota_fiscal,
+        custo_total: item.valor_total_item, // Map valor_total_item to custo_total
+      }))
+    );
+  }, [obra]);
+
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -148,7 +163,7 @@ const ObraDetailPage = () => {
       {/* Other content sections */}
       <div className="mb-8 py-6">
         <ObraPurchasesTabContent
-          todasCompras={obra.compras || []}
+          todasCompras={comprasFlat}
           isLoading={isLoading}
           obraId={obra.id}
           obraNome={obra.nome_obra}
