@@ -54,6 +54,18 @@ class ItemCompraSerializer(serializers.ModelSerializer):
         model = ItemCompra
         fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item', 'categoria_uso']
 
+class FuncionarioBasicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Funcionario
+        fields = ['id', 'nome_completo']
+
+class EquipeComMembrosBasicSerializer(serializers.ModelSerializer):
+    membros = FuncionarioBasicSerializer(many=True, read_only=True)
+    lider = FuncionarioBasicSerializer(read_only=True, allow_null=True)
+    class Meta:
+        model = Equipe
+        fields = ['id', 'nome_equipe', 'lider', 'membros']
+
 # Main serializers that might be used as nested serializers
 class CompraSerializer(serializers.ModelSerializer):
     itens = ItemCompraSerializer(many=True)
@@ -86,6 +98,71 @@ class DespesaExtraSerializer(serializers.ModelSerializer):
         model = Despesa_Extra
         fields = '__all__'
 
+class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
+    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)
+    equipe_nome = serializers.CharField(source='equipe.nome_equipe', read_only=True)
+    funcionario_locado_nome = serializers.CharField(source='funcionario_locado.nome_completo', read_only=True)
+    equipe_details = EquipeComMembrosBasicSerializer(source='equipe', read_only=True)
+    tipo = serializers.SerializerMethodField()
+    recurso_nome = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Locacao_Obras_Equipes
+        fields = [
+            'id', 'obra', 'obra_nome', 'equipe', 'equipe_nome', 'equipe_details',
+            'funcionario_locado', 'funcionario_locado_nome', 'servico_externo',
+            'data_locacao_inicio', 'data_locacao_fim', 'tipo_pagamento',
+            'valor_pagamento', 'data_pagamento', 'status_locacao', 'observacoes',
+            'tipo', 'recurso_nome'
+        ]
+        read_only_fields = ('status_locacao', 'obra_nome', 'funcionario_locado_nome', 'equipe_nome', 'equipe_details', 'tipo', 'recurso_nome')
+
+    def get_tipo(self, obj):
+        if obj.funcionario_locado: return "funcionario"
+        if obj.equipe: return "equipe"
+        if obj.servico_externo: return "servico_externo"
+        return None
+
+    def get_recurso_nome(self, obj):
+        if obj.funcionario_locado: return obj.funcionario_locado.nome_completo
+        if obj.equipe: return obj.equipe.nome_equipe
+        if obj.servico_externo: return obj.servico_externo
+        return None
+
+    def validate_valor_pagamento(self, value):
+        if value is not None and value < Decimal('0.00'):
+            raise serializers.ValidationError("O valor do pagamento não pode ser negativo.")
+        return value
+
+    def validate(self, data):
+        equipe = data.get('equipe', getattr(self.instance, 'equipe', None))
+        funcionario_locado = data.get('funcionario_locado', getattr(self.instance, 'funcionario_locado', None))
+        servico_externo_str = data.get('servico_externo', getattr(self.instance, 'servico_externo', None))
+        servico_externo = servico_externo_str.strip() if isinstance(servico_externo_str, str) else None
+
+        active_fields_count = sum(1 for field_val in [equipe, funcionario_locado, servico_externo] if field_val)
+        if active_fields_count == 0:
+            raise serializers.ValidationError("É necessário selecionar uma equipe, um funcionário OU preencher o serviço externo.")
+        if active_fields_count > 1:
+            raise serializers.ValidationError("Não é possível definir uma equipe, um funcionário E um serviço externo ao mesmo tempo. Escolha apenas um.")
+
+        data_locacao_inicio = data.get('data_locacao_inicio', getattr(self.instance, 'data_locacao_inicio', None))
+        data_locacao_fim = data.get('data_locacao_fim', getattr(self.instance, 'data_locacao_fim', None))
+
+        if funcionario_locado and data_locacao_inicio:
+            effective_data_locacao_fim = data_locacao_fim or data_locacao_inicio
+            q_conditions = Q(data_locacao_inicio__lte=effective_data_locacao_fim) & Q(data_locacao_fim__gte=data_locacao_inicio)
+            conflicting_locacoes_qs = Locacao_Obras_Equipes.objects.filter(funcionario_locado=funcionario_locado).filter(q_conditions)
+            if self.instance and self.instance.pk:
+                conflicting_locacoes_qs = conflicting_locacoes_qs.exclude(pk=self.instance.pk)
+            if conflicting_locacoes_qs.exists():
+                first_conflict = conflicting_locacoes_qs.first()
+                raise serializers.ValidationError({
+                    'funcionario_locado': f"Este funcionário já está locado na obra '{first_conflict.obra.nome_obra}' de {first_conflict.data_locacao_inicio.strftime('%d/%m/%Y')} até {first_conflict.data_locacao_fim.strftime('%d/%m/%Y')}.",
+                    'conflict_details': {'locacao_id': first_conflict.id}
+                })
+        return data
+
 # The main ObraSerializer that depends on the ones above
 class ObraSerializer(serializers.ModelSerializer):
     responsavel_nome = serializers.CharField(source='responsavel.nome_completo', read_only=True)
@@ -105,7 +182,6 @@ class ObraSerializer(serializers.ModelSerializer):
     compras = CompraSerializer(many=True, read_only=True)
     despesas_extras = DespesaExtraSerializer(many=True, read_only=True)
     locacoes = LocacaoObrasEquipesSerializer(many=True, read_only=True, source='locacao_obras_equipes_set')
-
 
     class Meta:
         model = Obra
@@ -177,11 +253,6 @@ class ObraSerializer(serializers.ModelSerializer):
 
 # --- Other Serializers ---
 
-class FuncionarioBasicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Funcionario
-        fields = ['id', 'nome_completo']
-
 class FuncionarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Funcionario
@@ -191,78 +262,6 @@ class EquipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Equipe
         fields = '__all__'
-
-class EquipeComMembrosBasicSerializer(serializers.ModelSerializer):
-    membros = FuncionarioBasicSerializer(many=True, read_only=True)
-    lider = FuncionarioBasicSerializer(read_only=True, allow_null=True)
-    class Meta:
-        model = Equipe
-        fields = ['id', 'nome_equipe', 'lider', 'membros']
-
-class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
-    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)
-    equipe_nome = serializers.CharField(source='equipe.nome_equipe', read_only=True)
-    funcionario_locado_nome = serializers.CharField(source='funcionario_locado.nome_completo', read_only=True)
-    equipe_details = EquipeComMembrosBasicSerializer(source='equipe', read_only=True)
-    tipo = serializers.SerializerMethodField()
-    recurso_nome = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Locacao_Obras_Equipes
-        fields = [
-            'id', 'obra', 'obra_nome', 'equipe', 'equipe_nome', 'equipe_details',
-            'funcionario_locado', 'funcionario_locado_nome', 'servico_externo',
-            'data_locacao_inicio', 'data_locacao_fim', 'tipo_pagamento',
-            'valor_pagamento', 'data_pagamento', 'status_locacao', 'observacoes',
-            'tipo', 'recurso_nome'
-        ]
-        read_only_fields = ('status_locacao', 'obra_nome', 'funcionario_locado_nome', 'equipe_nome', 'equipe_details', 'tipo', 'recurso_nome')
-
-    def get_tipo(self, obj):
-        if obj.funcionario_locado: return "funcionario"
-        if obj.equipe: return "equipe"
-        if obj.servico_externo: return "servico_externo"
-        return None
-
-    def get_recurso_nome(self, obj):
-        if obj.funcionario_locado: return obj.funcionario_locado.nome_completo
-        if obj.equipe: return obj.equipe.nome_equipe
-        if obj.servico_externo: return obj.servico_externo
-        return None
-
-    def validate_valor_pagamento(self, value):
-        if value is not None and value < Decimal('0.00'):
-            raise serializers.ValidationError("O valor do pagamento não pode ser negativo.")
-        return value
-
-    def validate(self, data):
-        equipe = data.get('equipe', getattr(self.instance, 'equipe', None))
-        funcionario_locado = data.get('funcionario_locado', getattr(self.instance, 'funcionario_locado', None))
-        servico_externo_str = data.get('servico_externo', getattr(self.instance, 'servico_externo', None))
-        servico_externo = servico_externo_str.strip() if isinstance(servico_externo_str, str) else None
-
-        active_fields_count = sum(1 for field_val in [equipe, funcionario_locado, servico_externo] if field_val)
-        if active_fields_count == 0:
-            raise serializers.ValidationError("É necessário selecionar uma equipe, um funcionário OU preencher o serviço externo.")
-        if active_fields_count > 1:
-            raise serializers.ValidationError("Não é possível definir uma equipe, um funcionário E um serviço externo ao mesmo tempo. Escolha apenas um.")
-
-        data_locacao_inicio = data.get('data_locacao_inicio', getattr(self.instance, 'data_locacao_inicio', None))
-        data_locacao_fim = data.get('data_locacao_fim', getattr(self.instance, 'data_locacao_fim', None))
-
-        if funcionario_locado and data_locacao_inicio:
-            effective_data_locacao_fim = data_locacao_fim or data_locacao_inicio
-            q_conditions = Q(data_locacao_inicio__lte=effective_data_locacao_fim) & Q(data_locacao_fim__gte=data_locacao_inicio)
-            conflicting_locacoes_qs = Locacao_Obras_Equipes.objects.filter(funcionario_locado=funcionario_locado).filter(q_conditions)
-            if self.instance and self.instance.pk:
-                conflicting_locacoes_qs = conflicting_locacoes_qs.exclude(pk=self.instance.pk)
-            if conflicting_locacoes_qs.exists():
-                first_conflict = conflicting_locacoes_qs.first()
-                raise serializers.ValidationError({
-                    'funcionario_locado': f"Este funcionário já está locado na obra '{first_conflict.obra.nome_obra}' de {first_conflict.data_locacao_inicio.strftime('%d/%m/%Y')} até {first_conflict.data_locacao_fim.strftime('%d/%m/%Y')}.",
-                    'conflict_details': {'locacao_id': first_conflict.id}
-                })
-        return data
 
 class FotoObraSerializer(serializers.ModelSerializer):
     class Meta:
