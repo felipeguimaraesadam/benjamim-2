@@ -83,6 +83,8 @@ const ComprasPage = () => {
       ) {
         params.fornecedor = currentFilters.fornecedor.trim();
       }
+      if (currentFilters.tipo) params.tipo = currentFilters.tipo;
+      if (currentFilters.obraId) params.obra_id = currentFilters.obraId;
 
       try {
         const response = await api.getCompras(params);
@@ -122,7 +124,7 @@ const ComprasPage = () => {
   useEffect(() => {
     // Fetch data when page or filters change, but only if not in add/edit mode
     if (!currentCompra && !isAddingNew) {
-      fetchCompras(currentPage, { dataInicio, dataFim, fornecedor });
+      fetchCompras(currentPage, { dataInicio, dataFim, fornecedor, tipo, obraId });
     }
   }, [
     currentPage,
