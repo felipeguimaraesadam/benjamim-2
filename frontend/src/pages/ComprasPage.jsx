@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ComprasTable from '../components/tables/ComprasTable';
 import CompraForm from '../components/forms/CompraForm';
 import CompraItensModal from '../components/modals/CompraItensModal';
+import ObraAutocomplete from '../components/forms/ObraAutocomplete';
 import * as api from '../services/api';
 import PaginationControls from '../components/utils/PaginationControls';
 import { showSuccessToast, showErrorToast } from '../utils/toastUtils';
@@ -65,7 +66,7 @@ const ComprasPage = () => {
   const [fornecedor, setFornecedor] = useState('');
   const [tipo, setTipo] = useState('');
   const [obraId, setObraId] = useState('');
-  const [obras, setObras] = useState([]);
+  const [selectedObra, setSelectedObra] = useState(null);
 
   const fetchCompras = useCallback(
     async (page = 1, currentFilters = {}) => {
@@ -82,6 +83,8 @@ const ComprasPage = () => {
       ) {
         params.fornecedor = currentFilters.fornecedor.trim();
       }
+      if (currentFilters.tipo) params.tipo = currentFilters.tipo;
+      if (currentFilters.obraId) params.obra_id = currentFilters.obraId;
 
       try {
         const response = await api.getCompras(params);
@@ -121,7 +124,7 @@ const ComprasPage = () => {
   useEffect(() => {
     // Fetch data when page or filters change, but only if not in add/edit mode
     if (!currentCompra && !isAddingNew) {
-      fetchCompras(currentPage, { dataInicio, dataFim, fornecedor });
+      fetchCompras(currentPage, { dataInicio, dataFim, fornecedor, tipo, obraId });
     }
   }, [
     currentPage,
@@ -134,20 +137,6 @@ const ComprasPage = () => {
     tipo,
     obraId,
   ]);
-
-  // Load obras for filter dropdown
-  useEffect(() => {
-    const fetchObras = async () => {
-      try {
-        const response = await api.getObras();
-        const obrasData = Array.isArray(response.data.results) ? response.data.results : Array.isArray(response.data) ? response.data : [];
-        setObras(obrasData);
-      } catch (error) {
-        console.error('Failed to fetch obras:', error);
-      }
-    };
-    fetchObras();
-  }, []);
 
   useEffect(() => {
     const obraIdFromState = location.state?.obraIdParaNovaCompra;
@@ -217,10 +206,11 @@ const ComprasPage = () => {
       showSuccessToast('Compra excluída com sucesso!');
       setCompraToDeleteId(null);
       setShowDeleteConfirm(false);
+      const currentFilters = { dataInicio, dataFim, fornecedor, tipo, obraId };
       if (compras.length === 1 && currentPage > 1) {
-        fetchCompras(currentPage - 1, { dataInicio, dataFim, fornecedor });
+        fetchCompras(currentPage - 1, currentFilters);
       } else {
-        fetchCompras(currentPage, { dataInicio, dataFim, fornecedor });
+        fetchCompras(currentPage, currentFilters);
       }
     } catch (err) {
       const errorMsg = err.message || 'Falha ao excluir compra.';
@@ -252,6 +242,8 @@ const ComprasPage = () => {
         dataInicio,
         dataFim,
         fornecedor,
+        tipo,
+        obraId,
       });
     } catch (err) {
       let detailedError = isEditing
@@ -312,6 +304,11 @@ const ComprasPage = () => {
     fetchCompras(1, { dataInicio, dataFim, fornecedor, tipo, obraId });
   };
 
+  const handleObraSelect = (obra) => {
+    setSelectedObra(obra);
+    setObraId(obra ? obra.id : '');
+  }
+
   const handleApprove = async (compraId) => {
     try {
       await api.approveOrcamento(compraId);
@@ -328,6 +325,7 @@ const ComprasPage = () => {
     setFornecedor('');
     setTipo('');
     setObraId('');
+    setSelectedObra(null);
     setCurrentPage(1); // Reset to page 1
     // fetchCompras(1, {}); // useEffect will trigger this due to state changes if currentPage was not 1
     // or if filter states are deps. Explicit call for clarity.
@@ -465,24 +463,16 @@ const ComprasPage = () => {
               </div>
               <div>
                 <label
-                  htmlFor="obraId"
+                  htmlFor="obra-autocomplete"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Obra
                 </label>
-                <select
-                  id="obraId"
-                  value={obraId}
-                  onChange={e => setObraId(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                >
-                  <option value="">Todas</option>
-                  {obras.map(obra => (
-                    <option key={obra.id} value={obra.id}>
-                      {obra.nome_obra}
-                    </option>
-                  ))}
-                </select>
+                <ObraAutocomplete
+                  value={selectedObra}
+                  onObraSelect={handleObraSelect}
+                  placeholder="Digite para buscar uma obra..."
+                />
               </div>
               <div className="flex space-x-2 sm:pt-5">
                 <button

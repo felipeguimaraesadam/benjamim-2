@@ -372,6 +372,11 @@ class CompraViewSet(viewsets.ModelViewSet):
         fornecedor = self.request.query_params.get('fornecedor')
         if fornecedor:
             queryset = queryset.filter(fornecedor__icontains=fornecedor)
+
+        tipo = self.request.query_params.get('tipo')
+        if tipo:
+            queryset = queryset.filter(tipo=tipo)
+
         return queryset
 
     def update(self, request, *args, **kwargs):
