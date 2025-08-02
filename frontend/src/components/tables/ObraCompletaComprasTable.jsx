@@ -1,7 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-import { Eye, Pencil } from 'lucide-react';
 
 const ObraCompletaComprasTable = ({ compras, isLoading, error }) => {
   const formatDate = dateString => {
@@ -88,57 +86,35 @@ const ObraCompletaComprasTable = ({ compras, isLoading, error }) => {
             >
               Nota Fiscal
             </th>
-            <th
-              scope="col"
-              className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Ações
-            </th>
+
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {compras.map(item => (
-            <tr key={item.id} className="hover:bg-gray-50">
+          {compras.map(compra => (
+            <tr key={compra.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {formatDate(item.data_compra)}
+                {formatDate(compra.data_compra)}
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                {item.material_nome || 'N/A'}
+                {compra.material_nome || 'N/A'}
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {parseFloat(item.quantidade || 0).toLocaleString('pt-BR')}{' '}
-                {item.unidade_medida || ''}
+                {parseFloat(compra.quantidade || 0).toLocaleString('pt-BR')}{' '}
+                {compra.material_unidade_medida || ''}
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {formatCurrency(item.valor_unitario)}
+                {formatCurrency(compra.valor_unitario)}
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {formatCurrency(item.custo_total)}
+                {formatCurrency(compra.custo_total)}
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {item.fornecedor || '-'}
+                {compra.fornecedor || '-'}
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {item.nota_fiscal || '-'}
+                {compra.nota_fiscal || '-'}
               </td>
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                <div className="flex items-center justify-center space-x-2">
-                  <Link
-                    to={`/compras/${item.compra_id}`}
-                    className="text-blue-600 hover:text-blue-800"
-                    title="Ver Detalhes da Compra"
-                  >
-                    <Eye size={18} />
-                  </Link>
-                  <Link
-                    to={`/compras/editar/${item.compra_id}`}
-                    className="text-yellow-600 hover:text-yellow-800"
-                    title="Editar Compra"
-                  >
-                    <Pencil size={18} />
-                  </Link>
-                </div>
-              </td>
+
             </tr>
           ))}
         </tbody>
@@ -150,18 +126,20 @@ const ObraCompletaComprasTable = ({ compras, isLoading, error }) => {
 ObraCompletaComprasTable.propTypes = {
   compras: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.string.isRequired, // Now a unique string like 'compraId-itemId'
-      compra_id: PropTypes.number.isRequired,
-      data_compra: PropTypes.string,
+      id: PropTypes.number.isRequired,
+      data_compra: PropTypes.string.isRequired,
       material_nome: PropTypes.string,
-      quantidade: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      unidade_medida: PropTypes.string,
+      quantidade: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+        .isRequired,
       valor_unitario: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      custo_total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      custo_total: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+        .isRequired,
       fornecedor: PropTypes.string,
       nota_fiscal: PropTypes.string,
+
+      material_unidade_medida: PropTypes.string, // Assuming this comes from CompraSerializer
     })
-  ),
+  ).isRequired,
   isLoading: PropTypes.bool,
   error: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
 };
