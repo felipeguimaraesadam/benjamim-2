@@ -28,13 +28,13 @@ const ObraDetailPage = () => {
   // Instantiate useApiData for each data point
   const { data: obra, isLoading: isLoadingObra, error: errorObra, fetchData: fetchObraDetails, setData: setObra } = useApiData(api.getObraById, obraApiParams, null, true);
   const { data: locacoesEquipe, isLoading: isLoadingLocacoes, error: errorLocacoes, fetchData: fetchLocacoes, setData: setLocacoesEquipe } = useApiData(api.getLocacoes, obraQueryObjParams, [], true);
-  const { data: historicoCustos, isLoading: isLoadingHistoricoCustos, error: errorHistoricoCustos, fetchData: fetchHistoricoCustos } = useApiData(api.getObraHistoricoCustos, obraApiParams, [], true);
+  // const { data: historicoCustos, isLoading: isLoadingHistoricoCustos, error: errorHistoricoCustos, fetchData: fetchHistoricoCustos } = useApiData(api.getObraHistoricoCustos, obraApiParams, [], true);
 
   // custosCategoria is part of 'obra' object (obra.custos_por_categoria)
   // No separate hook needed if FinancialDashboard consumes 'obra' prop and derives it.
   // If direct fetch was needed: const { data: custosCategoria, ... } = useApiData(api.getObraCustosPorCategoria, obraApiParams, [], true);
 
-  const { data: custosMaterial, isLoading: isLoadingCustosMaterial, error: errorCustosMaterial, fetchData: fetchCustosMaterial } = useApiData(api.getObraCustosPorMaterial, obraApiParams, [], true);
+  // const { data: custosMaterial, isLoading: isLoadingCustosMaterial, error: errorCustosMaterial, fetchData: fetchCustosMaterial } = useApiData(api.getObraCustosPorMaterial, obraApiParams, [], true);
   const { data: todasAsComprasBruto, isLoading: isLoadingTodasAsCompras, error: errorTodasAsCompras, fetchData: fetchTodasAsCompras } = useApiData(api.getObraComprasDetalhes, obraApiParams, [], true);
 
   const { data: despesasExtrasObra, isLoading: isLoadingDespesasExtras, error: errorDespesasExtras, fetchData: fetchDespesasExtras } = useApiData(api.getDespesasExtras, obraQueryObjParams, [], true);
@@ -245,8 +245,8 @@ const ObraDetailPage = () => {
       </div>
 
       <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <CostHistoryChart historicoCustos={historicoCustos} custosError={errorHistoricoCustos} isLoading={isLoadingHistoricoCustos} />
-        <TopMaterialsChart custosMaterial={custosMaterial} materialError={errorCustosMaterial} isLoading={isLoadingCustosMaterial} />
+        <CostHistoryChart historicoCustos={obra?.historico_custos || []} isLoading={isLoadingObra} />
+        <TopMaterialsChart custosMaterial={obra?.top_materiais || []} isLoading={isLoadingObra} />
       </div>
     </div>
   );

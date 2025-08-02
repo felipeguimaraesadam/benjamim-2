@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra, Backup, BackupSettings
 from django.db.models import Sum, Q
+from django.db.models.functions import TruncMonth
 from decimal import Decimal
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -68,9 +69,18 @@ class ObraNestedSerializer(serializers.ModelSerializer):
 
 class ObraSerializer(serializers.ModelSerializer):
     responsavel_nome = serializers.CharField(source='responsavel.nome_completo', read_only=True)
+
+    # Financial Summary Fields
     custo_total_realizado = serializers.SerializerMethodField()
     custos_por_categoria = serializers.SerializerMethodField()
+    balanco_financeiro = serializers.SerializerMethodField()
+    custo_m2 = serializers.SerializerMethodField()
+
+    # Chart-specific data
     gastos_por_categoria_material_obra = serializers.SerializerMethodField()
+    historico_custos = serializers.SerializerMethodField()
+    top_materiais = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Obra
@@ -78,38 +88,98 @@ class ObraSerializer(serializers.ModelSerializer):
             'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
             'data_inicio', 'data_prevista_fim', 'data_real_fim',
             'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem',
-            'custo_total_realizado', 'custos_por_categoria', 'gastos_por_categoria_material_obra'
+            # Financial and chart fields
+            'custo_total_realizado', 'custos_por_categoria', 'gastos_por_categoria_material_obra',
+            'balanco_financeiro', 'custo_m2', 'historico_custos', 'top_materiais'
         ]
 
     def get_custos_por_categoria(self, obj):
         """Calcula a soma dos custos agrupados por categoria principal."""
-        # obj is the Obra instance
+        if hasattr(obj, '_cached_custos_por_categoria'):
+            return obj._cached_custos_por_categoria
+
         custo_materiais = obj.compras.filter(tipo='COMPRA').aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         custo_locacoes = obj.locacao_obras_equipes_set.filter(status_locacao='ativa').aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
         custo_despesas_extras = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
 
-        return {
+        result = {
             'materiais': custo_materiais,
             'locacoes': custo_locacoes,
             'despesas_extras': custo_despesas_extras,
         }
+        obj._cached_custos_por_categoria = result
+        return result
 
     def get_custo_total_realizado(self, obj):
         """Calcula o custo total da obra somando as categorias."""
-        # obj is the Obra instance
         custos = self.get_custos_por_categoria(obj)
         return sum(custos.values())
 
+    def get_balanco_financeiro(self, obj):
+        """Calcula o balanço financeiro da obra."""
+        orcamento = obj.orcamento_previsto or Decimal('0.00')
+        custo_total = self.get_custo_total_realizado(obj)
+        return orcamento - custo_total
+
+    def get_custo_m2(self, obj):
+        """Calcula o custo por metro quadrado."""
+        if not obj.area_metragem or obj.area_metragem == 0:
+            return Decimal('0.00')
+        custo_total = self.get_custo_total_realizado(obj)
+        return custo_total / obj.area_metragem
+
     def get_gastos_por_categoria_material_obra(self, obj):
         """Calcula os gastos de materiais, agrupados por sua categoria de uso."""
-        # obj is the Obra instance
         gastos = ItemCompra.objects.filter(compra__obra=obj, compra__tipo='COMPRA', categoria_uso__isnull=False)\
             .values('categoria_uso')\
             .annotate(total=Sum('valor_total_item'))\
             .order_by('-total')
-
-        # Converte o resultado para um dicionário {categoria: total}
         return {gasto['categoria_uso']: gasto['total'] for gasto in gastos}
+
+    def get_historico_custos(self, obj):
+        """Gera o histórico de custos mensais para o gráfico."""
+        custos_compras = obj.compras.filter(tipo='COMPRA').annotate(mes=TruncMonth('data_compra')).values('mes').annotate(total=Sum('valor_total_liquido')).order_by('mes')
+        custos_despesas = obj.despesas_extras.annotate(mes=TruncMonth('data')).values('mes').annotate(total=Sum('valor')).order_by('mes')
+        custos_locacoes = obj.locacao_obras_equipes_set.filter(status_locacao='ativa').annotate(mes=TruncMonth('data_locacao_inicio')).values('mes').annotate(total=Sum('valor_pagamento')).order_by('mes')
+
+        historico = {}
+        for custo_set in [custos_compras, custos_despesas, custos_locacoes]:
+            for item in custo_set:
+                if item['mes'] is None: continue
+                mes_str = item['mes'].strftime('%Y-%m')
+                if mes_str not in historico:
+                    historico[mes_str] = {'total_custo_compras': Decimal('0.00'), 'total_custo_despesas': Decimal('0.00'), 'total_custo_locacoes': Decimal('0.00')}
+
+                if 'total_custo_compras' in item:
+                    historico[mes_str]['total_custo_compras'] += item['total'] or Decimal('0.00')
+                elif 'total_custo_despesas' in item:
+                     historico[mes_str]['total_custo_despesas'] += item['total'] or Decimal('0.00')
+                else: # locacoes
+                    historico[mes_str]['total_custo_locacoes'] += item['total'] or Decimal('0.00')
+
+        resultado_final = [
+            {
+                'mes': mes,
+                'total_custo_compras': totais['total_custo_compras'],
+                'total_custo_despesas': totais['total_custo_despesas'],
+                'total_custo_locacoes': totais['total_custo_locacoes'],
+                'total_geral_mes': sum(totais.values())
+            }
+            for mes, totais in sorted(historico.items())
+        ]
+        return resultado_final
+
+    def get_top_materiais(self, obj):
+        """Retorna os materiais mais caros da obra."""
+        custos = ItemCompra.objects.filter(compra__obra=obj, compra__tipo='COMPRA')\
+            .values('material__nome')\
+            .annotate(total_custo=Sum('valor_total_item'))\
+            .order_by('-total_custo')[:10] # Top 10
+
+        return [
+            {'name': item['material__nome'], 'value': item['total_custo'] or Decimal('0.00')}
+            for item in custos
+        ]
 
 # Novo Serializer Básico para Funcionário
 class FuncionarioBasicSerializer(serializers.ModelSerializer):
