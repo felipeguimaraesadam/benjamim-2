@@ -206,10 +206,11 @@ const ComprasPage = () => {
       showSuccessToast('Compra excluída com sucesso!');
       setCompraToDeleteId(null);
       setShowDeleteConfirm(false);
+      const currentFilters = { dataInicio, dataFim, fornecedor, tipo, obraId };
       if (compras.length === 1 && currentPage > 1) {
-        fetchCompras(currentPage - 1, { dataInicio, dataFim, fornecedor });
+        fetchCompras(currentPage - 1, currentFilters);
       } else {
-        fetchCompras(currentPage, { dataInicio, dataFim, fornecedor });
+        fetchCompras(currentPage, currentFilters);
       }
     } catch (err) {
       const errorMsg = err.message || 'Falha ao excluir compra.';
@@ -241,6 +242,8 @@ const ComprasPage = () => {
         dataInicio,
         dataFim,
         fornecedor,
+        tipo,
+        obraId,
       });
     } catch (err) {
       let detailedError = isEditing
