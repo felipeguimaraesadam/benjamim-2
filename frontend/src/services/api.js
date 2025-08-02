@@ -306,7 +306,7 @@ export const uploadFotoObra = formData =>
   apiClient.post('/fotosobras/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
-export const deleteFoto = fotoId =>
+export const deleteFotoObra = fotoId =>
   apiClient.delete(`/fotosobras/${fotoId}/`);
 
 // --- PDF Report Service Functions ---

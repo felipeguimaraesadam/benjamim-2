@@ -20,7 +20,7 @@ const AlertIcon = ({ type = 'error', className = "w-5 h-5 mr-2" }) => {
 const ComprasPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { id: urlId } = useParams(); // Get ID from URL
+  const { id: urlId } = useParams();
   const [compras, setCompras] = useState([]);
   const [isLoading, setIsLoading] = useState(false); // For page data
   const [isLoadingForm, setIsLoadingForm] = useState(false); // For form submission
@@ -150,12 +150,16 @@ const ComprasPage = () => {
     fetchObras();
   }, []);
 
-  // Effect to handle editing from URL
   useEffect(() => {
     if (urlId) {
-      handleEditCompra({ id: urlId });
+      const isEdit = location.pathname.includes('/editar/');
+      if (isEdit) {
+        handleEditCompra({ id: urlId });
+      } else {
+        handleViewCompraItens({ id: urlId });
+      }
     }
-  }, [urlId]);
+  }, [urlId, location.pathname]);
 
   useEffect(() => {
     const obraIdFromState = location.state?.obraIdParaNovaCompra;
@@ -342,9 +346,15 @@ const ComprasPage = () => {
     // Actually, useEffect depends on filter states, so it will refetch.
   };
 
-  const handleViewCompraItens = compra => {
-    setSelectedCompraParaModal(compra); // Store the whole compra object
-    setIsItensModalOpen(true);
+  const handleViewCompraItens = async compraSummary => {
+    // This function will now also fetch the full details if needed
+    try {
+      const response = await api.getCompraById(compraSummary.id);
+      setSelectedCompraParaModal(response.data);
+      setIsItensModalOpen(true);
+    } catch (error) {
+      showErrorToast('Falha ao buscar detalhes da compra.');
+    }
   };
 
   const handleCloseItensModal = () => {
