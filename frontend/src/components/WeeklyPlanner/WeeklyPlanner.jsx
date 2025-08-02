@@ -217,41 +217,71 @@ function WeeklyPlanner({ selectedObra }) {
     if (!draggedLocacaoDataForModal || !targetDayIdForModal) return;
     setIsLoading(true);
     try {
-      const { id, obra_nome, equipe_details, status_locacao, tipo, recurso_nome, ...restOfLocacao } = draggedLocacaoDataForModal;
+      const loc = draggedLocacaoDataForModal;
 
+      // Build the payload from scratch, mirroring LocacaoForm.jsx logic for robustness.
       const newLocacaoData = {
-        ...restOfLocacao,
-        obra: draggedLocacaoDataForModal.obra.id || draggedLocacaoDataForModal.obra,
+        obra: parseInt(loc.obra.id || loc.obra, 10),
         data_locacao_inicio: targetDayIdForModal,
-        data_locacao_fim: targetDayIdForModal,
-        equipe: draggedLocacaoDataForModal.equipe?.id || null,
-        funcionario_locado: draggedLocacaoDataForModal.funcionario_locado?.id || null,
-        // Preserve servico_externo if it exists
-        servico_externo: draggedLocacaoDataForModal.servico_externo || null,
+        data_locacao_fim: targetDayIdForModal, // Duplication is for a single day
+
+        // Include payment and other fields from the source allocation
+        tipo_pagamento: loc.tipo_pagamento,
+        valor_pagamento: loc.valor_pagamento
+          ? parseFloat(loc.valor_pagamento)
+          : null,
+        data_pagamento: null, // A new allocation should not inherit the payment date
+        observacoes: loc.observacoes,
+
+        // Set the correct resource, ensuring others are null
+        equipe: null,
+        funcionario_locado: null,
+        servico_externo: null,
       };
-      delete newLocacaoData.id;
-      delete newLocacaoData.obra_nome;
-      delete newLocacaoData.equipe_details;
-      delete newLocacaoData.equipe_nome;
-      delete newLocacaoData.funcionario_locado_nome;
-      delete newLocacaoData.status_locacao;
-      delete newLocacaoData.tipo;
-      delete newLocacaoData.recurso_nome;
+
+      if (loc.tipo === 'equipe' && loc.equipe) {
+        newLocacaoData.equipe = parseInt(loc.equipe.id || loc.equipe, 10);
+      } else if (loc.tipo === 'funcionario' && loc.funcionario_locado) {
+        newLocacaoData.funcionario_locado = parseInt(
+          loc.funcionario_locado.id || loc.funcionario_locado,
+          10
+        );
+      } else if (loc.tipo === 'servico_externo' && loc.servico_externo) {
+        newLocacaoData.servico_externo = loc.servico_externo;
+      }
+
+      // Final check to prevent an obviously invalid request
+      if (
+        !newLocacaoData.equipe &&
+        !newLocacaoData.funcionario_locado &&
+        !newLocacaoData.servico_externo
+      ) {
+        throw new Error(
+          'Não foi possível determinar o recurso (equipe, funcionário ou serviço) para duplicar.'
+        );
+      }
 
       const response = await api.createLocacao(newLocacaoData);
-      // Check if multiple rentals were created (though unlikely for single day duplication)
       const createdRentals = response.data;
       if (Array.isArray(createdRentals) && createdRentals.length > 1) {
-        toast.success(`${createdRentals.length} locações de ${draggedLocacaoDataForModal.recurso_nome} duplicadas para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
+        toast.success(
+          `${createdRentals.length} locações de ${loc.recurso_nome} duplicadas para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`
+        );
       } else {
-        toast.success(`Locação de ${draggedLocacaoDataForModal.recurso_nome} duplicada para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
+        toast.success(
+          `Locação de ${loc.recurso_nome} duplicada para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`
+        );
       }
       fetchWeekData(currentDate, selectedObra?.id);
     } catch (error) {
-      console.error("Erro ao duplicar locação:", error.response?.data || error.message);
-      const errorMsg = error.response?.data && typeof error.response.data === 'object'
-                       ? Object.values(error.response.data).flat().join('; ')
-                       : (error.response?.data?.detail || error.message);
+      console.error(
+        'Erro ao duplicar locação:',
+        error.response?.data || error.message
+      );
+      const errorMsg =
+        error.response?.data && typeof error.response.data === 'object'
+          ? Object.values(error.response.data).flat().join('; ')
+          : error.response?.data?.detail || error.message;
       toast.error(`Erro ao duplicar locação: ${errorMsg}`);
     } finally {
       setIsLoading(false);
@@ -260,7 +290,10 @@ function WeeklyPlanner({ selectedObra }) {
   };
 
   const weekStart = startOfWeek(currentDate, { locale, weekStartsOn });
-  const daysOfWeek = eachDayOfInterval({ start: weekStart, end: endOfWeek(currentDate, { locale, weekStartsOn }) });
+  const daysOfWeek = eachDayOfInterval({
+    start: weekStart,
+    end: endOfWeek(currentDate, { locale, weekStartsOn }),
+  });
 
   // Context Menu Handlers
   const handleShowContextMenu = (locacaoId, event) => {
@@ -276,7 +309,7 @@ function WeeklyPlanner({ selectedObra }) {
     setContextMenu({ ...contextMenu, visible: false, locacaoId: null });
   };
 
-  const handleDeleteLocacao = async (locacaoIdToDelete) => {
+  const handleDeleteLocacao = async locacaoIdToDelete => {
     if (!locacaoIdToDelete) return;
 
     // eslint-disable-next-line no-restricted-globals
@@ -287,53 +320,60 @@ function WeeklyPlanner({ selectedObra }) {
         toast.success('Locação excluída com sucesso!');
         fetchWeekData(currentDate, selectedObra?.id); // Refresh data
       } catch (err) {
-        console.error("Erro ao excluir locação:", err);
-        toast.error(`Falha ao excluir locação: ${err.response?.data?.detail || err.message}`);
+        console.error('Erro ao excluir locação:', err);
+        toast.error(
+          `Falha ao excluir locação: ${err.response?.data?.detail || err.message}`
+        );
       } finally {
         setIsLoading(false);
       }
     }
   };
 
-  const contextMenuOptions = contextMenu.locacaoId ? [
-    {
-      label: 'Detalhes',
-      action: () => {
-        handleOpenLocacaoDetail(contextMenu.locacaoId);
-        handleCloseContextMenu();
-      },
-    },
-    {
-      label: 'Editar',
-      action: () => {
-        // Find the full locacao object to pass as initialData
-        let locacaoParaEditar = null;
-        for (const dayKey in locacoesPorDia) {
-          const found = locacoesPorDia[dayKey].find(l => l.id === contextMenu.locacaoId);
-          if (found) {
-            locacaoParaEditar = found;
-            break;
-          }
-        }
-        if (locacaoParaEditar) {
-          setLocacaoFormInitialData(locacaoParaEditar);
-          setShowLocacaoFormModal(true);
-        } else {
-          toast.error("Não foi possível encontrar os dados da locação para edição.");
-        }
-        handleCloseContextMenu();
-      },
-    },
-    {
-      label: 'Excluir',
-      action: () => {
-        handleDeleteLocacao(contextMenu.locacaoId);
-        handleCloseContextMenu();
-      },
-      className: 'text-red-600 hover:bg-red-50',
-    },
-  ] : [];
-
+  const contextMenuOptions = contextMenu.locacaoId
+    ? [
+        {
+          label: 'Detalhes',
+          action: () => {
+            handleOpenLocacaoDetail(contextMenu.locacaoId);
+            handleCloseContextMenu();
+          },
+        },
+        {
+          label: 'Editar',
+          action: () => {
+            // Find the full locacao object to pass as initialData
+            let locacaoParaEditar = null;
+            for (const dayKey in locacoesPorDia) {
+              const found = locacoesPorDia[dayKey].find(
+                l => l.id === contextMenu.locacaoId
+              );
+              if (found) {
+                locacaoParaEditar = found;
+                break;
+              }
+            }
+            if (locacaoParaEditar) {
+              setLocacaoFormInitialData(locacaoParaEditar);
+              setShowLocacaoFormModal(true);
+            } else {
+              toast.error(
+                'Não foi possível encontrar os dados da locação para edição.'
+              );
+            }
+            handleCloseContextMenu();
+          },
+        },
+        {
+          label: 'Excluir',
+          action: () => {
+            handleDeleteLocacao(contextMenu.locacaoId);
+            handleCloseContextMenu();
+          },
+          className: 'text-red-600 hover:bg-red-50',
+        },
+      ]
+    : [];
 
   return (
     <DndContext
@@ -347,15 +387,26 @@ function WeeklyPlanner({ selectedObra }) {
           onDateChange={handleDateChange}
         />
 
-        {isLoading && <div className="text-center p-4 text-gray-600 dark:text-gray-300">Carregando dados da semana...</div>}
-        {error && <div className="text-center p-4 text-red-600 dark:text-red-400">Erro: {error}</div>}
+        {isLoading && (
+          <div className="text-center p-4 text-gray-600 dark:text-gray-300">
+            Carregando dados da semana...
+          </div>
+        )}
+        {error && (
+          <div className="text-center p-4 text-red-600 dark:text-red-400">
+            Erro: {error}
+          </div>
+        )}
 
         {!isLoading && !error && (
           <div className="flex mt-4 overflow-x-auto pb-4 h-full flex-grow">
             {daysOfWeek.map(day => {
               const formattedDayId = format(day, 'yyyy-MM-dd');
               return (
-                <div key={formattedDayId} className="flex-1 min-w-[180px] sm:min-w-[200px] md:min-w-[210px]">
+                <div
+                  key={formattedDayId}
+                  className="flex-1 min-w-[180px] sm:min-w-[200px] md:min-w-[210px]"
+                >
                   <DayColumn
                     id={formattedDayId}
                     date={day}
@@ -371,15 +422,29 @@ function WeeklyPlanner({ selectedObra }) {
 
             <div className="flex flex-col w-64 flex-shrink-0 min-h-[300px] max-h-[calc(100vh-250px)] ml-2 mr-1 rounded-lg shadow-md bg-slate-100 dark:bg-gray-700">
               <div className="p-3 sticky top-0 bg-slate-200 dark:bg-gray-600 rounded-t-lg shadow z-10">
-                <h4 className="text-md font-semibold text-center text-slate-700 dark:text-gray-200">Recursos Mais Utilizados</h4>
-                <p className="text-sm text-center text-slate-500 dark:text-gray-300">Nesta Semana</p>
+                <h4 className="text-md font-semibold text-center text-slate-700 dark:text-gray-200">
+                  Recursos Mais Utilizados
+                </h4>
+                <p className="text-sm text-center text-slate-500 dark:text-gray-300">
+                  Nesta Semana
+                </p>
               </div>
               <div className="flex-grow overflow-y-auto p-4 space-y-2">
                 {recursosMaisUtilizados.length > 0 ? (
                   <ul className="text-sm text-slate-700 dark:text-gray-200 space-y-1">
                     {recursosMaisUtilizados.map((recurso, index) => (
-                      <li key={index} className="p-2 bg-white dark:bg-gray-600 rounded shadow-sm">
-                        <span className="font-medium">{recurso.recurso_nome}</span>: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{recurso.ocorrencias}</span> {recurso.ocorrencias > 1 ? 'alocações' : 'alocação'}
+                      <li
+                        key={index}
+                        className="p-2 bg-white dark:bg-gray-600 rounded shadow-sm"
+                      >
+                        <span className="font-medium">
+                          {recurso.recurso_nome}
+                        </span>
+                        :{' '}
+                        <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                          {recurso.ocorrencias}
+                        </span>{' '}
+                        {recurso.ocorrencias > 1 ? 'alocações' : 'alocação'}
                       </li>
                     ))}
                   </ul>
@@ -404,7 +469,9 @@ function WeeklyPlanner({ selectedObra }) {
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50 p-4">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100 mb-4">
-                {locacaoFormInitialData?.id ? 'Editar Locação' : 'Adicionar Nova Locação'}
+                {locacaoFormInitialData?.id
+                  ? 'Editar Locação'
+                  : 'Adicionar Nova Locação'}
               </h3>
               <LocacaoForm
                 initialData={locacaoFormInitialData}
@@ -417,38 +484,49 @@ function WeeklyPlanner({ selectedObra }) {
           </div>
         )}
 
-        {showDragDropConfirmModal && draggedLocacaoDataForModal && targetDayIdForModal && (
+        {showDragDropConfirmModal &&
+          draggedLocacaoDataForModal &&
+          targetDayIdForModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Confirmar Ação</h2>
-                    <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
-                        O que deseja fazer com a locação de "{draggedLocacaoDataForModal.recurso_nome}" para o dia {format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}?
-                    </p>
-                    <div className="flex justify-end space-x-3">
-                        <button
-                            onClick={closeDragDropConfirmModal}
-                            className="py-2 px-4 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handleDuplicateLocacao}
-                            disabled={isLoading}
-                            className="py-2 px-4 text-sm font-medium text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 rounded-md disabled:opacity-50"
-                        >
-                            {isLoading ? 'Duplicando...' : 'Duplicar'}
-                        </button>
-                        <button
-                            onClick={handleMoveLocacao}
-                            disabled={isLoading}
-                            className="py-2 px-4 text-sm font-medium text-white bg-primary-600 dark:bg-primary-700 hover:bg-primary-700 dark:hover:bg-primary-600 rounded-md disabled:opacity-50"
-                        >
-                            {isLoading ? 'Movendo...' : 'Mover'}
-                        </button>
-                    </div>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                  Confirmar Ação
+                </h2>
+                <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
+                  O que deseja fazer com a locação de "
+                  {draggedLocacaoDataForModal.recurso_nome}" para o dia{' '}
+                  {format(
+                    new Date(targetDayIdForModal + 'T00:00:00'),
+                    'dd/MM/yyyy',
+                    { locale }
+                  )}
+                  ?
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={closeDragDropConfirmModal}
+                    className="py-2 px-4 text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleDuplicateLocacao}
+                    disabled={isLoading}
+                    className="py-2 px-4 text-sm font-medium text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 rounded-md disabled:opacity-50"
+                  >
+                    {isLoading ? 'Duplicando...' : 'Duplicar'}
+                  </button>
+                  <button
+                    onClick={handleMoveLocacao}
+                    disabled={isLoading}
+                    className="py-2 px-4 text-sm font-medium text-white bg-primary-600 dark:bg-primary-700 hover:bg-primary-700 dark:hover:bg-primary-600 rounded-md disabled:opacity-50"
+                  >
+                    {isLoading ? 'Movendo...' : 'Mover'}
+                  </button>
                 </div>
+              </div>
             </div>
-        )}
+          )}
 
         {/* Render ContextMenu */}
         {contextMenu.visible && (
@@ -467,7 +545,6 @@ function WeeklyPlanner({ selectedObra }) {
             />
           ) : null}
         </DragOverlay>
-
       </div>
     </DndContext>
   );
