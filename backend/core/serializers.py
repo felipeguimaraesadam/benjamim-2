@@ -104,6 +104,8 @@ class ObraSerializer(serializers.ModelSerializer):
     # Nested data for tabs
     compras = CompraSerializer(many=True, read_only=True)
     despesas_extras = DespesaExtraSerializer(many=True, read_only=True)
+    locacoes = LocacaoObrasEquipesSerializer(many=True, read_only=True, source='locacao_obras_equipes_set')
+
 
     class Meta:
         model = Obra
@@ -113,7 +115,7 @@ class ObraSerializer(serializers.ModelSerializer):
             'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem',
             'custo_total_realizado', 'custos_por_categoria', 'gastos_por_categoria_material_obra',
             'balanco_financeiro', 'custo_m2', 'historico_custos', 'top_materiais',
-            'compras', 'despesas_extras'
+            'compras', 'despesas_extras', 'locacoes'
         ]
 
     def get_custos_por_categoria(self, obj):

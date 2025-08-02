@@ -27,7 +27,7 @@ const ObraDetailPage = () => {
 
   // Instantiate useApiData for each data point
   const { data: obra, isLoading: isLoadingObra, error: errorObra, fetchData: fetchObraDetails, setData: setObra } = useApiData(api.getObraById, obraApiParams, null, true);
-  const { data: locacoesEquipe, isLoading: isLoadingLocacoes, error: errorLocacoes, fetchData: fetchLocacoes, setData: setLocacoesEquipe } = useApiData(api.getLocacoes, obraQueryObjParams, [], true);
+  // const { data: locacoesEquipe, isLoading: isLoadingLocacoes, error: errorLocacoes, fetchData: fetchLocacoes, setData: setLocacoesEquipe } = useApiData(api.getLocacoes, obraQueryObjParams, [], true);
   // const { data: historicoCustos, isLoading: isLoadingHistoricoCustos, error: errorHistoricoCustos, fetchData: fetchHistoricoCustos } = useApiData(api.getObraHistoricoCustos, obraApiParams, [], true);
 
   // custosCategoria is part of 'obra' object (obra.custos_por_categoria)
@@ -74,8 +74,8 @@ const ObraDetailPage = () => {
          setSpecificLocacaoError(null);
          try {
              await api.deleteLocacao(locacaoId);
-             fetchLocacoes(); // Re-fetch alocacoes
-             fetchObraDetails(); // <<< ADD THIS LINE to re-fetch obra details for financial summary
+             // fetchLocacoes(); // No longer needed, re-fetch the whole obra object
+             fetchObraDetails(); // Re-fetches the entire obra object, updating all data
              setOperationStatus({ type: 'success', message: 'Locação removida com sucesso!' });
          } catch (err) {
              const errMsg = err.response?.data?.detail || err.message || 'Falha ao remover locação.';
@@ -86,7 +86,7 @@ const ObraDetailPage = () => {
              setRemovingLocacaoId(null);
          }
      }
-  }, [fetchLocacoes, fetchObraDetails, setOperationStatus]); // Added fetchObraDetails to dependency array
+  }, [fetchObraDetails, setOperationStatus]); // Simplified dependencies
 
   // NEW CALLBACK for photo upload
   const handlePhotoUploaded = (newFotoData) => {
