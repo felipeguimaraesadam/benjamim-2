@@ -111,6 +111,8 @@ apiClient.interceptors.response.use(
 
 // --- Obra Service Functions ---
 export const getObras = params => apiClient.get('/obras/', { params });
+export const searchObras = query =>
+  apiClient.get('/obras/search/', { params: { q: query } });
 export const getObraById = id => apiClient.get(`/obras/${id}/`);
 export const createObra = obraData => apiClient.post('/obras/', obraData);
 export const updateObra = (id, obraData) =>

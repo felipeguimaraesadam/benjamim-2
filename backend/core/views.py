@@ -82,9 +82,22 @@ class ObraViewSet(viewsets.ModelViewSet):
     """
     serializer_class = ObraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nome_obra']
 
     def get_queryset(self):
-        return Obra.objects.select_related('responsavel').all()
+        queryset = Obra.objects.select_related('responsavel').all()
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def search(self, request):
+        query = request.query_params.get('q', '')
+        obras = self.get_queryset().filter(nome_obra__icontains=query)
+        serializer = self.get_serializer(obras, many=True)
+        return Response(serializer.data)
 
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
