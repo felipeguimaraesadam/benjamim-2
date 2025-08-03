@@ -1590,15 +1590,6 @@ class BackupViewSet(viewsets.ModelViewSet):
 
 from django.utils.decorators import method_decorator
 
-@method_decorator(csrf_exempt, name='dispatch')
-class FrontendErrorLogView(APIView):
-    authentication_classes = []
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request, *args, **kwargs):
-        print("Frontend Error:", request.data)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
 class BackupSettingsViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gerenciar configurações de backup.
