@@ -1587,6 +1587,13 @@ class BackupViewSet(viewsets.ModelViewSet):
             )
 
 
+class FrontendErrorLogView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        print("Frontend Error:", request.data)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class BackupSettingsViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gerenciar configurações de backup.

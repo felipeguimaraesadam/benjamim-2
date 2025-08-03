@@ -38,13 +38,10 @@ from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.urls import re_path
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-# Servir arquivos estáticos em desenvolvimento
+# Servir arquivos estáticos e de mídia em desenvolvimento
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    # Servir assets do React
-    urlpatterns += static('/assets/', document_root=settings.BASE_DIR / 'static_react_build' / 'assets')
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Servir o frontend React
 urlpatterns += [
