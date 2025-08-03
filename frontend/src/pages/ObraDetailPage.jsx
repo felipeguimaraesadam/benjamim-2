@@ -116,10 +116,10 @@ const ObraDetailPage = () => {
       { name: 'Despesas Extras', value: parseFloat(obra.custos_por_categoria.despesas_extras) || 0 },
   ].filter(item => item.value > 0) : [];
 
-  const gastosPorCategoriaMaterialDataObra = obra && obra.gastos_por_categoria_material_obra ?
-      Object.entries(obra.gastos_por_categoria_material_obra).map(([key, value]) => ({
-          name: key,
-          value: parseFloat(value) || 0,
+  const gastosPorCategoriaMaterialDataObra = custosMaterial && custosMaterial.length > 0 ?
+      custosMaterial.map(item => ({
+          name: item.name,
+          value: parseFloat(item.value) || 0,
       })).filter(entry => entry.value > 0)
       : [];
 

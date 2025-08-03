@@ -90,33 +90,33 @@ const ObraCompletaComprasTable = ({ compras, isLoading, error }) => {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {compras.map(compra => (
-            <tr key={compra.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {formatDate(compra.data_compra)}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                {compra.material_nome || 'N/A'}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {parseFloat(compra.quantidade || 0).toLocaleString('pt-BR')}{' '}
-                {compra.material_unidade_medida || ''}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {formatCurrency(compra.valor_unitario)}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {formatCurrency(compra.custo_total)}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {compra.fornecedor || '-'}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                {compra.nota_fiscal || '-'}
-              </td>
-
-            </tr>
-          ))}
+          {compras.map(compra =>
+            compra.itens.map(item => (
+              <tr key={`${compra.id}-${item.id}`} className="hover:bg-gray-50">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                  {formatDate(compra.data_compra)}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {item.material_nome || 'N/A'}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                  {parseFloat(item.quantidade || 0).toLocaleString('pt-BR')}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                  {formatCurrency(item.valor_unitario)}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                  {formatCurrency(item.valor_total_item)}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                  {compra.fornecedor || '-'}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                  {compra.nota_fiscal || '-'}
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
