@@ -611,7 +611,7 @@ const LocacaoForm = ({
         ))
     ) {
       try {
-        await onSubmit(dataToSubmit); // onSubmit is the prop from parent, handles actual locacao save
+        await onSubmit(dataToSubmit, formData.anexos); // Pass files separately
         // and subsequent state changes like closing modal, fetching data.
       } catch (err) {
         // Error handling for locacao submission (conflict, validation, etc.)

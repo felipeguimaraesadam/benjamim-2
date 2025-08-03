@@ -162,6 +162,29 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
             <div className="md:col-span-2">
               <DetailItem label="Observações" value={locacao.observacoes} />
             </div>
+
+            {/* Anexos Section */}
+            {locacao.anexos && locacao.anexos.length > 0 && (
+              <div className="md:col-span-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-md font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Anexos
+                </h3>
+                <ul className="list-disc list-inside space-y-1">
+                  {locacao.anexos.map(anexo => (
+                    <li key={anexo.id}>
+                      <a
+                        href={anexo.anexo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-200 underline"
+                      >
+                        {anexo.descricao || anexo.anexo.split('/').pop()}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 

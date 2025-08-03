@@ -113,16 +113,30 @@ const DespesasExtrasPage = () => {
     }
   };
 
-  const handleFormSubmit = async formData => {
+  const handleFormSubmit = async (formData, anexos) => {
     setIsLoadingForm(true);
     setError(null); // Clear previous modal errors
     const isEditing = currentDespesa && currentDespesa.id;
+
+    const data = new FormData();
+    Object.keys(formData).forEach(key => {
+        if (formData[key] !== null && formData[key] !== undefined) {
+            data.append(key, formData[key]);
+        }
+    });
+
+    if (anexos && anexos.length > 0) {
+        anexos.forEach(anexo => {
+            data.append('anexos', anexo);
+        });
+    }
+
     try {
       if (isEditing) {
-        await api.updateDespesaExtra(currentDespesa.id, formData);
+        await api.updateDespesaExtra(currentDespesa.id, data);
         showSuccessToast('Despesa atualizada com sucesso!');
       } else {
-        await api.createDespesaExtra(formData);
+        await api.createDespesaExtra(data);
         showSuccessToast('Despesa criada com sucesso!');
       }
       setShowFormModal(false);
