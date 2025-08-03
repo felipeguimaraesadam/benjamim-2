@@ -30,7 +30,7 @@ const ObraDetailPage = () => {
   const { data: locacoesEquipe, isLoading: isLoadingLocacoes, error: errorLocacoes, fetchData: fetchLocacoes, setData: setLocacoesEquipe } = useApiData(api.getLocacoes, obraQueryObjParams, [], true);
   const { data: historicoCustos, isLoading: isLoadingHistoricoCustos, error: errorHistoricoCustos, fetchData: fetchHistoricoCustos } = useApiData(api.getObraHistoricoCustos, obraApiParams, [], true);
 
-  const { data: custosMaterial, isLoading: isLoadingCustosMaterial, error: errorCustosMaterial, fetchData: fetchCustosMaterial } = useApiData(api.getObraCustosPorMaterial, obraApiParams, [], true);
+  const { data: gastosPorCategoriaMaterial, isLoading: isLoadingGastosPorCategoria, error: errorGastosPorCategoria, fetchData: fetchGastosPorCategoria } = useApiData(api.getObraGastosPorCategoriaMaterial, obraApiParams, [], true);
   const { data: todasAsComprasBruto, isLoading: isLoadingTodasAsCompras, error: errorTodasAsCompras, fetchData: fetchTodasAsCompras } = useApiData(api.getCompras, obraQueryObjParams, [], true);
 
   const { data: despesasExtrasObra, isLoading: isLoadingDespesasExtras, error: errorDespesasExtras, fetchData: fetchDespesasExtras } = useApiData(api.getDespesasExtras, obraQueryObjParams, [], true);
@@ -116,8 +116,8 @@ const ObraDetailPage = () => {
       { name: 'Despesas Extras', value: parseFloat(obra.custos_por_categoria.despesas_extras) || 0 },
   ].filter(item => item.value > 0) : [];
 
-  const gastosPorCategoriaMaterialDataObra = custosMaterial && custosMaterial.length > 0 ?
-      custosMaterial.map(item => ({
+  const gastosPorCategoriaMaterialDataObra = gastosPorCategoriaMaterial && gastosPorCategoriaMaterial.length > 0 ?
+      gastosPorCategoriaMaterial.map(item => ({
           name: item.name,
           value: parseFloat(item.value) || 0,
       })).filter(entry => entry.value > 0)
@@ -240,7 +240,7 @@ const ObraDetailPage = () => {
 
           <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <CostHistoryChart historicoCustos={historicoCustos} custosError={errorHistoricoCustos} isLoading={isLoadingHistoricoCustos} />
-            <TopMaterialsChart custosMaterial={custosMaterial} materialError={errorCustosMaterial} isLoading={isLoadingCustosMaterial} />
+        <TopMaterialsChart custosMaterial={gastosPorCategoriaMaterial} materialError={errorGastosPorCategoria} isLoading={isLoadingGastosPorCategoria} />
           </div>
         </>
       )}
