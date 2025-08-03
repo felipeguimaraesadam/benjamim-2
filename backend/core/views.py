@@ -1383,6 +1383,7 @@ class RecursosMaisUtilizadosSemanaView(APIView):
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
+@method_decorator(csrf_exempt, name='dispatch')
 class AnexoLocacaoViewSet(viewsets.ModelViewSet):
     queryset = AnexoLocacao.objects.all()
     serializer_class = AnexoLocacaoSerializer
@@ -1401,6 +1402,7 @@ class AnexoLocacaoViewSet(viewsets.ModelViewSet):
             return self.queryset.none()  # Return none if no locacao_id for list
         return self.queryset.all()  # For detail views, return all
 
+@method_decorator(csrf_exempt, name='dispatch')
 class AnexoDespesaViewSet(viewsets.ModelViewSet):
     queryset = AnexoDespesa.objects.all()
     serializer_class = AnexoDespesaSerializer
