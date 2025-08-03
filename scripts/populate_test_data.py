@@ -156,7 +156,8 @@ def create_test_data():
                     material=material,
                     defaults={
                         'quantidade': quantidade,
-                        'valor_unitario': valor_unitario
+                        'valor_unitario': valor_unitario,
+                        'categoria_uso': material.categoria_uso_padrao # Adicionado para popular a categoria
                     }
                 )
 
