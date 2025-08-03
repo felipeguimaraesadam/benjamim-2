@@ -67,7 +67,11 @@ def create_test_data():
     responsavel_func, _ = get_or_create_with_log(
         Funcionario,
         nome_completo='Carlos Gerente de Obras',
-        defaults={'cargo': 'Gerente de Obras', 'valor_diaria_padrao': Decimal('350.00')}
+        defaults={
+            'cargo': 'Gerente de Obras',
+            'valor_diaria_padrao': Decimal('350.00'),
+            'data_contratacao': date(2022, 1, 1)  # Campo obrigatório adicionado
+        }
     )
     print("\n")
 
@@ -160,7 +164,11 @@ def create_test_data():
     funcionarios = [get_or_create_with_log(
         Funcionario,
         nome_completo=data['nome_completo'],
-        defaults={'cargo': data['cargo'], 'valor_diaria_padrao': Decimal(data['valor_diaria'])}
+        defaults={
+            'cargo': data['cargo'],
+            'valor_diaria_padrao': Decimal(data['valor_diaria']),
+            'data_contratacao': date(2023, 1, 1) # Campo obrigatório adicionado
+        }
     )[0] for data in funcionarios_data]
 
     equipes_data = [{'nome_equipe': 'Equipe Estrutural'}, {'nome_equipe': 'Equipe Acabamento'}, {'nome_equipe': 'Equipe Hidro/Elétrica'}]
