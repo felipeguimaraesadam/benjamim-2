@@ -8,6 +8,7 @@ from datetime import datetime, date, timedelta
 from django.db import transaction
 from rest_framework.decorators import action
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 # Note: 'from datetime import date, timedelta' was also imported directly.
 # django.utils.timezone.now().date() provides date, and timedelta can be imported if needed.
 # For this merge, keeping existing imports from backup unless clearly redundant and conflicting.
@@ -1587,9 +1588,10 @@ class BackupViewSet(viewsets.ModelViewSet):
             )
 
 
+from django.utils.decorators import method_decorator
+
+@method_decorator(csrf_exempt, name='dispatch')
 class FrontendErrorLogView(APIView):
-    authentication_classes = []
-    permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
         print("Frontend Error:", request.data)
