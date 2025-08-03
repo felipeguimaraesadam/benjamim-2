@@ -20,7 +20,11 @@ import os
 from .utils import generate_pdf_response
 # from weasyprint.fonts import FontConfiguration # Optional
 
-from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra, Backup, BackupSettings
+from .models import (
+    Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material,
+    Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra,
+    Backup, BackupSettings, AnexoLocacao, AnexoDespesa
+)
 from .serializers import (
     UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer,
     LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer,
@@ -28,7 +32,7 @@ from .serializers import (
     ItemCompraSerializer, EquipeComMembrosBasicSerializer,
     FotoObraSerializer, FuncionarioDetailSerializer,
     EquipeDetailSerializer, MaterialDetailSerializer, CompraReportSerializer,
-    BackupSerializer, BackupSettingsSerializer
+    BackupSerializer, BackupSettingsSerializer, AnexoLocacaoSerializer, AnexoDespesaSerializer
 )
 from .permissions import IsNivelAdmin, IsNivelGerente
 
