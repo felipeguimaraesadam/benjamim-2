@@ -221,7 +221,8 @@ def create_test_data():
             if not Locacao_Obras_Equipes.objects.filter(obra=obra, data_locacao_inicio=data_inicio, funcionario_locado=loc_kwargs.get('funcionario_locado'), equipe=loc_kwargs.get('equipe'), servico_externo=loc_kwargs.get('servico_externo')).exists():
                 locacao = Locacao_Obras_Equipes.objects.create(**loc_kwargs)
                 locacoes_criadas_count += 1
-                print(f"✓ [CRIADO] Locacao: {locacao.get_recurso_display()} para {locacao.obra.nome_obra}")
+                recurso_str = locacao.servico_externo or str(locacao.equipe) or str(locacao.funcionario_locado)
+                print(f"✓ [CRIADO] Locacao: {recurso_str} para {locacao.obra.nome_obra}")
 
     print("\n=========================================")
     print("      SCRIPT DE POPULAÇÃO CONCLUÍDO      ")
