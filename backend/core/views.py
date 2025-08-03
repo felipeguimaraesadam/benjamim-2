@@ -88,7 +88,7 @@ class ObraViewSet(viewsets.ModelViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get_queryset(self):
-        return Obra.objects.select_related('responsavel').all()
+        return Obra.objects.select_related('responsavel').all().order_by('id')
 
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
@@ -118,12 +118,12 @@ class EquipeViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows equipes to be viewed or edited.
     """
-    queryset = Equipe.objects.all()
+    queryset = Equipe.objects.all().order_by('id')
     serializer_class = EquipeComMembrosBasicSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get_queryset(self):
-        return Equipe.objects.prefetch_related('membros').select_related('lider').all()
+        return Equipe.objects.prefetch_related('membros').select_related('lider').all().order_by('id')
 
 
 # New EquipeDetailView
@@ -149,46 +149,60 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def create(self, request, *args, **kwargs):
-        """
-        Custom create method that automatically splits multi-day rentals into individual daily rentals.
-        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        anexos_data = request.FILES.getlist('anexos')
         validated_data = serializer.validated_data
         
+        # Remove 'anexos' from validated_data if it's there, as it's not a model field
+        validated_data.pop('anexos', None)
+
         data_inicio = validated_data['data_locacao_inicio']
         data_fim = validated_data.get('data_locacao_fim', data_inicio)
-        
-        # If it's a single day rental, create normally
-        if data_inicio == data_fim:
-            locacao = serializer.save()
-            headers = self.get_success_headers(serializer.data)
-            return Response(self.get_serializer(locacao).data, status=status.HTTP_201_CREATED, headers=headers)
-        
-        # For multi-day rentals, create individual daily rentals
+
         created_locacoes = []
-        current_date = data_inicio
-        
         with transaction.atomic():
-            while current_date <= data_fim:
-                # Create a copy of validated_data for each day
-                daily_data = validated_data.copy()
-                daily_data['data_locacao_inicio'] = current_date
-                daily_data['data_locacao_fim'] = current_date
-                
-                # Create individual daily rental
-                locacao = Locacao_Obras_Equipes.objects.create(**daily_data)
+            if data_inicio == data_fim:
+                locacao = Locacao_Obras_Equipes.objects.create(**validated_data)
+                for anexo_file in anexos_data:
+                    AnexoLocacao.objects.create(locacao=locacao, anexo=anexo_file, descricao=anexo_file.name)
                 created_locacoes.append(locacao)
-                
-                current_date += timedelta(days=1)
+            else:
+                current_date = data_inicio
+                while current_date <= data_fim:
+                    daily_data = validated_data.copy()
+                    daily_data['data_locacao_inicio'] = current_date
+                    daily_data['data_locacao_fim'] = current_date
+                    locacao = Locacao_Obras_Equipes.objects.create(**daily_data)
+                    # Assuming attachments are for the entire period, not per day
+                    if current_date == data_inicio:
+                        for anexo_file in anexos_data:
+                            AnexoLocacao.objects.create(locacao=locacao, anexo=anexo_file, descricao=anexo_file.name)
+                    created_locacoes.append(locacao)
+                    current_date += timedelta(days=1)
         
-        # Return the list of created rentals
-        response_data = self.get_serializer(created_locacoes, many=True).data
-        headers = self.get_success_headers(response_data)
-        return Response({
-            'message': f'{len(created_locacoes)} locações diárias criadas com sucesso.',
-            'locacoes': response_data
-        }, status=status.HTTP_201_CREATED, headers=headers)
+        response_serializer = self.get_serializer(created_locacoes, many=True)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        anexos_data = request.FILES.getlist('anexos')
+
+        self.perform_update(serializer)
+
+        for anexo_file in anexos_data:
+            AnexoLocacao.objects.create(locacao=instance, anexo=anexo_file, descricao=anexo_file.name)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been used, we need to manually update the prefetch cache.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     def get_queryset(self):
         today = timezone.now().date()
@@ -466,12 +480,42 @@ class CompraViewSet(viewsets.ModelViewSet):
 class DespesaExtraViewSet(viewsets.ModelViewSet):
     serializer_class = DespesaExtraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+
     def get_queryset(self):
-        queryset = Despesa_Extra.objects.all().order_by('-data')
-        obra_id = self.request.query_params.get('obra_id')
-        if obra_id:
-            queryset = queryset.filter(obra_id=obra_id)
-        return queryset
+        return Despesa_Extra.objects.all().order_by('-data')
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        anexos_data = request.FILES.getlist('anexos')
+        validated_data = serializer.validated_data
+        validated_data.pop('anexos', None)
+
+        despesa = Despesa_Extra.objects.create(**validated_data)
+        for anexo_file in anexos_data:
+            AnexoDespesa.objects.create(despesa=despesa, anexo=anexo_file, descricao=anexo_file.name)
+
+        response_serializer = self.get_serializer(despesa)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        anexos_data = request.FILES.getlist('anexos')
+
+        self.perform_update(serializer)
+
+        for anexo_file in anexos_data:
+            AnexoDespesa.objects.create(despesa=instance, anexo=anexo_file, descricao=anexo_file.name)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
 
 class OcorrenciaFuncionarioViewSet(viewsets.ModelViewSet):
