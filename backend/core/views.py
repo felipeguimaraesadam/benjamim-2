@@ -1590,6 +1590,11 @@ class BackupViewSet(viewsets.ModelViewSet):
 
 from django.utils.decorators import method_decorator
 
+from django.http import HttpResponse
+
+def media_test_view(request):
+    return HttpResponse('<a href="/media/anexos_locacoes/59/e8a4f56e286e438ebf8f4e30ce972a87.jpg">Test Link</a>')
+
 class BackupSettingsViewSet(viewsets.ModelViewSet):
     """
     API endpoint para gerenciar configurações de backup.

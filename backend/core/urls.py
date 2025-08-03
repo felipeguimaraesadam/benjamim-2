@@ -13,7 +13,8 @@ from .views import (
     RelatorioFolhaPagamentoViewSet, RelatorioPagamentoMateriaisViewSet,
     GerarRelatorioPDFObraView, GerarRelatorioPagamentoLocacoesPDFView,
     LocacaoSemanalView, RecursosMaisUtilizadosSemanaView,
-    ObraCustosPorMaterialView, ObraCustosPorCategoriaMaterialView
+    ObraCustosPorMaterialView, ObraCustosPorCategoriaMaterialView,
+    media_test_view
 )
 
 router = DefaultRouter()
@@ -53,4 +54,5 @@ urlpatterns = [
     path('relatorios/recursos-mais-utilizados/', RecursosMaisUtilizadosSemanaView.as_view(), name='recursos-mais-utilizados-semana'),
     path('obras/<int:pk>/custos-por-material/', ObraCustosPorMaterialView.as_view(), name='obra-custos-por-material'),
     path('obras/<int:pk>/custos-por-categoria-material/', ObraCustosPorCategoriaMaterialView.as_view(), name='obra-custos-por-categoria-material'),
+    path('media-test/', media_test_view, name='media-test'),
 ]
