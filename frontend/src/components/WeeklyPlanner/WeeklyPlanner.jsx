@@ -84,8 +84,16 @@ function WeeklyPlanner({ selectedObra }) {
     setSelectedLocacaoIdForDetail(null);
   };
 
-  const handleOpenLocacaoForm = (dateString = null) => {
-    setLocacaoFormInitialData(dateString ? { data_locacao_inicio: dateString, data_locacao_fim: dateString } : null);
+  const handleOpenLocacaoForm = (data = null) => {
+    if (data && data.date) {
+      setLocacaoFormInitialData({
+        data_locacao_inicio: data.date,
+        data_locacao_fim: data.date,
+        obra: data.obra ? data.obra.id : '',
+      });
+    } else {
+      setLocacaoFormInitialData(null);
+    }
     setShowLocacaoFormModal(true);
   };
 
@@ -415,6 +423,7 @@ function WeeklyPlanner({ selectedObra }) {
                     onOpenLocacaoDetail={handleOpenLocacaoDetail}
                     onShowContextMenu={handleShowContextMenu}
                     activeDragItemId={activeDragId} // Pass activeDragItemId to DayColumn
+                    selectedObra={selectedObra}
                   />
                 </div>
               );
