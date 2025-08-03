@@ -1304,6 +1304,30 @@ class RecursosMaisUtilizadosSemanaView(APIView):
         return Response(resposta_formatada)
 
 # Comentário original da view GerarRelatorioPagamentoLocacoesPDFView removido para evitar confusão com a correção acima.
+class AnexoLocacaoViewSet(viewsets.ModelViewSet):
+    queryset = AnexoLocacao.objects.all()
+    serializer_class = AnexoLocacaoSerializer
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get_queryset(self):
+        locacao_id = self.request.query_params.get('locacao_id')
+        if locacao_id:
+            return self.queryset.filter(locacao_id=locacao_id)
+        return self.queryset.none()
+
+class AnexoDespesaViewSet(viewsets.ModelViewSet):
+    queryset = AnexoDespesa.objects.all()
+    serializer_class = AnexoDespesaSerializer
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get_queryset(self):
+        despesa_id = self.request.query_params.get('despesa_id')
+        if despesa_id:
+            return self.queryset.filter(despesa_id=despesa_id)
+        return self.queryset.none()
+
 class GerarRelatorioPagamentoLocacoesPDFView(APIView):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 

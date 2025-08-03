@@ -26,6 +26,7 @@ const LocacaoForm = ({
     valor_pagamento: '', // New
     data_pagamento: '', // New
     observacoes: '', // New field
+    anexos: [],
   });
   const [formErrors, setFormErrors] = useState({});
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
@@ -328,6 +329,13 @@ const LocacaoForm = ({
       if (formErrors.valor_pagamento)
         setFormErrors(prev => ({ ...prev, valor_pagamento: null }));
     }
+  };
+
+  const handleFileChange = e => {
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      anexos: [...e.target.files],
+    }));
   };
 
   const validateFrontendForm = () => {
@@ -985,6 +993,24 @@ const LocacaoForm = ({
             placeholder="Adicione observações relevantes sobre a locação..."
           ></textarea>
           {/* {formErrors.observacoes && <p className="mt-1 text-sm text-red-600">{formErrors.observacoes}</p>} */}
+        </div>
+
+        {/* Anexos Field Section */}
+        <div className="mt-6 pt-6 border-t">
+          <label
+            htmlFor="anexos"
+            className="block text-sm font-medium text-gray-900"
+          >
+            Anexos (PDF, Imagens)
+          </label>
+          <input
+            type="file"
+            name="anexos"
+            id="anexos"
+            onChange={handleFileChange}
+            multiple
+            className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 focus:outline-none"
+          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">

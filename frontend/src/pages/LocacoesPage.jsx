@@ -186,17 +186,31 @@ const LocacoesPage = () => {
     }
   };
 
-  const handleApiSubmit = async formData => {
+  const handleApiSubmit = async (formData, anexos) => {
     setIsLoadingForm(true);
     setError(null);
     const isEditing = currentLocacao && currentLocacao.id;
+
+    const data = new FormData();
+    Object.keys(formData).forEach(key => {
+        if (formData[key] !== null && formData[key] !== undefined) {
+            data.append(key, formData[key]);
+        }
+    });
+
+    if (anexos && anexos.length > 0) {
+        anexos.forEach(anexo => {
+            data.append('anexos', anexo);
+        });
+    }
+
     try {
       let response;
       if (isEditing) {
-        response = await api.updateLocacao(currentLocacao.id, formData);
+        response = await api.updateLocacao(currentLocacao.id, data);
         showSuccessToast('Locação atualizada com sucesso!');
       } else {
-        response = await api.createLocacao(formData);
+        response = await api.createLocacao(data);
         const createdRentals = response.data;
         if (Array.isArray(createdRentals) && createdRentals.length > 1) {
           showSuccessToast(
