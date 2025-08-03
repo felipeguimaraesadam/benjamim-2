@@ -30,15 +30,13 @@ const ObraDetailPage = () => {
   const { data: locacoesEquipe, isLoading: isLoadingLocacoes, error: errorLocacoes, fetchData: fetchLocacoes, setData: setLocacoesEquipe } = useApiData(api.getLocacoes, obraQueryObjParams, [], true);
   const { data: historicoCustos, isLoading: isLoadingHistoricoCustos, error: errorHistoricoCustos, fetchData: fetchHistoricoCustos } = useApiData(api.getObraHistoricoCustos, obraApiParams, [], true);
 
-  const { data: custosCategoria, isLoading: isLoadingCustosCategoria, error: errorCustosCategoria, fetchData: fetchCustosCategoria } = useApiData(api.getObraCustosPorCategoria, obraApiParams, {}, true);
-
   const { data: custosMaterial, isLoading: isLoadingCustosMaterial, error: errorCustosMaterial, fetchData: fetchCustosMaterial } = useApiData(api.getObraCustosPorMaterial, obraApiParams, [], true);
-  const { data: todasAsComprasBruto, isLoading: isLoadingTodasAsCompras, error: errorTodasAsCompras, fetchData: fetchTodasAsCompras } = useApiData(api.getObraComprasDetalhes, obraApiParams, [], true);
+  const { data: todasAsComprasBruto, isLoading: isLoadingTodasAsCompras, error: errorTodasAsCompras, fetchData: fetchTodasAsCompras } = useApiData(api.getCompras, obraQueryObjParams, [], true);
 
   const { data: despesasExtrasObra, isLoading: isLoadingDespesasExtras, error: errorDespesasExtras, fetchData: fetchDespesasExtras } = useApiData(api.getDespesasExtras, obraQueryObjParams, [], true);
 
   const actualTodasAsCompras = useMemo(() => {
-      return todasAsComprasBruto?.compras || (Array.isArray(todasAsComprasBruto) ? todasAsComprasBruto : []);
+      return todasAsComprasBruto?.results || (Array.isArray(todasAsComprasBruto) ? todasAsComprasBruto : []);
   }, [todasAsComprasBruto]);
 
   // Derived state for comprasEstoque (removed)
@@ -54,23 +52,6 @@ const ObraDetailPage = () => {
 
   // NEW STATE for handling photo uploads
   const [latestUploadedFoto, setLatestUploadedFoto] = useState(null);
-
-  // Effect to merge fetched financial data into the main 'obra' object
-  useEffect(() => {
-    if (obra && custosCategoria && Object.keys(custosCategoria).length > 0) {
-      const totalCost = (
-        (parseFloat(custosCategoria.materiais) || 0) +
-        (parseFloat(custosCategoria.locacoes) || 0) +
-        (parseFloat(custosCategoria.despesas_extras) || 0)
-      ).toFixed(2);
-
-      setObra(prevObra => ({
-        ...prevObra,
-        custos_por_categoria: custosCategoria,
-        custo_total_realizado: totalCost,
-      }));
-    }
-  }, [custosCategoria, setObra]); // Dependency on the fetched data
 
   // Effect to clear operation status messages
   useEffect(() => {
