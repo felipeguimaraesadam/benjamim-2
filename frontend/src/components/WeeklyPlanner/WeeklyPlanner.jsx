@@ -68,6 +68,20 @@ function WeeklyPlanner({ selectedObra }) {
     }
   }, [locale, weekStartsOn]);
 
+  const [obras, setObras] = useState([]);
+
+  useEffect(() => {
+    const fetchObras = async () => {
+        try {
+            const response = await api.getObras({ page_size: 500 });
+            setObras(response.data?.results || []);
+        } catch (error) {
+            console.error('Erro ao buscar obras:', error);
+        }
+    };
+    fetchObras();
+  }, []);
+
   useEffect(() => {
     fetchWeekData(currentDate, selectedObra?.id);
   }, [currentDate, selectedObra, fetchWeekData]);
@@ -484,6 +498,7 @@ function WeeklyPlanner({ selectedObra }) {
               </h3>
               <LocacaoForm
                 initialData={locacaoFormInitialData}
+                obras={obras}
                 onSubmit={handleActualFormSubmit}
                 onCancel={handleCloseLocacaoForm}
                 isLoading={isLoading}

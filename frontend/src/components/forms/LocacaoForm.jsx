@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import SpinnerIcon from '../utils/SpinnerIcon'; // Import SpinnerIcon
+import ObraAutocomplete from './ObraAutocomplete';
 
 const LocacaoForm = ({
   initialData,
@@ -716,21 +717,10 @@ const LocacaoForm = ({
           >
             Obra <span className="text-red-500">*</span>
           </label>
-          <select
-            name="obra"
-            id="obra"
-            value={formData.obra}
-            onChange={handleChange}
-            className={`mt-1 block w-full bg-gray-50 border ${formErrors.obra ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2`}
-          >
-            <option value="">Selecione uma Obra</option>
-            {obras &&
-              obras.map(obra => (
-                <option key={obra.id} value={obra.id}>
-                  {obra.nome_obra}
-                </option>
-              ))}
-          </select>
+          <ObraAutocomplete
+            value={obras.find(o => o.id === formData.obra)}
+            onObraSelect={obra => setFormData(prev => ({ ...prev, obra: obra ? obra.id : '' }))}
+          />
           {formErrors.obra && (
             <p className="mt-1 text-sm text-red-600">{formErrors.obra}</p>
           )}
