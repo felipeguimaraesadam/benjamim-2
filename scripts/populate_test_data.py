@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Script para popular o banco de dados com dados de teste
-Incluindo várias locações para testar o sistema
+Script para popular o banco de dados com dados de teste, incluindo Obras,
+Materiais, Compras e Locações para um teste mais completo.
 """
 
 import os
@@ -9,6 +9,7 @@ import sys
 import django
 from datetime import date, timedelta
 from decimal import Decimal
+import random
 
 # Adicionar o diretório backend ao path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
@@ -17,295 +18,206 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sgo_core.settings')
 django.setup()
 
+# Importar modelos após a configuração do Django
 from core.models import (
     Usuario, Obra, Funcionario, Equipe, 
-    Locacao_Obras_Equipes
+    Material, Compra, Locacao_Obras_Equipes
 )
 
+def get_or_create_with_log(model, defaults=None, **kwargs):
+    """Helper para criar ou obter um objeto com logging."""
+    obj, created = model.objects.get_or_create(defaults=defaults or {}, **kwargs)
+    if created:
+        print(f"✓ [CRIADO] {model.__name__}: {obj}")
+    else:
+        print(f"✓ [EXISTENTE] {model.__name__}: {obj}")
+    return obj, created
+
 def create_test_data():
-    print("Criando dados de teste...")
-    
-    # Criar usuários
-    admin_user, created = Usuario.objects.get_or_create(
+    """Função principal para criar todos os dados de teste."""
+    print("=========================================")
+    print("  INICIANDO CRIAÇÃO DE DADOS DE TESTE  ")
+    print("=========================================\n")
+
+    # --- 1. Criar Usuários ---
+    print("--- 1. Criando Usuários ---")
+    admin_user, admin_created = get_or_create_with_log(
+        Usuario,
         login='admin_test',
         defaults={
-            'password': 'pbkdf2_sha256$600000$test$hash',  # senha: test123
             'nome_completo': 'Administrador Teste',
             'nivel_acesso': 'admin',
             'is_staff': True,
             'is_superuser': True
         }
     )
-    if created:
+    if admin_created:
         admin_user.set_password('test123')
         admin_user.save()
-        print(f"✓ Usuário admin criado: {admin_user.login}")
-    
-    gerente_user, created = Usuario.objects.get_or_create(
+        print("   - Senha definida para 'test123'")
+
+    gerente_user, gerente_created = get_or_create_with_log(
+        Usuario,
         login='gerente_test',
         defaults={
-            'password': 'pbkdf2_sha256$600000$test$hash',
             'nome_completo': 'Gerente Teste',
             'nivel_acesso': 'gerente',
             'is_staff': True
         }
     )
-    if created:
+    if gerente_created:
         gerente_user.set_password('test123')
         gerente_user.save()
-        print(f"✓ Usuário gerente criado: {gerente_user.login}")
-    
-    # Criar obras
+        print("   - Senha definida para 'test123'")
+    print("\n")
+
+    # --- 2. Criar Obras ---
+    print("--- 2. Criando Obras ---")
     obras_data = [
-        {'nome_obra': 'Construção Residencial Alpha', 'cidade': 'São Paulo', 'endereco_completo': 'Rua das Flores, 123 - Vila Madalena'},
-        {'nome_obra': 'Edifício Comercial Beta', 'cidade': 'Rio de Janeiro', 'endereco_completo': 'Av. Atlântica, 456 - Copacabana'},
-        {'nome_obra': 'Shopping Center Gamma', 'cidade': 'Belo Horizonte', 'endereco_completo': 'Rua do Comércio, 789 - Centro'},
-        {'nome_obra': 'Condomínio Delta', 'cidade': 'Brasília', 'endereco_completo': 'Quadra 15, Lote 10 - Asa Norte'},
-        {'nome_obra': 'Reforma Hospital Epsilon', 'cidade': 'Salvador', 'endereco_completo': 'Av. Principal, 321 - Barra'}
+        {'nome_obra': 'Construção Residencial Alpha', 'cidade': 'São Paulo', 'orcamento': '650000.00'},
+        {'nome_obra': 'Edifício Comercial Beta', 'cidade': 'Rio de Janeiro', 'orcamento': '1200000.00'},
+        {'nome_obra': 'Shopping Center Gamma', 'cidade': 'Belo Horizonte', 'orcamento': '3500000.00'},
     ]
-    
     obras = []
-    for obra_data in obras_data:
-        obra, created = Obra.objects.get_or_create(
-            nome_obra=obra_data['nome_obra'],
+    for data in obras_data:
+        obra, _ = get_or_create_with_log(
+            Obra,
+            nome_obra=data['nome_obra'],
             defaults={
                 'status': 'Em Andamento',
-                'cidade': obra_data['cidade'],
-                'endereco_completo': obra_data['endereco_completo']
+                'cidade': data['cidade'],
+                'endereco_completo': f"Endereço Fictício para {data['nome_obra']}",
+                'orcamento_previsto': Decimal(data['orcamento']),
+                'responsavel': gerente_user
             }
         )
         obras.append(obra)
-        if created:
-            print(f"✓ Obra criada: {obra.nome_obra}")
+    obra_alpha, obra_beta, obra_gamma = obras[0], obras[1], obras[2]
+    print("\n")
+
+    # --- 3. Criar Materiais ---
+    print("--- 3. Criando Materiais ---")
+    materiais_data = [
+        {'nome': 'Cimento Portland CP II', 'categoria': 'Básico', 'unidade': 'saco 50kg', 'estoque_minimo': 20, 'estoque_atual': 100},
+        {'nome': 'Vergalhão de Aço CA-50 10mm', 'categoria': 'Estrutural', 'unidade': 'barra 12m', 'estoque_minimo': 50, 'estoque_atual': 200},
+        {'nome': 'Tijolo Baiano 9 furos', 'categoria': 'Alvenaria', 'unidade': 'unidade', 'estoque_minimo': 2000, 'estoque_atual': 5000},
+        {'nome': 'Tinta Acrílica Branca Fosca', 'categoria': 'Acabamento', 'unidade': 'lata 18L', 'estoque_minimo': 10, 'estoque_atual': 30},
+        {'nome': 'Cabo Flexível 2.5mm', 'categoria': 'Elétrico', 'unidade': 'rolo 100m', 'estoque_minimo': 5, 'estoque_atual': 15},
+        {'nome': 'Tubo PVC Esgoto 100mm', 'categoria': 'Hidráulico', 'unidade': 'barra 6m', 'estoque_minimo': 10, 'estoque_atual': 40},
+    ]
+    materiais = [get_or_create_with_log(Material, nome=data['nome'], defaults=data)[0] for data in materiais_data]
+    print("\n")
     
-    # Criar funcionários
+    # --- 4. Criar Compras ---
+    print("--- 4. Criando Compras (associadas às obras) ---")
+    compras_data = [
+        {'obra': obra_alpha, 'material': materiais[0], 'qtd': 50, 'preco_unit': '35.00', 'status': 'Entregue'},
+        {'obra': obra_alpha, 'material': materiais[2], 'qtd': 3000, 'preco_unit': '1.80', 'status': 'Entregue'},
+        {'obra': obra_beta, 'material': materiais[1], 'qtd': 100, 'preco_unit': '45.50', 'status': 'Entregue'},
+        {'obra': obra_beta, 'material': materiais[4], 'qtd': 10, 'preco_unit': '120.00', 'status': 'Pendente'},
+        {'obra': obra_beta, 'material': materiais[5], 'qtd': 20, 'preco_unit': '55.00', 'status': 'Entregue'},
+        {'obra': obra_gamma, 'material': materiais[3], 'qtd': 15, 'preco_unit': '350.00', 'status': 'Entregue'},
+    ]
+    compras_criadas = 0
+    for data in compras_data:
+        compra, created = get_or_create_with_log(
+            Compra,
+            obra=data['obra'],
+            material=data['material'],
+            quantidade=data['qtd'],
+            defaults={
+                'preco_unitario': Decimal(data['preco_unit']),
+                'status_compra': data['status'],
+                'data_compra': date.today() - timedelta(days=random.randint(5, 30)),
+                'fornecedor': 'Fornecedor Padrão Teste',
+                'categoria_uso': 'Uso Direto na Obra'
+            }
+        )
+        if created:
+            compras_criadas += 1
+            print(f"   -> Compra de {compra.quantidade}x {compra.material.nome} para {compra.obra.nome_obra}")
+    print("\n")
+
+    # --- 5. Criar Funcionários e Equipes ---
+    print("--- 5. Criando Funcionários e Equipes ---")
     funcionarios_data = [
         {'nome_completo': 'João Silva Santos', 'cargo': 'Pedreiro', 'valor_diaria': '150.00'},
         {'nome_completo': 'Maria Oliveira Costa', 'cargo': 'Eletricista', 'valor_diaria': '180.00'},
         {'nome_completo': 'Carlos Eduardo Lima', 'cargo': 'Encanador', 'valor_diaria': '160.00'},
-        {'nome_completo': 'Ana Paula Ferreira', 'cargo': 'Pintora', 'valor_diaria': '140.00'},
-        {'nome_completo': 'Roberto Almeida', 'cargo': 'Carpinteiro', 'valor_diaria': '170.00'},
-        {'nome_completo': 'Fernanda Souza', 'cargo': 'Azulejista', 'valor_diaria': '165.00'},
-        {'nome_completo': 'Pedro Henrique', 'cargo': 'Soldador', 'valor_diaria': '190.00'},
-        {'nome_completo': 'Juliana Martins', 'cargo': 'Gesseira', 'valor_diaria': '155.00'}
     ]
-    
-    funcionarios = []
-    for func_data in funcionarios_data:
-        funcionario, created = Funcionario.objects.get_or_create(
-            nome_completo=func_data['nome_completo'],
-            defaults={
-                'cargo': func_data['cargo'],
-                'data_contratacao': date(2023, 1, 15),
-                'valor_diaria_padrao': Decimal(func_data['valor_diaria'])
-            }
-        )
-        funcionarios.append(funcionario)
-        if created:
-            print(f"✓ Funcionário criado: {funcionario.nome_completo} - {funcionario.cargo}")
-    
-    # Criar equipes
-    equipes_data = [
-        {'nome_equipe': 'Equipe Estrutural'},
-        {'nome_equipe': 'Equipe Elétrica'},
-        {'nome_equipe': 'Equipe Hidráulica'},
-        {'nome_equipe': 'Equipe Acabamento'},
-        {'nome_equipe': 'Equipe Paisagismo'}
-    ]
-    
-    equipes = []
-    for equipe_data in equipes_data:
-        equipe, created = Equipe.objects.get_or_create(
-            nome_equipe=equipe_data['nome_equipe']
-        )
-        equipes.append(equipe)
-        if created:
-            print(f"✓ Equipe criada: {equipe.nome_equipe}")
-    
-    # Criar locações variadas para teste
-    print("\nCriando locações de teste...")
-    
-    # Data base para as locações (semana atual)
+    funcionarios = [get_or_create_with_log(
+        Funcionario,
+        nome_completo=data['nome_completo'],
+        defaults={'cargo': data['cargo'], 'valor_diaria_padrao': Decimal(data['valor_diaria'])}
+    )[0] for data in funcionarios_data]
+
+    equipes_data = [{'nome_equipe': 'Equipe Estrutural'}, {'nome_equipe': 'Equipe Acabamento'}]
+    equipes = [get_or_create_with_log(Equipe, nome_equipe=data['nome_equipe'])[0] for data in equipes_data]
+    print("\n")
+
+    # --- 6. Criar Locações ---
+    print("--- 6. Criando Locações (associadas às obras) ---")
     hoje = date.today()
-    inicio_semana = hoje - timedelta(days=hoje.weekday())  # Segunda-feira
-    
     locacoes_data = [
-        # Locações da semana atual
-        {
-            'obra': obras[0],
-            'funcionario_locado': funcionarios[0],  # João Silva
-            'data_inicio': inicio_semana,
-            'data_fim': inicio_semana,
-            'valor': '150.00',
-            'observacoes': 'Construção de alicerce'
-        },
-        {
-            'obra': obras[0],
-            'equipe': equipes[0],  # Equipe Estrutural
-            'data_inicio': inicio_semana + timedelta(days=1),
-            'data_fim': inicio_semana + timedelta(days=2),
-            'valor': '800.00',
-            'observacoes': 'Montagem de estrutura'
-        },
-        {
-            'obra': obras[1],
-            'servico_externo': 'Consultoria Arquitetônica Especializada',
-            'data_inicio': inicio_semana + timedelta(days=2),
-            'data_fim': inicio_semana + timedelta(days=4),
-            'valor': '1200.00',
-            'observacoes': 'Análise estrutural do projeto'
-        },
-        {
-            'obra': obras[1],
-            'funcionario_locado': funcionarios[1],  # Maria Oliveira
-            'data_inicio': inicio_semana + timedelta(days=3),
-            'data_fim': inicio_semana + timedelta(days=3),
-            'valor': '180.00',
-            'observacoes': 'Instalação elétrica'
-        },
-        {
-            'obra': obras[2],
-            'equipe': equipes[1],  # Equipe Elétrica
-            'data_inicio': inicio_semana + timedelta(days=4),
-            'data_fim': inicio_semana + timedelta(days=6),
-            'valor': '1500.00',
-            'observacoes': 'Sistema elétrico completo'
-        },
-        
-        # Locações da semana passada
-        {
-            'obra': obras[0],
-            'funcionario_locado': funcionarios[2],  # Carlos Eduardo
-            'data_inicio': inicio_semana - timedelta(days=7),
-            'data_fim': inicio_semana - timedelta(days=5),
-            'valor': '480.00',
-            'observacoes': 'Instalação hidráulica'
-        },
-        {
-            'obra': obras[2],
-            'servico_externo': 'Terraplanagem e Escavação',
-            'data_inicio': inicio_semana - timedelta(days=6),
-            'data_fim': inicio_semana - timedelta(days=4),
-            'valor': '2500.00',
-            'observacoes': 'Preparação do terreno'
-        },
-        {
-            'obra': obras[3],
-            'funcionario_locado': funcionarios[3],  # Ana Paula
-            'data_inicio': inicio_semana - timedelta(days=3),
-            'data_fim': inicio_semana - timedelta(days=1),
-            'valor': '420.00',
-            'observacoes': 'Pintura de fachada'
-        },
-        
-        # Locações da próxima semana
-        {
-            'obra': obras[3],
-            'equipe': equipes[2],  # Equipe Hidráulica
-            'data_inicio': inicio_semana + timedelta(days=7),
-            'data_fim': inicio_semana + timedelta(days=9),
-            'valor': '900.00',
-            'observacoes': 'Sistema hidráulico'
-        },
-        {
-            'obra': obras[4],
-            'funcionario_locado': funcionarios[4],  # Roberto Almeida
-            'data_inicio': inicio_semana + timedelta(days=8),
-            'data_fim': inicio_semana + timedelta(days=12),
-            'valor': '850.00',
-            'observacoes': 'Estrutura de madeira'
-        },
-        {
-            'obra': obras[4],
-            'servico_externo': 'Impermeabilização Especializada',
-            'data_inicio': inicio_semana + timedelta(days=10),
-            'data_fim': inicio_semana + timedelta(days=11),
-            'valor': '800.00',
-            'observacoes': 'Impermeabilização de laje'
-        },
-        
-        # Locações de longo prazo (multi-dia)
-        {
-            'obra': obras[1],
-            'funcionario_locado': funcionarios[5],  # Fernanda Souza
-            'data_inicio': inicio_semana + timedelta(days=14),
-            'data_fim': inicio_semana + timedelta(days=18),
-            'valor': '825.00',
-            'observacoes': 'Revestimento cerâmico'
-        },
-        {
-            'obra': obras[2],
-            'equipe': equipes[3],  # Equipe Acabamento
-            'data_inicio': inicio_semana + timedelta(days=15),
-            'data_fim': inicio_semana + timedelta(days=20),
-            'valor': '2400.00',
-            'observacoes': 'Acabamento completo'
-        },
-        {
-            'obra': obras[0],
-            'servico_externo': 'Instalação de Elevadores',
-            'data_inicio': inicio_semana + timedelta(days=21),
-            'data_fim': inicio_semana + timedelta(days=25),
-            'valor': '15000.00',
-            'observacoes': 'Instalação de 2 elevadores'
-        }
+        {'obra': obra_beta, 'funcionario_locado': funcionarios[0], 'inicio_dias_atras': 10, 'duracao': 2, 'valor': '300.00'},
+        {'obra': obra_beta, 'equipe': equipes[0], 'inicio_dias_atras': 8, 'duracao': 3, 'valor': '2500.00'},
+        {'obra': obra_alpha, 'servico_externo': 'Terraplanagem', 'inicio_dias_atras': 15, 'duracao': 5, 'valor': '5000.00'},
+        {'obra': obra_beta, 'servico_externo': 'Aluguel de Betoneira', 'inicio_dias_atras': 5, 'duracao': 10, 'valor': '1200.00'},
     ]
-    
-    locacoes_criadas = 0
-    for loc_data in locacoes_data:
-        # Verificar se já existe uma locação similar
-        existing = Locacao_Obras_Equipes.objects.filter(
-            obra=loc_data['obra'],
-            data_locacao_inicio=loc_data['data_inicio'],
-            data_locacao_fim=loc_data['data_fim']
-        )
+    locacoes_criadas_count = 0
+    for data in locacoes_data:
+        data_inicio = hoje - timedelta(days=data['inicio_dias_atras'])
+        data_fim = data_inicio + timedelta(days=data['duracao'])
         
-        if loc_data.get('funcionario_locado'):
-            existing = existing.filter(funcionario_locado=loc_data['funcionario_locado'])
-        elif loc_data.get('equipe'):
-            existing = existing.filter(equipe=loc_data['equipe'])
-        elif loc_data.get('servico_externo'):
-            existing = existing.filter(servico_externo=loc_data['servico_externo'])
-        
-        if not existing.exists():
+        # Construir o filtro para evitar duplicatas
+        filter_kwargs = {
+            'obra': data['obra'],
+            'data_locacao_inicio': data_inicio,
+        }
+        if data.get('funcionario_locado'):
+            filter_kwargs['funcionario_locado'] = data.get('funcionario_locado')
+        elif data.get('equipe'):
+            filter_kwargs['equipe'] = data.get('equipe')
+        else:
+            filter_kwargs['servico_externo'] = data.get('servico_externo')
+
+        if not Locacao_Obras_Equipes.objects.filter(**filter_kwargs).exists():
             locacao = Locacao_Obras_Equipes.objects.create(
-                obra=loc_data['obra'],
-                funcionario_locado=loc_data.get('funcionario_locado'),
-                equipe=loc_data.get('equipe'),
-                servico_externo=loc_data.get('servico_externo'),
-                data_locacao_inicio=loc_data['data_inicio'],
-                data_locacao_fim=loc_data['data_fim'],
-                valor_pagamento=Decimal(loc_data['valor']),
-                observacoes=loc_data['observacoes'],
-                status_locacao='ativa'
+                obra=data['obra'],
+                funcionario_locado=data.get('funcionario_locado'),
+                equipe=data.get('equipe'),
+                servico_externo=data.get('servico_externo'),
+                data_locacao_inicio=data_inicio,
+                data_locacao_fim=data_fim,
+                valor_pagamento=Decimal(data['valor']),
+                status_locacao='ativa',
+                observacoes=f"Locação de teste para {data.get('servico_externo') or data.get('equipe') or data.get('funcionario_locado')}"
             )
-            locacoes_criadas += 1
-            
-            # Determinar tipo de recurso para log
-            if locacao.funcionario_locado:
-                tipo_recurso = f"Funcionário: {locacao.funcionario_locado.nome_completo}"
-            elif locacao.equipe:
-                tipo_recurso = f"Equipe: {locacao.equipe.nome_equipe}"
-            else:
-                tipo_recurso = f"Serviço: {locacao.servico_externo}"
-            
-            print(f"✓ Locação criada: {tipo_recurso} - {loc_data['obra'].nome_obra} ({loc_data['data_inicio']} a {loc_data['data_fim']})")
-    
-    print(f"\n✅ Script concluído!")
-    print(f"📊 Resumo:")
-    print(f"   - {len(obras)} obras")
-    print(f"   - {len(funcionarios)} funcionários")
-    print(f"   - {len(equipes)} equipes")
-    print(f"   - {locacoes_criadas} locações criadas")
-    print(f"\n🔑 Usuários de teste:")
-    print(f"   - admin_test / test123 (Administrador)")
-    print(f"   - gerente_test / test123 (Gerente)")
-    print(f"\n💡 Dica: Use o planejamento semanal para visualizar as locações!")
+            locacoes_criadas_count += 1
+            print(f"✓ [CRIADO] Locacao: {locacao.get_recurso_display()} para {locacao.obra.nome_obra}")
+        else:
+            print(f"✓ [EXISTENTE] Locacao similar já existe para {data['obra'].nome_obra} na data {data_inicio}")
+
+    print("\n=========================================")
+    print("      SCRIPT DE POPULAÇÃO CONCLUÍDO      ")
+    print("=========================================")
+    print("📊 RESUMO:")
+    print(f"   - Obras: {len(obras)}")
+    print(f"   - Materiais: {len(materiais)}")
+    print(f"   - Compras Criadas: {compras_criadas}")
+    print(f"   - Funcionários: {len(funcionarios)}")
+    print(f"   - Equipes: {len(equipes)}")
+    print(f"   - Locações Criadas: {locacoes_criadas_count}")
+    print("\n🔑 USUÁRIOS DE TESTE:")
+    print("   - admin_test / test123 (Administrador)")
+    print("   - gerente_test / test123 (Gerente)")
+    print("\n💡 Dica: Verifique a página de detalhes da 'Edifício Comercial Beta' para ver os novos dados.")
+
 
 if __name__ == '__main__':
     try:
         create_test_data()
     except Exception as e:
-        print(f"❌ Erro ao executar script: {e}")
+        print(f"\n❌ ERRO AO EXECUTAR O SCRIPT: {e}")
         import traceback
         traceback.print_exc()
