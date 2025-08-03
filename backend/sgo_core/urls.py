@@ -37,11 +37,20 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.urls import re_path
+from django.views.static import serve
 
-# Servir arquivos estáticos e de mídia em desenvolvimento
+# Servir arquivos estáticos em desenvolvimento
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Adicionar rota para servir arquivos de mídia em qualquer ambiente (dev/prod simplificado)
+# Isso garante que os links de mídia funcionem corretamente.
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {
+        'document_root': settings.MEDIA_ROOT,
+    }),
+]
 
 # Servir o frontend React
+# A rota catch-all deve ser a última para não interceptar as rotas de API ou mídia.
 urlpatterns.append(re_path(r'^.*$', TemplateView.as_view(template_name='index.html')))

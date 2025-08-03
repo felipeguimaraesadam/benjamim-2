@@ -572,19 +572,20 @@ class ObraPermissionsTests(PermissionsTestBase):
         response = self.client.get(self.obra_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_gerente_can_update_obras(self): # Original test said cannot, but ModelViewSet default is usually allow for Gerente if they can create/list
+    def test_gerente_can_update_obras(self):
         self.client.force_authenticate(user=self.gerente_user)
         response = self.client.put(self.obra_detail_url, self.obra_update_data, format='json')
-        # Default ModelViewSet with IsNivelAdmin | IsNivelGerente usually allows PUT for Gerente.
-        # If this should be forbidden, the ViewSet needs more granular permission_classes per action.
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, response.data) # Gerente CANNOT update by default strict ModelViewSet
+        # With the new permissions, Gerente should be able to update.
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
 
-    def test_gerente_cannot_delete_obras(self): # Typically delete is more restricted
+    def test_gerente_can_delete_obras(self):
         self.client.force_authenticate(user=self.gerente_user)
-        response = self.client.delete(self.obra_detail_url)
-        # This often remains admin-only by default or by explicit rule.
-        # If Gerente should delete, ViewSet needs adjustment.
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, response.data) # Assuming Gerente CANNOT delete
+        # Create a temporary obra for this specific test to delete
+        temp_obra = Obra.objects.create(nome_obra="Temp Obra for Gerente Deletion", endereco_completo=".", cidade=".", status="Planejada", orcamento_previsto="1")
+        detail_url_temp = reverse('obra-detail', kwargs={'pk': temp_obra.pk})
+        response = self.client.delete(detail_url_temp)
+        # With the new permissions, Gerente should be able to delete.
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT, response.data)
 
 
     # Operador (Other User) Tests - 'operador_user' now has 'consulta' role
