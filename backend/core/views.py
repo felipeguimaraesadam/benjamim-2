@@ -163,22 +163,26 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
 
         created_locacoes = []
         with transaction.atomic():
-            if data_inicio == data_fim:
-                locacao = Locacao_Obras_Equipes.objects.create(**validated_data)
-                for anexo_file in anexos_data:
-                    AnexoLocacao.objects.create(locacao=locacao, anexo=anexo_file, descricao=anexo_file.name)
-                created_locacoes.append(locacao)
-            else:
-                current_date = data_inicio
+            # Create the first locacao
+            first_locacao_data = validated_data.copy()
+            if data_inicio != data_fim:
+                first_locacao_data['data_locacao_fim'] = data_inicio
+
+            locacao = Locacao_Obras_Equipes.objects.create(**first_locacao_data)
+            created_locacoes.append(locacao)
+
+            # Save attachments for the first locacao
+            for anexo_file in anexos_data:
+                AnexoLocacao.objects.create(locacao=locacao, anexo=anexo_file, descricao=anexo_file.name)
+
+            # Create remaining locacoes for multi-day rentals
+            if data_inicio != data_fim:
+                current_date = data_inicio + timedelta(days=1)
                 while current_date <= data_fim:
                     daily_data = validated_data.copy()
                     daily_data['data_locacao_inicio'] = current_date
                     daily_data['data_locacao_fim'] = current_date
                     locacao = Locacao_Obras_Equipes.objects.create(**daily_data)
-                    # Assuming attachments are for the entire period, not per day
-                    if current_date == data_inicio:
-                        for anexo_file in anexos_data:
-                            AnexoLocacao.objects.create(locacao=locacao, anexo=anexo_file, descricao=anexo_file.name)
                     created_locacoes.append(locacao)
                     current_date += timedelta(days=1)
         
