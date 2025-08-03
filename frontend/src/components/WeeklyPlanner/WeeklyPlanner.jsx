@@ -124,9 +124,22 @@ function WeeklyPlanner({ selectedObra }) {
   };
 
   // Nova função para lidar com o submit real do LocacaoForm
-  const handleActualFormSubmit = async (formDataFromForm) => {
+  const handleActualFormSubmit = async (formDataFromForm, anexos) => {
     setIsLoading(true); // Usar isLoading geral ou um específico para o form
     setError(null);
+
+    const data = new FormData();
+    Object.keys(formDataFromForm).forEach(key => {
+        if (formDataFromForm[key] !== null && formDataFromForm[key] !== undefined) {
+            data.append(key, formDataFromForm[key]);
+        }
+    });
+
+    if (anexos && anexos.length > 0) {
+        anexos.forEach(anexo => {
+            data.append('anexos', anexo);
+        });
+    }
 
     // Determinar se é criação ou edição baseado em locacaoFormInitialData
     const isEditing = locacaoFormInitialData && locacaoFormInitialData.id;
@@ -134,10 +147,10 @@ function WeeklyPlanner({ selectedObra }) {
     try {
       let response;
       if (isEditing) {
-        response = await api.updateLocacao(locacaoFormInitialData.id, formDataFromForm);
+        response = await api.updateLocacao(locacaoFormInitialData.id, data);
         toast.success("Locação atualizada com sucesso!");
       } else {
-        response = await api.createLocacao(formDataFromForm);
+        response = await api.createLocacao(data);
         // Check if multiple rentals were created (multi-day rental)
         const createdRentals = response.data;
         if (Array.isArray(createdRentals) && createdRentals.length > 1) {
