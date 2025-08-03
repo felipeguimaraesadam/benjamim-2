@@ -115,10 +115,16 @@ const ObraDetailPage = () => {
 
   // Debug log for obra data
   useEffect(() => {
-    if (obra) {
-      console.log('[DEBUG ObraDetailPage] obra data for charts:', obra);
-    }
+    console.log('[DEBUG ObraDetailPage] State updated: `obra`', obra);
   }, [obra]);
+
+  useEffect(() => {
+    console.log('[DEBUG ObraDetailPage] State updated: `custosCategoria`', custosCategoria);
+  }, [custosCategoria]);
+
+  useEffect(() => {
+    console.log('[DEBUG ObraDetailPage] State updated: `todasAsComprasBruto`', todasAsComprasBruto);
+  }, [todasAsComprasBruto]);
 
   // Chart data preparation
   const orcamentoVsGastoDataObra = obra ? [

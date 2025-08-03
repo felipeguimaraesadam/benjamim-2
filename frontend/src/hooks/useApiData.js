@@ -63,15 +63,26 @@ export const useApiData = (
           response ||
           (Array.isArray(initialDataRef.current) ? [] : null);
         setData(responseData);
+
+        // Enhanced Logging
+        console.log(`[useApiData SUCCESS] - ${apiFunction.name || 'anonymous'}`, {
+            params: fetchParamsToUse,
+            response: responseData,
+        });
+
         return { success: true, data: responseData };
       } catch (err) {
         const errorMessage =
           err.response?.data?.detail || err.message || 'Falha ao buscar dados.';
         setError(errorMessage);
-        console.error(
-          `Error in useApiData with ${apiFunction?.name || 'anonymous API function'}:`,
-          err
-        );
+
+        // Enhanced Logging
+        console.error(`[useApiData ERROR] - ${apiFunction?.name || 'anonymous API function'}`, {
+            params: fetchParamsToUse,
+            error: err,
+            errorMessage,
+        });
+
         setData(initialDataRef.current); // Reset to initialData on error
         return { success: false, error: errorMessage };
       } finally {
