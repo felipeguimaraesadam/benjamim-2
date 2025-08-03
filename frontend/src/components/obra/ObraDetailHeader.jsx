@@ -36,6 +36,22 @@ const ObraDetailHeader = ({ obra, formatDate }) => {
           </h1>
           {/* Action Buttons Moved Up for better visibility */}
           <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
+            <a
+              href={`/api/relatorios/obra/${obra.id}/pdf/?is_simple=true`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
+            >
+              Relatório Geral
+            </a>
+            <a
+              href={`/api/relatorios/obra/${obra.id}/pdf/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
+            >
+              Relatório Completo
+            </a>
             <Link
               to="/obras" // This link should ideally go to an edit page: /obras/edit/${obra.id}
               className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
