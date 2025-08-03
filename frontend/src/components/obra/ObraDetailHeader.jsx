@@ -1,8 +1,27 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { getRelatorioObraGeral, getRelatorioObraCompleto } from '../../services/api';
 
 const ObraDetailHeader = ({ obra, formatDate }) => {
   if (!obra) return null;
+
+  const handleGerarRelatorio = async (tipoRelatorio) => {
+    try {
+      let response;
+      if (tipoRelatorio === 'geral') {
+        response = await getRelatorioObraGeral(obra.id);
+      } else {
+        response = await getRelatorioObraCompleto(obra.id);
+      }
+
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      const fileURL = URL.createObjectURL(file);
+      window.open(fileURL, '_blank');
+    } catch (error) {
+      console.error(`Erro ao gerar relatório ${tipoRelatorio}:`, error);
+      alert(`Não foi possível gerar o relatório ${tipoRelatorio}.`);
+    }
+  };
 
   return (
     <>
@@ -36,22 +55,18 @@ const ObraDetailHeader = ({ obra, formatDate }) => {
           </h1>
           {/* Action Buttons Moved Up for better visibility */}
           <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
-            <a
-              href={`http://localhost:8000/api/relatorios/obra/${obra.id}/pdf/?is_simple=true`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => handleGerarRelatorio('geral')}
               className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
             >
               Relatório Geral
-            </a>
-            <a
-              href={`http://localhost:8000/api/relatorios/obra/${obra.id}/pdf/`}
-              target="_blank"
-              rel="noopener noreferrer"
+            </button>
+            <button
+              onClick={() => handleGerarRelatorio('completo')}
               className="bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
             >
               Relatório Completo
-            </a>
+            </button>
             <Link
               to="/obras" // This link should ideally go to an edit page: /obras/edit/${obra.id}
               className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-md shadow-sm transition duration-150 ease-in-out text-xs"
