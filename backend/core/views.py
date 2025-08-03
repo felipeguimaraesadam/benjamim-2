@@ -149,10 +149,14 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def create(self, request, *args, **kwargs):
+        print("LocacaoObrasEquipesViewSet: Create method called")
+        print("Request data:", request.data)
+        print("Request files:", request.FILES)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         anexos_data = request.FILES.getlist('anexos')
+        print("Anexos data:", anexos_data)
         validated_data = serializer.validated_data
         
         # Remove 'anexos' from validated_data if it's there, as it's not a model field
@@ -169,11 +173,13 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
                 first_locacao_data['data_locacao_fim'] = data_inicio
 
             locacao = Locacao_Obras_Equipes.objects.create(**first_locacao_data)
+            print("Created locacao:", locacao)
             created_locacoes.append(locacao)
 
             # Save attachments for the first locacao
             for anexo_file in anexos_data:
-                AnexoLocacao.objects.create(locacao=locacao, anexo=anexo_file, descricao=anexo_file.name)
+                anexo = AnexoLocacao.objects.create(locacao=locacao, anexo=anexo_file, descricao=anexo_file.name)
+                print("Created anexo:", anexo)
 
             # Create remaining locacoes for multi-day rentals
             if data_inicio != data_fim:
@@ -183,6 +189,7 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
                     daily_data['data_locacao_inicio'] = current_date
                     daily_data['data_locacao_fim'] = current_date
                     locacao = Locacao_Obras_Equipes.objects.create(**daily_data)
+                    print("Created multi-day locacao:", locacao)
                     created_locacoes.append(locacao)
                     current_date += timedelta(days=1)
         
@@ -190,17 +197,22 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
+        print("LocacaoObrasEquipesViewSet: Update method called")
+        print("Request data:", request.data)
+        print("Request files:", request.FILES)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
 
         anexos_data = request.FILES.getlist('anexos')
+        print("Anexos data:", anexos_data)
 
         self.perform_update(serializer)
 
         for anexo_file in anexos_data:
-            AnexoLocacao.objects.create(locacao=instance, anexo=anexo_file, descricao=anexo_file.name)
+            anexo = AnexoLocacao.objects.create(locacao=instance, anexo=anexo_file, descricao=anexo_file.name)
+            print("Created anexo:", anexo)
 
         if getattr(instance, '_prefetched_objects_cache', None):
             # If 'prefetch_related' has been used, we need to manually update the prefetch cache.
@@ -489,32 +501,43 @@ class DespesaExtraViewSet(viewsets.ModelViewSet):
         return Despesa_Extra.objects.all().order_by('-data')
 
     def create(self, request, *args, **kwargs):
+        print("DespesaExtraViewSet: Create method called")
+        print("Request data:", request.data)
+        print("Request files:", request.FILES)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         anexos_data = request.FILES.getlist('anexos')
+        print("Anexos data:", anexos_data)
         validated_data = serializer.validated_data
         validated_data.pop('anexos', None)
 
         despesa = Despesa_Extra.objects.create(**validated_data)
+        print("Created despesa:", despesa)
         for anexo_file in anexos_data:
-            AnexoDespesa.objects.create(despesa=despesa, anexo=anexo_file, descricao=anexo_file.name)
+            anexo = AnexoDespesa.objects.create(despesa=despesa, anexo=anexo_file, descricao=anexo_file.name)
+            print("Created anexo:", anexo)
 
         response_serializer = self.get_serializer(despesa)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
+        print("DespesaExtraViewSet: Update method called")
+        print("Request data:", request.data)
+        print("Request files:", request.FILES)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
 
         anexos_data = request.FILES.getlist('anexos')
+        print("Anexos data:", anexos_data)
 
         self.perform_update(serializer)
 
         for anexo_file in anexos_data:
-            AnexoDespesa.objects.create(despesa=instance, anexo=anexo_file, descricao=anexo_file.name)
+            anexo = AnexoDespesa.objects.create(despesa=instance, anexo=anexo_file, descricao=anexo_file.name)
+            print("Created anexo:", anexo)
 
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
