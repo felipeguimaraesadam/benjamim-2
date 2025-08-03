@@ -1387,10 +1387,16 @@ class AnexoLocacaoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get_queryset(self):
-        locacao_id = self.request.query_params.get('locacao_id')
-        if locacao_id:
-            return self.queryset.filter(locacao_id=locacao_id)
-        return self.queryset.none()
+        """
+        This view should return a list of anexos for a specific locacao,
+        or all anexos for detail views (retrieve, update, destroy).
+        """
+        if self.action == 'list':
+            locacao_id = self.request.query_params.get('locacao_id')
+            if locacao_id:
+                return self.queryset.filter(locacao_id=locacao_id)
+            return self.queryset.none()  # Return none if no locacao_id for list
+        return self.queryset.all()  # For detail views, return all
 
 class AnexoDespesaViewSet(viewsets.ModelViewSet):
     queryset = AnexoDespesa.objects.all()
