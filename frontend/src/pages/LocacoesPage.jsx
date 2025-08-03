@@ -84,6 +84,7 @@ const LocacoesPage = () => {
   const fetchObras = useCallback(async () => {
     try {
       const response = await api.getObras();
+      console.log('Obras response:', response);
       const obrasData =
         response?.data?.results ||
         response?.data ||
