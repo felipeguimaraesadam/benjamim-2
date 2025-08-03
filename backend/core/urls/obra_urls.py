@@ -11,6 +11,7 @@ router.register(r'', ObraViewSet, basename='obra')
 router.register(r'fotos', FotoObraViewSet, basename='fotoobra')
 
 urlpatterns = [
+    path('search/', ObraViewSet.as_view({'get': 'search'}), name='obra-search'),
     path('', include(router.urls)),
     path('<int:pk>/historico-custos/', ObraHistoricoCustosView.as_view(), name='obra-historico-custos'),
     path('<int:pk>/custos-por-categoria/', ObraCustosPorCategoriaView.as_view(), name='obra-custos-categoria'),

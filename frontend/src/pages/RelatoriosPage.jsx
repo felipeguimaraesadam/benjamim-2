@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Autocomplete from '../components/forms/Autocomplete';
 import * as api from '../services/api';
 import {
   exportDataToCsv,
@@ -332,20 +333,19 @@ const RelatoriosPage = () => {
                 >
                   Obra <span className="text-red-500">*</span>
                 </label>
-                <select
-                  id="obra_id_fin"
-                  name="obra_id"
-                  value={filters.obra_id}
-                  onChange={e => handleFilterChange('obra_id', e.target.value)}
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                >
-                  <option value="">Selecione uma Obra</option>
-                  {obras.map(obra => (
-                    <option key={obra.id} value={obra.id}>
-                      {obra.nome_obra}
-                    </option>
-                  ))}
-                </select>
+                <Autocomplete
+                  fetchSuggestions={async query => {
+                    const response = await api.searchObras(query);
+                    return response.data.map(obra => ({
+                      value: obra.id,
+                      label: obra.nome_obra,
+                    }));
+                  }}
+                  onSelect={selection =>
+                    handleFilterChange('obra_id', selection ? selection.value : '')
+                  }
+                  placeholder="Digite para buscar uma obra..."
+                />
               </div>
               <div>
                 <label
@@ -409,20 +409,19 @@ const RelatoriosPage = () => {
                 >
                   Obra (Opcional)
                 </label>
-                <select
-                  id="obra_id_comp"
-                  name="obra_id"
-                  value={filters.obra_id}
-                  onChange={e => handleFilterChange('obra_id', e.target.value)}
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                >
-                  <option value="">Todas as Obras</option>
-                  {obras.map(obra => (
-                    <option key={obra.id} value={obra.id}>
-                      {obra.nome_obra}
-                    </option>
-                  ))}
-                </select>
+                <Autocomplete
+                  fetchSuggestions={async query => {
+                    const response = await api.searchObras(query);
+                    return response.data.map(obra => ({
+                      value: obra.id,
+                      label: obra.nome_obra,
+                    }));
+                  }}
+                  onSelect={selection =>
+                    handleFilterChange('obra_id', selection ? selection.value : '')
+                  }
+                  placeholder="Digite para buscar uma obra..."
+                />
               </div>
               <div>
                 <label

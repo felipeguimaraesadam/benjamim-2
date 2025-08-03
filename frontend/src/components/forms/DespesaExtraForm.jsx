@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-// Explicitly importing SpinnerIcon for clarity and to ensure re-processing
 import SpinnerIcon from '../utils/SpinnerIcon';
+import Autocomplete from './Autocomplete';
+import { searchObras } from '../../services/api';
 
 const DespesaExtraForm = ({
   initialData,
-  obras,
+  obras, // This is now used only for initial value lookup
   onSubmit,
   onCancel,
   isLoading,
@@ -14,8 +15,9 @@ const DespesaExtraForm = ({
     valor: '',
     data: '',
     categoria: 'Outros',
-    obra: '',
+    obra: null, // Changed to null
   });
+  const [obraInitial, setObraInitial] = useState(null);
 
   const categoriasDespesa = [
     'Alimentação',
@@ -25,26 +27,33 @@ const DespesaExtraForm = ({
   ];
 
   useEffect(() => {
+    const obraData = initialData?.obra
+      ? obras.find(o => o.id === initialData.obra)
+      : null;
+
     if (initialData) {
       setFormData({
         descricao: initialData.descricao || '',
         valor: initialData.valor || '',
-        // Ensure date is formatted as YYYY-MM-DD for the input type="date"
         data: initialData.data
           ? new Date(initialData.data).toISOString().split('T')[0]
           : '',
         categoria: initialData.categoria || 'Outros',
-        obra: initialData.obra || '', // Assuming 'obra' stores the ID
+        obra: initialData.obra || null,
       });
+      if (obraData) {
+        setObraInitial({
+          value: obraData.id,
+          label: obraData.nome_obra,
+        });
+      }
     } else {
-      // Default for new despesa
       setFormData({
         descricao: '',
         valor: '',
-        data: new Date().toISOString().split('T')[0], // Default to today
+        data: new Date().toISOString().split('T')[0],
         categoria: 'Outros',
-        // Set a default obra if obras list is available and not empty
-        obra: obras && obras.length > 0 ? obras[0].id : '',
+        obra: null,
       });
     }
   }, [initialData, obras]);
@@ -54,13 +63,29 @@ const DespesaExtraForm = ({
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleObraSelect = selection => {
+    setFormData(prev => ({ ...prev, obra: selection ? selection.value : null }));
+  };
+
+  const fetchObrasSuggestions = async query => {
+    try {
+      const response = await searchObras(query);
+      return response.data.map(obra => ({
+        value: obra.id,
+        label: obra.nome_obra,
+      }));
+    } catch (error) {
+      console.error('Error fetching obras:', error);
+      return [];
+    }
+  };
+
   const handleSubmit = e => {
     e.preventDefault();
-    // Ensure 'valor' is a number and 'obra' is an integer ID
     const dataToSubmit = {
       ...formData,
       valor: parseFloat(formData.valor),
-      obra: parseInt(formData.obra, 10),
+      obra: formData.obra,
     };
     onSubmit(dataToSubmit);
   };
@@ -74,22 +99,12 @@ const DespesaExtraForm = ({
         >
           Obra Associada
         </label>
-        <select
-          name="obra"
-          id="obra"
-          value={formData.obra}
-          onChange={handleChange}
-          required
-          className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
-        >
-          <option value="">Selecione uma Obra</option>
-          {obras &&
-            obras.map(obra => (
-              <option key={obra.id} value={obra.id}>
-                {obra.nome_obra}
-              </option>
-            ))}
-        </select>
+        <Autocomplete
+          fetchSuggestions={fetchObrasSuggestions}
+          onSelect={handleObraSelect}
+          placeholder="Digite para buscar uma obra..."
+          initialValue={obraInitial}
+        />
       </div>
 
       <div>

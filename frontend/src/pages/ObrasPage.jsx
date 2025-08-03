@@ -4,7 +4,9 @@ import {
   createObra,
   updateObra,
   deleteObra,
+  searchObras,
 } from '../services/api';
+import Autocomplete from '../components/forms/Autocomplete';
 import ObrasTable from '../components/tables/ObrasTable';
 import ObraForm from '../components/forms/ObraForm';
 import PaginationControls from '../components/utils/PaginationControls';
@@ -38,12 +40,22 @@ const ObrasPage = () => {
   // const COLORS_PIE = ['#0088FE', '#FF8042', '#FFBB28', '#00C49F'];
   // const COLORS_CATEGORIES = ['#8884d8', '#82ca9d', '#ffc658', '#FF8042', '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28CFF', '#FF8F57', '#FFDA83', '#80E1D1'];
 
+  const [filters, setFilters] = useState({
+    nome: '',
+    status: '',
+  });
+
   const fetchObras = useCallback(
     async (page = 1) => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await getObras({ page }); // Pass page to API
+        const params = {
+          page,
+          search: filters.nome,
+          status: filters.status,
+        };
+        const response = await getObras(params);
         setObras(response.data.results);
         setTotalItems(response.data.count);
         setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
@@ -58,7 +70,7 @@ const ObrasPage = () => {
         setIsLoading(false);
       }
     },
-    [PAGE_SIZE]
+    [PAGE_SIZE, filters]
   );
 
   useEffect(() => {
@@ -210,6 +222,46 @@ const ObrasPage = () => {
       )}
 
       {/* Table and Pagination - only show if not initial loading or if there's data */}
+      <div className="mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700">
+              Filtrar por Status
+            </label>
+            <select
+              id="status-filter"
+              name="status"
+              value={filters.status}
+              onChange={e => setFilters({ ...filters, status: e.target.value })}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            >
+              <option value="">Todos</option>
+              <option value="Em Andamento">Em Andamento</option>
+              <option value="Concluída">Concluída</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="nome-filter" className="block text-sm font-medium text-gray-700">
+              Filtrar por Nome
+            </label>
+            <Autocomplete
+              fetchSuggestions={async query => {
+                const response = await searchObras(query);
+                return response.data.map(obra => ({
+                  value: obra.nome_obra,
+                  label: obra.nome_obra,
+                }));
+              }}
+              onSelect={selection =>
+                setFilters({ ...filters, nome: selection ? selection.label : '' })
+              }
+              onClear={() => setFilters({ ...filters, nome: '' })}
+              placeholder="Digite para buscar uma obra..."
+            />
+          </div>
+        </div>
+      </div>
+
       {(!isLoading || obras.length > 0) && !error && (
         <>
           <ObrasTable

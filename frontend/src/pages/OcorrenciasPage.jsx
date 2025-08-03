@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import OcorrenciasTable from '../components/tables/OcorrenciasTable';
 import OcorrenciaForm from '../components/forms/OcorrenciaForm';
 import * as api from '../services/api';
+import Autocomplete from '../components/forms/Autocomplete';
 import {
   BarChart,
   Bar,
@@ -41,6 +42,7 @@ const OcorrenciasPage = () => {
     data_fim: '',
     funcionario_id: '',
     tipo: '',
+    obra_id: '',
   });
   const [ocorrenciasGrafico, setOcorrenciasGrafico] = useState([]);
 
@@ -57,6 +59,7 @@ const OcorrenciasPage = () => {
         if (currentFilters.funcionario_id)
           queryParams.funcionario_id = currentFilters.funcionario_id;
         if (currentFilters.tipo) queryParams.tipo = currentFilters.tipo;
+        if (currentFilters.obra_id) queryParams.obra_id = currentFilters.obra_id;
 
         // Fetch paginated ocorrencias
         const ocorrenciasResponse = await api.getOcorrencias(queryParams);
@@ -326,6 +329,28 @@ const OcorrenciasPage = () => {
                 Falta não Justificada
               </option>
             </select>
+          </div>
+          <div>
+            <label
+              htmlFor="filtro_obra"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Obra
+            </label>
+            <Autocomplete
+              fetchSuggestions={async query => {
+                const response = await api.searchObras(query);
+                return response.data.map(obra => ({
+                  value: obra.id,
+                  label: obra.nome_obra,
+                }));
+              }}
+              onSelect={selection =>
+                setFiltros({ ...filtros, obra_id: selection ? selection.value : '' })
+              }
+              onClear={() => setFiltros({ ...filtros, obra_id: '' })}
+              placeholder="Digite para buscar uma obra..."
+            />
           </div>
           <div className="flex space-x-2">
             <button
