@@ -99,9 +99,6 @@ const ObraDetailPage = () => {
     console.log('[DEBUG ObraDetailPage] State updated: `obra`', obra);
   }, [obra]);
 
-  useEffect(() => {
-    console.log('[DEBUG ObraDetailPage] State updated: `custosCategoria`', custosCategoria);
-  }, [custosCategoria]);
 
   useEffect(() => {
     console.log('[DEBUG ObraDetailPage] State updated: `todasAsComprasBruto`', todasAsComprasBruto);
