@@ -1388,7 +1388,7 @@ class AnexoLocacaoViewSet(viewsets.ModelViewSet):
     queryset = AnexoLocacao.objects.all()
     serializer_class = AnexoLocacaoSerializer
     parser_classes = (MultiPartParser, FormParser)
-    permission_classes = [IsNivelAdmin | IsNivelGerente]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """
