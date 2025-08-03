@@ -188,6 +188,7 @@ export const createDespesaExtra = (despesaData) => {
         },
     });
 };
+export const deleteAnexoDespesa = id => apiClient.delete(`/anexos-despesa/${id}/`);
 
 export const updateDespesaExtra = (id, despesaData) => {
     return apiClient.put(`/despesas/${id}/`, despesaData, {
@@ -208,6 +209,7 @@ export const createLocacao = (alocacaoData) => {
     },
   });
 };
+export const deleteAnexoLocacao = id => apiClient.delete(`/anexos-locacao/${id}/`);
 
 export const updateLocacao = (id, alocacaoData) => {
   return apiClient.patch(`/locacoes/${id}/`, alocacaoData, {

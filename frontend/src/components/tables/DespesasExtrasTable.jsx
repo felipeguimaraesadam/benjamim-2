@@ -14,6 +14,19 @@ const DespesasExtrasTable = ({
   const toggleRow = id => {
     setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const handleDeleteAnexo = async (anexoId) => {
+    if (window.confirm('Tem certeza que deseja excluir este anexo?')) {
+      try {
+        await api.deleteAnexoDespesa(anexoId);
+        // Ideally, the parent component should handle refetching the data.
+        // For now, we can just reload the page as a simple solution.
+        window.location.reload();
+      } catch (error) {
+        console.error('Erro ao excluir anexo:', error);
+      }
+    }
+  };
   // Helper to find obra name by ID
   const getObraNome = obraId => {
     const obra = obras && obras.find(o => o.id === obraId);
@@ -104,7 +117,7 @@ const DespesasExtrasTable = ({
                     <h4 className="font-bold">Anexos:</h4>
                     <ul className="list-disc list-inside">
                       {despesa.anexos.map(anexo => (
-                        <li key={anexo.id}>
+                        <li key={anexo.id} className="flex items-center space-x-2">
                           <a
                             href={anexo.anexo}
                             target="_blank"
@@ -113,6 +126,7 @@ const DespesasExtrasTable = ({
                           >
                             {anexo.descricao || anexo.anexo.split('/').pop()}
                           </a>
+                          <button onClick={() => handleDeleteAnexo(anexo.id)} className="text-red-600 hover:text-red-800">Excluir</button>
                         </li>
                       ))}
                     </ul>

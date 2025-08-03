@@ -74,6 +74,17 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
     return 'N/A';
   };
 
+  const handleDeleteAnexo = async (anexoId) => {
+    if (window.confirm('Tem certeza que deseja excluir este anexo?')) {
+      try {
+        await api.deleteAnexoLocacao(anexoId);
+        fetchLocacaoDetails(locacaoId);
+      } catch (error) {
+        console.error('Erro ao excluir anexo:', error);
+      }
+    }
+  };
+
   if (!locacaoId) {
     // Or some other prop to control visibility, but typically driven by parent through locacaoId
     return null;
@@ -180,6 +191,7 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
                       </div>
                       <a href={anexo.anexo} download className="text-blue-600 hover:text-blue-800">Download</a>
                       <a href={anexo.anexo} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-800">Ver</a>
+                      <button onClick={() => handleDeleteAnexo(anexo.id)} className="text-red-600 hover:text-red-800">Excluir</button>
                     </div>
                   ))}
                 </div>
