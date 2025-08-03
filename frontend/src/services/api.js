@@ -322,11 +322,15 @@ export const deleteFotoObra = fotoId =>
   apiClient.delete(`/fotosobras/${fotoId}/`);
 
 // --- PDF Report Service Functions ---
-export const gerarRelatorioPDFObra = (obraId, isSimple = false) => {
-  const params = { is_simple: isSimple };
-  return apiClient.get(`/obras/${obraId}/gerar-relatorio-pdf/`, {
-    params,
-    responseType: 'blob', // Crucial for handling file download
+export const getRelatorioObraGeral = obraId => {
+  return apiClient.get(`/relatorios/obra/${obraId}/pdf/?is_simple=true`, {
+    responseType: 'blob',
+  });
+};
+
+export const getRelatorioObraCompleto = obraId => {
+  return apiClient.get(`/relatorios/obra/${obraId}/pdf/`, {
+    responseType: 'blob',
   });
 };
 
