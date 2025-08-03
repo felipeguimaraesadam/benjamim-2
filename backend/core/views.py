@@ -35,7 +35,7 @@ from .serializers import (
     EquipeDetailSerializer, MaterialDetailSerializer, CompraReportSerializer,
     BackupSerializer, BackupSettingsSerializer, AnexoLocacaoSerializer, AnexoDespesaSerializer
 )
-from .permissions import IsNivelAdmin, IsNivelGerente, LoggingPermission
+from .permissions import IsNivelAdmin, IsNivelGerente
 
 class LocacaoSemanalView(APIView):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
@@ -1388,7 +1388,7 @@ class AnexoLocacaoViewSet(viewsets.ModelViewSet):
     queryset = AnexoLocacao.objects.all()
     serializer_class = AnexoLocacaoSerializer
     parser_classes = (MultiPartParser, FormParser)
-    permission_classes = [LoggingPermission]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         """
