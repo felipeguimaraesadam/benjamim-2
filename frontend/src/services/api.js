@@ -122,6 +122,8 @@ export const getObraCustosPorCategoria = obraId =>
   apiClient.get(`/obras/${obraId}/custos-por-categoria/`);
 export const getObraCustosPorMaterial = obraId =>
   apiClient.get(`/obras/${obraId}/custos-por-material/`);
+export const getObraGastosPorCategoriaMaterial = obraId =>
+    apiClient.get(`/obras/${obraId}/gastos-por-categoria-material/`);
 export const getItensDisponiveisPorObra = obraId =>
   apiClient.get(`/obras/${obraId}/itens-disponiveis/`);
 

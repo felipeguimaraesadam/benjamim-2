@@ -2,7 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from ..views import (
     ObraViewSet, FotoObraViewSet, ObraHistoricoCustosView,
-    ObraCustosPorCategoriaView, ObraCustosPorMaterialView, GerarRelatorioPDFObraView
+    ObraCustosPorCategoriaView, ObraCustosPorMaterialView, GerarRelatorioPDFObraView,
+    ObraCustosPorCategoriaMaterialView
 )
 
 router = DefaultRouter()
@@ -14,5 +15,6 @@ urlpatterns = [
     path('<int:pk>/historico-custos/', ObraHistoricoCustosView.as_view(), name='obra-historico-custos'),
     path('<int:pk>/custos-por-categoria/', ObraCustosPorCategoriaView.as_view(), name='obra-custos-categoria'),
     path('<int:pk>/custos-por-material/', ObraCustosPorMaterialView.as_view(), name='obra-custos-material'),
+    path('<int:pk>/gastos-por-categoria-material/', ObraCustosPorCategoriaMaterialView.as_view(), name='obra-gastos-por-categoria-material'),
     path('<int:pk>/gerar-relatorio-pdf/', GerarRelatorioPDFObraView.as_view(), name='gerar-relatorio-pdf-obra'),
 ]

@@ -1098,6 +1098,28 @@ class ObraCustosPorMaterialView(APIView):
         ]
         return Response(resultado_formatado)
 
+
+class ObraCustosPorCategoriaMaterialView(APIView):
+    permission_classes = [IsNivelAdmin | IsNivelGerente]
+    def get(self, request, pk, format=None):
+        try:
+            obra = Obra.objects.get(pk=pk)
+        except Obra.DoesNotExist:
+            return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Agrupar por 'categoria_uso' e somar 'valor_total_item'
+        custos = ItemCompra.objects.filter(compra__obra=obra)\
+                                   .values('categoria_uso')\
+                                   .annotate(total_custo=Sum('valor_total_item'))\
+                                   .order_by('-total_custo')
+
+        # Formatar o resultado para o gráfico
+        resultado_formatado = [
+            {'name': item['categoria_uso'] or 'Não categorizado', 'value': item['total_custo'] or Decimal('0.00')}
+            for item in custos if item['total_custo'] is not None
+        ]
+        return Response(resultado_formatado)
+
 # print("DEBUG: CompraViewSet logic updated.") # This line was the end of the original backup file before placeholder.
 
 # --- New PDF Generation View ---

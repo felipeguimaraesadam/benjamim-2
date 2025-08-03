@@ -68,14 +68,34 @@ class ObraNestedSerializer(serializers.ModelSerializer):
 
 class ObraSerializer(serializers.ModelSerializer):
     responsavel_nome = serializers.CharField(source='responsavel.nome_completo', read_only=True)
+    custo_total_realizado = serializers.SerializerMethodField()
+    custos_por_categoria = serializers.SerializerMethodField()
 
     class Meta:
         model = Obra
         fields = [
             'id', 'nome_obra', 'endereco_completo', 'cidade', 'status',
             'data_inicio', 'data_prevista_fim', 'data_real_fim',
-            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem'
+            'responsavel', 'responsavel_nome', 'cliente_nome', 'orcamento_previsto', 'area_metragem',
+            'custo_total_realizado', 'custos_por_categoria'
         ]
+
+    def get_custos_por_categoria(self, obj):
+        # obj is the Obra instance
+        custo_materiais = obj.compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
+        custo_locacoes = obj.locacao_obras_equipes_set.aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
+        custo_despesas_extras = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        return {
+            'materiais': custo_materiais,
+            'locacoes': custo_locacoes,
+            'despesas_extras': custo_despesas_extras
+        }
+
+    def get_custo_total_realizado(self, obj):
+        # Reuse the calculation from get_custos_por_categoria
+        custos = self.get_custos_por_categoria(obj)
+        return custos['materiais'] + custos['locacoes'] + custos['despesas_extras']
 
 # Novo Serializer Básico para Funcionário
 class FuncionarioBasicSerializer(serializers.ModelSerializer):

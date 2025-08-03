@@ -30,17 +30,13 @@ const ObraDetailPage = () => {
   const { data: locacoesEquipe, isLoading: isLoadingLocacoes, error: errorLocacoes, fetchData: fetchLocacoes, setData: setLocacoesEquipe } = useApiData(api.getLocacoes, obraQueryObjParams, [], true);
   const { data: historicoCustos, isLoading: isLoadingHistoricoCustos, error: errorHistoricoCustos, fetchData: fetchHistoricoCustos } = useApiData(api.getObraHistoricoCustos, obraApiParams, [], true);
 
-  // custosCategoria is part of 'obra' object (obra.custos_por_categoria)
-  // No separate hook needed if FinancialDashboard consumes 'obra' prop and derives it.
-  // If direct fetch was needed: const { data: custosCategoria, ... } = useApiData(api.getObraCustosPorCategoria, obraApiParams, [], true);
-
-  const { data: custosMaterial, isLoading: isLoadingCustosMaterial, error: errorCustosMaterial, fetchData: fetchCustosMaterial } = useApiData(api.getObraCustosPorMaterial, obraApiParams, [], true);
-  const { data: todasAsComprasBruto, isLoading: isLoadingTodasAsCompras, error: errorTodasAsCompras, fetchData: fetchTodasAsCompras } = useApiData(api.getObraComprasDetalhes, obraApiParams, [], true);
+  const { data: gastosPorCategoriaMaterial, isLoading: isLoadingGastosPorCategoria, error: errorGastosPorCategoria, fetchData: fetchGastosPorCategoria } = useApiData(api.getObraGastosPorCategoriaMaterial, obraApiParams, [], true);
+  const { data: todasAsComprasBruto, isLoading: isLoadingTodasAsCompras, error: errorTodasAsCompras, fetchData: fetchTodasAsCompras } = useApiData(api.getCompras, obraQueryObjParams, [], true);
 
   const { data: despesasExtrasObra, isLoading: isLoadingDespesasExtras, error: errorDespesasExtras, fetchData: fetchDespesasExtras } = useApiData(api.getDespesasExtras, obraQueryObjParams, [], true);
 
   const actualTodasAsCompras = useMemo(() => {
-      return todasAsComprasBruto?.compras || (Array.isArray(todasAsComprasBruto) ? todasAsComprasBruto : []);
+      return todasAsComprasBruto?.results || (Array.isArray(todasAsComprasBruto) ? todasAsComprasBruto : []);
   }, [todasAsComprasBruto]);
 
   // Derived state for comprasEstoque (removed)
@@ -98,15 +94,15 @@ const ObraDetailPage = () => {
   // Overall page loading state (optional, can use individual isLoading states in JSX)
   // const isPageLoading = isLoadingObra || isLoadingLocacoes || ... ;
 
-  // Main loading/error display for the core 'obra' data
-  if (isLoadingObra) return <div className="p-4 text-center"><p>Carregando detalhes da obra...</p></div>;
-  if (errorObra) return <div className="p-4 text-center"><p className="text-red-500">Erro ao carregar dados da obra: {errorObra}</p></div>;
-  if (!obra && !isLoadingObra) return <div className="p-4 text-center"><p>Obra não encontrada.</p></div>;
-
   // Debug log for obra data
-  if (obra) {
-    console.log('[DEBUG ObraDetailPage] obra data for charts:', obra);
-  }
+  useEffect(() => {
+    console.log('[DEBUG ObraDetailPage] State updated: `obra`', obra);
+  }, [obra]);
+
+
+  useEffect(() => {
+    console.log('[DEBUG ObraDetailPage] State updated: `todasAsComprasBruto`', todasAsComprasBruto);
+  }, [todasAsComprasBruto]);
 
   // Chart data preparation
   const orcamentoVsGastoDataObra = obra ? [
@@ -120,10 +116,10 @@ const ObraDetailPage = () => {
       { name: 'Despesas Extras', value: parseFloat(obra.custos_por_categoria.despesas_extras) || 0 },
   ].filter(item => item.value > 0) : [];
 
-  const gastosPorCategoriaMaterialDataObra = obra && obra.gastos_por_categoria_material_obra ?
-      Object.entries(obra.gastos_por_categoria_material_obra).map(([key, value]) => ({
-          name: key,
-          value: parseFloat(value) || 0,
+  const gastosPorCategoriaMaterialDataObra = gastosPorCategoriaMaterial && gastosPorCategoriaMaterial.length > 0 ?
+      gastosPorCategoriaMaterial.map(item => ({
+          name: item.name,
+          value: parseFloat(item.value) || 0,
       })).filter(entry => entry.value > 0)
       : [];
 
@@ -140,109 +136,114 @@ const ObraDetailPage = () => {
         </div>
       )}
 
-      <ObraDetailHeader obra={obra} formatDate={formatDateToDMY} />
+      {isLoadingObra && <div className="p-4 text-center"><p>Carregando detalhes da obra...</p></div>}
+      {errorObra && <div className="p-4 text-center"><p className="text-red-500">Erro ao carregar dados da obra: {errorObra}</p></div>}
+      {!isLoadingObra && !errorObra && !obra && <div className="p-4 text-center"><p>Obra não encontrada.</p></div>}
 
-      <FinancialDashboard obra={obra} />
-
-      {/* New Charts Section */}
       {obra && (
-        <div className="my-8 p-4 bg-gray-50 shadow-md rounded-lg">
-            <h2 className="text-xl font-bold mb-6 text-gray-700 text-center">Análise Financeira Detalhada da Obra</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Chart 1: Orçamento vs. Gasto Total */}
-                <div className="p-4 bg-white shadow-lg rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Orçamento vs. Gasto Total</h3>
-                    {orcamentoVsGastoDataObra.length > 0 && (orcamentoVsGastoDataObra[0].value > 0 || orcamentoVsGastoDataObra[1].value > 0) ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie data={orcamentoVsGastoDataObra} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
-                                    {orcamentoVsGastoDataObra.map((entry, index) => (
-                                        <Cell key={`cell-ovg-${index}`} fill={COLORS_PIE_OBRA[index % COLORS_PIE_OBRA.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    ) : <p className="text-center text-gray-500 py-10">Dados insuficientes.</p>}
-                </div>
+        <>
+          <ObraDetailHeader obra={obra} formatDate={formatDateToDMY} />
+          <FinancialDashboard obra={obra} />
 
-                {/* Chart 2: Composição dos Gastos */}
-                <div className="p-4 bg-white shadow-lg rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Composição dos Gastos</h3>
-                    {composicaoGastosDataObra.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={composicaoGastosDataObra} layout="vertical">
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis type="number" tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`} />
-                                <YAxis type="category" dataKey="name" width={120} interval={0} />
-                                <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                                <Legend />
-                                <Bar dataKey="value" fill="#82ca9d">
-                                    {composicaoGastosDataObra.map((entry, index) => (
-                                        <Cell key={`cell-cg-${index}`} fill={COLORS_CATEGORIES_OBRA[index % COLORS_CATEGORIES_OBRA.length]} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    ) : <p className="text-center text-gray-500 py-10">Não há composição de gastos para exibir.</p>}
-                </div>
+          {/* New Charts Section */}
+          <div className="my-8 p-4 bg-gray-50 shadow-md rounded-lg">
+              <h2 className="text-xl font-bold mb-6 text-gray-700 text-center">Análise Financeira Detalhada da Obra</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Chart 1: Orçamento vs. Gasto Total */}
+                  <div className="p-4 bg-white shadow-lg rounded-lg">
+                      <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Orçamento vs. Gasto Total</h3>
+                      {orcamentoVsGastoDataObra.length > 0 && (orcamentoVsGastoDataObra[0].value > 0 || orcamentoVsGastoDataObra[1].value > 0) ? (
+                          <ResponsiveContainer width="100%" height={300}>
+                              <PieChart>
+                                  <Pie data={orcamentoVsGastoDataObra} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
+                                      {orcamentoVsGastoDataObra.map((entry, index) => (
+                                          <Cell key={`cell-ovg-${index}`} fill={COLORS_PIE_OBRA[index % COLORS_PIE_OBRA.length]} />
+                                      ))}
+                                  </Pie>
+                                  <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                  <Legend />
+                              </PieChart>
+                          </ResponsiveContainer>
+                      ) : <p className="text-center text-gray-500 py-10">Dados insuficientes.</p>}
+                  </div>
 
-                {/* Chart 3: Gastos por Categoria de Material */}
-                <div className="p-4 bg-white shadow-lg rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Gastos por Categoria de Material</h3>
-                     {gastosPorCategoriaMaterialDataObra.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie data={gastosPorCategoriaMaterialDataObra} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#ffc658" labelLine={false} label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
-                                    {gastosPorCategoriaMaterialDataObra.map((entry, index) => (
-                                        <Cell key={`cell-gcm-${index}`} fill={COLORS_CATEGORIES_OBRA[index % COLORS_CATEGORIES_OBRA.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-                                <Legend wrapperStyle={{ overflowY: 'auto', maxHeight: 60 }}/>
-                            </PieChart>
-                        </ResponsiveContainer>
-                    ) : <p className="text-center text-gray-500 py-10">Não há gastos por categoria de material para exibir.</p>}
-                </div>
+                  {/* Chart 2: Composição dos Gastos */}
+                  <div className="p-4 bg-white shadow-lg rounded-lg">
+                      <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Composição dos Gastos</h3>
+                      {composicaoGastosDataObra.length > 0 ? (
+                          <ResponsiveContainer width="100%" height={300}>
+                              <BarChart data={composicaoGastosDataObra} layout="vertical">
+                                  <CartesianGrid strokeDasharray="3 3" />
+                                  <XAxis type="number" tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`} />
+                                  <YAxis type="category" dataKey="name" width={120} interval={0} />
+                                  <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                  <Legend />
+                                  <Bar dataKey="value" fill="#82ca9d">
+                                      {composicaoGastosDataObra.map((entry, index) => (
+                                          <Cell key={`cell-cg-${index}`} fill={COLORS_CATEGORIES_OBRA[index % COLORS_CATEGORIES_OBRA.length]} />
+                                      ))}
+                                  </Bar>
+                              </BarChart>
+                          </ResponsiveContainer>
+                      ) : <p className="text-center text-gray-500 py-10">Não há composição de gastos para exibir.</p>}
+                  </div>
+
+                  {/* Chart 3: Gastos por Categoria de Material */}
+                  <div className="p-4 bg-white shadow-lg rounded-lg">
+                      <h3 className="text-lg font-semibold mb-3 text-center text-gray-600">Gastos por Categoria de Material</h3>
+                       {gastosPorCategoriaMaterialDataObra.length > 0 ? (
+                          <ResponsiveContainer width="100%" height={300}>
+                              <PieChart>
+                                  <Pie data={gastosPorCategoriaMaterialDataObra} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#ffc658" labelLine={false} label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+                                      {gastosPorCategoriaMaterialDataObra.map((entry, index) => (
+                                          <Cell key={`cell-gcm-${index}`} fill={COLORS_CATEGORIES_OBRA[index % COLORS_CATEGORIES_OBRA.length]} />
+                                      ))}
+                                  </Pie>
+                                  <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
+                                  <Legend wrapperStyle={{ overflowY: 'auto', maxHeight: 60 }}/>
+                              </PieChart>
+                          </ResponsiveContainer>
+                      ) : <p className="text-center text-gray-500 py-10">Não há gastos por categoria de material para exibir.</p>}
+                  </div>
+              </div>
+          </div>
+          {/* End New Charts Section */}
+
+          {/* CurrentStockTable component instance removed */}
+
+          <div className="mb-8 py-6"> {/* Removed tab navigation structure, kept py-6 for padding */}
+            {/* Components rendered sequentially */}
+            {/* EquipesLocadasList component removed - component not found */}
+
+            <ObraPurchasesTabContent
+              todasCompras={actualTodasAsCompras}
+              isLoading={isLoadingTodasAsCompras}
+              todasComprasError={errorTodasAsCompras}
+              obraId={obra.id}
+              obraNome={obra.nome_obra}
+            />
+
+            {/* Container for Photo Components */}
+            <div className="my-6"> {/* Added some margin for separation */}
+              <ObraFotosUpload obraId={id} onUploadSuccess={handlePhotoUploaded} />
+              <ObraGaleria obraId={id} newFoto={latestUploadedFoto} />
             </div>
-        </div>
+
+            <ObraExpensesTabContent
+              despesasExtrasObra={despesasExtrasObra}
+              isLoading={isLoadingDespesasExtras}
+              despesasExtrasObraError={errorDespesasExtras}
+              obraId={obra.id}
+              obraNome={obra.nome_obra}
+            />
+          </div>
+
+          <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <CostHistoryChart historicoCustos={historicoCustos} custosError={errorHistoricoCustos} isLoading={isLoadingHistoricoCustos} />
+        <TopMaterialsChart custosMaterial={gastosPorCategoriaMaterial} materialError={errorGastosPorCategoria} isLoading={isLoadingGastosPorCategoria} />
+          </div>
+        </>
       )}
-      {/* End New Charts Section */}
-
-      {/* CurrentStockTable component instance removed */}
-
-      <div className="mb-8 py-6"> {/* Removed tab navigation structure, kept py-6 for padding */}
-        {/* Components rendered sequentially */}
-        {/* EquipesLocadasList component removed - component not found */}
-
-        <ObraPurchasesTabContent
-          todasCompras={actualTodasAsCompras}
-          isLoading={isLoadingTodasAsCompras}
-          todasComprasError={errorTodasAsCompras}
-          obraId={obra.id}
-          obraNome={obra.nome_obra}
-        />
-
-        {/* Container for Photo Components */}
-        <div className="my-6"> {/* Added some margin for separation */}
-          <ObraFotosUpload obraId={id} onUploadSuccess={handlePhotoUploaded} />
-          <ObraGaleria obraId={id} newFoto={latestUploadedFoto} />
-        </div>
-
-        <ObraExpensesTabContent
-          despesasExtrasObra={despesasExtrasObra}
-          isLoading={isLoadingDespesasExtras}
-          despesasExtrasObraError={errorDespesasExtras}
-          obraId={obra.id}
-          obraNome={obra.nome_obra}
-        />
-      </div>
-
-      <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <CostHistoryChart historicoCustos={historicoCustos} custosError={errorHistoricoCustos} isLoading={isLoadingHistoricoCustos} />
-        <TopMaterialsChart custosMaterial={custosMaterial} materialError={errorCustosMaterial} isLoading={isLoadingCustosMaterial} />
-      </div>
     </div>
   );
 };

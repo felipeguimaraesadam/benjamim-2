@@ -24,6 +24,12 @@ const FinancialDashboard = ({ obra }) => {
   };
 
   const custos = obra.custos_por_categoria || {};
+  const orcamento = parseFloat(obra.orcamento_previsto) || 0;
+  const custoRealizado = parseFloat(obra.custo_total_realizado) || 0;
+  const area = parseFloat(obra.area_metragem) || 0;
+
+  const balancoFinanceiro = orcamento - custoRealizado;
+  const custoPorMetro = area > 0 ? custoRealizado / area : 0;
 
   return (
     // O componente FinancialDashboard em si é um card grande.
@@ -47,7 +53,7 @@ const FinancialDashboard = ({ obra }) => {
             Orçamento Previsto
           </h3>
           <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
-            {formatCurrency(obra.orcamento_previsto)}
+            {formatCurrency(orcamento)}
           </p>
         </div>
         {/* Card Custo Total Realizado */}
@@ -56,20 +62,20 @@ const FinancialDashboard = ({ obra }) => {
             Custo Total Realizado
           </h3>
           <p className="text-xl font-bold text-red-900 dark:text-red-100">
-            {formatCurrency(obra.custo_total_realizado)}
+            {formatCurrency(custoRealizado)}
           </p>
         </div>
         {/* Card Balanço Financeiro */}
         <div
           className={`p-4 rounded-lg shadow ${
-            parseFloat(obra.balanco_financeiro || 0) >= 0
+            balancoFinanceiro >= 0
               ? 'bg-green-100 dark:bg-green-500/30 dark:hover:bg-green-500/40'
               : 'bg-orange-100 dark:bg-orange-500/30 dark:hover:bg-orange-500/40'
           }`}
         >
           <h3
             className={`text-sm font-semibold ${
-              parseFloat(obra.balanco_financeiro || 0) >= 0
+              balancoFinanceiro >= 0
                 ? 'text-green-800 dark:text-green-200'
                 : 'text-orange-800 dark:text-orange-200'
             }`}
@@ -78,12 +84,12 @@ const FinancialDashboard = ({ obra }) => {
           </h3>
           <p
             className={`text-xl font-bold ${
-              parseFloat(obra.balanco_financeiro || 0) >= 0
+              balancoFinanceiro >= 0
                 ? 'text-green-900 dark:text-green-100'
                 : 'text-orange-900 dark:text-orange-100'
             }`}
           >
-            {formatCurrency(obra.balanco_financeiro)}
+            {formatCurrency(balancoFinanceiro)}
           </p>
         </div>
         {/* Card Custo por m² */}
@@ -92,8 +98,8 @@ const FinancialDashboard = ({ obra }) => {
             Custo por m²
           </h3>
           <p className="text-xl font-bold text-purple-900 dark:text-purple-100">
-            {obra.custo_por_metro
-              ? formatCurrency(obra.custo_por_metro)
+            {custoPorMetro > 0
+              ? formatCurrency(custoPorMetro)
               : 'N/A'}
           </p>
         </div>
