@@ -236,7 +236,12 @@ class ErrorMonitoringService {
         return;
       }
 
-      await fetch('/api/frontend-error-log/', {
+      // Avoid logging errors about the error logging endpoint itself
+      if (errorData.url && errorData.url.includes('/api/frontend-error-log/')) {
+        return;
+      }
+
+      await fetch('http://localhost:8000/api/frontend-error-log/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
