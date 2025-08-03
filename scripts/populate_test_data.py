@@ -21,7 +21,7 @@ django.setup()
 # Importar modelos após a configuração do Django
 from core.models import (
     Usuario, Obra, Funcionario, Equipe, 
-    Material, Compra, Locacao_Obras_Equipes
+    Material, Compra, ItemCompra, Locacao_Obras_Equipes
 )
 
 def get_or_create_with_log(model, defaults=None, **kwargs):
