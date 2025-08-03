@@ -169,20 +169,20 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
                 <h3 className="text-md font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Anexos
                 </h3>
-                <ul className="list-disc list-inside space-y-1">
+                <div className="space-y-2">
                   {locacao.anexos.map(anexo => (
-                    <li key={anexo.id}>
-                      <a
-                        href={anexo.anexo}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-200 underline"
-                      >
-                        {anexo.descricao || anexo.anexo.split('/').pop()}
-                      </a>
-                    </li>
+                    <div key={anexo.id} className="flex items-center space-x-2">
+                      {anexo.anexo.toLowerCase().match(/\.(jpeg|jpg|gif|png)$/) && (
+                        <img src={anexo.anexo} alt={anexo.descricao || 'preview'} className="w-10 h-10 object-cover rounded" />
+                      )}
+                      <div className="flex-grow">
+                        <p className="text-sm text-gray-800 dark:text-gray-200">{anexo.descricao || anexo.anexo.split('/').pop()}</p>
+                      </div>
+                      <a href={anexo.anexo} download className="text-blue-600 hover:text-blue-800">Download</a>
+                      <a href={anexo.anexo} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-800">Ver</a>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
           </div>
