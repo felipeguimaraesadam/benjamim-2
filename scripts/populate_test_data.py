@@ -104,53 +104,74 @@ def create_test_data():
     print("--- 4. Criando Materiais com Categorias Diversificadas ---")
     materiais_data = [
         # Fundação & Estrutural
-        {'nome': 'Cimento Portland CP II', 'categoria': 'Fundação', 'unidade': 'saco 50kg', 'estoque_minimo': 20, 'estoque_atual': 100},
-        {'nome': 'Vergalhão de Aço CA-50 10mm', 'categoria': 'Estrutural', 'unidade': 'barra 12m', 'estoque_minimo': 50, 'estoque_atual': 200},
-        {'nome': 'Tábua de Pinus 30cm', 'categoria': 'Estrutural', 'unidade': 'unidade', 'estoque_minimo': 100, 'estoque_atual': 300},
+        {'nome': 'Cimento Portland CP II', 'categoria_uso_padrao': 'Fundacao', 'unidade_medida': 'saco', 'nivel_minimo_estoque': 20, 'quantidade_em_estoque': 100},
+        {'nome': 'Vergalhão de Aço CA-50 10mm', 'categoria_uso_padrao': 'Geral', 'unidade_medida': 'un', 'nivel_minimo_estoque': 50, 'quantidade_em_estoque': 200},
+        {'nome': 'Tábua de Pinus 30cm', 'categoria_uso_padrao': 'Geral', 'unidade_medida': 'un', 'nivel_minimo_estoque': 100, 'quantidade_em_estoque': 300},
         # Alvenaria
-        {'nome': 'Tijolo Baiano 9 furos', 'categoria': 'Alvenaria', 'unidade': 'milheiro', 'estoque_minimo': 2, 'estoque_atual': 5},
-        {'nome': 'Argamassa ACIII', 'categoria': 'Alvenaria', 'unidade': 'saco 20kg', 'estoque_minimo': 30, 'estoque_atual': 80},
+        {'nome': 'Tijolo Baiano 9 furos', 'categoria_uso_padrao': 'Alvenaria', 'unidade_medida': 'un', 'nivel_minimo_estoque': 2000, 'quantidade_em_estoque': 5000},
+        {'nome': 'Argamassa ACIII', 'categoria_uso_padrao': 'Alvenaria', 'unidade_medida': 'saco', 'nivel_minimo_estoque': 30, 'quantidade_em_estoque': 80},
         # Hidráulica
-        {'nome': 'Tubo PVC Esgoto 100mm', 'categoria': 'Hidráulica', 'unidade': 'barra 6m', 'estoque_minimo': 10, 'estoque_atual': 40},
-        {'nome': 'Registro de Gaveta 3/4"', 'categoria': 'Hidráulica', 'unidade': 'unidade', 'estoque_minimo': 15, 'estoque_atual': 50},
+        {'nome': 'Tubo PVC Esgoto 100mm', 'categoria_uso_padrao': 'Hidraulica', 'unidade_medida': 'un', 'nivel_minimo_estoque': 10, 'quantidade_em_estoque': 40},
+        {'nome': 'Registro de Gaveta 3/4"', 'categoria_uso_padrao': 'Hidraulica', 'unidade_medida': 'un', 'nivel_minimo_estoque': 15, 'quantidade_em_estoque': 50},
         # Elétrico
-        {'nome': 'Cabo Flexível 2.5mm', 'categoria': 'Elétrico', 'unidade': 'rolo 100m', 'estoque_minimo': 5, 'estoque_atual': 15},
-        {'nome': 'Disjuntor Monopolar 20A', 'categoria': 'Elétrico', 'unidade': 'unidade', 'estoque_minimo': 20, 'estoque_atual': 60},
+        {'nome': 'Cabo Flexível 2.5mm', 'categoria_uso_padrao': 'Eletrica', 'unidade_medida': 'un', 'nivel_minimo_estoque': 5, 'quantidade_em_estoque': 15},
+        {'nome': 'Disjuntor Monopolar 20A', 'categoria_uso_padrao': 'Eletrica', 'unidade_medida': 'un', 'nivel_minimo_estoque': 20, 'quantidade_em_estoque': 60},
         # Acabamento
-        {'nome': 'Tinta Acrílica Branca Fosca', 'categoria': 'Acabamento', 'unidade': 'lata 18L', 'estoque_minimo': 10, 'estoque_atual': 30},
-        {'nome': 'Porcelanato Acetinado 80x80', 'categoria': 'Acabamento', 'unidade': 'm²', 'estoque_minimo': 50, 'estoque_atual': 150},
+        {'nome': 'Tinta Acrílica Branca Fosca', 'categoria_uso_padrao': 'Acabamento', 'unidade_medida': 'un', 'nivel_minimo_estoque': 10, 'quantidade_em_estoque': 30},
+        {'nome': 'Porcelanato Acetinado 80x80', 'categoria_uso_padrao': 'Acabamento', 'unidade_medida': 'm²', 'nivel_minimo_estoque': 50, 'quantidade_em_estoque': 150},
     ]
     materiais = [get_or_create_with_log(Material, nome=data['nome'], defaults=data)[0] for data in materiais_data]
     print("\n")
     
-    # --- 5. Criar Compras ---
-    print("--- 5. Criando Compras (associadas às obras) ---")
-    # Limpar para garantir que a lista de compras seja representativa dos materiais
-    compras_criadas = 0
+    # --- 5. Criar Compras e Itens de Compra ---
+    print("--- 5. Criando Compras e Itens de Compra (associadas às obras) ---")
+    compras_criadas_count = 0
+    itens_criados_count = 0
     for obra in obras:
-        # Cada obra terá entre 2 e 4 compras de materiais aleatórios
-        num_compras = random.randint(2, 4)
-        for _ in range(num_compras):
-            material_comprado = random.choice(materiais)
-            qtd = random.randint(5, 50)
-            preco_unit = Decimal(random.uniform(5.0, 500.0)).quantize(Decimal('0.01'))
-
-            compra, created = get_or_create_with_log(
+        # Cada obra terá entre 2 e 4 compras
+        for _ in range(random.randint(2, 4)):
+            # Criar a Compra principal
+            compra_obj, created = get_or_create_with_log(
                 Compra,
                 obra=obra,
-                material=material_comprado,
-                quantidade=qtd,
-                preco_unitario=preco_unit,
+                data_compra=date.today() - timedelta(days=random.randint(5, 45)),
                 defaults={
-                    'status_compra': random.choice(['Entregue', 'Pendente', 'Cancelada']),
-                    'data_compra': date.today() - timedelta(days=random.randint(5, 45)),
                     'fornecedor': f"Fornecedor {random.choice(['A', 'B', 'C'])}",
-                    'categoria_uso': 'Uso Direto na Obra'
+                    'observacoes': 'Compra de teste gerada por script.'
                 }
             )
             if created:
-                compras_criadas += 1
-                print(f"   -> Compra de {compra.quantidade}x {compra.material.nome} para {compra.obra.nome_obra}")
+                compras_criadas_count += 1
+
+            # Adicionar itens a esta compra
+            valor_total_bruto = Decimal('0.0')
+            for _ in range(random.randint(1, 3)): # Cada compra terá de 1 a 3 itens
+                material = random.choice(materiais)
+                quantidade = Decimal(random.randint(5, 50))
+                valor_unitario = Decimal(random.uniform(10.0, 200.0)).quantize(Decimal('0.01'))
+
+                # Usar update_or_create para evitar duplicatas de itens na mesma compra
+                item, item_created = ItemCompra.objects.update_or_create(
+                    compra=compra_obj,
+                    material=material,
+                    defaults={
+                        'quantidade': quantidade,
+                        'valor_unitario': valor_unitario
+                    }
+                )
+
+                if item_created:
+                    itens_criados_count += 1
+                    print(f"   -> Item Adicionado: {item.quantidade}x {item.material.nome} para Compra ID {compra_obj.id}")
+
+                valor_total_bruto += item.valor_total_item
+
+            # Atualizar o valor bruto da compra e salvar
+            if created:
+                compra_obj.valor_total_bruto = valor_total_bruto
+                compra_obj.save()
+                print(f"   -> Compra ID {compra_obj.id} para {obra.nome_obra} finalizada com valor total de R$ {compra_obj.valor_total_liquido}")
+
     print("\n")
 
     # --- 6. Criar Funcionários e Equipes ---
@@ -208,7 +229,8 @@ def create_test_data():
     print("📊 RESUMO:")
     print(f"   - Obras: {len(obras)}")
     print(f"   - Materiais: {len(materiais)}")
-    print(f"   - Compras Criadas: {compras_criadas}")
+    print(f"   - Compras Criadas: {compras_criadas_count}")
+    print(f"   - Itens de Compra Criados: {itens_criados_count}")
     print(f"   - Funcionários: {len(funcionarios) + 1}") # +1 pelo gerente
     print(f"   - Equipes: {len(equipes)}")
     print(f"   - Locações Criadas: {locacoes_criadas_count}")
