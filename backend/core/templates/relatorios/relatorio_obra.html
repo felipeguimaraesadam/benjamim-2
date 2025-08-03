@@ -85,6 +85,11 @@
         .text-right { text-align: right; }
         .font-bold { font-weight: bold; }
         .total-row th, .total-row td { background-color: #f8f8f8; font-weight: bold; }
+
+        .simple-report-container { font-size: 9pt; }
+        .simple-report-container h1 { font-size: 16pt; }
+        .simple-report-container h2.section-title { font-size: 13pt; }
+        .simple-report-container h3.subsection-title { font-size: 11pt; }
     </style>
 </head>
 <body>
@@ -101,6 +106,7 @@
 
 
 
+    <div class="content-body">
     {% if is_simple_report %}
     <div class="simple-report-container">
         <div class="report-header">
@@ -111,8 +117,6 @@
             </div>
         </div>
     {% endif %}
-
-    <div class="content-body">
 
         <section class="section">
             <h2 class="section-title">1. Resumo da Obra</h2>
@@ -150,6 +154,15 @@
         </section>
 
         {% if is_simple_report %}
+        <section class="section">
+            <h3 class="subsection-title">Detalhamento do Custo Realizado</h3>
+            <table class="financial-summary avoid-break">
+                <tr><th style="width:70%;">Custo Total de Materiais</th><td class="text-right">R$ {{ custo_total_materiais|floatformat:"2"|default:"0.00" }}</td></tr>
+                <tr><th>Custo Mão de Obra/Serviços</th><td class="text-right">R$ {{ custo_total_locacoes|floatformat:"2"|default:"0.00" }}</td></tr>
+                <tr><th>Custo de Despesas Extras</th><td class="text-right">R$ {{ custo_total_despesas_extras|floatformat:"2"|default:"0.00" }}</td></tr>
+            </table>
+        </section>
+
         <div class="report-footer">
             Relatório gerado em {{ data_emissao|date:"d/m/Y H:i" }} pelo Sistema de Gestão de Obras (SGO).
         </div>
