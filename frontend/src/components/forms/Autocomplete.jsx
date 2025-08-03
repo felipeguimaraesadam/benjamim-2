@@ -6,6 +6,7 @@ const Autocomplete = ({
   onSelect,
   placeholder,
   initialValue,
+  onClear,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -42,7 +43,14 @@ const Autocomplete = ({
     const value = e.target.value;
     setInputValue(value);
     setShowSuggestions(true);
-    debouncedFetch(value);
+    if (value) {
+      debouncedFetch(value);
+    } else {
+      setSuggestions([]);
+      if (onClear) {
+        onClear();
+      }
+    }
   };
 
   const handleSelect = suggestion => {

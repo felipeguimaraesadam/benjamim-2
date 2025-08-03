@@ -255,6 +255,7 @@ const ObrasPage = () => {
               onSelect={selection =>
                 setFilters({ ...filters, nome: selection ? selection.label : '' })
               }
+              onClear={() => setFilters({ ...filters, nome: '' })}
               placeholder="Digite para buscar uma obra..."
             />
           </div>

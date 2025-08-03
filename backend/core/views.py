@@ -487,27 +487,44 @@ class OcorrenciaFuncionarioViewSet(viewsets.ModelViewSet):
     queryset = Ocorrencia_Funcionario.objects.all()
     serializer_class = OcorrenciaFuncionarioSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+
     def get_queryset(self):
         queryset = Ocorrencia_Funcionario.objects.all().select_related('funcionario').order_by('-data')
         data_inicio_str = self.request.query_params.get('data_inicio')
         data_fim_str = self.request.query_params.get('data_fim')
         funcionario_id_str = self.request.query_params.get('funcionario_id')
         tipo_ocorrencia_str = self.request.query_params.get('tipo')
+        obra_id_str = self.request.query_params.get('obra_id')
+
+        if obra_id_str:
+            try:
+                obra_id = int(obra_id_str)
+                # Find all funcionarios that worked on the given obra
+                locacoes = Locacao_Obras_Equipes.objects.filter(obra_id=obra_id)
+                funcionarios_na_obra_ids = locacoes.values_list('funcionario_locado_id', flat=True).distinct()
+                # Filter occurrences by these a
+                queryset = queryset.filter(funcionario_id__in=funcionarios_na_obra_ids)
+            except (ValueError, TypeError):
+                pass
+
         if data_inicio_str:
             try:
                 data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
                 queryset = queryset.filter(data__gte=data_inicio)
-            except ValueError: pass
+            except ValueError:
+                pass
         if data_fim_str:
             try:
                 data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
                 queryset = queryset.filter(data__lte=data_fim)
-            except ValueError: pass
+            except ValueError:
+                pass
         if funcionario_id_str:
             try:
                 funcionario_id = int(funcionario_id_str)
                 queryset = queryset.filter(funcionario_id=funcionario_id)
-            except ValueError: pass
+            except ValueError:
+                pass
         if tipo_ocorrencia_str:
             queryset = queryset.filter(tipo=tipo_ocorrencia_str)
         return queryset

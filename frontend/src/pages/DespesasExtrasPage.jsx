@@ -1,6 +1,7 @@
 // Re-processing trigger for DespesasExtrasPage and its imports
 import React, { useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
+import Autocomplete from '../components/forms/Autocomplete';
 import DespesasExtrasTable from '../components/tables/DespesasExtrasTable';
 import DespesaExtraForm from '../components/forms/DespesaExtraForm';
 import PaginationControls from '../components/utils/PaginationControls';
@@ -26,12 +27,20 @@ const DespesasExtrasPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [despesaToDeleteId, setDespesaToDeleteId] = useState(null);
 
+  const [filters, setFilters] = useState({
+    obra_id: '',
+  });
+
   const fetchDespesasExtras = useCallback(
     async (page = 1) => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await api.getDespesasExtras({ page }); // Pass page param
+        const params = {
+          page,
+          obra_id: filters.obra_id,
+        };
+        const response = await api.getDespesasExtras(params);
         setDespesas(response.data.results);
         setTotalItems(response.data.count);
         setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
@@ -45,7 +54,7 @@ const DespesasExtrasPage = () => {
         setIsLoading(false);
       }
     },
-    [PAGE_SIZE]
+    [PAGE_SIZE, filters]
   );
 
   const fetchObrasForForm = useCallback(async () => {
@@ -197,6 +206,30 @@ const DespesasExtrasPage = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
         </div>
       )}
+
+      <div className="mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="obra-filter" className="block text-sm font-medium text-gray-700">
+              Filtrar por Obra
+            </label>
+            <Autocomplete
+              fetchSuggestions={async query => {
+                const response = await api.searchObras(query);
+                return response.data.map(obra => ({
+                  value: obra.id,
+                  label: obra.nome_obra,
+                }));
+              }}
+              onSelect={selection =>
+                setFilters({ ...filters, obra_id: selection ? selection.value : '' })
+              }
+              onClear={() => setFilters({ ...filters, obra_id: '' })}
+              placeholder="Digite para buscar uma obra..."
+            />
+          </div>
+        </div>
+      </div>
 
       {(!isLoading || despesas.length > 0) && !error && (
         <>
