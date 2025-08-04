@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as api from '../../services/api';
 import SpinnerIcon from '../utils/SpinnerIcon'; // Import SpinnerIcon
+import ObraAutocomplete from './ObraAutocomplete';
 
 const LocacaoForm = ({
   initialData,
@@ -26,6 +27,7 @@ const LocacaoForm = ({
     valor_pagamento: '', // New
     data_pagamento: '', // New
     observacoes: '', // New field
+    anexos: [],
   });
   const [formErrors, setFormErrors] = useState({});
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
@@ -330,6 +332,13 @@ const LocacaoForm = ({
     }
   };
 
+  const handleFileChange = e => {
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      anexos: [...e.target.files],
+    }));
+  };
+
   const validateFrontendForm = () => {
     const newErrors = {};
     if (!formData.obra) newErrors.obra = 'Obra é obrigatória.';
@@ -603,7 +612,7 @@ const LocacaoForm = ({
         ))
     ) {
       try {
-        await onSubmit(dataToSubmit); // onSubmit is the prop from parent, handles actual locacao save
+        onSubmit(dataToSubmit, formData.anexos); // Pass files separately
         // and subsequent state changes like closing modal, fetching data.
       } catch (err) {
         // Error handling for locacao submission (conflict, validation, etc.)
@@ -708,21 +717,10 @@ const LocacaoForm = ({
           >
             Obra <span className="text-red-500">*</span>
           </label>
-          <select
-            name="obra"
-            id="obra"
-            value={formData.obra}
-            onChange={handleChange}
-            className={`mt-1 block w-full bg-gray-50 border ${formErrors.obra ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2`}
-          >
-            <option value="">Selecione uma Obra</option>
-            {obras &&
-              obras.map(obra => (
-                <option key={obra.id} value={obra.id}>
-                  {obra.nome_obra}
-                </option>
-              ))}
-          </select>
+          <ObraAutocomplete
+            value={obras.find(o => o.id === formData.obra)}
+            onObraSelect={obra => setFormData(prev => ({ ...prev, obra: obra ? obra.id : '' }))}
+          />
           {formErrors.obra && (
             <p className="mt-1 text-sm text-red-600">{formErrors.obra}</p>
           )}
@@ -985,6 +983,24 @@ const LocacaoForm = ({
             placeholder="Adicione observações relevantes sobre a locação..."
           ></textarea>
           {/* {formErrors.observacoes && <p className="mt-1 text-sm text-red-600">{formErrors.observacoes}</p>} */}
+        </div>
+
+        {/* Anexos Field Section */}
+        <div className="mt-6 pt-6 border-t">
+          <label
+            htmlFor="anexos"
+            className="block text-sm font-medium text-gray-900"
+          >
+            Anexos (PDF, Imagens)
+          </label>
+          <input
+            type="file"
+            name="anexos"
+            id="anexos"
+            onChange={handleFileChange}
+            multiple
+            className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 focus:outline-none"
+          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">

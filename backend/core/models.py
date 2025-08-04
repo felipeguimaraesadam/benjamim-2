@@ -12,6 +12,24 @@ def obra_foto_path(instance, filename):
     filename = f"{filename_base}.{ext}"
     return os.path.join('fotos_obras', str(instance.obra.id), filename)
 
+def anexo_locacao_path(instance, filename):
+    """
+    Generates a unique path for uploaded location attachments.
+    """
+    ext = filename.split('.')[-1]
+    filename_base = f"{uuid4().hex}"
+    filename = f"{filename_base}.{ext}"
+    return os.path.join('anexos_locacoes', str(instance.locacao.id), filename)
+
+def anexo_despesa_path(instance, filename):
+    """
+    Generates a unique path for uploaded expense attachments.
+    """
+    ext = filename.split('.')[-1]
+    filename_base = f"{uuid4().hex}"
+    filename = f"{filename_base}.{ext}"
+    return os.path.join('anexos_despesas', str(instance.despesa.id), filename)
+
 CATEGORIA_USO_CHOICES = [
     ('Geral', 'Geral'), ('Eletrica', 'Elétrica'), ('Hidraulica', 'Hidráulica'),
     ('Alvenaria', 'Alvenaria'), ('Acabamento', 'Acabamento'), ('Fundacao', 'Fundação')
@@ -271,3 +289,23 @@ class BackupSettings(models.Model):
     
     def __str__(self):
         return f"Configurações de Backup - Auto: {self.auto_backup_enabled}"
+
+
+class AnexoLocacao(models.Model):
+    locacao = models.ForeignKey(Locacao_Obras_Equipes, related_name='anexos', on_delete=models.CASCADE)
+    anexo = models.FileField(upload_to=anexo_locacao_path)
+    descricao = models.CharField(max_length=255, blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Anexo de {self.locacao.id} ({self.id})"
+
+
+class AnexoDespesa(models.Model):
+    despesa = models.ForeignKey(Despesa_Extra, related_name='anexos', on_delete=models.CASCADE)
+    anexo = models.FileField(upload_to=anexo_despesa_path)
+    descricao = models.CharField(max_length=255, blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Anexo de {self.despesa.id} ({self.id})"

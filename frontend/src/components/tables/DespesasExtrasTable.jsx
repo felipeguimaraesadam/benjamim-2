@@ -1,6 +1,6 @@
 // Re-processing trigger for DespesasExtrasTable
-import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react'; // Add icon imports
+import React, { useState } from 'react';
+import { Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react'; // Add icon imports
 
 const DespesasExtrasTable = ({
   despesas,
@@ -9,6 +9,24 @@ const DespesasExtrasTable = ({
   onDelete,
   isLoading,
 }) => {
+  const [expandedRows, setExpandedRows] = useState({});
+
+  const toggleRow = id => {
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleDeleteAnexo = async (anexoId) => {
+    if (window.confirm('Tem certeza que deseja excluir este anexo?')) {
+      try {
+        await api.deleteAnexoDespesa(anexoId);
+        // Ideally, the parent component should handle refetching the data.
+        // For now, we can just reload the page as a simple solution.
+        window.location.reload();
+      } catch (error) {
+        console.error('Erro ao excluir anexo:', error);
+      }
+    }
+  };
   // Helper to find obra name by ID
   const getObraNome = obraId => {
     const obra = obras && obras.find(o => o.id === obraId);
@@ -54,39 +72,68 @@ const DespesasExtrasTable = ({
         </thead>
         <tbody>
           {despesas.map(despesa => (
-            <tr key={despesa.id} className="bg-white border-b hover:bg-gray-50">
-              <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                {despesa.descricao}
-              </td>
-              <td className="px-6 py-4">
-                R$ {parseFloat(despesa.valor).toFixed(2)}
-              </td>
-              <td className="px-6 py-4">
-                {new Date(despesa.data).toLocaleDateString()}
-              </td>
-              <td className="px-6 py-4">{despesa.categoria}</td>
-              <td className="px-6 py-4">{getObraNome(despesa.obra)}</td>
-              <td className="px-6 py-4 flex space-x-2">
-                <button
-                  onClick={() => onEdit(despesa)}
-                  className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
-                  disabled={isLoading}
-                  aria-label="Editar Despesa"
-                  title="Editar Despesa"
-                >
-                  <Pencil size={18} />
-                </button>
-                <button
-                  onClick={() => onDelete(despesa.id)}
-                  className="text-red-600 hover:text-red-800 disabled:text-gray-400"
-                  disabled={isLoading}
-                  aria-label="Excluir Despesa"
-                  title="Excluir Despesa"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </td>
-            </tr>
+            <React.Fragment key={despesa.id}>
+              <tr className="bg-white border-b hover:bg-gray-50">
+                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                  {despesa.descricao}
+                </td>
+                <td className="px-6 py-4">
+                  R$ {parseFloat(despesa.valor).toFixed(2)}
+                </td>
+                <td className="px-6 py-4">
+                  {new Date(despesa.data).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4">{despesa.categoria}</td>
+                <td className="px-6 py-4">{getObraNome(despesa.obra)}</td>
+                <td className="px-6 py-4 flex space-x-2">
+                  <button
+                    onClick={() => onEdit(despesa)}
+                    className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+                    disabled={isLoading}
+                    aria-label="Editar Despesa"
+                    title="Editar Despesa"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button
+                    onClick={() => onDelete(despesa.id)}
+                    className="text-red-600 hover:text-red-800 disabled:text-gray-400"
+                    disabled={isLoading}
+                    aria-label="Excluir Despesa"
+                    title="Excluir Despesa"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                  {despesa.anexos && despesa.anexos.length > 0 && (
+                    <button onClick={() => toggleRow(despesa.id)}>
+                      {expandedRows[despesa.id] ? <ChevronUp /> : <ChevronDown />}
+                    </button>
+                  )}
+                </td>
+              </tr>
+              {expandedRows[despesa.id] && (
+                <tr className="bg-gray-50">
+                  <td colSpan="6" className="px-6 py-4">
+                    <h4 className="font-bold">Anexos:</h4>
+                    <ul className="list-disc list-inside">
+                      {despesa.anexos.map(anexo => (
+                        <li key={anexo.id} className="flex items-center space-x-2">
+                          <a
+                            href={anexo.anexo}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {anexo.descricao || anexo.anexo.split('/').pop()}
+                          </a>
+                          <button onClick={() => handleDeleteAnexo(anexo.id)} className="text-red-600 hover:text-red-800">Excluir</button>
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))}
         </tbody>
       </table>

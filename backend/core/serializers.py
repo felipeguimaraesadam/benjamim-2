@@ -1,6 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material, Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra, Backup, BackupSettings
+from .models import (
+    Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material,
+    Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra,
+    Backup, BackupSettings, AnexoLocacao, AnexoDespesa
+)
 from django.db.models import Sum, Q
 from decimal import Decimal
 
@@ -133,6 +137,18 @@ class EquipeComMembrosBasicSerializer(serializers.ModelSerializer):
         fields = ['id', 'nome_equipe', 'lider', 'membros']
 
 
+class AnexoLocacaoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnexoLocacao
+        fields = ['id', 'locacao', 'anexo', 'descricao', 'uploaded_at']
+        read_only_fields = ['uploaded_at']
+
+class AnexoDespesaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnexoDespesa
+        fields = ['id', 'despesa', 'anexo', 'descricao', 'uploaded_at']
+        read_only_fields = ['uploaded_at']
+
 class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
     obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)
     equipe_nome = serializers.CharField(source='equipe.nome_equipe', read_only=True)
@@ -140,6 +156,7 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
     equipe_details = EquipeComMembrosBasicSerializer(source='equipe', read_only=True)
     tipo = serializers.SerializerMethodField()
     recurso_nome = serializers.SerializerMethodField()
+    anexos = AnexoLocacaoSerializer(many=True, read_only=True)
 
     class Meta:
         model = Locacao_Obras_Equipes
@@ -152,7 +169,7 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
             'servico_externo',
             'data_locacao_inicio', 'data_locacao_fim', 'tipo_pagamento',
             'valor_pagamento', 'data_pagamento', 'status_locacao', 'observacoes',
-            'tipo', 'recurso_nome' # Adicionado para a nova view semanal
+            'tipo', 'recurso_nome', 'anexos'
         ]
         read_only_fields = (
             'status_locacao',
@@ -161,7 +178,8 @@ class LocacaoObrasEquipesSerializer(serializers.ModelSerializer):
             'equipe_nome', # Adicionado aos read_only_fields
             'equipe_details',
             'tipo',
-            'recurso_nome'
+            'recurso_nome',
+            'anexos'
         )
         # 'equipe' é para escrita, 'equipe_details' e 'equipe_nome' são para leitura.
 
@@ -452,9 +470,11 @@ class CompraReportSerializer(serializers.ModelSerializer):
 
 
 class DespesaExtraSerializer(serializers.ModelSerializer):
+    anexos = AnexoDespesaSerializer(many=True, read_only=True)
+
     class Meta:
         model = Despesa_Extra
-        fields = '__all__'
+        fields = ['id', 'obra', 'descricao', 'valor', 'data', 'categoria', 'anexos']
 
 
 class OcorrenciaFuncionarioSerializer(serializers.ModelSerializer):

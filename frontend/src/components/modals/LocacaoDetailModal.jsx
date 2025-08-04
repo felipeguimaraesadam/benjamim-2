@@ -74,6 +74,17 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
     return 'N/A';
   };
 
+  const handleDeleteAnexo = async (anexoId) => {
+    if (window.confirm('Tem certeza que deseja excluir este anexo?')) {
+      try {
+        await api.deleteAnexoLocacao(anexoId);
+        fetchLocacaoDetails(locacaoId);
+      } catch (error) {
+        console.error('Erro ao excluir anexo:', error);
+      }
+    }
+  };
+
   if (!locacaoId) {
     // Or some other prop to control visibility, but typically driven by parent through locacaoId
     return null;
@@ -162,6 +173,30 @@ const LocacaoDetailModal = ({ locacaoId, onClose }) => {
             <div className="md:col-span-2">
               <DetailItem label="Observações" value={locacao.observacoes} />
             </div>
+
+            {/* Anexos Section */}
+            {locacao.anexos && locacao.anexos.length > 0 && (
+              <div className="md:col-span-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-md font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Anexos
+                </h3>
+                <div className="space-y-2">
+                  {locacao.anexos.map(anexo => (
+                    <div key={anexo.id} className="flex items-center space-x-2">
+                      {anexo.anexo.toLowerCase().match(/\.(jpeg|jpg|gif|png)$/) && (
+                        <img src={anexo.anexo} alt={anexo.descricao || 'preview'} className="w-10 h-10 object-cover rounded" />
+                      )}
+                      <div className="flex-grow">
+                        <p className="text-sm text-gray-800 dark:text-gray-200">{anexo.descricao || anexo.anexo.split('/').pop()}</p>
+                      </div>
+                      <a href={anexo.anexo} download className="text-blue-600 hover:text-blue-800">Download</a>
+                      <a href={anexo.anexo} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-800">Ver</a>
+                      <button onClick={() => handleDeleteAnexo(anexo.id)} className="text-red-600 hover:text-red-800">Excluir</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

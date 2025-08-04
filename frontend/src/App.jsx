@@ -19,7 +19,6 @@ import OcorrenciasPage from './pages/OcorrenciasPage';
 import RelatoriosPage from './pages/RelatoriosPage';
 import UsuariosPage from './pages/UsuariosPage';
 import BackupPage from './pages/BackupPage';
-import ErrorTestPage from './pages/ErrorTestPage';
 
 function App() {
   const { user } = useAuth();
@@ -57,7 +56,6 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route path="usuarios" element={<UsuariosPage />} />
             <Route path="backup" element={<BackupPage />} />
-            <Route path="error-tests" element={<ErrorTestPage />} />
           </Route>
         </Route>
       </Routes>

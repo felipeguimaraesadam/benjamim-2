@@ -183,19 +183,89 @@ export const generateRelatorioPagamentoMateriais = params =>
 export const getDespesasExtras = params =>
   apiClient.get('/despesas/', { params });
 export const getDespesaExtraById = id => apiClient.get(`/despesas/${id}/`);
-export const createDespesaExtra = despesaData =>
-  apiClient.post('/despesas/', despesaData);
-export const updateDespesaExtra = (id, despesaData) =>
-  apiClient.put(`/despesas/${id}/`, despesaData);
+export const createDespesaExtra = (despesaData, anexos) => {
+  const formData = new FormData();
+  for (const key in despesaData) {
+    if (despesaData[key] !== null && despesaData[key] !== undefined) {
+      formData.append(key, despesaData[key]);
+    }
+  }
+  if (anexos) {
+    anexos.forEach(anexo => {
+      formData.append('anexos', anexo);
+    });
+  }
+  return apiClient.post('/despesas/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const updateDespesaExtra = (id, despesaData, anexos) => {
+  const formData = new FormData();
+  for (const key in despesaData) {
+    if (despesaData[key] !== null && despesaData[key] !== undefined) {
+      formData.append(key, despesaData[key]);
+    }
+  }
+  if (anexos) {
+    anexos.forEach(anexo => {
+      formData.append('anexos', anexo);
+    });
+  }
+  return apiClient.put(`/despesas/${id}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const deleteAnexoDespesa = id => apiClient.delete(`/anexos-despesa/${id}/`);
 export const deleteDespesaExtra = id => apiClient.delete(`/despesas/${id}/`);
 
 // --- Locacao Service Functions ---
 export const getLocacoes = params => apiClient.get('/locacoes/', { params });
 export const getLocacaoById = id => apiClient.get(`/locacoes/${id}/`);
-export const createLocacao = alocacaoData =>
-  apiClient.post('/locacoes/', alocacaoData);
-export const updateLocacao = (id, alocacaoData) =>
-  apiClient.patch(`/locacoes/${id}/`, alocacaoData); // Changed PUT to PATCH
+export const createLocacao = (alocacaoData, anexos) => {
+  const formData = new FormData();
+  for (const key in alocacaoData) {
+    if (alocacaoData[key] !== null && alocacaoData[key] !== undefined) {
+      formData.append(key, alocacaoData[key]);
+    }
+  }
+  if (anexos) {
+    anexos.forEach(anexo => {
+      formData.append('anexos', anexo);
+    });
+  }
+  return apiClient.post('/locacoes/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const updateLocacao = (id, alocacaoData, anexos) => {
+  const formData = new FormData();
+  for (const key in alocacaoData) {
+    if (alocacaoData[key] !== null && alocacaoData[key] !== undefined) {
+      formData.append(key, alocacaoData[key]);
+    }
+  }
+  if (anexos) {
+    anexos.forEach(anexo => {
+      formData.append('anexos', anexo);
+    });
+  }
+  return apiClient.patch(`/locacoes/${id}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const deleteAnexoLocacao = id => apiClient.delete(`/anexos-locacao/${id}/`);
 export const deleteLocacao = id => apiClient.delete(`/locacoes/${id}/`);
 export const transferFuncionarioLocacao = async transferData => {
   const response = await apiClient.post(

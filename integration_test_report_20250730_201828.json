@@ -1,0 +1,122 @@
+{
+  "summary": {
+    "total_tests": 15,
+    "passed_tests": 0,
+    "failed_tests": 15,
+    "success_rate": 0.0,
+    "total_duration_seconds": 50.82
+  },
+  "test_results": [
+    {
+      "test_name": "Backend Server Availability",
+      "status": "FAIL",
+      "details": "Erro ao conectar com backend: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /admin/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E376B2C00>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2055.73,
+      "timestamp": "2025-07-30T20:17:39.319756"
+    },
+    {
+      "test_name": "Frontend Server Availability",
+      "status": "FAIL",
+      "details": "Erro ao conectar com frontend: HTTPConnectionPool(host='localhost', port=5173): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37E8E930>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 4093.06,
+      "timestamp": "2025-07-30T20:17:43.412813"
+    },
+    {
+      "test_name": "Error Log - JavaScript Error",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37E8F0B0>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2029.28,
+      "timestamp": "2025-07-30T20:17:45.442096"
+    },
+    {
+      "test_name": "Error Log - Network Error",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37E8F470>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2022.97,
+      "timestamp": "2025-07-30T20:17:47.465066"
+    },
+    {
+      "test_name": "Error Log - User Action Error",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37E8E600>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2026.9,
+      "timestamp": "2025-07-30T20:17:49.491961"
+    },
+    {
+      "test_name": "Validation - Empty Data",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37E8F7D0>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2027.28,
+      "timestamp": "2025-07-30T20:17:51.520246"
+    },
+    {
+      "test_name": "Validation - Invalid JSON",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37ED03B0>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2030.03,
+      "timestamp": "2025-07-30T20:17:53.550273"
+    },
+    {
+      "test_name": "Validation - Very Large Message",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37ED0C50>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2040.9,
+      "timestamp": "2025-07-30T20:17:55.591172"
+    },
+    {
+      "test_name": "Validation - Special Characters",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37E8FE60>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2035.27,
+      "timestamp": "2025-07-30T20:17:57.626437"
+    },
+    {
+      "test_name": "HTTP Method - GET",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37E8F5F0>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2011.29,
+      "timestamp": "2025-07-30T20:17:59.637726"
+    },
+    {
+      "test_name": "HTTP Method - POST",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37E8F470>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2019.59,
+      "timestamp": "2025-07-30T20:18:01.657321"
+    },
+    {
+      "test_name": "HTTP Method - PUT",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37E8ECF0>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2023.67,
+      "timestamp": "2025-07-30T20:18:03.680994"
+    },
+    {
+      "test_name": "HTTP Method - DELETE",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37ED0080>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2044.08,
+      "timestamp": "2025-07-30T20:18:05.725079"
+    },
+    {
+      "test_name": "HTTP Method - PATCH",
+      "status": "FAIL",
+      "details": "Erro na requisição: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/frontend-error-log/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000018E37ED1550>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 2033.08,
+      "timestamp": "2025-07-30T20:18:07.758164"
+    },
+    {
+      "test_name": "Performance Stress Test",
+      "status": "FAIL",
+      "details": "Taxa de sucesso baixa: 0.0% (0/100)",
+      "duration_ms": 20325.97,
+      "timestamp": "2025-07-30T20:18:28.084130"
+    }
+  ],
+  "timestamp": "2025-07-30T20:18:28.084130",
+  "environment": {
+    "backend_url": "http://127.0.0.1:8000",
+    "frontend_url": "http://localhost:5173",
+    "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]"
+  }
+}

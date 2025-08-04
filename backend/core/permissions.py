@@ -26,11 +26,10 @@ class IsNivelGerente(permissions.BasePermission):
         return request.user and request.user.is_authenticated and request.user.nivel_acesso == 'gerente'
 
     def has_object_permission(self, request, view, obj):
-        # Allow 'retrieve' (view) actions for 'gerente'
-        if view.action == 'retrieve':
-            return request.user and request.user.is_authenticated and request.user.nivel_acesso == 'gerente'
-        # Disallow 'update', 'partial_update', and 'destroy' actions for 'gerente'
-        elif view.action in ['update', 'partial_update', 'destroy']:
-            return False
-        # For other actions, rely on has_permission or deny by default
-        return False
+        """
+        Allows object-level access to 'gerente' users. This grants them
+        permission to perform actions like view, update, and delete.
+        """
+        # Delegates object-level permission to the view-level permission check,
+        # which already confirms if the user is an authenticated 'gerente'.
+        return self.has_permission(request, view)

@@ -1,0 +1,227 @@
+{
+  "timestamp": "2025-07-29T17:59:33.879938",
+  "monitoring_tests": {
+    "summary": {
+      "total_tests": 15,
+      "passed_tests": 15,
+      "failed_tests": 0,
+      "success_rate": 100.0
+    },
+    "test_results": [
+      {
+        "test_name": "Endpoint Availability",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:13.771822",
+        "details": "GET request successful (status: 200)"
+      },
+      {
+        "test_name": "JavaScript Error Logging",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:14.776138",
+        "details": "JavaScript error logged successfully"
+      },
+      {
+        "test_name": "Network Error Logging",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:15.794948",
+        "details": "Network error logged successfully"
+      },
+      {
+        "test_name": "Promise Rejection Logging",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:16.799036",
+        "details": "Promise rejection logged successfully"
+      },
+      {
+        "test_name": "Malformed Data - Empty JSON",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:17.801592",
+        "details": "Handled gracefully (status: 200)"
+      },
+      {
+        "test_name": "Malformed Data - Missing required fields",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:17.819149",
+        "details": "Handled gracefully (status: 200)"
+      },
+      {
+        "test_name": "Malformed Data - Invalid JSON structure",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:17.836010",
+        "details": "Handled gracefully (status: 500)"
+      },
+      {
+        "test_name": "Malformed Data - Null values",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:17.838513",
+        "details": "Handled gracefully (status: 200)"
+      },
+      {
+        "test_name": "Malformed Data - Very long message",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:17.866424",
+        "details": "Handled gracefully (status: 200)"
+      },
+      {
+        "test_name": "HTTP Method - GET",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:18.893642",
+        "details": "Should return status message (status: 200)"
+      },
+      {
+        "test_name": "HTTP Method - POST",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:18.909687",
+        "details": "Should accept error logs (status: 200)"
+      },
+      {
+        "test_name": "HTTP Method - PUT",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:18.925751",
+        "details": "Should not be allowed (correctly rejected: 405)"
+      },
+      {
+        "test_name": "HTTP Method - DELETE",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:18.928136",
+        "details": "Should not be allowed (correctly rejected: 405)"
+      },
+      {
+        "test_name": "HTTP Method - PATCH",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:18.931143",
+        "details": "Should not be allowed (correctly rejected: 405)"
+      },
+      {
+        "test_name": "Stress Test",
+        "status": "PASS",
+        "timestamp": "2025-07-29T17:49:20.492145",
+        "details": "Success rate: 100.0% (50/50)"
+      }
+    ],
+    "timestamp": "2025-07-29T17:49:21.494801"
+  },
+  "integration_tests": {
+    "summary": {
+      "total_tests": 15,
+      "passed_tests": 14,
+      "failed_tests": 1,
+      "success_rate": 93.33,
+      "total_duration_seconds": 0.37
+    },
+    "test_results": [
+      {
+        "test_name": "Backend Server Availability",
+        "status": "FAIL",
+        "details": "Backend não respondeu adequadamente (status: 500)",
+        "duration_ms": 82.3,
+        "timestamp": "2025-07-29T17:51:16.515355"
+      },
+      {
+        "test_name": "Frontend Server Availability",
+        "status": "PASS",
+        "details": "Frontend respondendo (status: 200)",
+        "duration_ms": 6.0,
+        "timestamp": "2025-07-29T17:51:16.521355"
+      },
+      {
+        "test_name": "Error Log - JavaScript Error",
+        "status": "PASS",
+        "details": "Log registrado com sucesso (status: 200)",
+        "duration_ms": 3.0,
+        "timestamp": "2025-07-29T17:51:16.524355"
+      },
+      {
+        "test_name": "Error Log - Network Error",
+        "status": "PASS",
+        "details": "Log registrado com sucesso (status: 200)",
+        "duration_ms": 23.09,
+        "timestamp": "2025-07-29T17:51:16.547449"
+      },
+      {
+        "test_name": "Error Log - User Action Error",
+        "status": "PASS",
+        "details": "Log registrado com sucesso (status: 200)",
+        "duration_ms": 15.32,
+        "timestamp": "2025-07-29T17:51:16.562768"
+      },
+      {
+        "test_name": "Validation - Empty Data",
+        "status": "PASS",
+        "details": "Validação funcionou corretamente (status: 200)",
+        "duration_ms": 2.0,
+        "timestamp": "2025-07-29T17:51:16.565766"
+      },
+      {
+        "test_name": "Validation - Invalid JSON",
+        "status": "PASS",
+        "details": "Validação funcionou corretamente (status: 500)",
+        "duration_ms": 13.8,
+        "timestamp": "2025-07-29T17:51:16.579565"
+      },
+      {
+        "test_name": "Validation - Very Large Message",
+        "status": "PASS",
+        "details": "Validação funcionou corretamente (status: 200)",
+        "duration_ms": 4.23,
+        "timestamp": "2025-07-29T17:51:16.583795"
+      },
+      {
+        "test_name": "Validation - Special Characters",
+        "status": "PASS",
+        "details": "Validação funcionou corretamente (status: 200)",
+        "duration_ms": 2.61,
+        "timestamp": "2025-07-29T17:51:16.586409"
+      },
+      {
+        "test_name": "HTTP Method - GET",
+        "status": "PASS",
+        "details": "Método aceito (status: 200)",
+        "duration_ms": 2.56,
+        "timestamp": "2025-07-29T17:51:16.589706"
+      },
+      {
+        "test_name": "HTTP Method - POST",
+        "status": "PASS",
+        "details": "Método aceito (status: 200)",
+        "duration_ms": 19.94,
+        "timestamp": "2025-07-29T17:51:16.609649"
+      },
+      {
+        "test_name": "HTTP Method - PUT",
+        "status": "PASS",
+        "details": "Método rejeitado corretamente (status: 405)",
+        "duration_ms": 2.72,
+        "timestamp": "2025-07-29T17:51:16.612876"
+      },
+      {
+        "test_name": "HTTP Method - DELETE",
+        "status": "PASS",
+        "details": "Método rejeitado corretamente (status: 405)",
+        "duration_ms": 27.19,
+        "timestamp": "2025-07-29T17:51:16.640071"
+      },
+      {
+        "test_name": "HTTP Method - PATCH",
+        "status": "PASS",
+        "details": "Método rejeitado corretamente (status: 405)",
+        "duration_ms": 16.03,
+        "timestamp": "2025-07-29T17:51:16.656096"
+      },
+      {
+        "test_name": "Performance Stress Test",
+        "status": "PASS",
+        "details": "Taxa de sucesso: 100.0% (100/100) em 0.15s",
+        "duration_ms": 147.95,
+        "timestamp": "2025-07-29T17:51:16.804041"
+      }
+    ],
+    "timestamp": "2025-07-29T17:51:16.804564",
+    "environment": {
+      "backend_url": "http://127.0.0.1:8000",
+      "frontend_url": "http://localhost:5173",
+      "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]"
+    }
+  },
+  "overall_status": "PASS"
+}

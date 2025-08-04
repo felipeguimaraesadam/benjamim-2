@@ -68,6 +68,20 @@ function WeeklyPlanner({ selectedObra }) {
     }
   }, [locale, weekStartsOn]);
 
+  const [obras, setObras] = useState([]);
+
+  useEffect(() => {
+    const fetchObras = async () => {
+        try {
+            const response = await api.getObras({ page_size: 500 });
+            setObras(response.data?.results || []);
+        } catch (error) {
+            console.error('Erro ao buscar obras:', error);
+        }
+    };
+    fetchObras();
+  }, []);
+
   useEffect(() => {
     fetchWeekData(currentDate, selectedObra?.id);
   }, [currentDate, selectedObra, fetchWeekData]);
@@ -84,8 +98,16 @@ function WeeklyPlanner({ selectedObra }) {
     setSelectedLocacaoIdForDetail(null);
   };
 
-  const handleOpenLocacaoForm = (dateString = null) => {
-    setLocacaoFormInitialData(dateString ? { data_locacao_inicio: dateString, data_locacao_fim: dateString } : null);
+  const handleOpenLocacaoForm = (data = null) => {
+    if (data && data.date) {
+      setLocacaoFormInitialData({
+        data_locacao_inicio: data.date,
+        data_locacao_fim: data.date,
+        obra: data.obra ? data.obra.id : '',
+      });
+    } else {
+      setLocacaoFormInitialData(null);
+    }
     setShowLocacaoFormModal(true);
   };
 
@@ -102,9 +124,22 @@ function WeeklyPlanner({ selectedObra }) {
   };
 
   // Nova função para lidar com o submit real do LocacaoForm
-  const handleActualFormSubmit = async (formDataFromForm) => {
+  const handleActualFormSubmit = async (formDataFromForm, anexos) => {
     setIsLoading(true); // Usar isLoading geral ou um específico para o form
     setError(null);
+
+    const data = new FormData();
+    Object.keys(formDataFromForm).forEach(key => {
+        if (formDataFromForm[key] !== null && formDataFromForm[key] !== undefined) {
+            data.append(key, formDataFromForm[key]);
+        }
+    });
+
+    if (anexos && anexos.length > 0) {
+        anexos.forEach(anexo => {
+            data.append('anexos', anexo);
+        });
+    }
 
     // Determinar se é criação ou edição baseado em locacaoFormInitialData
     const isEditing = locacaoFormInitialData && locacaoFormInitialData.id;
@@ -112,10 +147,10 @@ function WeeklyPlanner({ selectedObra }) {
     try {
       let response;
       if (isEditing) {
-        response = await api.updateLocacao(locacaoFormInitialData.id, formDataFromForm);
+        response = await api.updateLocacao(locacaoFormInitialData.id, data);
         toast.success("Locação atualizada com sucesso!");
       } else {
-        response = await api.createLocacao(formDataFromForm);
+        response = await api.createLocacao(data);
         // Check if multiple rentals were created (multi-day rental)
         const createdRentals = response.data;
         if (Array.isArray(createdRentals) && createdRentals.length > 1) {
@@ -415,6 +450,7 @@ function WeeklyPlanner({ selectedObra }) {
                     onOpenLocacaoDetail={handleOpenLocacaoDetail}
                     onShowContextMenu={handleShowContextMenu}
                     activeDragItemId={activeDragId} // Pass activeDragItemId to DayColumn
+                    selectedObra={selectedObra}
                   />
                 </div>
               );
@@ -475,6 +511,7 @@ function WeeklyPlanner({ selectedObra }) {
               </h3>
               <LocacaoForm
                 initialData={locacaoFormInitialData}
+                obras={obras}
                 onSubmit={handleActualFormSubmit}
                 onCancel={handleCloseLocacaoForm}
                 isLoading={isLoading}

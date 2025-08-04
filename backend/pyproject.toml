@@ -1,0 +1,28 @@
+[tool.black]
+line-length = 88
+target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded by ^/ will apply only to files and directories
+# in the root of the project.
+(
+  ^/migrations/.*
+  | venv/.*
+  | env/.*
+)
+'''
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+exclude = [
+    "migrations",
+    "venv",
+    "env",
+    "__pycache__",
+    ".git",
+    ".tox",
+    "build",
+    "dist",
+    "*.egg-info"
+]

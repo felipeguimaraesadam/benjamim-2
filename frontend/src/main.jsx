@@ -9,9 +9,6 @@ import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { ToastContainer } from 'react-toastify'; // Import ToastContainer
 import 'react-toastify/dist/ReactToastify.css'; // Import CSS for react-toastify
 
-// Inicializa o serviço de monitoramento de erros
-import './services/errorMonitoring.js';
-
 // Log de inicialização da aplicação
 console.log('SGO Frontend iniciado:', {
   timestamp: new Date().toISOString(),

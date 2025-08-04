@@ -1,0 +1,122 @@
+{
+  "summary": {
+    "total_tests": 15,
+    "passed_tests": 0,
+    "failed_tests": 15,
+    "success_rate": 0.0,
+    "total_duration_seconds": 4.82
+  },
+  "test_results": [
+    {
+      "test_name": "Backend Server Availability",
+      "status": "FAIL",
+      "details": "Backend não respondeu adequadamente (status: 500)",
+      "duration_ms": 25.16,
+      "timestamp": "2025-07-30T20:19:00.102012"
+    },
+    {
+      "test_name": "Frontend Server Availability",
+      "status": "FAIL",
+      "details": "Erro ao conectar com frontend: HTTPConnectionPool(host='localhost', port=5173): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002383187E750>: Failed to establish a new connection: [WinError 10061] Nenhuma conexão pôde ser feita porque a máquina de destino as recusou ativamente'))",
+      "duration_ms": 4037.67,
+      "timestamp": "2025-07-30T20:19:04.139685"
+    },
+    {
+      "test_name": "Error Log - JavaScript Error",
+      "status": "FAIL",
+      "details": "Falha ao registrar log (status: 404)",
+      "duration_ms": 46.12,
+      "timestamp": "2025-07-30T20:19:04.186307"
+    },
+    {
+      "test_name": "Error Log - Network Error",
+      "status": "FAIL",
+      "details": "Falha ao registrar log (status: 404)",
+      "duration_ms": 6.01,
+      "timestamp": "2025-07-30T20:19:04.192322"
+    },
+    {
+      "test_name": "Error Log - User Action Error",
+      "status": "FAIL",
+      "details": "Falha ao registrar log (status: 404)",
+      "duration_ms": 31.0,
+      "timestamp": "2025-07-30T20:19:04.224321"
+    },
+    {
+      "test_name": "Validation - Empty Data",
+      "status": "FAIL",
+      "details": "Status inesperado: 404 (esperado: [200, 400])",
+      "duration_ms": 5.51,
+      "timestamp": "2025-07-30T20:19:04.229827"
+    },
+    {
+      "test_name": "Validation - Invalid JSON",
+      "status": "FAIL",
+      "details": "Status inesperado: 404 (esperado: [400, 500])",
+      "duration_ms": 7.51,
+      "timestamp": "2025-07-30T20:19:04.237339"
+    },
+    {
+      "test_name": "Validation - Very Large Message",
+      "status": "FAIL",
+      "details": "Status inesperado: 404 (esperado: [200, 413])",
+      "duration_ms": 5.97,
+      "timestamp": "2025-07-30T20:19:04.244308"
+    },
+    {
+      "test_name": "Validation - Special Characters",
+      "status": "FAIL",
+      "details": "Status inesperado: 404 (esperado: [200])",
+      "duration_ms": 27.73,
+      "timestamp": "2025-07-30T20:19:04.272039"
+    },
+    {
+      "test_name": "HTTP Method - GET",
+      "status": "FAIL",
+      "details": "Status inesperado: 404 (esperado: [200])",
+      "duration_ms": 6.5,
+      "timestamp": "2025-07-30T20:19:04.279545"
+    },
+    {
+      "test_name": "HTTP Method - POST",
+      "status": "FAIL",
+      "details": "Status inesperado: 404 (esperado: [200])",
+      "duration_ms": 22.6,
+      "timestamp": "2025-07-30T20:19:04.302140"
+    },
+    {
+      "test_name": "HTTP Method - PUT",
+      "status": "FAIL",
+      "details": "Status inesperado: 404 (esperado: [405])",
+      "duration_ms": 16.01,
+      "timestamp": "2025-07-30T20:19:04.318152"
+    },
+    {
+      "test_name": "HTTP Method - DELETE",
+      "status": "FAIL",
+      "details": "Status inesperado: 404 (esperado: [405])",
+      "duration_ms": 6.0,
+      "timestamp": "2025-07-30T20:19:04.324151"
+    },
+    {
+      "test_name": "HTTP Method - PATCH",
+      "status": "FAIL",
+      "details": "Status inesperado: 404 (esperado: [405])",
+      "duration_ms": 22.92,
+      "timestamp": "2025-07-30T20:19:04.348073"
+    },
+    {
+      "test_name": "Performance Stress Test",
+      "status": "FAIL",
+      "details": "Taxa de sucesso baixa: 0.0% (0/100)",
+      "duration_ms": 545.66,
+      "timestamp": "2025-07-30T20:19:04.895236"
+    }
+  ],
+  "timestamp": "2025-07-30T20:19:04.895236",
+  "environment": {
+    "backend_url": "http://127.0.0.1:8000",
+    "frontend_url": "http://localhost:5173",
+    "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]"
+  }
+}
