@@ -1389,6 +1389,7 @@ class AnexoLocacaoViewSet(viewsets.ModelViewSet):
     serializer_class = AnexoLocacaoSerializer
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         """
@@ -1408,6 +1409,7 @@ class AnexoDespesaViewSet(viewsets.ModelViewSet):
     serializer_class = AnexoDespesaSerializer
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         despesa_id = self.request.query_params.get('despesa_id')
