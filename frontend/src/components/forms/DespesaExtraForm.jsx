@@ -87,17 +87,10 @@ const DespesaExtraForm = ({
       anexos: [...e.target.files],
     }));
   };
-  };
 
   const handleSubmit = e => {
     e.preventDefault();
-    const { anexos, ...rest } = formData;
-    const dataToSubmit = {
-      ...rest,
-      valor: parseFloat(formData.valor),
-      obra: formData.obra,
-    };
-    onSubmit(dataToSubmit, anexos);
+    onSubmit(formData);
   };
 
   return (

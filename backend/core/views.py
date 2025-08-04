@@ -1,4 +1,6 @@
 from rest_framework import viewsets, status, filters, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -89,14 +91,36 @@ class ObraViewSet(viewsets.ModelViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get_queryset(self):
-        return Obra.objects.select_related('responsavel').all().order_by('id')
+        queryset = Obra.objects.select_related('responsavel').all().order_by('id')
+        
+        # Filtering based on query parameters
+        search_query = self.request.query_params.get('search', None)
+        status_query = self.request.query_params.get('status', None)
+
+        if search_query:
+            queryset = queryset.filter(nome_obra__icontains=search_query)
+
+        if status_query:
+            queryset = queryset.filter(status=status_query)
+
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def search(self, request):
+        query = request.query_params.get('q', '')
+        if not query:
+            return Response({'error': 'Query parameter "q" is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        obras = Obra.objects.filter(nome_obra__icontains=query)
+        serializer = self.get_serializer(obras, many=True)
+        return Response(serializer.data)
 
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows funcionarios to be viewed or edited.
     """
-    queryset = Funcionario.objects.all()
+    queryset = Funcionario.objects.all().order_by('id')
     serializer_class = FuncionarioSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
@@ -499,7 +523,11 @@ class DespesaExtraViewSet(viewsets.ModelViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def get_queryset(self):
-        return Despesa_Extra.objects.all().order_by('-data')
+        queryset = Despesa_Extra.objects.all().order_by('-data')
+        obra_id = self.request.query_params.get('obra_id', None)
+        if obra_id:
+            queryset = queryset.filter(obra_id=obra_id)
+        return queryset
 
     def create(self, request, *args, **kwargs):
         print("DespesaExtraViewSet: Create method called")

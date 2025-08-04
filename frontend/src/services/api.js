@@ -183,18 +183,7 @@ export const generateRelatorioPagamentoMateriais = params =>
 export const getDespesasExtras = params =>
   apiClient.get('/despesas/', { params });
 export const getDespesaExtraById = id => apiClient.get(`/despesas/${id}/`);
-export const createDespesaExtra = (despesaData, anexos) => {
-  const formData = new FormData();
-  for (const key in despesaData) {
-    if (despesaData[key] !== null && despesaData[key] !== undefined) {
-      formData.append(key, despesaData[key]);
-    }
-  }
-  if (anexos) {
-    anexos.forEach(anexo => {
-      formData.append('anexos', anexo);
-    });
-  }
+export const createDespesaExtra = formData => {
   return apiClient.post('/despesas/', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -202,18 +191,7 @@ export const createDespesaExtra = (despesaData, anexos) => {
   });
 };
 
-export const updateDespesaExtra = (id, despesaData, anexos) => {
-  const formData = new FormData();
-  for (const key in despesaData) {
-    if (despesaData[key] !== null && despesaData[key] !== undefined) {
-      formData.append(key, despesaData[key]);
-    }
-  }
-  if (anexos) {
-    anexos.forEach(anexo => {
-      formData.append('anexos', anexo);
-    });
-  }
+export const updateDespesaExtra = (id, formData) => {
   return apiClient.put(`/despesas/${id}/`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',

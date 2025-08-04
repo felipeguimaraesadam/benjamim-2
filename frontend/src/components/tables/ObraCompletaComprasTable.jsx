@@ -127,19 +127,26 @@ ObraCompletaComprasTable.propTypes = {
   compras: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,
-      data_compra: PropTypes.string.isRequired,
-      material_nome: PropTypes.string,
-      quantidade: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-        .isRequired,
-      valor_unitario: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      custo_total: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-        .isRequired,
+      data_compra: PropTypes.string,
       fornecedor: PropTypes.string,
       nota_fiscal: PropTypes.string,
-
-      material_unidade_medida: PropTypes.string, // Assuming this comes from CompraSerializer
+      itens: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.number.isRequired,
+          material_nome: PropTypes.string,
+          quantidade: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+          valor_unitario: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.number,
+          ]),
+          valor_total_item: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.number,
+          ]),
+        })
+      ),
     })
-  ).isRequired,
+  ),
   isLoading: PropTypes.bool,
   error: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
 };

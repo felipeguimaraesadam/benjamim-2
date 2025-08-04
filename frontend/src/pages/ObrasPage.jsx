@@ -45,6 +45,11 @@ const ObrasPage = () => {
     status: '',
   });
 
+  const handleFilterChange = e => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
   const fetchObras = useCallback(
     async (page = 1) => {
       setIsLoading(true);
@@ -74,8 +79,8 @@ const ObrasPage = () => {
   );
 
   useEffect(() => {
-    fetchObras(currentPage);
-  }, [currentPage, fetchObras]);
+    fetchObras(1); // Reset to page 1 on filter change
+  }, [filters, fetchObras]);
 
   // useEffect to fetch dashboard summary data (removed)
   // useEffect(() => {
@@ -232,7 +237,7 @@ const ObrasPage = () => {
               id="status-filter"
               name="status"
               value={filters.status}
-              onChange={e => setFilters({ ...filters, status: e.target.value })}
+              onChange={handleFilterChange}
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
             >
               <option value="">Todos</option>
@@ -246,14 +251,15 @@ const ObrasPage = () => {
             </label>
             <Autocomplete
               fetchSuggestions={async query => {
+                if (!query) return [];
                 const response = await searchObras(query);
                 return response.data.map(obra => ({
-                  value: obra.nome_obra,
+                  value: obra.nome_obra, // Filter by name
                   label: obra.nome_obra,
                 }));
               }}
               onSelect={selection =>
-                setFilters({ ...filters, nome: selection ? selection.label : '' })
+                setFilters({ ...filters, nome: selection ? selection.value : '' })
               }
               onClear={() => setFilters({ ...filters, nome: '' })}
               placeholder="Digite para buscar uma obra..."

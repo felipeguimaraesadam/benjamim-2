@@ -73,9 +73,12 @@ const DespesasExtrasPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchDespesasExtras(currentPage);
+    fetchDespesasExtras(1); // Reset to page 1 on filter change
+  }, [filters, fetchDespesasExtras]);
+
+  useEffect(() => {
     fetchObrasForForm(); // Obras list for form, fetched once or as needed
-  }, [currentPage, fetchDespesasExtras, fetchObrasForForm]);
+  }, [fetchObrasForForm]);
 
   const handlePageChange = newPage => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -122,22 +125,26 @@ const DespesasExtrasPage = () => {
     }
   };
 
-  const handleFormSubmit = async (formData, anexos) => {
+  const handleFormSubmit = async (formData) => {
     setIsLoadingForm(true);
     setError(null); // Clear previous modal errors
     const isEditing = currentDespesa && currentDespesa.id;
 
     const data = new FormData();
-    Object.keys(formData).forEach(key => {
-        if (formData[key] !== null && formData[key] !== undefined) {
-            data.append(key, formData[key]);
-        }
-    });
 
-    if (anexos && anexos.length > 0) {
-        anexos.forEach(anexo => {
-            data.append('anexos', anexo);
-        });
+    // Append all form fields to FormData
+    for (const key in formData) {
+      if (key === 'anexos') {
+        // Handle files array for 'anexos'
+        if (formData.anexos && formData.anexos.length > 0) {
+          for (let i = 0; i < formData.anexos.length; i++) {
+            data.append('anexos', formData.anexos[i]);
+          }
+        }
+      } else if (formData[key] !== null && formData[key] !== undefined) {
+        // Append other fields
+        data.append(key, formData[key]);
+      }
     }
 
     try {
@@ -189,6 +196,30 @@ const DespesasExtrasPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
+      <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="obra-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Filtrar por Obra
+            </label>
+            <Autocomplete
+              fetchSuggestions={async (query) => {
+                if (!query) return [];
+                const response = await api.searchObras(query);
+                return response.data.map((obra) => ({
+                  value: obra.id,
+                  label: obra.nome_obra,
+                }));
+              }}
+              onSelect={(selection) =>
+                setFilters({ ...filters, obra_id: selection ? selection.value : '' })
+              }
+              onClear={() => setFilters({ ...filters, obra_id: '' })}
+              placeholder="Digite para buscar uma obra..."
+            />
+          </div>
+        </div>
+      </div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">
           Gestão de Despesas Extras
@@ -221,29 +252,7 @@ const DespesasExtrasPage = () => {
         </div>
       )}
 
-      <div className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label htmlFor="obra-filter" className="block text-sm font-medium text-gray-700">
-              Filtrar por Obra
-            </label>
-            <Autocomplete
-              fetchSuggestions={async query => {
-                const response = await api.searchObras(query);
-                return response.data.map(obra => ({
-                  value: obra.id,
-                  label: obra.nome_obra,
-                }));
-              }}
-              onSelect={selection =>
-                setFilters({ ...filters, obra_id: selection ? selection.value : '' })
-              }
-              onClear={() => setFilters({ ...filters, obra_id: '' })}
-              placeholder="Digite para buscar uma obra..."
-            />
-          </div>
-        </div>
-      </div>
+
 
       {(!isLoading || despesas.length > 0) && !error && (
         <>
