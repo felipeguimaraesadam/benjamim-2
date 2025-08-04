@@ -4,6 +4,7 @@ from ..views import (
     CreateUsuarioView, UsuarioViewSet, FuncionarioViewSet, EquipeViewSet,
     LocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
     DespesaExtraViewSet, OcorrenciaFuncionarioViewSet, FotoObraViewSet,
+    AnexoLocacaoViewSet, AnexoDespesaViewSet,
     DashboardStatsView, FuncionarioDetailView, EquipeDetailView,
     MaterialDetailAPIView, LocacaoSemanalView,
     RecursosMaisUtilizadosSemanaView, BackupViewSet, BackupSettingsViewSet
@@ -18,6 +19,8 @@ router.register(r'materiais', MaterialViewSet)
 router.register(r'compras', CompraViewSet, basename='compra')
 router.register(r'despesas', DespesaExtraViewSet, basename='despesaextra')
 router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
+router.register(r'anexos-locacao', AnexoLocacaoViewSet)
+router.register(r'anexos-despesa', AnexoDespesaViewSet)
 router.register(r'backups', BackupViewSet)
 router.register(r'backup-settings', BackupSettingsViewSet)
 router.register(r'fotosobras', FotoObraViewSet, basename='foto-obra')

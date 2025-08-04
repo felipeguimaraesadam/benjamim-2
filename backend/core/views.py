@@ -1402,10 +1402,6 @@ class AnexoLocacaoViewSet(viewsets.ModelViewSet):
             return self.queryset.none()  # Return none if no locacao_id for list
         return self.queryset.all()  # For detail views, return all
 
-    def destroy(self, request, *args, **kwargs):
-        print("--- AnexoLocacaoViewSet: destroy method called ---")
-        return super().destroy(request, *args, **kwargs)
-
 @method_decorator(csrf_exempt, name='dispatch')
 class AnexoDespesaViewSet(viewsets.ModelViewSet):
     queryset = AnexoDespesa.objects.all()
@@ -1418,10 +1414,6 @@ class AnexoDespesaViewSet(viewsets.ModelViewSet):
         if despesa_id:
             return self.queryset.filter(despesa_id=despesa_id)
         return self.queryset.none()
-
-    def destroy(self, request, *args, **kwargs):
-        print("--- AnexoDespesaViewSet: destroy method called ---")
-        return super().destroy(request, *args, **kwargs)
 
 class GerarRelatorioPagamentoLocacoesPDFView(APIView):
     permission_classes = [IsNivelAdmin | IsNivelGerente]

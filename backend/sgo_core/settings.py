@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
     'core.apps.CoreConfig', # or simply 'core' if CoreConfig is standard
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
