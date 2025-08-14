@@ -612,7 +612,7 @@ const LocacoesPage = () => {
                 formatter={formatTooltipValue}
               />
               <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              <Bar dataKey="total_cost" name="Custo Total Diário">
+              <Bar dataKey="total_cost" name="Custo Total Diário" minPointSize={5}>
                 {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
