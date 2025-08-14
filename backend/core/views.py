@@ -962,37 +962,58 @@ class RelatorioFolhaPagamentoViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='pre_check_dias_sem_locacoes')
     def pre_check_dias_sem_locacoes(self, request):
         start_date_str = request.query_params.get('start_date')
-        end_date_str = request.query_params.get('end_date') # type: ignore
-        if not start_date_str or not end_date_str: return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
+        end_date_str = request.query_params.get('end_date')
+        if not start_date_str or not end_date_str:
+            return Response({"error": "Parâmetros start_date e end_date são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            start_date = date.fromisoformat(start_date_str) # type: ignore
-            end_date = date.fromisoformat(end_date_str) # type: ignore
-        except ValueError: return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-        if start_date > end_date: return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST) # type: ignore
-        all_dates_in_range = set()
-        current_date = start_date
-        while current_date <= end_date:
-            all_dates_in_range.add(current_date)
-            current_date += timedelta(days=1)
-        locacoes_dates_qs = Locacao_Obras_Equipes.objects.filter(data_locacao_inicio__gte=start_date, data_locacao_inicio__lte=end_date, status_locacao='ativa').values_list('data_locacao_inicio', flat=True).distinct() # type: ignore
-        locacoes_dates_set = set(locacoes_dates_qs) # type: ignore
-        dias_sem_locacoes = sorted([dt.isoformat() for dt in (all_dates_in_range - locacoes_dates_set)]) # type: ignore
-        medicoes_pendentes_qs = Locacao_Obras_Equipes.objects.filter( # type: ignore
-            Q(data_locacao_inicio__gte=start_date) & Q(data_locacao_inicio__lte=end_date) & # type: ignore
-            Q(status_locacao='ativa') & (Q(valor_pagamento__isnull=True) | Q(valor_pagamento=Decimal('0.00'))) # type: ignore
-        ).select_related('obra', 'funcionario_locado', 'equipe') # type: ignore
+            start_date = date.fromisoformat(start_date_str)
+            end_date = date.fromisoformat(end_date_str)
+        except ValueError:
+            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+        if start_date > end_date:
+            return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
+
+        all_dates_in_range = {start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)}
+
+        # Correctly filter for multi-day rentals that overlap with the selected period
+        locacoes_no_periodo = Locacao_Obras_Equipes.objects.filter(
+            data_locacao_inicio__lte=end_date,
+            data_locacao_fim__gte=start_date,
+            status_locacao='ativa'
+        )
+
+        locacoes_dates_set = set()
+        for locacao in locacoes_no_periodo:
+            # Iterate from the rental's start date to its end date
+            current_loc_date = locacao.data_locacao_inicio
+            while current_loc_date <= locacao.data_locacao_fim:
+                # Add the date to the set if it's within the report's range
+                if start_date <= current_loc_date <= end_date:
+                    locacoes_dates_set.add(current_loc_date)
+                current_loc_date += timedelta(days=1)
+
+        dias_sem_locacoes = sorted([dt.isoformat() for dt in (all_dates_in_range - locacoes_dates_set)])
+
+        # The logic for medicoes_pendentes should also consider overlapping rentals
+        medicoes_pendentes_qs = Locacao_Obras_Equipes.objects.filter(
+            Q(data_locacao_inicio__lte=end_date) & Q(data_locacao_fim__gte=start_date) &
+            Q(status_locacao='ativa') &
+            (Q(valor_pagamento__isnull=True) | Q(valor_pagamento=Decimal('0.00')))
+        ).select_related('obra', 'funcionario_locado', 'equipe').distinct()
+
         medicoes_pendentes_list = []
-        for loc in medicoes_pendentes_qs: # type: ignore
-            recurso_locado_str = get_recurso_nome_folha(loc) # type: ignore
-            medicoes_pendentes_list.append({ # type: ignore
-                'locacao_id': loc.id, # type: ignore
-                'obra_nome': loc.obra.nome_obra if loc.obra else "Obra não especificada", # type: ignore
+        for loc in medicoes_pendentes_qs:
+            recurso_locado_str = get_recurso_nome_folha(loc)
+            medicoes_pendentes_list.append({
+                'locacao_id': loc.id,
+                'obra_nome': loc.obra.nome_obra if loc.obra else "Obra não especificada",
                 'recurso_locado': recurso_locado_str,
-                'data_inicio': loc.data_locacao_inicio.isoformat(), # type: ignore
-                'tipo_pagamento': loc.get_tipo_pagamento_display(), # type: ignore
-                'valor_pagamento': loc.valor_pagamento # type: ignore
+                'data_inicio': loc.data_locacao_inicio.isoformat(),
+                'tipo_pagamento': loc.get_tipo_pagamento_display(),
+                'valor_pagamento': loc.valor_pagamento
             })
-        return Response({'dias_sem_locacoes': dias_sem_locacoes, 'medicoes_pendentes': medicoes_pendentes_list}) # type: ignore
+
+        return Response({'dias_sem_locacoes': dias_sem_locacoes, 'medicoes_pendentes': medicoes_pendentes_list})
 
     @action(detail=False, methods=['get'], url_path='generate_report')
     def generate_report(self, request): # This is for CSV / original structure
