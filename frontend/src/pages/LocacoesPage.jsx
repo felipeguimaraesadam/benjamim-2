@@ -495,17 +495,25 @@ const LocacoesPage = () => {
           <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
             Planejamento Semanal de Locações
           </h2>
-          <div className="w-1/3">
-            <ObraAutocomplete
-              value={selectedObra}
-              onObraSelect={obra => {
-                setSelectedObra(obra);
-                if (currentPage !== 1) {
-                  setCurrentPage(1);
-                }
-              }}
-              placeholder="Filtrar por obra..."
-            />
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleOpenReportModal}
+              className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300 dark:focus:ring-green-400"
+            >
+              Relatório de Pagamento
+            </button>
+            <div className="w-96">
+              <ObraAutocomplete
+                value={selectedObra}
+                onObraSelect={obra => {
+                  setSelectedObra(obra);
+                  if (currentPage !== 1) {
+                    setCurrentPage(1);
+                  }
+                }}
+                placeholder="Filtrar por obra..."
+              />
+            </div>
           </div>
         </div>
         <div className="flex-grow">
@@ -628,59 +636,6 @@ const LocacoesPage = () => {
         </div>
       </div>
 
-      {/* Seção da Tabela de Locações (Pode ser removida ou mantida conforme necessidade) */}
-      {/* O título e botões abaixo são da listagem antiga, mantidos por enquanto */}
-      <div className="flex justify-between items-center mb-6 mt-12">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-          Listagem Detalhada de Locações
-        </h1>
-        <div>
-          <button
-            onClick={handleOpenReportModal}
-            className="mr-3 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-green-300 dark:focus:ring-green-400"
-          >
-            Relatório de Pagamento
-          </button>
-          <button
-            onClick={handleAddNew}
-            className="bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-400 disabled:bg-primary-300 dark:disabled:bg-primary-700"
-          >
-            Nova Locação (Lista)
-          </button>
-        </div>
-      </div>
-
-      {error &&
-        !isLoading &&
-        !showFormModal &&
-        !showDeleteConfirm &&
-        locacoes.length === 0 && (
-          <div
-            className="bg-red-100 dark:bg-red-900 border-l-4 border-red-500 dark:border-red-400 text-red-700 dark:text-red-200 p-4 my-4 text-center"
-            role="alert"
-          >
-            <p className="font-bold">Falha ao Carregar Dados</p>
-            <p>{error}</p>
-          </div>
-        )}
-
-      <LocacoesTable
-        locacoes={locacoes}
-        obras={obras}
-        equipes={equipes}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onViewDetails={handleViewDetails}
-        isLoading={isLoading && locacoes.length === 0}
-      />
-
-      <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        totalItems={totalItems}
-        itemsPerPage={PAGE_SIZE}
-      />
 
       {selectedLocacaoId && (
         <LocacaoDetailModal

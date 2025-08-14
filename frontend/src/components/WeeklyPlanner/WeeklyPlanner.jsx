@@ -69,6 +69,8 @@ function WeeklyPlanner({ selectedObra }) {
   }, [locale, weekStartsOn]);
 
   const [obras, setObras] = useState([]);
+  const [equipes, setEquipes] = useState([]);
+
 
   useEffect(() => {
     const fetchObras = async () => {
@@ -79,7 +81,16 @@ function WeeklyPlanner({ selectedObra }) {
             console.error('Erro ao buscar obras:', error);
         }
     };
+    const fetchEquipes = async () => {
+      try {
+        const response = await api.getEquipes({ page_size: 500 });
+        setEquipes(response.data?.results || []);
+      } catch (error) {
+        console.error('Erro ao buscar equipes:', error);
+      }
+    };
     fetchObras();
+    fetchEquipes();
   }, []);
 
   useEffect(() => {
@@ -499,6 +510,7 @@ function WeeklyPlanner({ selectedObra }) {
               <LocacaoForm
                 initialData={locacaoFormInitialData}
                 obras={obras}
+                equipes={equipes}
                 onSubmit={handleActualFormSubmit}
                 onCancel={handleCloseLocacaoForm}
                 isLoading={isLoading}
