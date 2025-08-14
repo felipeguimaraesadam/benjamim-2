@@ -134,10 +134,10 @@ const FuncionarioDetailPage = () => {
         </div>
       </div>
 
-      {/* Obras Participadas */}
+      {/* Obras Participadas com Informações de Pagamento */}
       <div className="bg-white shadow rounded-lg p-6 mb-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
-          Obras Participadas
+          Obras Participadas e Pagamentos
         </h2>
         {funcionarioDetails.obras_participadas &&
         funcionarioDetails.obras_participadas.length > 0 ? (
@@ -154,82 +154,87 @@ const FuncionarioDetailPage = () => {
                   <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">
                     Fim da Locação
                   </th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">
+                    Tipo Pagamento
+                  </th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">
+                    Valor Pago
+                  </th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody className="text-gray-700">
-                {funcionarioDetails.obras_participadas.map(obra => (
-                  <tr
-                    key={obra.id}
-                    className="border-b border-gray-200 hover:bg-gray-50"
-                  >
-                    <td className="py-3 px-4">
-                      <Link
-                        to={`/obras/${obra.obra_id}`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                      >
-                        {obra.nome_obra || 'Nome não disponível'}
-                      </Link>
-                    </td>
-                    <td className="py-3 px-4">
-                      {formatDateToDMY(obra.data_locacao_inicio)}
-                    </td>
-                    <td className="py-3 px-4">
-                      {formatDateToDMY(obra.data_locacao_fim)}
-                    </td>
-                  </tr>
-                ))}
+                {funcionarioDetails.obras_participadas.map(obra => {
+                  // Buscar pagamento correspondente para esta obra
+                  const pagamento = funcionarioDetails.pagamentos_recebidos?.find(
+                    p => p.obra_nome === obra.nome_obra
+                  );
+                  
+                  return (
+                    <tr
+                      key={obra.id}
+                      className="border-b border-gray-200 hover:bg-gray-50"
+                    >
+                      <td className="py-3 px-4">
+                        <Link
+                          to={`/obras/${obra.obra_id}`}
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          {obra.nome_obra || 'Nome não disponível'}
+                        </Link>
+                      </td>
+                      <td className="py-3 px-4">
+                        {formatDateToDMY(obra.data_locacao_inicio)}
+                      </td>
+                      <td className="py-3 px-4">
+                        {formatDateToDMY(obra.data_locacao_fim)}
+                      </td>
+                      <td className="py-3 px-4">
+                        {obra.tipo_pagamento ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {obra.tipo_pagamento === 'diaria' ? 'Por Diária' : 
+                             obra.tipo_pagamento === 'metro' ? 'Por Metro' : 
+                             obra.tipo_pagamento === 'empreitada' ? 'Por Empreitada' : 
+                             obra.tipo_pagamento}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {obra.valor_pagamento ? (
+                          <span className="font-medium text-green-600">
+                            {formatCurrency(obra.valor_pagamento)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {pagamento ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Pago em {formatDateToDMY(pagamento.data_pagamento)}
+                          </span>
+                        ) : obra.valor_pagamento ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Considerado Pago
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            Sem Pagamento
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         ) : (
           <p className="text-gray-600">Nenhuma obra encontrada.</p>
-        )}
-      </div>
-
-      {/* Histórico de Pagamentos */}
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
-          Histórico de Pagamentos
-        </h2>
-        {funcionarioDetails.pagamentos_recebidos &&
-        funcionarioDetails.pagamentos_recebidos.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">
-                    Obra
-                  </th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">
-                    Data de Pagamento
-                  </th>
-                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">
-                    Valor Pago
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-700">
-                {funcionarioDetails.pagamentos_recebidos.map(pagamento => (
-                  <tr
-                    key={pagamento.id}
-                    className="border-b border-gray-200 hover:bg-gray-50"
-                  >
-                    <td className="py-3 px-4">
-                      {pagamento.obra_nome || 'Não especificado'}
-                    </td>
-                    <td className="py-3 px-4">
-                      {formatDateToDMY(pagamento.data_pagamento)}
-                    </td>
-                    <td className="py-3 px-4">
-                      {formatCurrency(pagamento.valor_pagamento)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-600">Nenhum pagamento encontrado.</p>
         )}
       </div>
 

@@ -488,10 +488,13 @@ class FuncionarioObraParticipadaSerializer(serializers.ModelSerializer):
     nome_obra = serializers.CharField(source='obra.nome_obra', read_only=True)
     data_locacao_inicio = serializers.DateField()
     data_locacao_fim = serializers.DateField()
+    tipo_pagamento = serializers.CharField(read_only=True)
+    valor_pagamento = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    data_pagamento = serializers.DateField(read_only=True)
 
     class Meta:
         model = Locacao_Obras_Equipes
-        fields = ['id', 'nome_obra', 'data_locacao_inicio', 'data_locacao_fim']
+        fields = ['id', 'nome_obra', 'data_locacao_inicio', 'data_locacao_fim', 'tipo_pagamento', 'valor_pagamento', 'data_pagamento']
 
 
 # New Serializer for Pagamentos Recebidos by Funcionario
@@ -542,10 +545,13 @@ class FuncionarioDetailSerializer(FuncionarioSerializer): # Inherits from Funcio
 # Serializer for Locações within EquipeDetailSerializer
 class EquipeLocacaoSerializer(serializers.ModelSerializer):
     obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)
+    tipo_pagamento = serializers.CharField(read_only=True)
+    valor_pagamento = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    data_pagamento = serializers.DateField(read_only=True)
 
     class Meta:
         model = Locacao_Obras_Equipes
-        fields = ['id', 'obra_nome', 'data_locacao_inicio', 'data_locacao_fim', 'status_locacao']
+        fields = ['id', 'obra_nome', 'data_locacao_inicio', 'data_locacao_fim', 'status_locacao', 'tipo_pagamento', 'valor_pagamento', 'data_pagamento']
 
 
 # EquipeDetailSerializer

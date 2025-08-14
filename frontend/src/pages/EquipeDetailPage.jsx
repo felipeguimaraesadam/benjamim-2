@@ -174,6 +174,12 @@ const EquipeDetailPage = () => {
                     Fim da Locação
                   </th>
                   <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">
+                    Tipo Pagamento
+                  </th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">
+                    Valor Pago
+                  </th>
+                  <th className="text-left py-3 px-4 font-semibold text-sm text-gray-600 uppercase tracking-wider">
                     Status
                   </th>
                 </tr>
@@ -201,19 +207,41 @@ const EquipeDetailPage = () => {
                       {formatDateToDMY(locacao.data_locacao_fim)}
                     </td>
                     <td className="py-3 px-4">
+                      {locacao.tipo_pagamento ? (
+                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                          {locacao.tipo_pagamento.charAt(0).toUpperCase() + locacao.tipo_pagamento.slice(1)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">-</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      {locacao.valor_pagamento ? (
+                        <span className="font-medium text-green-600">
+                          R$ {parseFloat(locacao.valor_pagamento).toLocaleString('pt-BR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">-</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
                       <span
                         className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          locacao.status_locacao === 'ativa'
+                          locacao.data_pagamento
                             ? 'bg-green-100 text-green-800'
-                            : locacao.status_locacao === 'cancelada'
-                              ? 'bg-red-100 text-red-800'
+                            : locacao.valor_pagamento
+                              ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        {locacao.status_locacao
-                          ? locacao.status_locacao.charAt(0).toUpperCase() +
-                            locacao.status_locacao.slice(1)
-                          : 'N/A'}
+                        {locacao.data_pagamento
+                          ? 'Pago'
+                          : locacao.valor_pagamento
+                            ? 'Considerado Pago'
+                            : 'Sem Pagamento'}
                       </span>
                     </td>
                   </tr>

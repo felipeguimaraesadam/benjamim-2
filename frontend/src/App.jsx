@@ -10,8 +10,11 @@ import LoginPage from './pages/LoginPage';
 import ObrasPage from './pages/ObrasPage';
 import ObraDetailPage from './pages/ObraDetailPage';
 import FuncionariosPage from './pages/FuncionariosPage';
+import FuncionarioDetailPage from './pages/FuncionarioDetailPage';
 import EquipesPage from './pages/EquipesPage';
+import EquipeDetailPage from './pages/EquipeDetailPage';
 import MateriaisPage from './pages/MateriaisPage';
+import MaterialDetailPage from './pages/MaterialDetailPage';
 import LocacoesPage from './pages/LocacoesPage';
 import ComprasPage from './pages/ComprasPage';
 import DespesasExtrasPage from './pages/DespesasExtrasPage';
@@ -43,9 +46,18 @@ function App() {
             <Route index element={<ObrasPage />} />
             <Route path=":id" element={<ObraDetailPage />} />
           </Route>
-          <Route path="funcionarios" element={<FuncionariosPage />} />
-          <Route path="equipes" element={<EquipesPage />} />
-          <Route path="materiais" element={<MateriaisPage />} />
+          <Route path="funcionarios">
+            <Route index element={<FuncionariosPage />} />
+            <Route path=":id" element={<FuncionarioDetailPage />} />
+          </Route>
+          <Route path="equipes">
+            <Route index element={<EquipesPage />} />
+            <Route path=":id" element={<EquipeDetailPage />} />
+          </Route>
+          <Route path="materiais">
+            <Route index element={<MateriaisPage />} />
+            <Route path=":id" element={<MaterialDetailPage />} />
+          </Route>
           <Route path="locacoes" element={<LocacoesPage />} />
           <Route path="compras" element={<ComprasPage />} />
           <Route path="despesas" element={<DespesasExtrasPage />} />

@@ -97,7 +97,7 @@ const Navegacao = () => {
         </div>
 
         <nav className="flex-grow space-y-1 overflow-y-auto">
-          <NavLink to="/" icon={<DashboardIcon />} onClick={closeMobileMenu}>Dashboard</NavLink>
+          <NavLink to="/" icon={<DashboardIcon />} onClick={closeMobileMenu}>Gerenciamento</NavLink>
           <NavLink to="/obras" icon={<BuildingIcon />} onClick={closeMobileMenu}>Obras</NavLink>
 
           <NavGroupHeader title="Cadastros" />

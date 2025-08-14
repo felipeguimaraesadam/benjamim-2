@@ -1,81 +1,60 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom'; // Import Link
+import { Link } from 'react-router-dom';
+import {
+  Building2,
+  Users,
+  DollarSign,
+  BarChart3,
+  FileText,
+  Package,
+  Calendar,
+  AlertTriangle,
+  TrendingUp,
+  Activity,
+  Clock,
+  CheckCircle
+} from 'lucide-react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  Area,
+  AreaChart
+} from 'recharts';
 import * as api from '../services/api';
+import fundoImage from '../assets/fundo.jpg';
 
-// Placeholder SVG Icons
-const BuildingIcon = ({ className = 'w-8 h-8 text-primary-500 mb-3' }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-    ></path>
-  </svg>
-);
+// Cores para os gráficos seguindo o design system
+const COLORS = {
+  primary: '#2563eb',
+  secondary: '#16a34a',
+  accent: '#ea580c',
+  warning: '#f59e0b',
+  danger: '#dc2626',
+  gray: '#64748b'
+};
 
-const MoneyIcon = ({ className = 'w-8 h-8 text-primary-500 mb-3' }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-    ></path>
-  </svg>
-);
-
-const UsersIcon = ({ className = 'w-8 h-8 text-primary-500 mb-3' }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 016-6h6a6 6 0 016 6v1h-3M15 21a2 2 0 002-2v-1a2 2 0 00-2-2h-3a2 2 0 00-2 2v1a2 2 0 002 2h3zm-3-14a2 2 0 012-2h3a2 2 0 012 2v2a2 2 0 01-2 2h-3a2 2 0 01-2-2v-2z"
-    ></path>
-  </svg>
-);
-
-// Icon for Relatórios (ChartBarIcon or similar)
-const ChartBarIcon = ({ className = 'w-7 h-7 mr-3 text-primary-500' }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-    ></path>
-  </svg>
-);
+const CHART_COLORS = [COLORS.primary, COLORS.secondary, COLORS.accent, COLORS.warning];
 
 const DashboardPage = () => {
   const [stats, setStats] = useState(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [errorStats, setErrorStats] = useState(null);
+  const [ocorrencias, setOcorrencias] = useState([]);
+  const [isLoadingOcorrencias, setIsLoadingOcorrencias] = useState(true);
+  const [chartData, setChartData] = useState({
+    custos: [],
+    atividade: []
+  });
 
   const fetchStats = useCallback(async () => {
     setIsLoadingStats(true);
@@ -83,6 +62,9 @@ const DashboardPage = () => {
     try {
       const response = await api.getDashboardStats();
       setStats(response.data);
+      
+      // Buscar dados reais de custos por categoria
+      await fetchRealChartData(response.data);
     } catch (err) {
       setErrorStats(
         err.message || 'Falha ao buscar estatísticas do dashboard.'
@@ -93,129 +75,594 @@ const DashboardPage = () => {
     }
   }, []);
 
+  const fetchRealChartData = useCallback(async (statsData) => {
+    try {
+      // Buscar dados reais de custos gerais do mês corrente
+      const currentDate = new Date();
+      const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      
+      const custosResponse = await api.apiClient.get('/relatorios/custo-geral/', {
+        params: {
+          data_inicio: firstDayOfMonth.toISOString().split('T')[0],
+          data_fim: lastDayOfMonth.toISOString().split('T')[0]
+        }
+      });
+
+      // Buscar dados de atividade semanal (última semana)
+      const lastWeekStart = new Date();
+      lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+      
+      const atividadeResponse = await api.apiClient.get('/analytics/recursos-semana/', {
+        params: {
+          inicio: lastWeekStart.toISOString().split('T')[0]
+        }
+      });
+
+      // Processar dados de custos reais
+      const custosData = custosResponse.data;
+      const custosChart = [];
+      
+      if (custosData.total_compras > 0) {
+        custosChart.push({
+          name: 'Compras',
+          value: parseFloat(custosData.total_compras),
+          color: COLORS.primary
+        });
+      }
+      
+      if (custosData.total_despesas_extras > 0) {
+        custosChart.push({
+          name: 'Despesas Extras',
+          value: parseFloat(custosData.total_despesas_extras),
+          color: COLORS.secondary
+        });
+      }
+
+      // Se não há dados de custos, usar dados básicos do dashboard
+      if (custosChart.length === 0 && statsData.custo_total_mes_corrente > 0) {
+        custosChart.push({
+          name: 'Custos Gerais',
+          value: parseFloat(statsData.custo_total_mes_corrente),
+          color: COLORS.primary
+        });
+      }
+
+      // Processar dados de atividade semanal
+      const atividadeData = atividadeResponse.data || [];
+      const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+      const atividadeChart = [];
+
+      // Criar dados de atividade por dia da semana
+      for (let i = 0; i < 7; i++) {
+        const dia = new Date(lastWeekStart);
+        dia.setDate(dia.getDate() + i);
+        const diaSemana = diasSemana[dia.getDay()];
+        const dataFormatada = dia.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        
+        // Contar funcionários e equipes ativos neste dia
+        let funcionarios = 0;
+        let equipes = 0;
+        
+        atividadeData.forEach(recurso => {
+          if (recurso.recurso_nome.includes('Funcionário')) {
+            funcionarios += Math.ceil(recurso.ocorrencias / 7); // Distribuir ao longo da semana
+          } else if (recurso.recurso_nome.includes('Equipe')) {
+            equipes += Math.ceil(recurso.ocorrencias / 7);
+          }
+        });
+        
+        atividadeChart.push({
+          dia: `${diaSemana}\n${dataFormatada}`,
+          funcionarios: funcionarios || 0, // Não usar dados falsos se não há dados reais
+          equipes: equipes || 0
+        });
+      }
+
+      setChartData({
+        custos: custosChart,
+        atividade: atividadeChart
+      });
+    } catch (err) {
+      console.error('Erro ao buscar dados dos gráficos:', err);
+      // Fallback para dados básicos se houver erro
+      const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+      const lastWeekStart = new Date();
+      lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+      
+      const atividadeFallback = [];
+      for (let i = 0; i < 7; i++) {
+        const dia = new Date(lastWeekStart);
+        dia.setDate(dia.getDate() + i);
+        const diaSemana = diasSemana[dia.getDay()];
+        const dataFormatada = dia.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        
+        atividadeFallback.push({
+          dia: `${diaSemana}\n${dataFormatada}`,
+          funcionarios: 0,
+          equipes: 0
+        });
+      }
+      
+      setChartData({
+        custos: statsData.custo_total_mes_corrente > 0 ? [{
+          name: 'Custos Totais',
+          value: parseFloat(statsData.custo_total_mes_corrente),
+          color: COLORS.primary
+        }] : [],
+        atividade: atividadeFallback
+      });
+    }
+  }, []);
+
+  const fetchOcorrencias = useCallback(async () => {
+    setIsLoadingOcorrencias(true);
+    try {
+      const response = await api.getOcorrencias({
+        ordering: '-data',
+        limit: 10
+      });
+      
+      let ocorrenciasData = response.data.results || response.data || [];
+      
+      // Filtrar ocorrências dos últimos 30 dias no frontend se necessário
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const thirtyDaysAgoTime = thirtyDaysAgo.getTime();
+      
+      ocorrenciasData = ocorrenciasData.filter(ocorrencia => {
+        if (!ocorrencia.data) return true; // Incluir ocorrências sem data
+        const ocorrenciaDate = new Date(ocorrencia.data);
+        return ocorrenciaDate.getTime() >= thirtyDaysAgoTime;
+      }).slice(0, 5); // Limitar a 5 mais recentes
+      
+      // Buscar detalhes adicionais se necessário
+      const ocorrenciasEnriquecidas = await Promise.all(
+        ocorrenciasData.map(async (ocorrencia) => {
+          try {
+            // Buscar detalhes da obra se tiver obra_id
+            if (ocorrencia.obra && !ocorrencia.obra_nome) {
+              try {
+                const obraResponse = await api.getObraById(ocorrencia.obra);
+                ocorrencia.obra_nome = obraResponse.data.nome_obra;
+              } catch (obraErr) {
+                console.warn('Erro ao buscar obra:', obraErr);
+              }
+            }
+            
+            // Buscar detalhes do funcionário se tiver funcionario_id
+            if (ocorrencia.funcionario && !ocorrencia.funcionario_nome) {
+              try {
+                const funcionarioResponse = await api.getFuncionarioById(ocorrencia.funcionario);
+                ocorrencia.funcionario_nome = funcionarioResponse.data.nome_completo || funcionarioResponse.data.nome;
+              } catch (funcErr) {
+                console.warn('Erro ao buscar funcionário:', funcErr);
+              }
+            }
+            
+            return ocorrencia;
+          } catch (err) {
+            console.warn('Erro ao buscar detalhes da ocorrência:', err);
+            return ocorrencia;
+          }
+        })
+      );
+      
+      setOcorrencias(ocorrenciasEnriquecidas);
+    } catch (err) {
+      console.error('Erro ao buscar ocorrências:', err);
+      setOcorrencias([]);
+    } finally {
+      setIsLoadingOcorrencias(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
+    fetchOcorrencias();
+  }, [fetchStats, fetchOcorrencias]);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+          <p className="text-gray-900 dark:text-gray-100 font-medium">{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {entry.value}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  if (isLoadingStats) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Activity className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400 text-lg">Carregando estatísticas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorStats) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-6 py-4 rounded-lg max-w-md">
+          <div className="flex items-center">
+            <AlertTriangle className="w-5 h-5 mr-2" />
+            <strong className="font-bold">Erro ao carregar estatísticas</strong>
+          </div>
+          <p className="mt-2">{errorStats}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6">
-        Dashboard
-      </h1>
-
-      {isLoadingStats && (
-        <p className="text-center text-gray-600 dark:text-gray-400">
-          Carregando estatísticas...
-        </p>
-      )}
-      {errorStats && (
-        <div
-          className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-500 text-red-700 dark:text-red-200 px-4 py-3 rounded relative mb-6"
-          role="alert"
-        >
-          <strong className="font-bold">Erro ao carregar estatísticas: </strong>
-          <span className="block sm:inline">{errorStats}</span>
+    <div 
+      className="min-h-screen"
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.8)), url(${fundoImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Hero Section */}
+      <div className="relative h-80 flex items-center justify-center">
+        <div className="text-center text-white">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 text-white" style={{textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)'}}>
+            Sistema de Gerenciamento de Obras
+          </h1>
+          <p className="text-xl md:text-2xl font-light opacity-90" style={{textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)'}}>
+            Controle total dos seus projetos de construção
+          </p>
         </div>
-      )}
+      </div>
 
-      {stats && !isLoadingStats && !errorStats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {/* Card for Obras em Andamento */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center text-center">
-            <BuildingIcon />
-            <h3 className="text-md font-medium text-gray-600 dark:text-gray-300 mb-1">
-              Obras em Andamento
-            </h3>
-            <p className="text-3xl font-bold text-primary-600">
-              {stats.obras_em_andamento}
-            </p>
+      <div className="container mx-auto px-4 py-8">
+        {/* Navegação Rápida */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 text-center">
+            Acesso Rápido
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <Link
+              to="/obras"
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+            >
+              <Building2 className="w-8 h-8 text-blue-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-1">
+                Obras
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                Gerenciar projetos
+              </p>
+            </Link>
+
+            <Link
+              to="/funcionarios"
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+            >
+              <Users className="w-8 h-8 text-green-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-1">
+                Funcionários
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                Equipe e recursos
+              </p>
+            </Link>
+
+            <Link
+              to="/relatorios"
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+            >
+              <BarChart3 className="w-8 h-8 text-orange-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-1">
+                Relatórios
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                Análises e dados
+              </p>
+            </Link>
+
+            <Link
+              to="/materiais"
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+            >
+              <Package className="w-8 h-8 text-purple-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-1">
+                Materiais
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                Estoque e compras
+              </p>
+            </Link>
+
+            <Link
+              to="/locacoes"
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+            >
+              <Calendar className="w-8 h-8 text-red-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-1">
+                Locações
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                Equipamentos
+              </p>
+            </Link>
           </div>
+        </div>
 
-          {/* Card for Custo Total Mês Corrente */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center text-center">
-            <MoneyIcon />
-            <h3 className="text-md font-medium text-gray-600 dark:text-gray-300 mb-1">
-              Custo Total do Mês
-            </h3>
-            <p className="text-3xl font-bold text-primary-600">
-              R${' '}
-              {parseFloat(stats.custo_total_mes_corrente).toLocaleString(
-                'pt-BR',
-                { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+        {stats && (
+          <>
+            {/* Cards de Estatísticas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-sm font-medium">Obras Ativas</p>
+                    <p className="text-3xl font-bold">{stats.obras_em_andamento}</p>
+                    <p className="text-blue-100 text-xs mt-1">Em andamento</p>
+                  </div>
+                  <Building2 className="w-12 h-12 text-blue-200" />
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-100 text-sm font-medium">Funcionários</p>
+                    <p className="text-3xl font-bold">{stats.total_funcionarios}</p>
+                    <p className="text-green-100 text-xs mt-1">Ativos no sistema</p>
+                  </div>
+                  <Users className="w-12 h-12 text-green-200" />
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-orange-100 text-sm font-medium">Custo Mensal</p>
+                    <p className="text-2xl font-bold">
+                      R$ {parseFloat(stats.custo_total_mes_corrente).toLocaleString('pt-BR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                      })}
+                    </p>
+                    <p className="text-orange-100 text-xs mt-1">Mês corrente</p>
+                  </div>
+                  <DollarSign className="w-12 h-12 text-orange-200" />
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-100 text-sm font-medium">Ocorrências</p>
+                    <p className="text-3xl font-bold">{isLoadingOcorrencias ? '...' : ocorrencias.length}</p>
+                    <p className="text-purple-100 text-xs mt-1">Últimos 30 dias</p>
+                  </div>
+                  <AlertTriangle className="w-12 h-12 text-purple-200" />
+                </div>
+              </div>
+            </div>
+
+            {/* Gráficos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+              {/* Gráfico de Custos */}
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center">
+                    <TrendingUp className="w-5 h-5 mr-2 text-blue-500" />
+                    Distribuição de Custos
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    Custos do mês atual (compras e despesas extras)
+                  </p>
+                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={chartData.custos}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {chartData.custos.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Valor']} />
+                  </PieChart>
+                </ResponsiveContainer>
+                {chartData.custos.length === 0 && (
+                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      <AlertTriangle className="inline mr-1" size={16} />
+                      Nenhum custo registrado para o mês atual.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Gráfico de Atividade Semanal */}
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center">
+                    <Activity className="w-5 h-5 mr-2 text-green-500" />
+                    Atividade Semanal
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    Recursos ativos nos últimos 7 dias (baseado em locações ativas)
+                  </p>
+                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={chartData.atividade}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis 
+                      dataKey="dia" 
+                      className="text-sm" 
+                      tick={{ fontSize: 12 }}
+                      interval={0}
+                    />
+                    <YAxis className="text-sm" />
+                    <Tooltip 
+                      content={<CustomTooltip />}
+                      formatter={(value, name) => [value, name === 'funcionarios' ? 'Funcionários' : 'Equipes']}
+                      labelFormatter={(label) => `Data: ${label.replace('\n', ' - ')}`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="funcionarios"
+                      stackId="1"
+                      stroke={COLORS.primary}
+                      fill={COLORS.primary}
+                      fillOpacity={0.6}
+                      name="Funcionários"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="equipes"
+                      stackId="2"
+                      stroke={COLORS.secondary}
+                      fill={COLORS.secondary}
+                      fillOpacity={0.6}
+                      name="Equipes"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+                {chartData.atividade && chartData.atividade.every(item => item.funcionarios === 0 && item.equipes === 0) && (
+                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      <AlertTriangle className="inline mr-1" size={16} />
+                      Nenhuma atividade encontrada para os últimos 7 dias. 
+                      Isso pode indicar que não há locações ativas no período ou que os dados são de períodos anteriores.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Painel de Ocorrências Recentes */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center">
+                <Clock className="w-5 h-5 mr-2 text-orange-500" />
+                Ocorrências Recentes (30 dias)
+              </h3>
+              {isLoadingOcorrencias ? (
+                <div className="flex items-center justify-center py-8">
+                  <Activity className="w-6 h-6 text-blue-500 animate-spin mr-2" />
+                  <span className="text-gray-600 dark:text-gray-400">Carregando ocorrências...</span>
+                </div>
+              ) : ocorrencias.length === 0 ? (
+                <div className="text-center py-8">
+                  <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400">Nenhuma ocorrência registrada nos últimos 30 dias.</p>
+                  <p className="text-xs text-gray-500 mt-2">Verifique se há dados no sistema ou se a API está funcionando corretamente.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {ocorrencias.map((ocorrencia) => {
+                      // Determinar cor do indicador baseado na gravidade
+                      const getGravidadeColor = (gravidade) => {
+                        switch (gravidade?.toLowerCase()) {
+                          case 'alta': case 'crítica': return 'bg-red-500';
+                          case 'média': case 'moderada': return 'bg-yellow-500';
+                          case 'baixa': case 'leve': return 'bg-green-500';
+                          default: return 'bg-blue-500';
+                        }
+                      };
+                      
+                      const getGravidadeBadge = (gravidade) => {
+                        switch (gravidade?.toLowerCase()) {
+                          case 'alta': case 'crítica': 
+                            return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+                          case 'média': case 'moderada': 
+                            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+                          case 'baixa': case 'leve': 
+                            return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+                          default: 
+                            return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+                        }
+                      };
+                      
+                      return (
+                        <div key={ocorrencia.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                          <div className="flex items-center space-x-4">
+                            <div className={`w-3 h-3 rounded-full ${getGravidadeColor(ocorrencia.gravidade)}`}></div>
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800 dark:text-gray-100">
+                                {ocorrencia.tipo || 'Ocorrência Registrada'}
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                {ocorrencia.observacao || 'Observação não informada'}
+                              </p>
+                              <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-gray-500">
+                                {ocorrencia.obra_nome && (
+                                  <span className="flex items-center">
+                                    <Building2 className="w-3 h-3 mr-1" />
+                                    {ocorrencia.obra_nome}
+                                  </span>
+                                )}
+                                {ocorrencia.funcionario_nome && (
+                                  <span className="flex items-center">
+                                    <Users className="w-3 h-3 mr-1" />
+                                    {ocorrencia.funcionario_nome}
+                                  </span>
+                                )}
+                                {ocorrencia.responsavel && (
+                                  <span className="flex items-center">
+                                    <Users className="w-3 h-3 mr-1" />
+                                    {ocorrencia.responsavel}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right flex flex-col items-end space-y-2">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {ocorrencia.data ? 
+                                new Date(ocorrencia.data).toLocaleDateString('pt-BR', {
+                                  day: '2-digit',
+                                  month: '2-digit', 
+                                  year: 'numeric'
+                                }) : 'Data não informada'
+                              }
+                            </p>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getGravidadeBadge(ocorrencia.gravidade)}`}>
+                              {ocorrencia.gravidade || 'Normal'}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-6 text-center">
+                    <Link
+                      to="/ocorrencias"
+                      className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Ver Todas as Ocorrências
+                    </Link>
+                  </div>
+                </>
               )}
-            </p>
-          </div>
-
-          {/* Card for Total de Funcionários */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center text-center">
-            <UsersIcon />
-            <h3 className="text-md font-medium text-gray-600 dark:text-gray-300 mb-1">
-              Total de Funcionários
-            </h3>
-            <p className="text-3xl font-bold text-primary-600">
-              {stats.total_funcionarios}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Placeholder for other dashboard content */}
-      {/* Example: <p className="text-gray-600">Mais conteúdo do dashboard aqui...</p> */}
-
-      {/* Quick Access Section */}
-      <div className="mt-10">
-        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-5">
-          Acesso Rápido
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Shortcut to Obras */}
-          <Link
-            to="/obras"
-            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-gray-700 group"
-          >
-            <BuildingIcon className="w-7 h-7 mr-4 text-primary-500 group-hover:text-primary-600 transition-colors" />
-            <div>
-              <h3 className="text-lg font-semibold group-hover:text-primary-600 transition-colors">
-                Gerenciar Obras
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
-                Visualizar e cadastrar obras.
-              </p>
             </div>
-          </Link>
-
-          {/* Shortcut to Funcionários */}
-          <Link
-            to="/funcionarios"
-            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-gray-700 group"
-          >
-            <UsersIcon className="w-7 h-7 mr-4 text-primary-500 group-hover:text-primary-600 transition-colors" />
-            <div>
-              <h3 className="text-lg font-semibold group-hover:text-primary-600 transition-colors">
-                Gerenciar Funcionários
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
-                Administrar quadro de funcionários.
-              </p>
-            </div>
-          </Link>
-
-          {/* Shortcut to Relatórios */}
-          <Link
-            to="/relatorios"
-            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out flex items-center text-gray-700 dark:text-gray-200 hover:bg-primary-50 dark:hover:bg-gray-700 group"
-          >
-            <ChartBarIcon className="w-7 h-7 mr-4 text-primary-500 group-hover:text-primary-600 transition-colors" />
-            <div>
-              <h3 className="text-lg font-semibold group-hover:text-primary-600 transition-colors">
-                Ver Relatórios
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
-                Analisar dados e informações.
-              </p>
-            </div>
-          </Link>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

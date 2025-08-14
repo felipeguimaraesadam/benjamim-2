@@ -150,6 +150,39 @@ class Locacao_Obras_Equipes(models.Model):
         if self.data_locacao_inicio:  # data_locacao_inicio is non-nullable
             if self.data_locacao_fim is None or self.data_locacao_fim < self.data_locacao_inicio:
                 self.data_locacao_fim = self.data_locacao_inicio
+        
+        # Cálculo automático de pagamento
+        if self.valor_pagamento == Decimal('0.00') or self.valor_pagamento is None:
+            dias_trabalhados = (self.data_locacao_fim - self.data_locacao_inicio).days + 1
+            
+            if self.funcionario_locado:
+                # Cálculo para funcionário individual
+                if self.tipo_pagamento == 'diaria' and self.funcionario_locado.valor_diaria_padrao:
+                    self.valor_pagamento = self.funcionario_locado.valor_diaria_padrao * dias_trabalhados
+                elif self.tipo_pagamento == 'metro' and self.funcionario_locado.valor_metro_padrao and self.obra.area_metragem:
+                    self.valor_pagamento = self.funcionario_locado.valor_metro_padrao * self.obra.area_metragem
+                elif self.tipo_pagamento == 'empreitada' and self.funcionario_locado.valor_empreitada_padrao:
+                    self.valor_pagamento = self.funcionario_locado.valor_empreitada_padrao
+            
+            elif self.equipe:
+                # Cálculo para equipe (soma dos valores de todos os membros)
+                valor_total_equipe = Decimal('0.00')
+                membros = self.equipe.membros.all()
+                
+                for membro in membros:
+                    if self.tipo_pagamento == 'diaria' and membro.valor_diaria_padrao:
+                        valor_total_equipe += membro.valor_diaria_padrao * dias_trabalhados
+                    elif self.tipo_pagamento == 'metro' and membro.valor_metro_padrao and self.obra.area_metragem:
+                        valor_total_equipe += membro.valor_metro_padrao * self.obra.area_metragem
+                    elif self.tipo_pagamento == 'empreitada' and membro.valor_empreitada_padrao:
+                        valor_total_equipe += membro.valor_empreitada_padrao
+                
+                self.valor_pagamento = valor_total_equipe
+            
+            # Se foi calculado um valor, considera como pago automaticamente
+            if self.valor_pagamento > Decimal('0.00') and not self.data_pagamento:
+                self.data_pagamento = self.data_locacao_inicio
+        
         super().save(*args, **kwargs)
 
     def __str__(self):
