@@ -312,6 +312,19 @@ const LocacoesPage = () => {
     return [formattedValue, 'Custo Total'];
   };
 
+  const dataMax =
+    chartData.length > 0
+      ? Math.max(...chartData.map(d => d.total_cost))
+      : 0;
+  const yAxisDomainMax = dataMax > 0 ? dataMax + 1000 : 100;
+
+  const displayData = chartData.map(entry => {
+    if (entry.total_cost === 0 && entry.has_locacoes === false) {
+      return { ...entry, barValue: yAxisDomainMax };
+    }
+    return { ...entry, barValue: entry.total_cost };
+  });
+
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportStartDate, setReportStartDate] = useState(
     new Date().toISOString().split('T')[0]
@@ -574,7 +587,7 @@ const LocacoesPage = () => {
         {!isLoadingChart && !chartError && chartData.length > 0 && (
           <ResponsiveContainer width="100%" height={400}>
             <BarChart
-              data={chartData}
+              data={displayData}
               margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
@@ -605,15 +618,15 @@ const LocacoesPage = () => {
                 tickFormatter={value =>
                   parseFloat(value).toLocaleString('pt-BR')
                 }
-                domain={[0, 'dataMax + 1000']}
+                domain={[0, yAxisDomainMax]}
               />
               <Tooltip
                 labelFormatter={formatTooltipLabel}
                 formatter={formatTooltipValue}
               />
               <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              <Bar dataKey="total_cost" name="Custo Total Diário" minPointSize={5}>
-                {chartData.map((entry, index) => (
+              <Bar dataKey="barValue" name="Custo Total Diário">
+                {displayData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={
