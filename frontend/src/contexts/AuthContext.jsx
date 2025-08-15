@@ -146,7 +146,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async userData => {
     try {
-      const response = await apiClient.post('/api/register/', userData);
+      const response = await apiClient.post('/register/', userData);
       // Assuming the register endpoint returns the user data but doesn't log them in
       return response.data;
     } catch (error) {
