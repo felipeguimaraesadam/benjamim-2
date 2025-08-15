@@ -65,10 +65,13 @@ export const useApiData = (
         setData(responseData);
 
         // Enhanced Logging
-        console.log(`[useApiData SUCCESS] - ${apiFunction.name || 'anonymous'}`, {
+        console.log(
+          `[useApiData SUCCESS] - ${apiFunction.name || 'anonymous'}`,
+          {
             params: fetchParamsToUse,
             response: responseData,
-        });
+          }
+        );
 
         return { success: true, data: responseData };
       } catch (err) {
@@ -77,11 +80,14 @@ export const useApiData = (
         setError(errorMessage);
 
         // Enhanced Logging
-        console.error(`[useApiData ERROR] - ${apiFunction?.name || 'anonymous API function'}`, {
+        console.error(
+          `[useApiData ERROR] - ${apiFunction?.name || 'anonymous API function'}`,
+          {
             params: fetchParamsToUse,
             error: err,
             errorMessage,
-        });
+          }
+        );
 
         setData(initialDataRef.current); // Reset to initialData on error
         return { success: false, error: errorMessage };

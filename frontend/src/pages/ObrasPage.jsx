@@ -230,7 +230,10 @@ const ObrasPage = () => {
       <div className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="status-filter"
+              className="block text-sm font-medium text-gray-700"
+            >
               Filtrar por Status
             </label>
             <select
@@ -246,7 +249,10 @@ const ObrasPage = () => {
             </select>
           </div>
           <div>
-            <label htmlFor="nome-filter" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="nome-filter"
+              className="block text-sm font-medium text-gray-700"
+            >
               Filtrar por Nome
             </label>
             <Autocomplete
@@ -259,7 +265,10 @@ const ObrasPage = () => {
                 }));
               }}
               onSelect={selection =>
-                setFilters({ ...filters, nome: selection ? selection.value : '' })
+                setFilters({
+                  ...filters,
+                  nome: selection ? selection.value : '',
+                })
               }
               onClear={() => setFilters({ ...filters, nome: '' })}
               placeholder="Digite para buscar uma obra..."

@@ -9,11 +9,22 @@ import PaginationControls from '../components/utils/PaginationControls';
 import { showSuccessToast, showErrorToast } from '../utils/toastUtils';
 import SpinnerIcon from '../components/utils/SpinnerIcon';
 
-const AlertIcon = ({ type = 'error', className = "w-5 h-5 mr-2" }) => {
+const AlertIcon = ({ type = 'error', className = 'w-5 h-5 mr-2' }) => {
   const color = type === 'error' ? 'currentColor' : 'currentColor'; // Adjust as needed
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke={color}>
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke={color}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
     </svg>
   );
 };
@@ -44,7 +55,7 @@ const ComprasPage = () => {
   const [isItensModalOpen, setIsItensModalOpen] = useState(false);
   const [selectedCompraParaModal, setSelectedCompraParaModal] = useState(null); // Renamed and initialized to null
 
-  const handleDuplicateCompra = async (compraSummary) => {
+  const handleDuplicateCompra = async compraSummary => {
     setIsLoadingForm(true);
     setError(null);
     try {
@@ -73,7 +84,13 @@ const ComprasPage = () => {
   const handleToggleStatus = async (id, field) => {
     try {
       await api.updateCompraStatus(id, { [field]: true });
-      fetchCompras(currentPage, { dataInicio, dataFim, fornecedor, tipo, obraId });
+      fetchCompras(currentPage, {
+        dataInicio,
+        dataFim,
+        fornecedor,
+        tipo,
+        obraId,
+      });
       showSuccessToast('Status da compra atualizado com sucesso!');
     } catch (error) {
       showErrorToast('Falha ao atualizar o status da compra.');
@@ -144,7 +161,13 @@ const ComprasPage = () => {
   useEffect(() => {
     // Fetch data when page or filters change, but only if not in add/edit mode
     if (!currentCompra && !isAddingNew) {
-      fetchCompras(currentPage, { dataInicio, dataFim, fornecedor, tipo, obraId });
+      fetchCompras(currentPage, {
+        dataInicio,
+        dataFim,
+        fornecedor,
+        tipo,
+        obraId,
+      });
     }
   }, [
     currentPage,
@@ -324,17 +347,23 @@ const ComprasPage = () => {
     fetchCompras(1, { dataInicio, dataFim, fornecedor, tipo, obraId });
   };
 
-  const handleObraSelect = (obra) => {
+  const handleObraSelect = obra => {
     setSelectedObra(obra);
     setObraId(obra ? obra.id : '');
-  }
+  };
 
-  const handleApprove = async (compraId) => {
+  const handleApprove = async compraId => {
     try {
       await api.approveOrcamento(compraId);
-      fetchCompras(currentPage, { dataInicio, dataFim, fornecedor, tipo, obraId });
+      fetchCompras(currentPage, {
+        dataInicio,
+        dataFim,
+        fornecedor,
+        tipo,
+        obraId,
+      });
       showSuccessToast('Orçamento aprovado com sucesso!');
-    } catch (error) { 
+    } catch (error) {
       showErrorToast('Falha ao aprovar o orçamento.');
     }
   };

@@ -342,7 +342,10 @@ const RelatoriosPage = () => {
                     }));
                   }}
                   onSelect={selection =>
-                    handleFilterChange('obra_id', selection ? selection.value : '')
+                    handleFilterChange(
+                      'obra_id',
+                      selection ? selection.value : ''
+                    )
                   }
                   placeholder="Digite para buscar uma obra..."
                 />
@@ -418,7 +421,10 @@ const RelatoriosPage = () => {
                     }));
                   }}
                   onSelect={selection =>
-                    handleFilterChange('obra_id', selection ? selection.value : '')
+                    handleFilterChange(
+                      'obra_id',
+                      selection ? selection.value : ''
+                    )
                   }
                   placeholder="Digite para buscar uma obra..."
                 />
@@ -662,8 +668,6 @@ const RelatoriosPage = () => {
       setMpIsGeneratingReport(false);
     }
   };
-
-
 
   // --- Handlers for Locacao Payments Report Modal --- foram removidos
 

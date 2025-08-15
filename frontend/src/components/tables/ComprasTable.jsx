@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Pencil, Trash2, Eye, CheckCircle, MoreVertical, Copy, ToggleLeft, ToggleRight } from 'lucide-react';
+import {
+  Pencil,
+  Trash2,
+  Eye,
+  CheckCircle,
+  MoreVertical,
+  Copy,
+  ToggleLeft,
+  ToggleRight,
+} from 'lucide-react';
 import ContextMenu from '../utils/ContextMenu';
 
 const ComprasTable = ({
@@ -67,7 +76,7 @@ const ComprasTable = ({
     );
   }
 
-  const getContextMenuItems = (compra) => {
+  const getContextMenuItems = compra => {
     if (!compra || !compra.id) {
       return [];
     }
@@ -138,7 +147,7 @@ const ComprasTable = ({
               <tr
                 key={compra.id}
                 className={`${rowClass} border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700`}
-                onContextMenu={(e) => handleContextMenu(e, compra)}
+                onContextMenu={e => handleContextMenu(e, compra)}
               >
                 <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-200 whitespace-nowrap">
                   {`${compra.itens?.length || 0} itens`}
@@ -198,7 +207,7 @@ const ComprasTable = ({
                     <Trash2 size={18} />
                   </button>
                   <button
-                    onClick={(e) => handleContextMenu(e, compra)}
+                    onClick={e => handleContextMenu(e, compra)}
                     className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:text-gray-400 dark:disabled:text-gray-600"
                     disabled={isLoading}
                     aria-label="Mais Opções"

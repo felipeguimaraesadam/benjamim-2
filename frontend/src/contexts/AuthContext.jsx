@@ -144,7 +144,25 @@ export const AuthProvider = ({ children }) => {
     // or by ProtectedRoute redirecting.
   };
 
-
+  const register = async userData => {
+    try {
+      const response = await apiClient.post('/register/', userData);
+      // Assuming the register endpoint returns the user data but doesn't log them in
+      return response.data;
+    } catch (error) {
+      console.error('Registration failed:', error);
+      if (error.response && error.response.data) {
+        // Extract and throw the specific error message from the backend
+        const errorMessages = Object.values(error.response.data)
+          .flat()
+          .join(' ');
+        throw new Error(
+          errorMessages || 'Erro ao registrar. Verifique os dados.'
+        );
+      }
+      throw new Error('Erro ao tentar registrar. Tente novamente mais tarde.');
+    }
+  };
 
   const contextValue = {
     user,
@@ -154,6 +172,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user && !!accessToken && !isLoading, // More robust check
     login,
     logout,
+    register,
     refreshAuthToken, // Expose for manual refresh if needed or for interceptor
     // attemptRefreshAndRetry // Could expose this for a more manual interceptor setup
   };

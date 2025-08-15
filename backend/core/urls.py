@@ -14,7 +14,8 @@ from .views import (
     GerarRelatorioPDFObraView, GerarRelatorioPagamentoLocacoesPDFView,
     LocacaoSemanalView, RecursosMaisUtilizadosSemanaView,
     ObraCustosPorMaterialView, ObraCustosPorCategoriaMaterialView,
-    media_test_view
+    media_test_view,
+    CreateUsuarioView
 )
 
 router = DefaultRouter()
@@ -35,6 +36,7 @@ router.register(r'backup-settings', BackupSettingsViewSet, basename='backupsetti
 
 
 urlpatterns = [
+    path('register/', CreateUsuarioView.as_view(), name='create-user'),
     path('', include(router.urls)),
     path('funcionarios/<int:pk>/details/', FuncionarioDetailView.as_view(), name='funcionario-detail'),
     path('equipes/<int:pk>/details/', EquipeDetailView.as_view(), name='equipe-detail'),

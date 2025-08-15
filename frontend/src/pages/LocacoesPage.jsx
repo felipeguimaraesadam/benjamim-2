@@ -175,7 +175,10 @@ const LocacoesPage = () => {
       showSuccessToast('Locação excluída com sucesso!');
       setLocacaoToDeleteId(null);
       setShowDeleteConfirm(false);
-      const newPage = locacoes.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+      const newPage =
+        locacoes.length === 1 && currentPage > 1
+          ? currentPage - 1
+          : currentPage;
       fetchLocacoes(newPage, selectedObra?.id);
     } catch (err) {
       const errorMsg = err.message || 'Falha ao excluir locação.';
@@ -194,15 +197,15 @@ const LocacoesPage = () => {
 
     const data = new FormData();
     Object.keys(formData).forEach(key => {
-        if (formData[key] !== null && formData[key] !== undefined) {
-            data.append(key, formData[key]);
-        }
+      if (formData[key] !== null && formData[key] !== undefined) {
+        data.append(key, formData[key]);
+      }
     });
 
     if (anexos && anexos.length > 0) {
-        anexos.forEach(anexo => {
-            data.append('anexos', anexo);
-        });
+      anexos.forEach(anexo => {
+        data.append('anexos', anexo);
+      });
     }
 
     try {
@@ -313,9 +316,7 @@ const LocacoesPage = () => {
   };
 
   const dataMax =
-    chartData.length > 0
-      ? Math.max(...chartData.map(d => d.total_cost))
-      : 0;
+    chartData.length > 0 ? Math.max(...chartData.map(d => d.total_cost)) : 0;
   const yAxisDomainMax = dataMax > 0 ? dataMax + 1000 : 100;
 
   const displayData = chartData.map(entry => {
@@ -648,7 +649,6 @@ const LocacoesPage = () => {
           </span>
         </div>
       </div>
-
 
       {selectedLocacaoId && (
         <LocacaoDetailModal

@@ -1,11 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { getRelatorioObraGeral, getRelatorioObraCompleto } from '../../services/api';
+import {
+  getRelatorioObraGeral,
+  getRelatorioObraCompleto,
+} from '../../services/api';
 
 const ObraDetailHeader = ({ obra, formatDate }) => {
   if (!obra) return null;
 
-  const handleGerarRelatorio = async (tipoRelatorio) => {
+  const handleGerarRelatorio = async tipoRelatorio => {
     try {
       let response;
       if (tipoRelatorio === 'geral') {

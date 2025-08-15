@@ -125,7 +125,7 @@ export const getObraCustosPorCategoria = obraId =>
 export const getObraCustosPorMaterial = obraId =>
   apiClient.get(`/obras/${obraId}/custos-por-material/`);
 export const getObraGastosPorCategoriaMaterial = obraId =>
-    apiClient.get(`/obras/${obraId}/gastos-por-categoria-material/`);
+  apiClient.get(`/obras/${obraId}/gastos-por-categoria-material/`);
 export const getItensDisponiveisPorObra = obraId =>
   apiClient.get(`/obras/${obraId}/itens-disponiveis/`);
 
@@ -199,7 +199,8 @@ export const updateDespesaExtra = (id, formData) => {
   });
 };
 
-export const deleteAnexoDespesa = id => apiClient.delete(`/anexos-despesa/${id}/`);
+export const deleteAnexoDespesa = id =>
+  apiClient.delete(`/anexos-despesa/${id}/`);
 export const deleteDespesaExtra = id => apiClient.delete(`/despesas/${id}/`);
 
 // --- Locacao Service Functions ---
@@ -243,7 +244,8 @@ export const updateLocacao = (id, alocacaoData, anexos) => {
   });
 };
 
-export const deleteAnexoLocacao = id => apiClient.delete(`/anexos-locacao/${id}/`);
+export const deleteAnexoLocacao = id =>
+  apiClient.delete(`/anexos-locacao/${id}/`);
 export const deleteLocacao = id => apiClient.delete(`/locacoes/${id}/`);
 export const transferFuncionarioLocacao = async transferData => {
   const response = await apiClient.post(
@@ -324,9 +326,11 @@ export const createCompra = compraData =>
 export const updateCompra = (id, compraData) =>
   apiClient.put(`/compras/${id}/`, compraData);
 export const deleteCompra = id => apiClient.delete(`/compras/${id}/`);
-export const updateCompraStatus = (id, data) => apiClient.patch(`/compras/${id}/`, data);
+export const updateCompraStatus = (id, data) =>
+  apiClient.patch(`/compras/${id}/`, data);
 export const approveOrcamento = id => apiClient.post(`/compras/${id}/approve/`);
-export const getObraComprasDetalhes = obraId => apiClient.get(`/obras/${obraId}/compras-detalhes/`);
+export const getObraComprasDetalhes = obraId =>
+  apiClient.get(`/obras/${obraId}/compras-detalhes/`);
 
 // --- UsoMaterial Service Functions ---
 export const createUsoMaterial = data => apiClient.post('/usomateriais/', data);

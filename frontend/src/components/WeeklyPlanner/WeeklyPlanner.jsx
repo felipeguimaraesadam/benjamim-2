@@ -18,14 +18,17 @@ function WeeklyPlanner({ selectedObra }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [selectedLocacaoIdForDetail, setSelectedLocacaoIdForDetail] = useState(null);
+  const [selectedLocacaoIdForDetail, setSelectedLocacaoIdForDetail] =
+    useState(null);
   const [showLocacaoFormModal, setShowLocacaoFormModal] = useState(false);
   const [locacaoFormInitialData, setLocacaoFormInitialData] = useState(null);
 
-  const [showDragDropConfirmModal, setShowDragDropConfirmModal] = useState(false);
+  const [showDragDropConfirmModal, setShowDragDropConfirmModal] =
+    useState(false);
   // draggedLocacao and targetDayId will be managed by the main drag end logic,
   // but activeRental is for the DragOverlay specifically.
-  const [draggedLocacaoDataForModal, setDraggedLocacaoDataForModal] = useState(null); // Renamed from draggedLocacao to avoid confusion
+  const [draggedLocacaoDataForModal, setDraggedLocacaoDataForModal] =
+    useState(null); // Renamed from draggedLocacao to avoid confusion
   const [targetDayIdForModal, setTargetDayIdForModal] = useState(null); // Renamed from targetDayId
 
   // State for DragOverlay
@@ -42,44 +45,52 @@ function WeeklyPlanner({ selectedObra }) {
   const locale = ptBR;
   const weekStartsOn = 1; // Segunda-feira
 
-  const fetchWeekData = useCallback(async (dateForWeek, obraId) => {
-    setIsLoading(true);
-    setError(null);
-    const weekStart = startOfWeek(dateForWeek, { locale, weekStartsOn });
-    const formattedStartDate = format(weekStart, 'yyyy-MM-dd');
-    console.log('[WeeklyPlanner] fetchWeekData - StartDate para API:', formattedStartDate); // LOG 1
+  const fetchWeekData = useCallback(
+    async (dateForWeek, obraId) => {
+      setIsLoading(true);
+      setError(null);
+      const weekStart = startOfWeek(dateForWeek, { locale, weekStartsOn });
+      const formattedStartDate = format(weekStart, 'yyyy-MM-dd');
+      console.log(
+        '[WeeklyPlanner] fetchWeekData - StartDate para API:',
+        formattedStartDate
+      ); // LOG 1
 
-    try {
-      const [locacoesRes, recursosRes] = await Promise.all([
-        api.getLocacoesDaSemana(formattedStartDate, obraId),
-        api.getRecursosMaisUtilizadosSemana(formattedStartDate, obraId)
-      ]);
-      console.log('[WeeklyPlanner] fetchWeekData - Locações recebidas:', locacoesRes.data); // LOG 2
-      setLocacoesPorDia(locacoesRes.data || {});
-      setRecursosMaisUtilizados(recursosRes.data || []);
-    } catch (err) {
-      console.error("[WeeklyPlanner] Erro ao buscar dados da semana:", err); // LOG Erro
-      setError(err.message || "Falha ao buscar dados da semana.");
-      setLocacoesPorDia({});
-      setRecursosMaisUtilizados([]);
-      toast.error(`Erro ao carregar dados da semana: ${err.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [locale, weekStartsOn]);
+      try {
+        const [locacoesRes, recursosRes] = await Promise.all([
+          api.getLocacoesDaSemana(formattedStartDate, obraId),
+          api.getRecursosMaisUtilizadosSemana(formattedStartDate, obraId),
+        ]);
+        console.log(
+          '[WeeklyPlanner] fetchWeekData - Locações recebidas:',
+          locacoesRes.data
+        ); // LOG 2
+        setLocacoesPorDia(locacoesRes.data || {});
+        setRecursosMaisUtilizados(recursosRes.data || []);
+      } catch (err) {
+        console.error('[WeeklyPlanner] Erro ao buscar dados da semana:', err); // LOG Erro
+        setError(err.message || 'Falha ao buscar dados da semana.');
+        setLocacoesPorDia({});
+        setRecursosMaisUtilizados([]);
+        toast.error(`Erro ao carregar dados da semana: ${err.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [locale, weekStartsOn]
+  );
 
   const [obras, setObras] = useState([]);
   const [equipes, setEquipes] = useState([]);
 
-
   useEffect(() => {
     const fetchObras = async () => {
-        try {
-            const response = await api.getObras({ page_size: 500 });
-            setObras(response.data?.results || []);
-        } catch (error) {
-            console.error('Erro ao buscar obras:', error);
-        }
+      try {
+        const response = await api.getObras({ page_size: 500 });
+        setObras(response.data?.results || []);
+      } catch (error) {
+        console.error('Erro ao buscar obras:', error);
+      }
     };
     const fetchEquipes = async () => {
       try {
@@ -97,11 +108,11 @@ function WeeklyPlanner({ selectedObra }) {
     fetchWeekData(currentDate, selectedObra?.id);
   }, [currentDate, selectedObra, fetchWeekData]);
 
-  const handleDateChange = (newDate) => {
+  const handleDateChange = newDate => {
     setCurrentDate(newDate);
   };
 
-  const handleOpenLocacaoDetail = (locacaoId) => {
+  const handleOpenLocacaoDetail = locacaoId => {
     setSelectedLocacaoIdForDetail(locacaoId);
   };
 
@@ -127,9 +138,13 @@ function WeeklyPlanner({ selectedObra }) {
     setLocacaoFormInitialData(null);
   };
 
-  const handleLocacaoFormSubmitSuccess = () => { // Renomear para indicar que é APÓS o submit real
+  const handleLocacaoFormSubmitSuccess = () => {
+    // Renomear para indicar que é APÓS o submit real
     handleCloseLocacaoForm();
-    console.log('[WeeklyPlanner] handleLocacaoFormSubmitSuccess - Chamando fetchWeekData com currentDate:', currentDate); // LOG 3
+    console.log(
+      '[WeeklyPlanner] handleLocacaoFormSubmitSuccess - Chamando fetchWeekData com currentDate:',
+      currentDate
+    ); // LOG 3
     fetchWeekData(currentDate, selectedObra?.id); // Re-fetch data
     // O toast de sucesso será movido para handleActualFormSubmit
   };
@@ -145,24 +160,36 @@ function WeeklyPlanner({ selectedObra }) {
     try {
       let response;
       if (isEditing) {
-        response = await api.updateLocacao(locacaoFormInitialData.id, formDataFromForm, anexos);
-        toast.success("Locação atualizada com sucesso!");
+        response = await api.updateLocacao(
+          locacaoFormInitialData.id,
+          formDataFromForm,
+          anexos
+        );
+        toast.success('Locação atualizada com sucesso!');
       } else {
         response = await api.createLocacao(formDataFromForm, anexos);
         // Check if multiple rentals were created (multi-day rental)
         const createdRentals = response.data;
         if (Array.isArray(createdRentals) && createdRentals.length > 1) {
-          toast.success(`${createdRentals.length} locações criadas com sucesso (uma para cada dia)!`);
+          toast.success(
+            `${createdRentals.length} locações criadas com sucesso (uma para cada dia)!`
+          );
         } else {
-          toast.success("Locação criada com sucesso!");
+          toast.success('Locação criada com sucesso!');
         }
       }
       handleLocacaoFormSubmitSuccess(); // Fecha modal e recarrega
     } catch (err) {
-      console.error("[WeeklyPlanner] Erro ao salvar locação (handleActualFormSubmit):", err.response?.data || err.message);
-      const errorMsg = err.response?.data && typeof err.response.data === 'object'
-                       ? Object.values(err.response.data).flat().join('; ')
-                       : (err.response?.data?.detail || err.message || "Erro desconhecido ao salvar.");
+      console.error(
+        '[WeeklyPlanner] Erro ao salvar locação (handleActualFormSubmit):',
+        err.response?.data || err.message
+      );
+      const errorMsg =
+        err.response?.data && typeof err.response.data === 'object'
+          ? Object.values(err.response.data).flat().join('; ')
+          : err.response?.data?.detail ||
+            err.message ||
+            'Erro desconhecido ao salvar.';
       toast.error(`Falha ao salvar locação: ${errorMsg}`);
       setError(errorMsg); // Pode ser útil mostrar o erro no formulário ou no planner
       // Não fechar o modal automaticamente em caso de erro, para o usuário ver.
@@ -175,16 +202,16 @@ function WeeklyPlanner({ selectedObra }) {
   const handleLocacaoTransferSuccess = () => {
     handleCloseLocacaoForm(); // Fecha o formulário se a transferência foi iniciada por ele
     fetchWeekData(currentDate, selectedObra?.id); // Re-fetch data
-    toast.success("Funcionário transferido e nova locação criada com sucesso!");
+    toast.success('Funcionário transferido e nova locação criada com sucesso!');
   };
 
   // Drag and Drop Handlers
-  const handleDragStart = (event) => {
+  const handleDragStart = event => {
     setActiveDragId(event.active.id);
     setActiveRental(event.active.data.current?.locacao);
   };
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = event => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -192,7 +219,7 @@ function WeeklyPlanner({ selectedObra }) {
       const idColunaDestino = over.id;
 
       if (!locacaoArrastada || !idColunaDestino) {
-        console.warn("Drag end sem dados suficientes:", event);
+        console.warn('Drag end sem dados suficientes:', event);
         setActiveDragId(null); // Reset active drag state
         setActiveRental(null);
         return;
@@ -235,11 +262,15 @@ function WeeklyPlanner({ selectedObra }) {
         data_locacao_fim: targetDayIdForModal,
       };
       await api.updateLocacao(draggedLocacaoDataForModal.id, updatedData);
-      toast.success(`Locação de ${draggedLocacaoDataForModal.recurso_nome} movida para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`);
+      toast.success(
+        `Locação de ${draggedLocacaoDataForModal.recurso_nome} movida para ${format(new Date(targetDayIdForModal + 'T00:00:00'), 'dd/MM/yyyy', { locale })}.`
+      );
       fetchWeekData(currentDate, selectedObra?.id);
     } catch (error) {
-      console.error("Erro ao mover locação:", error);
-      toast.error(`Erro ao mover locação: ${error.response?.data?.detail || error.message}`);
+      console.error('Erro ao mover locação:', error);
+      toast.error(
+        `Erro ao mover locação: ${error.response?.data?.detail || error.message}`
+      );
     } finally {
       setIsLoading(false);
       closeDragDropConfirmModal();

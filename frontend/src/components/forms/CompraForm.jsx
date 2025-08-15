@@ -188,7 +188,14 @@ const ItemRowInternal = ({
           itemIndex={index}
           error={getError('material')}
           parentOnKeyDown={handleMaterialAutocompleteKeyDown}
-          onBlurReport={(blurState) => onItemFieldBlur(index, 'material', blurState.currentInputValue, blurState)} // Pass the whole blurState
+          onBlurReport={blurState =>
+            onItemFieldBlur(
+              index,
+              'material',
+              blurState.currentInputValue,
+              blurState
+            )
+          } // Pass the whole blurState
         />
       </td>
       <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top w-[120px]">
@@ -355,7 +362,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           valueNome: value?.nome,
           hasValue: !!value,
           hasId: !!(value && value.id),
-          willReturnError: !value || !value.id
+          willReturnError: !value || !value.id,
         });
         if (!value || !value.id) return 'Material é obrigatório.';
       } else if (fieldName === 'quantidade') {
@@ -387,7 +394,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   ); // getFieldError is stable if defined outside or has no external deps from CompraForm scope
 
   // Handle obra selection
-  const handleObraSelect = useCallback((obra) => {
+  const handleObraSelect = useCallback(obra => {
     if (obra) {
       setObraId(obra.id);
       setObraSelecionada(obra);
@@ -400,13 +407,23 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
   const handleItemFieldBlur = useCallback(
     (itemIndex, fieldName, fieldValue, blurState) => {
-      console.log('🔍 DEBUG: handleItemFieldBlur called:', { itemIndex, fieldName, fieldValue, blurState });
+      console.log('🔍 DEBUG: handleItemFieldBlur called:', {
+        itemIndex,
+        fieldName,
+        fieldValue,
+        blurState,
+      });
 
       if (fieldName === 'material') {
         // If a selection was made, clear the error and skip validation.
         if (blurState?.selectionMade) {
-          console.log('🔍 DEBUG: Skipping material validation as selection was made.');
-          setErrors(prev => ({ ...prev, [`item_${itemIndex}_material`]: null }));
+          console.log(
+            '🔍 DEBUG: Skipping material validation as selection was made.'
+          );
+          setErrors(prev => ({
+            ...prev,
+            [`item_${itemIndex}_material`]: null,
+          }));
           return;
         }
 
@@ -425,10 +442,16 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
           if (materialIsTrulyEmpty && inputIsAlsoEmpty) {
             const error = getFieldError('material', null, itemIndex, items);
-            setErrors(prev => ({ ...prev, [`item_${itemIndex}_material`]: error }));
+            setErrors(prev => ({
+              ...prev,
+              [`item_${itemIndex}_material`]: error,
+            }));
           } else {
             // If input has text but no valid material is set, or if material is set, clear error.
-            setErrors(prev => ({ ...prev, [`item_${itemIndex}_material`]: null }));
+            setErrors(prev => ({
+              ...prev,
+              [`item_${itemIndex}_material`]: null,
+            }));
           }
         }, 150); // Delay to allow for selection state to propagate
 
@@ -437,7 +460,10 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
       // Original logic for other fields
       const error = getFieldError(fieldName, fieldValue, itemIndex, items);
-      setErrors(prev => ({ ...prev, [`item_${itemIndex}_${fieldName}`]: error }));
+      setErrors(prev => ({
+        ...prev,
+        [`item_${itemIndex}_${fieldName}`]: error,
+      }));
     },
     [items] // Dependency on items is correct
   );
@@ -445,20 +471,19 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   useEffect(() => {
     // This effect ensures that our refs array is in sync with the items array.
     // It's crucial for focus management, especially when items are added or removed.
-    itemFieldRefs.current = items.map(
-      (item, i) =>
-        // If a ref object already exists for this index, check if it corresponds
-        // to the correct item ID. If not, or if it doesn't exist, create a new one.
-        // This prevents refs from getting mismatched when items are reordered or removed.
-        (itemFieldRefs.current[i] && itemFieldRefs.current[i].id === item.id)
-          ? itemFieldRefs.current[i]
-          : {
-              id: item.id, // Associate ref with item's unique ID
-              material: React.createRef(),
-              quantity: React.createRef(),
-              unitPrice: React.createRef(),
-              // categoria_uso is handled by a separate callback ref
-            }
+    itemFieldRefs.current = items.map((item, i) =>
+      // If a ref object already exists for this index, check if it corresponds
+      // to the correct item ID. If not, or if it doesn't exist, create a new one.
+      // This prevents refs from getting mismatched when items are reordered or removed.
+      itemFieldRefs.current[i] && itemFieldRefs.current[i].id === item.id
+        ? itemFieldRefs.current[i]
+        : {
+            id: item.id, // Associate ref with item's unique ID
+            material: React.createRef(),
+            quantity: React.createRef(),
+            unitPrice: React.createRef(),
+            // categoria_uso is handled by a separate callback ref
+          }
     );
   }, [items]); // Rerun whenever the items array instance changes.
 
@@ -541,7 +566,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       } else if (initialData.obra) {
         const obraIdentifier = initialData.obra.id || initialData.obra;
         setObraId(String(obraIdentifier));
-        const obraObj = obras.find(o => String(o.id) === String(obraIdentifier));
+        const obraObj = obras.find(
+          o => String(o.id) === String(obraIdentifier)
+        );
         setObraSelecionada(obraObj || null);
       }
 
@@ -588,11 +615,22 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             material: materialForState,
             materialId: materialForState ? String(materialForState.id) : '',
             materialNome: materialForState ? materialForState.nome : '',
-            unidadeMedida: materialForState ? materialForState.unidade_medida : '',
-            quantidade: apiItem.quantidade != null ? String(apiItem.quantidade).replace(',', '.') : '',
-            valorUnitario: apiItem.valor_unitario != null ? String(apiItem.valor_unitario).replace(',', '.') : '',
+            unidadeMedida: materialForState
+              ? materialForState.unidade_medida
+              : '',
+            quantidade:
+              apiItem.quantidade != null
+                ? String(apiItem.quantidade).replace(',', '.')
+                : '',
+            valorUnitario:
+              apiItem.valor_unitario != null
+                ? String(apiItem.valor_unitario).replace(',', '.')
+                : '',
             valorTotalItem: '0.00',
-            categoria_uso: apiItem.categoria_uso || (materialForState ? materialForState.categoria_uso_padrao : '') || '',
+            categoria_uso:
+              apiItem.categoria_uso ||
+              (materialForState ? materialForState.categoria_uso_padrao : '') ||
+              '',
           };
           const qty = parseFloat(newItem.quantidade) || 0;
           const price = parseFloat(newItem.valorUnitario) || 0;
@@ -600,7 +638,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           return newItem;
         });
 
-        const initialItemsToSet = mappedItems.length > 0 ? mappedItems : [createNewEmptyItem()];
+        const initialItemsToSet =
+          mappedItems.length > 0 ? mappedItems : [createNewEmptyItem()];
         dispatchItems({
           type: ITEM_ACTION_TYPES.SET_ITEMS,
           payload: initialItemsToSet,
@@ -660,11 +699,15 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
   const handleMaterialSelected = useCallback(
     (index, selectedMaterialObj) => {
+      console.log('🔍 DEBUG: Material selected in CompraForm:', {
+        index,
+        selectedMaterialObj,
+        timestamp: new Date().toISOString(),
+      });
       console.log(
-        '🔍 DEBUG: Material selected in CompraForm:',
-        { index, selectedMaterialObj, timestamp: new Date().toISOString() }
+        '🔍 DEBUG: handleMaterialSelected call stack:',
+        new Error().stack
       );
-      console.log('🔍 DEBUG: handleMaterialSelected call stack:', new Error().stack);
       try {
         dispatchItems({
           type: ITEM_ACTION_TYPES.SET_MATERIAL,
@@ -709,7 +752,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           [`item_${index}_material`]: null,
           [`item_${index}_categoria_uso`]: null,
         }));
-        
+
         // Focus on quantity field immediately after material selection
         if (
           itemFieldRefs.current &&
@@ -956,364 +999,372 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         onSubmit={handleSubmit}
         className="w-full max-w-6xl mx-auto p-6 md:p-8 space-y-6 bg-white rounded-lg shadow-xl"
       >
-      {' '}
-      {/* Changed to max-w-6xl */}
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b border-slate-300 pb-3">
-        Informações da Compra
-      </h2>
-      {/* Header Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
         {' '}
-        {/* Adjusted to md:grid-cols-3 and gap-x-6 */}
-        <div>
-          <label
-            htmlFor="tipo"
-            className="block mb-1.5 text-sm font-medium text-gray-700"
-          >
-            Tipo
-          </label>
-          <div className="flex space-x-2 border border-slate-300 rounded-md p-1 bg-slate-50">
-            <button
-              ref={tipoCompraRef}
-              type="button"
-              onClick={() => setTipo('COMPRA')}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowRight') {
-                  e.preventDefault();
-                  tipoOrcamentoRef.current?.focus();
-                } else if (e.key === 'Tab' || e.key === 'Enter') {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    setTipo('COMPRA');
-                  }
-                  // Tab will naturally move to next focusable element
-                }
-              }}
-              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 ${tipo === 'COMPRA' ? 'bg-primary-600 text-white shadow' : 'bg-transparent text-slate-600 hover:bg-slate-200'}`}>
-              Compra
-            </button>
-            <button
-              ref={tipoOrcamentoRef}
-              type="button"
-              onClick={() => setTipo('ORCAMENTO')}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowLeft') {
-                  e.preventDefault();
-                  tipoCompraRef.current?.focus();
-                } else if (e.key === 'Tab' || e.key === 'Enter') {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    setTipo('ORCAMENTO');
-                  }
-                  // Tab will naturally move to next focusable element
-                }
-              }}
-              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 ${tipo === 'ORCAMENTO' ? 'bg-primary-600 text-white shadow' : 'bg-transparent text-slate-600 hover:bg-slate-200'}`}>
-              Orçamento
-            </button>
-          </div>
-        </div>
-        <div>
-          <label
-            htmlFor="dataCompra"
-            className="block mb-1.5 text-sm font-medium text-gray-700"
-          >
-            Data da Compra <span className="text-red-500">*</span>
-          </label>
-          <DatePicker
-            selected={dataCompra ? new Date(dataCompra + 'T00:00:00') : null}
-            onChange={date => setDataCompra(date.toISOString().split('T')[0])}
-            onBlur={() => handleFieldBlur('dataCompra', dataCompra)}
-            dateFormat="dd/MM/yyyy"
-            locale="pt-BR"
-            customInput={<CustomDateInput error={errors.dataCompra} />}
-          />
-          {errors.dataCompra && (
-            <p className="mt-1.5 text-xs text-red-600 flex items-center">
-              <WarningIcon /> {errors.dataCompra}
-            </p>
-          )}
-        </div>
-        <div>
-          <label
-            htmlFor="dataPagamento"
-            className="block mb-1.5 text-sm font-medium text-gray-700"
-          >
-            Data de Pagamento
-          </label>
-          <DatePicker
-            selected={dataPagamento ? new Date(dataPagamento + 'T00:00:00') : null}
-            onChange={date => setDataPagamento(date.toISOString().split('T')[0])}
-            dateFormat="dd/MM/yyyy"
-            locale="pt-BR"
-            customInput={<CustomDateInput />}
-          />
-          {/* Optional: {errors.dataPagamento && <p className="mt-1.5 text-xs text-red-600 flex items-center"><WarningIcon /> {errors.dataPagamento}</p>} */}
-        </div>
-        <div>
-          <label
-            htmlFor="obraId"
-            className="block mb-1.5 text-sm font-medium text-gray-700"
-          >
-            Obra <span className="text-red-500">*</span>
-          </label>
-          <ObraAutocomplete
-            ref={obraAutocompleteRef}
-            value={obraSelecionada}
-            onObraSelect={handleObraSelect}
-            onBlur={() => handleFieldBlur('obraId', obraId)}
-            placeholder="Digite para buscar a obra"
-            error={errors.obraId}
-            obras={obras}
-          />
-          {errors.obraId && (
-            <p className="mt-1.5 text-xs text-red-600 flex items-center">
-              <WarningIcon /> {errors.obraId}
-            </p>
-          )}
-        </div>
-        <div>
-          <label
-            htmlFor="fornecedor"
-            className="block mb-1.5 text-sm font-medium text-gray-700"
-          >
-            Fornecedor
-          </label>
-          <input
-            ref={fornecedorRef}
-            type="text"
-            name="fornecedor"
-            id="fornecedor"
-            value={fornecedor}
-            onChange={handleHeaderChange}
-            placeholder="Nome do fornecedor"
-            onBlur={e => handleFieldBlur(e.target.name, e.target.value)}
-            className={`w-full px-3 py-2.5 border ${errors.fornecedor ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
-          />
-          {errors.fornecedor && (
-            <p className="mt-1.5 text-xs text-red-600 flex items-center">
-              <WarningIcon /> {errors.fornecedor}
-            </p>
-          )}
-        </div>
-        <div>
-          <label
-            htmlFor="notaFiscal"
-            className="block mb-1.5 text-sm font-medium text-gray-700"
-          >
-            Nota Fiscal
-          </label>
-          <input
-            type="text"
-            name="notaFiscal"
-            id="notaFiscal"
-            value={notaFiscal}
-            onChange={handleHeaderChange}
-            placeholder="Número da nota fiscal (opcional)"
-            onBlur={e => handleFieldBlur(e.target.name, e.target.value)}
-            className={`w-full px-3 py-2.5 border ${errors.notaFiscal ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
-          />
-          {errors.notaFiscal && (
-            <p className="mt-1.5 text-xs text-red-600 flex items-center">
-              <WarningIcon /> {errors.notaFiscal}
-            </p>
-          )}
-        </div>
-      </div>
-      {/* Dynamic Item Table Section */}
-      <div className="mt-8 pt-6 border-t border-slate-300">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-700">
-            Itens da Compra
-          </h3>
-          <button
-            type="button"
-            onClick={addNewItemRow}
-            className="py-2 px-4 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-70 transition-colors"
-            disabled={isLoading}
-          >
-            Adicionar Novo Item
-          </button>
-        </div>
-        <div className="overflow-visible rounded-md shadow-sm border border-slate-200">
+        {/* Changed to max-w-6xl */}
+        <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b border-slate-300 pb-3">
+          Informações da Compra
+        </h2>
+        {/* Header Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
           {' '}
-          {/* Kept overflow-visible for autocomplete, might not be needed if portal is only solution */}
-          <div className="overflow-x-auto">
-            {' '}
-            {/* Reverted: Removed overflow-y-visible as portal handles clipping */}
-            <table className="min-w-full">
-              <thead className="bg-slate-100">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider min-w-[280px]"
-                  >
-                    Material
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[120px]"
-                  >
-                    Qtd.
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-3 py-2.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-[100px]"
-                  >
-                    Un.
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[150px]"
-                  >
-                    Val. Unit. (R$)
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-3 py-2.5 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider w-[140px]"
-                  >
-                    Val. Total (R$)
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[180px]"
-                  >
-                    Categoria de Uso
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-3 py-2.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-[100px]"
-                  >
-                    Ação
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
-                {items.map((item, index) => (
-                  <ItemRow
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    onItemChange={handleItemChange}
-                    onRemoveItem={removeItemRow}
-                    onMaterialSelectForItem={handleMaterialSelected}
-                    totalItems={items.length}
-                    errors={errors}
-                    initialData={initialData}
-                    onItemKeyDown={handleItemKeyDown}
-                    onItemFieldBlur={(...args) => handleItemFieldBlur(...args)} // Pass blur handler to ItemRow
-                    setCategoriaUsoRef={setCategoriaUsoRef}
-                    materialRef={itemFieldRefs.current[index]?.material}
-                    quantityRef={itemFieldRefs.current[index]?.quantity}
-                    unitPriceRef={itemFieldRefs.current[index]?.unitPrice}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        {items.length === 0 && (
-          <p className="text-sm text-center text-gray-500 py-4">
-            Nenhum item adicionado. Clique em "Adicionar Novo Item".
-          </p>
-        )}
-      </div>
-      {/* Summary Section */}
-      <div className="mt-8 pt-6 border-t border-slate-300">
-        <h3 className="text-xl font-semibold text-gray-700 mb-4">
-          Resumo da Compra
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
-          <div className="md:col-span-2">
+          {/* Adjusted to md:grid-cols-3 and gap-x-6 */}
+          <div>
             <label
-              htmlFor="observacoes"
+              htmlFor="tipo"
               className="block mb-1.5 text-sm font-medium text-gray-700"
             >
-              Observações
+              Tipo
             </label>
-            <textarea
-              name="observacoes"
-              id="observacoes"
-              value={observacoes}
-              onChange={handleHeaderChange}
-              onBlur={e => handleFieldBlur(e.target.name, e.target.value)}
-              rows="4"
-              placeholder="Notas ou observações sobre a compra (opcional)"
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-slate-700"
-            ></textarea>
+            <div className="flex space-x-2 border border-slate-300 rounded-md p-1 bg-slate-50">
+              <button
+                ref={tipoCompraRef}
+                type="button"
+                onClick={() => setTipo('COMPRA')}
+                onKeyDown={e => {
+                  if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    tipoOrcamentoRef.current?.focus();
+                  } else if (e.key === 'Tab' || e.key === 'Enter') {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      setTipo('COMPRA');
+                    }
+                    // Tab will naturally move to next focusable element
+                  }
+                }}
+                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 ${tipo === 'COMPRA' ? 'bg-primary-600 text-white shadow' : 'bg-transparent text-slate-600 hover:bg-slate-200'}`}
+              >
+                Compra
+              </button>
+              <button
+                ref={tipoOrcamentoRef}
+                type="button"
+                onClick={() => setTipo('ORCAMENTO')}
+                onKeyDown={e => {
+                  if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    tipoCompraRef.current?.focus();
+                  } else if (e.key === 'Tab' || e.key === 'Enter') {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      setTipo('ORCAMENTO');
+                    }
+                    // Tab will naturally move to next focusable element
+                  }
+                }}
+                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 ${tipo === 'ORCAMENTO' ? 'bg-primary-600 text-white shadow' : 'bg-transparent text-slate-600 hover:bg-slate-200'}`}
+              >
+                Orçamento
+              </button>
+            </div>
           </div>
-          <div className="md:col-span-1">
-            <div className="bg-slate-50 p-4 rounded-lg shadow space-y-3">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-600">Subtotal dos Itens:</span>
-                <span className="font-semibold text-slate-800">
-                  R$ {subtotalCalculado.toFixed(2).replace('.', ',')}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <label htmlFor="desconto" className="text-slate-600">
-                  Desconto (R$):
-                </label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  name="desconto"
-                  id="desconto"
-                  value={desconto}
-                  onChange={handleHeaderChange}
-                  placeholder="0,00"
-                  onBlur={e => handleFieldBlur(e.target.name, e.target.value)}
-                  className={`w-28 p-1.5 border ${errors.desconto ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm text-right`}
-                />
-              </div>
-              {errors.desconto && (
-                <p className="text-xs text-red-600 text-right -mt-2 mb-1">
-                  {errors.desconto}
-                </p>
-              )}
-              <div className="flex justify-between items-center text-lg font-bold border-t border-slate-300 pt-3 mt-3">
-                <span className="text-gray-700">Total Geral:</span>
-                <span className="text-primary-700">
-                  R$ {totalGeralCalculado.toFixed(2).replace('.', ',')}
-                </span>
+          <div>
+            <label
+              htmlFor="dataCompra"
+              className="block mb-1.5 text-sm font-medium text-gray-700"
+            >
+              Data da Compra <span className="text-red-500">*</span>
+            </label>
+            <DatePicker
+              selected={dataCompra ? new Date(dataCompra + 'T00:00:00') : null}
+              onChange={date => setDataCompra(date.toISOString().split('T')[0])}
+              onBlur={() => handleFieldBlur('dataCompra', dataCompra)}
+              dateFormat="dd/MM/yyyy"
+              locale="pt-BR"
+              customInput={<CustomDateInput error={errors.dataCompra} />}
+            />
+            {errors.dataCompra && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center">
+                <WarningIcon /> {errors.dataCompra}
+              </p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="dataPagamento"
+              className="block mb-1.5 text-sm font-medium text-gray-700"
+            >
+              Data de Pagamento
+            </label>
+            <DatePicker
+              selected={
+                dataPagamento ? new Date(dataPagamento + 'T00:00:00') : null
+              }
+              onChange={date =>
+                setDataPagamento(date.toISOString().split('T')[0])
+              }
+              dateFormat="dd/MM/yyyy"
+              locale="pt-BR"
+              customInput={<CustomDateInput />}
+            />
+            {/* Optional: {errors.dataPagamento && <p className="mt-1.5 text-xs text-red-600 flex items-center"><WarningIcon /> {errors.dataPagamento}</p>} */}
+          </div>
+          <div>
+            <label
+              htmlFor="obraId"
+              className="block mb-1.5 text-sm font-medium text-gray-700"
+            >
+              Obra <span className="text-red-500">*</span>
+            </label>
+            <ObraAutocomplete
+              ref={obraAutocompleteRef}
+              value={obraSelecionada}
+              onObraSelect={handleObraSelect}
+              onBlur={() => handleFieldBlur('obraId', obraId)}
+              placeholder="Digite para buscar a obra"
+              error={errors.obraId}
+              obras={obras}
+            />
+            {errors.obraId && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center">
+                <WarningIcon /> {errors.obraId}
+              </p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="fornecedor"
+              className="block mb-1.5 text-sm font-medium text-gray-700"
+            >
+              Fornecedor
+            </label>
+            <input
+              ref={fornecedorRef}
+              type="text"
+              name="fornecedor"
+              id="fornecedor"
+              value={fornecedor}
+              onChange={handleHeaderChange}
+              placeholder="Nome do fornecedor"
+              onBlur={e => handleFieldBlur(e.target.name, e.target.value)}
+              className={`w-full px-3 py-2.5 border ${errors.fornecedor ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
+            />
+            {errors.fornecedor && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center">
+                <WarningIcon /> {errors.fornecedor}
+              </p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="notaFiscal"
+              className="block mb-1.5 text-sm font-medium text-gray-700"
+            >
+              Nota Fiscal
+            </label>
+            <input
+              type="text"
+              name="notaFiscal"
+              id="notaFiscal"
+              value={notaFiscal}
+              onChange={handleHeaderChange}
+              placeholder="Número da nota fiscal (opcional)"
+              onBlur={e => handleFieldBlur(e.target.name, e.target.value)}
+              className={`w-full px-3 py-2.5 border ${errors.notaFiscal ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
+            />
+            {errors.notaFiscal && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center">
+                <WarningIcon /> {errors.notaFiscal}
+              </p>
+            )}
+          </div>
+        </div>
+        {/* Dynamic Item Table Section */}
+        <div className="mt-8 pt-6 border-t border-slate-300">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold text-gray-700">
+              Itens da Compra
+            </h3>
+            <button
+              type="button"
+              onClick={addNewItemRow}
+              className="py-2 px-4 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-70 transition-colors"
+              disabled={isLoading}
+            >
+              Adicionar Novo Item
+            </button>
+          </div>
+          <div className="overflow-visible rounded-md shadow-sm border border-slate-200">
+            {' '}
+            {/* Kept overflow-visible for autocomplete, might not be needed if portal is only solution */}
+            <div className="overflow-x-auto">
+              {' '}
+              {/* Reverted: Removed overflow-y-visible as portal handles clipping */}
+              <table className="min-w-full">
+                <thead className="bg-slate-100">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider min-w-[280px]"
+                    >
+                      Material
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[120px]"
+                    >
+                      Qtd.
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-2.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-[100px]"
+                    >
+                      Un.
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[150px]"
+                    >
+                      Val. Unit. (R$)
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-2.5 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider w-[140px]"
+                    >
+                      Val. Total (R$)
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[180px]"
+                    >
+                      Categoria de Uso
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-2.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-[100px]"
+                    >
+                      Ação
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-slate-200">
+                  {items.map((item, index) => (
+                    <ItemRow
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      onItemChange={handleItemChange}
+                      onRemoveItem={removeItemRow}
+                      onMaterialSelectForItem={handleMaterialSelected}
+                      totalItems={items.length}
+                      errors={errors}
+                      initialData={initialData}
+                      onItemKeyDown={handleItemKeyDown}
+                      onItemFieldBlur={(...args) =>
+                        handleItemFieldBlur(...args)
+                      } // Pass blur handler to ItemRow
+                      setCategoriaUsoRef={setCategoriaUsoRef}
+                      materialRef={itemFieldRefs.current[index]?.material}
+                      quantityRef={itemFieldRefs.current[index]?.quantity}
+                      unitPriceRef={itemFieldRefs.current[index]?.unitPrice}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {items.length === 0 && (
+            <p className="text-sm text-center text-gray-500 py-4">
+              Nenhum item adicionado. Clique em "Adicionar Novo Item".
+            </p>
+          )}
+        </div>
+        {/* Summary Section */}
+        <div className="mt-8 pt-6 border-t border-slate-300">
+          <h3 className="text-xl font-semibold text-gray-700 mb-4">
+            Resumo da Compra
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
+            <div className="md:col-span-2">
+              <label
+                htmlFor="observacoes"
+                className="block mb-1.5 text-sm font-medium text-gray-700"
+              >
+                Observações
+              </label>
+              <textarea
+                name="observacoes"
+                id="observacoes"
+                value={observacoes}
+                onChange={handleHeaderChange}
+                onBlur={e => handleFieldBlur(e.target.name, e.target.value)}
+                rows="4"
+                placeholder="Notas ou observações sobre a compra (opcional)"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-slate-700"
+              ></textarea>
+            </div>
+            <div className="md:col-span-1">
+              <div className="bg-slate-50 p-4 rounded-lg shadow space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-600">Subtotal dos Itens:</span>
+                  <span className="font-semibold text-slate-800">
+                    R$ {subtotalCalculado.toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <label htmlFor="desconto" className="text-slate-600">
+                    Desconto (R$):
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    name="desconto"
+                    id="desconto"
+                    value={desconto}
+                    onChange={handleHeaderChange}
+                    placeholder="0,00"
+                    onBlur={e => handleFieldBlur(e.target.name, e.target.value)}
+                    className={`w-28 p-1.5 border ${errors.desconto ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm text-right`}
+                  />
+                </div>
+                {errors.desconto && (
+                  <p className="text-xs text-red-600 text-right -mt-2 mb-1">
+                    {errors.desconto}
+                  </p>
+                )}
+                <div className="flex justify-between items-center text-lg font-bold border-t border-slate-300 pt-3 mt-3">
+                  <span className="text-gray-700">Total Geral:</span>
+                  <span className="text-primary-700">
+                    R$ {totalGeralCalculado.toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      {errors.form && (
-        <div
-          className="mt-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md text-sm"
-          role="alert"
-        >
-          <p>
-            <span className="font-bold">Erro:</span> {errors.form}
-          </p>
+        {errors.form && (
+          <div
+            className="mt-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md text-sm"
+            role="alert"
+          >
+            <p>
+              <span className="font-bold">Erro:</span> {errors.form}
+            </p>
+          </div>
+        )}
+        <div className="flex justify-end space-x-3 pt-6 mt-8 border-t border-slate-300">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isLoading}
+            className="py-2.5 px-6 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-70 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="py-2.5 px-6 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:bg-primary-400 transition-colors flex items-center justify-center"
+          >
+            {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
+            {isLoading
+              ? 'Salvando...'
+              : initialData && initialData.id
+                ? 'Atualizar Compra'
+                : 'Salvar Compra'}
+          </button>
         </div>
-      )}
-      <div className="flex justify-end space-x-3 pt-6 mt-8 border-t border-slate-300">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isLoading}
-          className="py-2.5 px-6 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-70 transition-colors"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="py-2.5 px-6 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:bg-primary-400 transition-colors flex items-center justify-center"
-        >
-          {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
-          {isLoading
-            ? 'Salvando...'
-            : initialData && initialData.id
-              ? 'Atualizar Compra'
-              : 'Salvar Compra'}
-        </button>
-      </div>
-    </form>
+      </form>
     </>
   );
 };
