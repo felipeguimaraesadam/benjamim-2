@@ -950,53 +950,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     </div>
   ));
 
-  // Debug component to show real-time state
-  const DebugPanel = () => {
-    const [isVisible, setIsVisible] = useState(true);
-    
-    if (!isVisible) {
-      return (
-        <button
-          onClick={() => setIsVisible(true)}
-          className="fixed top-4 right-4 bg-red-500 text-white px-2 py-1 rounded text-xs"
-        >
-          Show Debug
-        </button>
-      );
-    }
-    
-    return (
-      <div className="fixed top-4 right-4 bg-black text-white p-4 rounded-lg text-xs max-w-md max-h-96 overflow-y-auto z-50">
-        <button
-          onClick={() => setIsVisible(false)}
-          className="absolute top-1 right-1 bg-red-600 px-1 rounded"
-        >
-          ✕
-        </button>
-        <h4 className="font-bold mb-2">Debug Panel</h4>
-        <div className="space-y-1">
-          <div><strong>Items Count:</strong> {items.length}</div>
-          <div><strong>First Item Material:</strong> {items[0]?.material?.nome || 'NONE'}</div>
-          <div><strong>First Item MaterialId:</strong> {items[0]?.materialId || 'NONE'}</div>
-          <div><strong>Errors:</strong> {Object.keys(errors).length}</div>
-          <div><strong>Material Errors:</strong> {errors['item_0_material'] || 'NONE'}</div>
-        </div>
-        <button
-          onClick={() => {
-            console.log('🔍 DEBUG: Current items state:', items);
-            console.log('🔍 DEBUG: Current errors:', errors);
-          }}
-          className="mt-2 bg-blue-500 px-2 py-1 rounded text-xs"
-        >
-          Log State
-        </button>
-      </div>
-    );
-  };
-
   return (
     <>
-      <DebugPanel />
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-6xl mx-auto p-6 md:p-8 space-y-6 bg-white rounded-lg shadow-xl"
