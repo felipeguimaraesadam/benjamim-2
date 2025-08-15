@@ -7,6 +7,7 @@ import { useAuth } from './contexts/AuthContext';
 // Import pages
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import ObrasPage from './pages/ObrasPage';
 import ObraDetailPage from './pages/ObraDetailPage';
 import FuncionariosPage from './pages/FuncionariosPage';
@@ -31,6 +32,7 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
         {/* Protected Routes */}
         <Route

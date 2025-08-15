@@ -209,7 +209,8 @@ const EquipeDetailPage = () => {
                     <td className="py-3 px-4">
                       {locacao.tipo_pagamento ? (
                         <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {locacao.tipo_pagamento.charAt(0).toUpperCase() + locacao.tipo_pagamento.slice(1)}
+                          {locacao.tipo_pagamento.charAt(0).toUpperCase() +
+                            locacao.tipo_pagamento.slice(1)}
                         </span>
                       ) : (
                         <span className="text-gray-500">-</span>
@@ -218,10 +219,14 @@ const EquipeDetailPage = () => {
                     <td className="py-3 px-4">
                       {locacao.valor_pagamento ? (
                         <span className="font-medium text-green-600">
-                          R$ {parseFloat(locacao.valor_pagamento).toLocaleString('pt-BR', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })}
+                          R${' '}
+                          {parseFloat(locacao.valor_pagamento).toLocaleString(
+                            'pt-BR',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
                         </span>
                       ) : (
                         <span className="text-gray-500">-</span>

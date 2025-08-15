@@ -168,10 +168,11 @@ const FuncionarioDetailPage = () => {
               <tbody className="text-gray-700">
                 {funcionarioDetails.obras_participadas.map(obra => {
                   // Buscar pagamento correspondente para esta obra
-                  const pagamento = funcionarioDetails.pagamentos_recebidos?.find(
-                    p => p.obra_nome === obra.nome_obra
-                  );
-                  
+                  const pagamento =
+                    funcionarioDetails.pagamentos_recebidos?.find(
+                      p => p.obra_nome === obra.nome_obra
+                    );
+
                   return (
                     <tr
                       key={obra.id}
@@ -194,10 +195,13 @@ const FuncionarioDetailPage = () => {
                       <td className="py-3 px-4">
                         {obra.tipo_pagamento ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {obra.tipo_pagamento === 'diaria' ? 'Por Diária' : 
-                             obra.tipo_pagamento === 'metro' ? 'Por Metro' : 
-                             obra.tipo_pagamento === 'empreitada' ? 'Por Empreitada' : 
-                             obra.tipo_pagamento}
+                            {obra.tipo_pagamento === 'diaria'
+                              ? 'Por Diária'
+                              : obra.tipo_pagamento === 'metro'
+                                ? 'Por Metro'
+                                : obra.tipo_pagamento === 'empreitada'
+                                  ? 'Por Empreitada'
+                                  : obra.tipo_pagamento}
                           </span>
                         ) : (
                           <span className="text-gray-400">-</span>

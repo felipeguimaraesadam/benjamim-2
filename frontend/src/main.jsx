@@ -13,7 +13,7 @@ import 'react-toastify/dist/ReactToastify.css'; // Import CSS for react-toastify
 console.log('SGO Frontend iniciado:', {
   timestamp: new Date().toISOString(),
   environment: import.meta.env.MODE,
-  version: '1.0.0'
+  version: '1.0.0',
 });
 
 ReactDOM.createRoot(document.getElementById('root')).render(

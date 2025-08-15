@@ -125,7 +125,7 @@ const DespesasExtrasPage = () => {
     }
   };
 
-  const handleFormSubmit = async (formData) => {
+  const handleFormSubmit = async formData => {
     setIsLoadingForm(true);
     setError(null); // Clear previous modal errors
     const isEditing = currentDespesa && currentDespesa.id;
@@ -199,20 +199,26 @@ const DespesasExtrasPage = () => {
       <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="obra-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="obra-filter"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Filtrar por Obra
             </label>
             <Autocomplete
-              fetchSuggestions={async (query) => {
+              fetchSuggestions={async query => {
                 if (!query) return [];
                 const response = await api.searchObras(query);
-                return response.data.map((obra) => ({
+                return response.data.map(obra => ({
                   value: obra.id,
                   label: obra.nome_obra,
                 }));
               }}
-              onSelect={(selection) =>
-                setFilters({ ...filters, obra_id: selection ? selection.value : '' })
+              onSelect={selection =>
+                setFilters({
+                  ...filters,
+                  obra_id: selection ? selection.value : '',
+                })
               }
               onClear={() => setFilters({ ...filters, obra_id: '' })}
               placeholder="Digite para buscar uma obra..."
@@ -251,8 +257,6 @@ const DespesasExtrasPage = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
         </div>
       )}
-
-
 
       {(!isLoading || despesas.length > 0) && !error && (
         <>

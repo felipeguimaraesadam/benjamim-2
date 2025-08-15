@@ -15,7 +15,7 @@ const DespesasExtrasTable = ({
     setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleDeleteAnexo = async (anexoId) => {
+  const handleDeleteAnexo = async anexoId => {
     if (window.confirm('Tem certeza que deseja excluir este anexo?')) {
       try {
         await api.deleteAnexoDespesa(anexoId);
@@ -106,7 +106,11 @@ const DespesasExtrasTable = ({
                   </button>
                   {despesa.anexos && despesa.anexos.length > 0 && (
                     <button onClick={() => toggleRow(despesa.id)}>
-                      {expandedRows[despesa.id] ? <ChevronUp /> : <ChevronDown />}
+                      {expandedRows[despesa.id] ? (
+                        <ChevronUp />
+                      ) : (
+                        <ChevronDown />
+                      )}
                     </button>
                   )}
                 </td>
@@ -117,7 +121,10 @@ const DespesasExtrasTable = ({
                     <h4 className="font-bold">Anexos:</h4>
                     <ul className="list-disc list-inside">
                       {despesa.anexos.map(anexo => (
-                        <li key={anexo.id} className="flex items-center space-x-2">
+                        <li
+                          key={anexo.id}
+                          className="flex items-center space-x-2"
+                        >
                           <a
                             href={anexo.anexo}
                             target="_blank"
@@ -126,7 +133,12 @@ const DespesasExtrasTable = ({
                           >
                             {anexo.descricao || anexo.anexo.split('/').pop()}
                           </a>
-                          <button onClick={() => handleDeleteAnexo(anexo.id)} className="text-red-600 hover:text-red-800">Excluir</button>
+                          <button
+                            onClick={() => handleDeleteAnexo(anexo.id)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            Excluir
+                          </button>
                         </li>
                       ))}
                     </ul>

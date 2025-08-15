@@ -8,42 +8,42 @@ const MaterialSelectionTest = () => {
   const runMaterialSelectionTest = async () => {
     setIsTesting(true);
     setTestResults([]);
-    
+
     const results = [];
-    
+
     // Test 1: Manual click selection
     results.push({
       test: 'Manual Click Selection',
       action: 'Simulating manual click on suggestion',
       expected: 'Material should be selected and validation should pass',
-      status: 'RUNNING'
+      status: 'RUNNING',
     });
-    
+
     // Test 2: Enter key selection
     results.push({
       test: 'Enter Key Selection',
       action: 'Simulating Enter key on highlighted suggestion',
       expected: 'Material should be selected and validation should pass',
-      status: 'RUNNING'
+      status: 'RUNNING',
     });
-    
+
     // Test 3: Tab key selection
     results.push({
       test: 'Tab Key Selection',
       action: 'Simulating Tab key on highlighted suggestion',
       expected: 'Material should be selected and validation should pass',
-      status: 'RUNNING'
+      status: 'RUNNING',
     });
-    
+
     setTestResults(results);
-    
+
     // Simulate test execution
     setTimeout(() => {
       const updatedResults = results.map((result, index) => ({
         ...result,
         status: 'COMPLETED',
         actual: 'Check browser console for detailed logs',
-        logs: 'Look for 🔍 DEBUG logs in console'
+        logs: 'Look for 🔍 DEBUG logs in console',
       }));
       setTestResults(updatedResults);
       setIsTesting(false);
@@ -53,7 +53,7 @@ const MaterialSelectionTest = () => {
   return (
     <div className="p-4 bg-gray-100 rounded-lg">
       <h3 className="text-lg font-bold mb-4">Material Selection Debug Tool</h3>
-      
+
       <button
         onClick={runMaterialSelectionTest}
         disabled={isTesting}
@@ -61,19 +61,23 @@ const MaterialSelectionTest = () => {
       >
         {isTesting ? 'Testing...' : 'Run Debug Tests'}
       </button>
-      
+
       <div className="space-y-2">
         {testResults.map((result, index) => (
           <div key={index} className="p-3 bg-white rounded shadow">
             <h4 className="font-semibold">{result.test}</h4>
             <p className="text-sm text-gray-600">{result.action}</p>
-            <p className="text-sm text-green-600">Expected: {result.expected}</p>
+            <p className="text-sm text-green-600">
+              Expected: {result.expected}
+            </p>
             <p className="text-sm text-blue-600">Status: {result.status}</p>
-            {result.actual && <p className="text-sm text-purple-600">Actual: {result.actual}</p>}
+            {result.actual && (
+              <p className="text-sm text-purple-600">Actual: {result.actual}</p>
+            )}
           </div>
         ))}
       </div>
-      
+
       <div className="mt-4 p-3 bg-yellow-100 rounded">
         <h4 className="font-semibold">Debug Instructions:</h4>
         <ol className="text-sm list-decimal list-inside">

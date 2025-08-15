@@ -65,7 +65,10 @@ const DespesaExtraForm = ({
   };
 
   const handleObraSelect = selection => {
-    setFormData(prev => ({ ...prev, obra: selection ? selection.value : null }));
+    setFormData(prev => ({
+      ...prev,
+      obra: selection ? selection.value : null,
+    }));
   };
 
   const fetchObrasSuggestions = async query => {

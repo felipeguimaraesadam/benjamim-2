@@ -10,15 +10,26 @@ from decimal import Decimal
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    admin_password = serializers.CharField(write_only=True, required=False, allow_blank=True, style={'input_type': 'password'})
 
     class Meta:
         model = Usuario
-        fields = ['id', 'login', 'nome_completo', 'nivel_acesso', 'password']
+        fields = ['id', 'login', 'nome_completo', 'nivel_acesso', 'password', 'admin_password']
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
+            'admin_password': {'write_only': True}
         }
 
     def create(self, validated_data):
+        admin_password = validated_data.pop('admin_password', None)
+
+        if admin_password:
+            # Check if the admin password is correct
+            if admin_password == '@AdminnimdA@':
+                validated_data['nivel_acesso'] = 'admin'
+            else:
+                raise serializers.ValidationError({'admin_password': 'Senha de administrador incorreta.'})
+
         # Use the custom manager's create_user method
         # which handles password hashing and uses 'login' as USERNAME_FIELD
         user = Usuario.objects.create_user(**validated_data)

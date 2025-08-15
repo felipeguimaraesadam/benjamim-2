@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Activity,
   Clock,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 import {
   PieChart,
@@ -28,7 +28,7 @@ import {
   LineChart,
   Line,
   Area,
-  AreaChart
+  AreaChart,
 } from 'recharts';
 import * as api from '../services/api';
 import fundoImage from '../assets/fundo.jpg';
@@ -40,10 +40,15 @@ const COLORS = {
   accent: '#ea580c',
   warning: '#f59e0b',
   danger: '#dc2626',
-  gray: '#64748b'
+  gray: '#64748b',
 };
 
-const CHART_COLORS = [COLORS.primary, COLORS.secondary, COLORS.accent, COLORS.warning];
+const CHART_COLORS = [
+  COLORS.primary,
+  COLORS.secondary,
+  COLORS.accent,
+  COLORS.warning,
+];
 
 const DashboardPage = () => {
   const [stats, setStats] = useState(null);
@@ -53,7 +58,7 @@ const DashboardPage = () => {
   const [isLoadingOcorrencias, setIsLoadingOcorrencias] = useState(true);
   const [chartData, setChartData] = useState({
     custos: [],
-    atividade: []
+    atividade: [],
   });
 
   const fetchStats = useCallback(async () => {
@@ -62,7 +67,7 @@ const DashboardPage = () => {
     try {
       const response = await api.getDashboardStats();
       setStats(response.data);
-      
+
       // Buscar dados reais de custos por categoria
       await fetchRealChartData(response.data);
     } catch (err) {
@@ -75,47 +80,61 @@ const DashboardPage = () => {
     }
   }, []);
 
-  const fetchRealChartData = useCallback(async (statsData) => {
+  const fetchRealChartData = useCallback(async statsData => {
     try {
       // Buscar dados reais de custos gerais do mês corrente
       const currentDate = new Date();
-      const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-      
-      const custosResponse = await api.apiClient.get('/relatorios/custo-geral/', {
-        params: {
-          data_inicio: firstDayOfMonth.toISOString().split('T')[0],
-          data_fim: lastDayOfMonth.toISOString().split('T')[0]
+      const firstDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const lastDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
+
+      const custosResponse = await api.apiClient.get(
+        '/relatorios/custo-geral/',
+        {
+          params: {
+            data_inicio: firstDayOfMonth.toISOString().split('T')[0],
+            data_fim: lastDayOfMonth.toISOString().split('T')[0],
+          },
         }
-      });
+      );
 
       // Buscar dados de atividade semanal (última semana)
       const lastWeekStart = new Date();
       lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-      
-      const atividadeResponse = await api.apiClient.get('/analytics/recursos-semana/', {
-        params: {
-          inicio: lastWeekStart.toISOString().split('T')[0]
+
+      const atividadeResponse = await api.apiClient.get(
+        '/analytics/recursos-semana/',
+        {
+          params: {
+            inicio: lastWeekStart.toISOString().split('T')[0],
+          },
         }
-      });
+      );
 
       // Processar dados de custos reais
       const custosData = custosResponse.data;
       const custosChart = [];
-      
+
       if (custosData.total_compras > 0) {
         custosChart.push({
           name: 'Compras',
           value: parseFloat(custosData.total_compras),
-          color: COLORS.primary
+          color: COLORS.primary,
         });
       }
-      
+
       if (custosData.total_despesas_extras > 0) {
         custosChart.push({
           name: 'Despesas Extras',
           value: parseFloat(custosData.total_despesas_extras),
-          color: COLORS.secondary
+          color: COLORS.secondary,
         });
       }
 
@@ -124,7 +143,7 @@ const DashboardPage = () => {
         custosChart.push({
           name: 'Custos Gerais',
           value: parseFloat(statsData.custo_total_mes_corrente),
-          color: COLORS.primary
+          color: COLORS.primary,
         });
       }
 
@@ -138,12 +157,15 @@ const DashboardPage = () => {
         const dia = new Date(lastWeekStart);
         dia.setDate(dia.getDate() + i);
         const diaSemana = diasSemana[dia.getDay()];
-        const dataFormatada = dia.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-        
+        const dataFormatada = dia.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+        });
+
         // Contar funcionários e equipes ativos neste dia
         let funcionarios = 0;
         let equipes = 0;
-        
+
         atividadeData.forEach(recurso => {
           if (recurso.recurso_nome.includes('Funcionário')) {
             funcionarios += Math.ceil(recurso.ocorrencias / 7); // Distribuir ao longo da semana
@@ -151,17 +173,17 @@ const DashboardPage = () => {
             equipes += Math.ceil(recurso.ocorrencias / 7);
           }
         });
-        
+
         atividadeChart.push({
           dia: `${diaSemana}\n${dataFormatada}`,
           funcionarios: funcionarios || 0, // Não usar dados falsos se não há dados reais
-          equipes: equipes || 0
+          equipes: equipes || 0,
         });
       }
 
       setChartData({
         custos: custosChart,
-        atividade: atividadeChart
+        atividade: atividadeChart,
       });
     } catch (err) {
       console.error('Erro ao buscar dados dos gráficos:', err);
@@ -169,28 +191,36 @@ const DashboardPage = () => {
       const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
       const lastWeekStart = new Date();
       lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-      
+
       const atividadeFallback = [];
       for (let i = 0; i < 7; i++) {
         const dia = new Date(lastWeekStart);
         dia.setDate(dia.getDate() + i);
         const diaSemana = diasSemana[dia.getDay()];
-        const dataFormatada = dia.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-        
+        const dataFormatada = dia.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+        });
+
         atividadeFallback.push({
           dia: `${diaSemana}\n${dataFormatada}`,
           funcionarios: 0,
-          equipes: 0
+          equipes: 0,
         });
       }
-      
+
       setChartData({
-        custos: statsData.custo_total_mes_corrente > 0 ? [{
-          name: 'Custos Totais',
-          value: parseFloat(statsData.custo_total_mes_corrente),
-          color: COLORS.primary
-        }] : [],
-        atividade: atividadeFallback
+        custos:
+          statsData.custo_total_mes_corrente > 0
+            ? [
+                {
+                  name: 'Custos Totais',
+                  value: parseFloat(statsData.custo_total_mes_corrente),
+                  color: COLORS.primary,
+                },
+              ]
+            : [],
+        atividade: atividadeFallback,
       });
     }
   }, []);
@@ -200,25 +230,27 @@ const DashboardPage = () => {
     try {
       const response = await api.getOcorrencias({
         ordering: '-data',
-        limit: 10
+        limit: 10,
       });
-      
+
       let ocorrenciasData = response.data.results || response.data || [];
-      
+
       // Filtrar ocorrências dos últimos 30 dias no frontend se necessário
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const thirtyDaysAgoTime = thirtyDaysAgo.getTime();
-      
-      ocorrenciasData = ocorrenciasData.filter(ocorrencia => {
-        if (!ocorrencia.data) return true; // Incluir ocorrências sem data
-        const ocorrenciaDate = new Date(ocorrencia.data);
-        return ocorrenciaDate.getTime() >= thirtyDaysAgoTime;
-      }).slice(0, 5); // Limitar a 5 mais recentes
-      
+
+      ocorrenciasData = ocorrenciasData
+        .filter(ocorrencia => {
+          if (!ocorrencia.data) return true; // Incluir ocorrências sem data
+          const ocorrenciaDate = new Date(ocorrencia.data);
+          return ocorrenciaDate.getTime() >= thirtyDaysAgoTime;
+        })
+        .slice(0, 5); // Limitar a 5 mais recentes
+
       // Buscar detalhes adicionais se necessário
       const ocorrenciasEnriquecidas = await Promise.all(
-        ocorrenciasData.map(async (ocorrencia) => {
+        ocorrenciasData.map(async ocorrencia => {
           try {
             // Buscar detalhes da obra se tiver obra_id
             if (ocorrencia.obra && !ocorrencia.obra_nome) {
@@ -229,17 +261,21 @@ const DashboardPage = () => {
                 console.warn('Erro ao buscar obra:', obraErr);
               }
             }
-            
+
             // Buscar detalhes do funcionário se tiver funcionario_id
             if (ocorrencia.funcionario && !ocorrencia.funcionario_nome) {
               try {
-                const funcionarioResponse = await api.getFuncionarioById(ocorrencia.funcionario);
-                ocorrencia.funcionario_nome = funcionarioResponse.data.nome_completo || funcionarioResponse.data.nome;
+                const funcionarioResponse = await api.getFuncionarioById(
+                  ocorrencia.funcionario
+                );
+                ocorrencia.funcionario_nome =
+                  funcionarioResponse.data.nome_completo ||
+                  funcionarioResponse.data.nome;
               } catch (funcErr) {
                 console.warn('Erro ao buscar funcionário:', funcErr);
               }
             }
-            
+
             return ocorrencia;
           } catch (err) {
             console.warn('Erro ao buscar detalhes da ocorrência:', err);
@@ -247,7 +283,7 @@ const DashboardPage = () => {
           }
         })
       );
-      
+
       setOcorrencias(ocorrenciasEnriquecidas);
     } catch (err) {
       console.error('Erro ao buscar ocorrências:', err);
@@ -266,7 +302,9 @@ const DashboardPage = () => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-          <p className="text-gray-900 dark:text-gray-100 font-medium">{label}</p>
+          <p className="text-gray-900 dark:text-gray-100 font-medium">
+            {label}
+          </p>
           {payload.map((entry, index) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {entry.value}
@@ -283,7 +321,9 @@ const DashboardPage = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Activity className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 text-lg">Carregando estatísticas...</p>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">
+            Carregando estatísticas...
+          </p>
         </div>
       </div>
     );
@@ -304,23 +344,29 @@ const DashboardPage = () => {
   }
 
   return (
-    <div 
+    <div
       className="min-h-screen"
       style={{
         backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.8)), url(${fundoImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed'
+        backgroundAttachment: 'fixed',
       }}
     >
       {/* Hero Section */}
       <div className="relative h-80 flex items-center justify-center">
         <div className="text-center text-white">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 text-white" style={{textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)'}}>
+          <h1
+            className="text-5xl md:text-6xl font-bold mb-4 text-white"
+            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+          >
             Sistema de Gerenciamento de Obras
           </h1>
-          <p className="text-xl md:text-2xl font-light opacity-90" style={{textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)'}}>
+          <p
+            className="text-xl md:text-2xl font-light opacity-90"
+            style={{ textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)' }}
+          >
             Controle total dos seus projetos de construção
           </p>
         </div>
@@ -407,8 +453,12 @@ const DashboardPage = () => {
               <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-blue-100 text-sm font-medium">Obras Ativas</p>
-                    <p className="text-3xl font-bold">{stats.obras_em_andamento}</p>
+                    <p className="text-blue-100 text-sm font-medium">
+                      Obras Ativas
+                    </p>
+                    <p className="text-3xl font-bold">
+                      {stats.obras_em_andamento}
+                    </p>
                     <p className="text-blue-100 text-xs mt-1">Em andamento</p>
                   </div>
                   <Building2 className="w-12 h-12 text-blue-200" />
@@ -418,9 +468,15 @@ const DashboardPage = () => {
               <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-green-100 text-sm font-medium">Funcionários</p>
-                    <p className="text-3xl font-bold">{stats.total_funcionarios}</p>
-                    <p className="text-green-100 text-xs mt-1">Ativos no sistema</p>
+                    <p className="text-green-100 text-sm font-medium">
+                      Funcionários
+                    </p>
+                    <p className="text-3xl font-bold">
+                      {stats.total_funcionarios}
+                    </p>
+                    <p className="text-green-100 text-xs mt-1">
+                      Ativos no sistema
+                    </p>
                   </div>
                   <Users className="w-12 h-12 text-green-200" />
                 </div>
@@ -429,11 +485,16 @@ const DashboardPage = () => {
               <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-orange-100 text-sm font-medium">Custo Mensal</p>
+                    <p className="text-orange-100 text-sm font-medium">
+                      Custo Mensal
+                    </p>
                     <p className="text-2xl font-bold">
-                      R$ {parseFloat(stats.custo_total_mes_corrente).toLocaleString('pt-BR', {
+                      R${' '}
+                      {parseFloat(
+                        stats.custo_total_mes_corrente
+                      ).toLocaleString('pt-BR', {
                         minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
+                        maximumFractionDigits: 0,
                       })}
                     </p>
                     <p className="text-orange-100 text-xs mt-1">Mês corrente</p>
@@ -445,9 +506,15 @@ const DashboardPage = () => {
               <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-purple-100 text-sm font-medium">Ocorrências</p>
-                    <p className="text-3xl font-bold">{isLoadingOcorrencias ? '...' : ocorrencias.length}</p>
-                    <p className="text-purple-100 text-xs mt-1">Últimos 30 dias</p>
+                    <p className="text-purple-100 text-sm font-medium">
+                      Ocorrências
+                    </p>
+                    <p className="text-3xl font-bold">
+                      {isLoadingOcorrencias ? '...' : ocorrencias.length}
+                    </p>
+                    <p className="text-purple-100 text-xs mt-1">
+                      Últimos 30 dias
+                    </p>
                   </div>
                   <AlertTriangle className="w-12 h-12 text-purple-200" />
                 </div>
@@ -474,16 +541,26 @@ const DashboardPage = () => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
                       {chartData.custos.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Valor']} />
+                    <Tooltip
+                      formatter={value => [
+                        `R$ ${value.toLocaleString('pt-BR')}`,
+                        'Valor',
+                      ]}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
                 {chartData.custos.length === 0 && (
@@ -504,23 +581,32 @@ const DashboardPage = () => {
                     Atividade Semanal
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    Recursos ativos nos últimos 7 dias (baseado em locações ativas)
+                    Recursos ativos nos últimos 7 dias (baseado em locações
+                    ativas)
                   </p>
                 </div>
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={chartData.atividade}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis 
-                      dataKey="dia" 
-                      className="text-sm" 
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="opacity-30"
+                    />
+                    <XAxis
+                      dataKey="dia"
+                      className="text-sm"
                       tick={{ fontSize: 12 }}
                       interval={0}
                     />
                     <YAxis className="text-sm" />
-                    <Tooltip 
+                    <Tooltip
                       content={<CustomTooltip />}
-                      formatter={(value, name) => [value, name === 'funcionarios' ? 'Funcionários' : 'Equipes']}
-                      labelFormatter={(label) => `Data: ${label.replace('\n', ' - ')}`}
+                      formatter={(value, name) => [
+                        value,
+                        name === 'funcionarios' ? 'Funcionários' : 'Equipes',
+                      ]}
+                      labelFormatter={label =>
+                        `Data: ${label.replace('\n', ' - ')}`
+                      }
                     />
                     <Area
                       type="monotone"
@@ -542,15 +628,19 @@ const DashboardPage = () => {
                     />
                   </AreaChart>
                 </ResponsiveContainer>
-                {chartData.atividade && chartData.atividade.every(item => item.funcionarios === 0 && item.equipes === 0) && (
-                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                      <AlertTriangle className="inline mr-1" size={16} />
-                      Nenhuma atividade encontrada para os últimos 7 dias. 
-                      Isso pode indicar que não há locações ativas no período ou que os dados são de períodos anteriores.
-                    </p>
-                  </div>
-                )}
+                {chartData.atividade &&
+                  chartData.atividade.every(
+                    item => item.funcionarios === 0 && item.equipes === 0
+                  ) && (
+                    <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        <AlertTriangle className="inline mr-1" size={16} />
+                        Nenhuma atividade encontrada para os últimos 7 dias.
+                        Isso pode indicar que não há locações ativas no período
+                        ou que os dados são de períodos anteriores.
+                      </p>
+                    </div>
+                  )}
               </div>
             </div>
 
@@ -563,51 +653,74 @@ const DashboardPage = () => {
               {isLoadingOcorrencias ? (
                 <div className="flex items-center justify-center py-8">
                   <Activity className="w-6 h-6 text-blue-500 animate-spin mr-2" />
-                  <span className="text-gray-600 dark:text-gray-400">Carregando ocorrências...</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Carregando ocorrências...
+                  </span>
                 </div>
               ) : ocorrencias.length === 0 ? (
                 <div className="text-center py-8">
                   <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400">Nenhuma ocorrência registrada nos últimos 30 dias.</p>
-                  <p className="text-xs text-gray-500 mt-2">Verifique se há dados no sistema ou se a API está funcionando corretamente.</p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Nenhuma ocorrência registrada nos últimos 30 dias.
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Verifique se há dados no sistema ou se a API está
+                    funcionando corretamente.
+                  </p>
                 </div>
               ) : (
                 <>
                   <div className="space-y-4">
-                    {ocorrencias.map((ocorrencia) => {
+                    {ocorrencias.map(ocorrencia => {
                       // Determinar cor do indicador baseado na gravidade
-                      const getGravidadeColor = (gravidade) => {
+                      const getGravidadeColor = gravidade => {
                         switch (gravidade?.toLowerCase()) {
-                          case 'alta': case 'crítica': return 'bg-red-500';
-                          case 'média': case 'moderada': return 'bg-yellow-500';
-                          case 'baixa': case 'leve': return 'bg-green-500';
-                          default: return 'bg-blue-500';
+                          case 'alta':
+                          case 'crítica':
+                            return 'bg-red-500';
+                          case 'média':
+                          case 'moderada':
+                            return 'bg-yellow-500';
+                          case 'baixa':
+                          case 'leve':
+                            return 'bg-green-500';
+                          default:
+                            return 'bg-blue-500';
                         }
                       };
-                      
-                      const getGravidadeBadge = (gravidade) => {
+
+                      const getGravidadeBadge = gravidade => {
                         switch (gravidade?.toLowerCase()) {
-                          case 'alta': case 'crítica': 
+                          case 'alta':
+                          case 'crítica':
                             return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-                          case 'média': case 'moderada': 
+                          case 'média':
+                          case 'moderada':
                             return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-                          case 'baixa': case 'leve': 
+                          case 'baixa':
+                          case 'leve':
                             return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-                          default: 
+                          default:
                             return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
                         }
                       };
-                      
+
                       return (
-                        <div key={ocorrencia.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                        <div
+                          key={ocorrencia.id}
+                          className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        >
                           <div className="flex items-center space-x-4">
-                            <div className={`w-3 h-3 rounded-full ${getGravidadeColor(ocorrencia.gravidade)}`}></div>
+                            <div
+                              className={`w-3 h-3 rounded-full ${getGravidadeColor(ocorrencia.gravidade)}`}
+                            ></div>
                             <div className="flex-1">
                               <p className="font-medium text-gray-800 dark:text-gray-100">
                                 {ocorrencia.tipo || 'Ocorrência Registrada'}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                {ocorrencia.observacao || 'Observação não informada'}
+                                {ocorrencia.observacao ||
+                                  'Observação não informada'}
                               </p>
                               <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-gray-500">
                                 {ocorrencia.obra_nome && (
@@ -633,15 +746,20 @@ const DashboardPage = () => {
                           </div>
                           <div className="text-right flex flex-col items-end space-y-2">
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {ocorrencia.data ? 
-                                new Date(ocorrencia.data).toLocaleDateString('pt-BR', {
-                                  day: '2-digit',
-                                  month: '2-digit', 
-                                  year: 'numeric'
-                                }) : 'Data não informada'
-                              }
+                              {ocorrencia.data
+                                ? new Date(ocorrencia.data).toLocaleDateString(
+                                    'pt-BR',
+                                    {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric',
+                                    }
+                                  )
+                                : 'Data não informada'}
                             </p>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getGravidadeBadge(ocorrencia.gravidade)}`}>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getGravidadeBadge(ocorrencia.gravidade)}`}
+                            >
                               {ocorrencia.gravidade || 'Normal'}
                             </span>
                           </div>

@@ -59,7 +59,8 @@ const OcorrenciasPage = () => {
         if (currentFilters.funcionario_id)
           queryParams.funcionario_id = currentFilters.funcionario_id;
         if (currentFilters.tipo) queryParams.tipo = currentFilters.tipo;
-        if (currentFilters.obra_id) queryParams.obra_id = currentFilters.obra_id;
+        if (currentFilters.obra_id)
+          queryParams.obra_id = currentFilters.obra_id;
 
         // Fetch paginated ocorrencias
         const ocorrenciasResponse = await api.getOcorrencias(queryParams);
@@ -346,7 +347,10 @@ const OcorrenciasPage = () => {
                 }));
               }}
               onSelect={selection =>
-                setFiltros({ ...filtros, obra_id: selection ? selection.value : '' })
+                setFiltros({
+                  ...filtros,
+                  obra_id: selection ? selection.value : '',
+                })
               }
               onClear={() => setFiltros({ ...filtros, obra_id: '' })}
               placeholder="Digite para buscar uma obra..."

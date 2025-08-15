@@ -75,19 +75,19 @@ const Autocomplete = ({
         <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto">
           {isLoading ? (
             <li className="px-3 py-2">Carregando...</li>
+          ) : suggestions.length > 0 ? (
+            suggestions.map(suggestion => (
+              <li
+                key={suggestion.value}
+                onClick={() => handleSelect(suggestion)}
+                className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+              >
+                {suggestion.label}
+              </li>
+            ))
           ) : (
-            suggestions.length > 0 ? (
-              suggestions.map(suggestion => (
-                <li
-                  key={suggestion.value}
-                  onClick={() => handleSelect(suggestion)}
-                  className="px-3 py-2 cursor-pointer hover:bg-gray-100"
-                >
-                  {suggestion.label}
-                </li>
-              ))
-            ) : (
-              inputValue && <li className="px-3 py-2">Nenhum resultado encontrado</li>
+            inputValue && (
+              <li className="px-3 py-2">Nenhum resultado encontrado</li>
             )
           )}
         </ul>

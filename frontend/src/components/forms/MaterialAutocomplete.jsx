@@ -160,7 +160,10 @@ const MaterialAutocomplete = React.memo(
       const handleSuggestionClick = material => {
         console.log('🧪 MaterialAutocomplete: Suggestion clicked:', material);
         console.log('🧪 MaterialAutocomplete: Current inputValue:', inputValue);
-        console.log('🧪 MaterialAutocomplete: Calling onMaterialSelect with:', material);
+        console.log(
+          '🧪 MaterialAutocomplete: Calling onMaterialSelect with:',
+          material
+        );
 
         setSelectionMadeViaClick(true); // Set the flag here
         setInputValue(material.nome);
@@ -176,7 +179,9 @@ const MaterialAutocomplete = React.memo(
         setTimeout(() => {
           if (inputRef.current) {
             inputRef.current.blur();
-            console.log('🧪 MaterialAutocomplete: Input blurred after selection');
+            console.log(
+              '🧪 MaterialAutocomplete: Input blurred after selection'
+            );
           }
         }, 100);
       };
@@ -323,7 +328,7 @@ const MaterialAutocomplete = React.memo(
 
       const selectHighlighted = () => {
         let materialToSelect = null;
-        
+
         // First, try to select highlighted item
         if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
           materialToSelect = suggestions[highlightedIndex];
@@ -331,10 +336,10 @@ const MaterialAutocomplete = React.memo(
         // If no highlighted item, but there are suggestions, try to find exact match or select first one
         else if (suggestions.length > 0) {
           // Try to find exact match first
-          const exactMatch = suggestions.find(s => 
-            s.nome.toLowerCase().trim() === inputValue.toLowerCase().trim()
+          const exactMatch = suggestions.find(
+            s => s.nome.toLowerCase().trim() === inputValue.toLowerCase().trim()
           );
-          
+
           if (exactMatch) {
             materialToSelect = exactMatch;
           } else if (suggestions.length === 1) {
@@ -342,25 +347,34 @@ const MaterialAutocomplete = React.memo(
             materialToSelect = suggestions[0];
           }
         }
-        
+
         if (materialToSelect) {
           // Immediately update UI state
           setInputValue(materialToSelect.nome);
           setSuggestions([]);
           setShowSuggestions(false);
           setHighlightedIndex(-1);
-          
+
           // Call onMaterialSelect immediately to ensure selection is processed
           onMaterialSelect(itemIndex, materialToSelect);
-          
+
           return true; // Indicates a selection was made
         }
-        
+
         return false;
       };
 
       const handleInputKeyDown = e => {
-        console.log('🔍 DEBUG: handleInputKeyDown - key:', e.key, 'showSuggestions:', showSuggestions, 'highlightedIndex:', highlightedIndex, 'suggestions:', suggestions.length);
+        console.log(
+          '🔍 DEBUG: handleInputKeyDown - key:',
+          e.key,
+          'showSuggestions:',
+          showSuggestions,
+          'highlightedIndex:',
+          highlightedIndex,
+          'suggestions:',
+          suggestions.length
+        );
 
         if (showNewMaterialModal) {
           if (e.key === 'Escape') {
@@ -376,12 +390,16 @@ const MaterialAutocomplete = React.memo(
             const nextIndex = (highlightedIndex + 1) % suggestions.length;
             setHighlightedIndex(nextIndex);
             scrollToSuggestion(nextIndex);
-            console.log('🔍 DEBUG: ArrowDown - new highlightedIndex:', nextIndex);
+            console.log(
+              '🔍 DEBUG: ArrowDown - new highlightedIndex:',
+              nextIndex
+            );
             return;
           }
           if (e.key === 'ArrowUp') {
             e.preventDefault();
-            const prevIndex = (highlightedIndex - 1 + suggestions.length) % suggestions.length;
+            const prevIndex =
+              (highlightedIndex - 1 + suggestions.length) % suggestions.length;
             setHighlightedIndex(prevIndex);
             scrollToSuggestion(prevIndex);
             console.log('🔍 DEBUG: ArrowUp - new highlightedIndex:', prevIndex);
@@ -389,11 +407,16 @@ const MaterialAutocomplete = React.memo(
           }
           if (e.key === 'Enter' || e.key === 'Tab') {
             e.preventDefault();
-            console.log('🔍 DEBUG: Enter/Tab pressed - highlightedIndex:', highlightedIndex, 'suggestions:', suggestions);
+            console.log(
+              '🔍 DEBUG: Enter/Tab pressed - highlightedIndex:',
+              highlightedIndex,
+              'suggestions:',
+              suggestions
+            );
             setSelectionMadeViaEnter(true); // Mark that selection was made via keyboard
             if (selectHighlighted()) {
               console.log('🔍 DEBUG: Selection made via Enter/Tab');
-              // The blur will be triggered by the state update and subsequent re-render, 
+              // The blur will be triggered by the state update and subsequent re-render,
               // which will then call handleBlur and onBlurReport.
             } else {
               console.log('🔍 DEBUG: No selection made, blurring directly');

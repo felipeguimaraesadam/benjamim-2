@@ -86,7 +86,6 @@ const ObraCompletaComprasTable = ({ compras, isLoading, error }) => {
             >
               Nota Fiscal
             </th>
-
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">

@@ -28,7 +28,7 @@ const ObraAutocomplete = React.memo(
         error,
         onBlur,
         onKeyDown,
-        placeholder = "Digite para buscar uma obra...",
+        placeholder = 'Digite para buscar uma obra...',
         required = false,
       },
       ref
@@ -59,7 +59,7 @@ const ObraAutocomplete = React.memo(
           inputRef.current?.blur();
         },
         getValue: () => value,
-        setValue: (newValue) => {
+        setValue: newValue => {
           if (newValue && newValue.nome_obra) {
             setInputValue(newValue.nome_obra);
           } else {
@@ -109,7 +109,7 @@ const ObraAutocomplete = React.memo(
 
       // Debounced search function
       const debouncedSearch = useCallback(
-        debounce(async (searchTerm) => {
+        debounce(async searchTerm => {
           if (!searchTerm.trim()) {
             setSuggestions([]);
             setIsLoading(false);
@@ -119,7 +119,11 @@ const ObraAutocomplete = React.memo(
           try {
             setIsLoading(true);
             const response = await api.getObras({ search: searchTerm });
-            const obras = response.data ? (Array.isArray(response.data) ? response.data : response.data.results) : [];
+            const obras = response.data
+              ? Array.isArray(response.data)
+                ? response.data
+                : response.data.results
+              : [];
             if (!Array.isArray(obras)) {
               console.error('Expected obras to be an array, but got:', obras);
               setSuggestions([]);
@@ -136,13 +140,13 @@ const ObraAutocomplete = React.memo(
         []
       );
 
-      const handleInputChange = (e) => {
+      const handleInputChange = e => {
         const newValue = e.target.value;
         setInputValue(newValue);
         setSelectionMade(false);
         setShowSuggestions(true);
         setHighlightedIndex(-1);
-        
+
         if (!newValue.trim()) {
           onObraSelect(null);
           setSuggestions([]);
@@ -152,7 +156,7 @@ const ObraAutocomplete = React.memo(
         }
       };
 
-      const handleSuggestionClick = (obra) => {
+      const handleSuggestionClick = obra => {
         setInputValue(obra.nome_obra);
         setSelectionMade(true);
         setShowSuggestions(false);
@@ -161,7 +165,7 @@ const ObraAutocomplete = React.memo(
         inputRef.current?.focus();
       };
 
-      const handleKeyDown = (e) => {
+      const handleKeyDown = e => {
         if (!showSuggestions || suggestions.length === 0) {
           if (onKeyDown) {
             onKeyDown(e);
@@ -179,7 +183,7 @@ const ObraAutocomplete = React.memo(
                 if (suggestionItemRefs.current[newIndex]) {
                   suggestionItemRefs.current[newIndex].scrollIntoView({
                     block: 'nearest',
-                    behavior: 'smooth'
+                    behavior: 'smooth',
                   });
                 }
               }, 0);
@@ -196,7 +200,7 @@ const ObraAutocomplete = React.memo(
                 if (suggestionItemRefs.current[newIndex]) {
                   suggestionItemRefs.current[newIndex].scrollIntoView({
                     block: 'nearest',
-                    behavior: 'smooth'
+                    behavior: 'smooth',
                   });
                 }
               }, 0);
@@ -236,7 +240,7 @@ const ObraAutocomplete = React.memo(
         }
       };
 
-      const handleInputBlur = (e) => {
+      const handleInputBlur = e => {
         // Delay hiding suggestions to allow for clicks
         setTimeout(() => {
           setShowSuggestions(false);
@@ -312,7 +316,7 @@ const ObraAutocomplete = React.memo(
                   suggestions.map((obra, index) => (
                     <div
                       key={obra.id}
-                      ref={(el) => (suggestionItemRefs.current[index] = el)}
+                      ref={el => (suggestionItemRefs.current[index] = el)}
                       className={`px-3 py-2 cursor-pointer text-sm transition-colors ${
                         index === highlightedIndex
                           ? 'bg-primary-100 text-primary-900'

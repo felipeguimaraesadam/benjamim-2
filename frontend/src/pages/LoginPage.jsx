@@ -145,7 +145,7 @@ const LoginPage = () => {
         <p className="text-sm text-center text-gray-600 dark:text-gray-300">
           Não tem uma conta?{' '}
           <Link
-            to="/registrar"
+            to="/register"
             className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
           >
             Registre-se aqui

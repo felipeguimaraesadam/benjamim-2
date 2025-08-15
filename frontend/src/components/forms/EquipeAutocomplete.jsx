@@ -28,7 +28,7 @@ const EquipeAutocomplete = React.memo(
         error,
         onBlur,
         onKeyDown,
-        placeholder = "Digite para buscar uma equipe...",
+        placeholder = 'Digite para buscar uma equipe...',
         required = false,
       },
       ref
@@ -59,7 +59,7 @@ const EquipeAutocomplete = React.memo(
           inputRef.current?.blur();
         },
         getValue: () => value,
-        setValue: (newValue) => {
+        setValue: newValue => {
           if (newValue && newValue.nome_equipe) {
             setInputValue(newValue.nome_equipe);
           } else {
@@ -104,7 +104,7 @@ const EquipeAutocomplete = React.memo(
       }, [showSuggestions]);
 
       const debouncedSearch = useCallback(
-        debounce(async (searchTerm) => {
+        debounce(async searchTerm => {
           if (!searchTerm.trim()) {
             setSuggestions([]);
             setIsLoading(false);
@@ -114,9 +114,16 @@ const EquipeAutocomplete = React.memo(
           try {
             setIsLoading(true);
             const response = await api.getEquipes({ search: searchTerm });
-            const equipes = response.data ? (Array.isArray(response.data) ? response.data : response.data.results) : [];
+            const equipes = response.data
+              ? Array.isArray(response.data)
+                ? response.data
+                : response.data.results
+              : [];
             if (!Array.isArray(equipes)) {
-              console.error('Expected equipes to be an array, but got:', equipes);
+              console.error(
+                'Expected equipes to be an array, but got:',
+                equipes
+              );
               setSuggestions([]);
               return;
             }
@@ -131,7 +138,7 @@ const EquipeAutocomplete = React.memo(
         []
       );
 
-      const handleInputChange = (e) => {
+      const handleInputChange = e => {
         const newValue = e.target.value;
         setInputValue(newValue);
         setSelectionMade(false);
@@ -147,7 +154,7 @@ const EquipeAutocomplete = React.memo(
         }
       };
 
-      const handleSuggestionClick = (equipe) => {
+      const handleSuggestionClick = equipe => {
         setInputValue(equipe.nome_equipe);
         setSelectionMade(true);
         setShowSuggestions(false);
@@ -156,7 +163,7 @@ const EquipeAutocomplete = React.memo(
         inputRef.current?.focus();
       };
 
-      const handleKeyDown = (e) => {
+      const handleKeyDown = e => {
         if (!showSuggestions || suggestions.length === 0) {
           if (onKeyDown) {
             onKeyDown(e);
@@ -173,7 +180,7 @@ const EquipeAutocomplete = React.memo(
                 if (suggestionItemRefs.current[newIndex]) {
                   suggestionItemRefs.current[newIndex].scrollIntoView({
                     block: 'nearest',
-                    behavior: 'smooth'
+                    behavior: 'smooth',
                   });
                 }
               }, 0);
@@ -189,7 +196,7 @@ const EquipeAutocomplete = React.memo(
                 if (suggestionItemRefs.current[newIndex]) {
                   suggestionItemRefs.current[newIndex].scrollIntoView({
                     block: 'nearest',
-                    behavior: 'smooth'
+                    behavior: 'smooth',
                   });
                 }
               }, 0);
@@ -229,7 +236,7 @@ const EquipeAutocomplete = React.memo(
         }
       };
 
-      const handleInputBlur = (e) => {
+      const handleInputBlur = e => {
         setTimeout(() => {
           setShowSuggestions(false);
           setHighlightedIndex(-1);
@@ -270,7 +277,9 @@ const EquipeAutocomplete = React.memo(
               aria-expanded={showSuggestions}
               aria-haspopup="listbox"
               aria-autocomplete="list"
-              aria-describedby={error ? `equipe-error-${Date.now()}` : undefined}
+              aria-describedby={
+                error ? `equipe-error-${Date.now()}` : undefined
+              }
               required={required}
             />
             {isLoading && (
@@ -303,7 +312,7 @@ const EquipeAutocomplete = React.memo(
                   suggestions.map((equipe, index) => (
                     <div
                       key={equipe.id}
-                      ref={(el) => (suggestionItemRefs.current[index] = el)}
+                      ref={el => (suggestionItemRefs.current[index] = el)}
                       className={`px-3 py-2 cursor-pointer text-sm transition-colors ${
                         index === highlightedIndex
                           ? 'bg-primary-100 text-primary-900'
