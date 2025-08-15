@@ -22,7 +22,7 @@ const RegisterPage = () => {
       login,
       nome_completo: nomeCompleto,
       password,
-      nivel_acesso: 'user', // Default level
+      nivel_acesso: 'gerente', // Default level
     };
 
     if (showAdminPassword) {
@@ -140,6 +140,7 @@ const RegisterPage = () => {
                 id="adminPassword"
                 name="adminPassword"
                 type="password"
+                autoComplete="new-password"
                 value={adminPassword}
                 onChange={e => setAdminPassword(e.target.value)}
                 className="form-input"
