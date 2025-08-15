@@ -44,10 +44,30 @@ const ComprasPage = () => {
   const [isItensModalOpen, setIsItensModalOpen] = useState(false);
   const [selectedCompraParaModal, setSelectedCompraParaModal] = useState(null); // Renamed and initialized to null
 
-  const handleDuplicateCompra = (compra) => {
-    const duplicatedCompra = { ...compra, data_compra: null, id: null };
-    setCurrentCompra(duplicatedCompra);
-    setIsAddingNew(true);
+  const handleDuplicateCompra = async (compraSummary) => {
+    setIsLoadingForm(true);
+    setError(null);
+    try {
+      const response = await api.getCompraById(compraSummary.id);
+      const fullCompraData = response.data || response;
+      const duplicatedCompra = {
+        ...fullCompraData,
+        id: null, // Important: nullify ID for creation
+        data_compra: new Date().toISOString().split('T')[0], // Set to today or null
+        nota_fiscal: '', // Clear nota fiscal
+        // data_pagamento can be cleared or kept, depending on desired behavior
+        data_pagamento: null,
+      };
+      setCurrentCompra(duplicatedCompra);
+      setIsAddingNew(true); // This will show the form
+    } catch (err) {
+      const errorMsg = `Falha ao carregar dados para duplicar a compra ID ${compraSummary.id}.`;
+      setError(errorMsg);
+      showErrorToast(errorMsg);
+      console.error('Error fetching compra details for duplication:', err);
+    } finally {
+      setIsLoadingForm(false);
+    }
   };
 
   const handleToggleStatus = async (id, field) => {
