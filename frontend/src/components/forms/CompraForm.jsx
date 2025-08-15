@@ -529,41 +529,47 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   useEffect(() => {
     itemUniqueIdCounter = 0;
     setErrors({});
-    if (initialData && initialData.id) {
+
+    if (initialData) {
+      // This block now handles both editing and duplicating.
       setTipo(initialData.tipo ? initialData.tipo.toUpperCase() : 'COMPRA');
-      // Use obra_details for reading, obra for writing
+
+      // Handle 'obra' which might be an object or just an ID
       if (initialData.obra_details) {
-        const obraIdentifier = initialData.obra_details.id || initialData.obra_details;
-        setObraId(obraIdentifier.toString());
+        setObraId(String(initialData.obra_details.id));
         setObraSelecionada(initialData.obra_details);
       } else if (initialData.obra) {
-        // Fallback for cases where obra is still present
         const obraIdentifier = initialData.obra.id || initialData.obra;
-        setObraId(obraIdentifier.toString());
-        // Try to find the obra in the obras list
-        const obraObj = obras.find(o => o.id === parseInt(obraIdentifier));
+        setObraId(String(obraIdentifier));
+        const obraObj = obras.find(o => String(o.id) === String(obraIdentifier));
         setObraSelecionada(obraObj || null);
       }
+
+      // Set dates and other fields
       const initialDataCompra = initialData.data_compra
         ? new Date(initialData.data_compra).toISOString().split('T')[0]
-        : '';
+        : new Date().toISOString().split('T')[0]; // Default to today if null
       setDataCompra(initialDataCompra);
+
       setDataPagamento(
         initialData.data_pagamento
           ? new Date(initialData.data_pagamento).toISOString().split('T')[0]
-          : initialDataCompra
-      ); // Set dataPagamento from initialData or default to data_compra
+          : null // Keep payment date null for duplicates unless specified
+      );
+
       setFornecedor(initialData.fornecedor || '');
       setNotaFiscal(initialData.nota_fiscal || '');
       setObservacoes(initialData.observacoes || '');
       setDesconto(
         initialData.desconto != null
-          ? initialData.desconto.toString().replace(',', '.')
+          ? String(initialData.desconto).replace(',', '.')
           : '0.00'
       );
 
+      // Process items for both editing and duplication
       if (initialData.itens && Array.isArray(initialData.itens)) {
         const mappedItems = initialData.itens.map(apiItem => {
+          // The logic to map API item to form item state
           let materialForState = null;
           if (apiItem.material_obj) materialForState = apiItem.material_obj;
           else if (apiItem.material && apiItem.material_nome)
@@ -577,40 +583,24 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
           const newItem = {
             id: generateItemUniqueId(),
-            originalId: apiItem.id || null,
+            // For duplicated items, originalId should be null to indicate they are new
+            originalId: initialData.id ? apiItem.id : null,
             material: materialForState,
-            materialId: materialForState
-              ? String(materialForState.id)
-              : apiItem.material
-                ? String(apiItem.material.id || apiItem.material)
-                : '',
-            materialNome: materialForState
-              ? materialForState.nome
-              : apiItem.material_nome || '',
-            unidadeMedida: materialForState
-              ? materialForState.unidade_medida
-              : apiItem.material_unidade_medida || '',
-            quantidade:
-              apiItem.quantidade != null
-                ? apiItem.quantidade.toString().replace(',', '.')
-                : '',
-            valorUnitario:
-              apiItem.valor_unitario != null
-                ? apiItem.valor_unitario.toString().replace(',', '.')
-                : '',
+            materialId: materialForState ? String(materialForState.id) : '',
+            materialNome: materialForState ? materialForState.nome : '',
+            unidadeMedida: materialForState ? materialForState.unidade_medida : '',
+            quantidade: apiItem.quantidade != null ? String(apiItem.quantidade).replace(',', '.') : '',
+            valorUnitario: apiItem.valor_unitario != null ? String(apiItem.valor_unitario).replace(',', '.') : '',
             valorTotalItem: '0.00',
-            categoria_uso:
-              apiItem.categoria_uso ||
-              (materialForState ? materialForState.categoria_uso_padrao : '') ||
-              '', // Added categoria_uso
+            categoria_uso: apiItem.categoria_uso || (materialForState ? materialForState.categoria_uso_padrao : '') || '',
           };
           const qty = parseFloat(newItem.quantidade) || 0;
           const price = parseFloat(newItem.valorUnitario) || 0;
           newItem.valorTotalItem = (qty * price).toFixed(2);
           return newItem;
         });
-        const initialItemsToSet =
-          mappedItems.length > 0 ? mappedItems : [createNewEmptyItem()];
+
+        const initialItemsToSet = mappedItems.length > 0 ? mappedItems : [createNewEmptyItem()];
         dispatchItems({
           type: ITEM_ACTION_TYPES.SET_ITEMS,
           payload: initialItemsToSet,
@@ -622,19 +612,17 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         });
       }
     } else {
-      const obraIdFromInitial = initialData?.obra?.toString() || initialData?.obra_id?.toString() || '';
-      setObraId(obraIdFromInitial);
-      if (obraIdFromInitial && obras.length > 0) {
-        const obraObj = obras.find(o => o.id === parseInt(obraIdFromInitial));
-        setObraSelecionada(obraObj || null);
-      }
+      // This block is now only for a completely new, blank form.
       const today = new Date().toISOString().split('T')[0];
       setDataCompra(today);
-      setDataPagamento(today); // Default dataPagamento to today for new entries
+      setDataPagamento(today);
       setFornecedor('');
       setNotaFiscal('');
       setObservacoes('');
       setDesconto('0.00');
+      setTipo('COMPRA');
+      setObraId('');
+      setObraSelecionada(null);
       dispatchItems({
         type: ITEM_ACTION_TYPES.SET_ITEMS,
         payload: [createNewEmptyItem()],
@@ -962,53 +950,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     </div>
   ));
 
-  // Debug component to show real-time state
-  const DebugPanel = () => {
-    const [isVisible, setIsVisible] = useState(true);
-    
-    if (!isVisible) {
-      return (
-        <button
-          onClick={() => setIsVisible(true)}
-          className="fixed top-4 right-4 bg-red-500 text-white px-2 py-1 rounded text-xs"
-        >
-          Show Debug
-        </button>
-      );
-    }
-    
-    return (
-      <div className="fixed top-4 right-4 bg-black text-white p-4 rounded-lg text-xs max-w-md max-h-96 overflow-y-auto z-50">
-        <button
-          onClick={() => setIsVisible(false)}
-          className="absolute top-1 right-1 bg-red-600 px-1 rounded"
-        >
-          ✕
-        </button>
-        <h4 className="font-bold mb-2">Debug Panel</h4>
-        <div className="space-y-1">
-          <div><strong>Items Count:</strong> {items.length}</div>
-          <div><strong>First Item Material:</strong> {items[0]?.material?.nome || 'NONE'}</div>
-          <div><strong>First Item MaterialId:</strong> {items[0]?.materialId || 'NONE'}</div>
-          <div><strong>Errors:</strong> {Object.keys(errors).length}</div>
-          <div><strong>Material Errors:</strong> {errors['item_0_material'] || 'NONE'}</div>
-        </div>
-        <button
-          onClick={() => {
-            console.log('🔍 DEBUG: Current items state:', items);
-            console.log('🔍 DEBUG: Current errors:', errors);
-          }}
-          className="mt-2 bg-blue-500 px-2 py-1 rounded text-xs"
-        >
-          Log State
-        </button>
-      </div>
-    );
-  };
-
   return (
     <>
-      <DebugPanel />
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-6xl mx-auto p-6 md:p-8 space-y-6 bg-white rounded-lg shadow-xl"

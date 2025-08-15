@@ -10,7 +10,6 @@ const ComprasTable = ({
   onApprove,
   isLoading,
   onDuplicate,
-  onToggleStatus,
 }) => {
   const [contextMenu, setContextMenu] = useState(null);
 
@@ -75,20 +74,19 @@ const ComprasTable = ({
     const isOrcamento = compra.tipo === 'ORCAMENTO';
 
     const items = [
-      { label: 'Visualizar', onClick: () => onViewDetails(compra), icon: <Eye size={16} /> },
-      { label: 'Editar', onClick: () => onEdit(compra), icon: <Pencil size={16} /> },
-      { label: 'Duplicar', onClick: () => onDuplicate(compra), icon: <Copy size={16} /> },
+      { label: 'Visualizar', action: () => onViewDetails(compra) },
+      { label: 'Editar', action: () => onEdit(compra) },
+      { label: 'Duplicar', action: () => onDuplicate(compra) },
     ];
 
     if (isOrcamento) {
       items.push({
         label: 'Aprovar Orçamento',
-        onClick: () => onApprove(compra.id),
-        icon: <CheckCircle size={16} />
+        action: () => onApprove(compra.id),
       });
     }
 
-    items.push({ label: 'Excluir', onClick: () => onDelete(compra.id), icon: <Trash2 size={16} /> });
+    items.push({ label: 'Excluir', action: () => onDelete(compra.id) });
 
     return items;
   };
@@ -97,8 +95,8 @@ const ComprasTable = ({
     <div className="overflow-x-auto shadow-md sm:rounded-lg">
       {contextMenu && (
         <ContextMenu
-          position={contextMenu}
-          menuItems={getContextMenuItems(contextMenu.compra)}
+          position={{ top: contextMenu.y, left: contextMenu.x }}
+          options={getContextMenuItems(contextMenu.compra)}
           onClose={closeContextMenu}
         />
       )}
