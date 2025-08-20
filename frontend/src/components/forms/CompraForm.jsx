@@ -1289,6 +1289,32 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
             <div>
+              <label className="block mb-1.5 text-sm font-medium text-gray-700">Forma de Pagamento</label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="forma_pagamento"
+                    value="AVISTA"
+                    checked={pagamento.forma_pagamento === 'AVISTA'}
+                    onChange={(e) => setPagamento({ ...pagamento, forma_pagamento: e.target.value })}
+                    className="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">À Vista</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="forma_pagamento"
+                    value="PARCELADO"
+                    checked={pagamento.forma_pagamento === 'PARCELADO'}
+                    onChange={(e) => setPagamento({ ...pagamento, forma_pagamento: e.target.value })}
+                    className="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Parcelado</span>
+                </label>
+              </div>
+
               {pagamento.forma_pagamento === 'AVISTA' && (
                 <div className="mt-4">
                   <label htmlFor="dataPagamento" className="block mb-1.5 text-sm font-medium text-gray-700">Data de Pagamento</label>

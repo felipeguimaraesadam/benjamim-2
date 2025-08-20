@@ -588,6 +588,11 @@ class CompraSerializer(serializers.ModelSerializer):
         return compra
 
     def update(self, instance, validated_data):
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"CompraSerializer update started for instance {instance.id}")
+        logger.info(f"Validated data: {validated_data}")
+
         instance.tipo = validated_data.get('tipo', instance.tipo)
         instance.obra = validated_data.get('obra', instance.obra)
         instance.fornecedor = validated_data.get('fornecedor', instance.fornecedor)
