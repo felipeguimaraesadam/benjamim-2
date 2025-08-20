@@ -477,16 +477,22 @@ class CompraViewSet(viewsets.ModelViewSet):
         return queryset
 
     def update(self, request, *args, **kwargs):
-        import json
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+
+        # Start with a mutable copy of the request data
         data = request.data.copy()
 
-        if 'itens' in data and isinstance(data['itens'], str):
-            data['itens'] = json.loads(data['itens'])
-        if 'parcelas' in data and isinstance(data['parcelas'], str):
-            data['parcelas'] = json.loads(data['parcelas'])
+        # Handle JSON string parsing for nested data
+        try:
+            if 'itens' in data and isinstance(data['itens'], str):
+                data['itens'] = json.loads(data['itens'])
+            if 'parcelas' in data and isinstance(data['parcelas'], str):
+                data['parcelas'] = json.loads(data['parcelas'])
+        except json.JSONDecodeError:
+            return Response({"error": "Invalid JSON format for itens or parcelas."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Handle file attachments
         anexos_files = request.FILES.getlist('anexos')
         for anexo_file in anexos_files:
             AnexoCompra.objects.create(compra=instance, arquivo=anexo_file)
@@ -495,13 +501,56 @@ class CompraViewSet(viewsets.ModelViewSet):
         if anexos_a_remover_ids:
             AnexoCompra.objects.filter(id__in=anexos_a_remover_ids, compra=instance).delete()
 
-        serializer = self.get_serializer(instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        # Update instance fields manually from data
+        instance.tipo = data.get('tipo', instance.tipo)
+        instance.obra_id = data.get('obra', instance.obra_id)
+        instance.fornecedor = data.get('fornecedor', instance.fornecedor)
+        instance.data_compra = data.get('data_compra', instance.data_compra)
+        instance.nota_fiscal = data.get('nota_fiscal', instance.nota_fiscal)
+        instance.desconto = Decimal(data.get('desconto', instance.desconto))
+        instance.observacoes = data.get('observacoes', instance.observacoes)
+        instance.forma_pagamento = data.get('forma_pagamento', instance.forma_pagamento)
+        instance.numero_parcelas = int(data.get('numero_parcelas', instance.numero_parcelas))
+        instance.valor_entrada = Decimal(data.get('valor_entrada', instance.valor_entrada))
 
-        if getattr(instance, '_prefetched_objects_cache', None):
-            instance._prefetched_objects_cache = {}
+        # Handle nested Itens
+        itens_data = data.get('itens')
+        if itens_data is not None:
+            # Your original robust logic for updating items
+            existing_items_ids = set(instance.itens.values_list('id', flat=True))
+            request_items_ids = set()
+            for item_data in itens_data:
+                item_id = item_data.get('id', None)
+                material_id = item_data.get('material')
+                if not material_id: continue
 
+                if item_id:
+                    request_items_ids.add(item_id)
+                    ItemCompra.objects.update_or_create(id=item_id, compra=instance, defaults=item_data)
+                else:
+                    item = ItemCompra.objects.create(compra=instance, **item_data)
+                    request_items_ids.add(item.id)
+
+            ids_to_delete = existing_items_ids - request_items_ids
+            if ids_to_delete:
+                instance.itens.filter(id__in=ids_to_delete).delete()
+
+        # Handle nested Parcelas
+        parcelas_data = data.get('parcelas')
+        if instance.forma_pagamento == 'PARCELADO' and parcelas_data is not None:
+            instance.parcelas.all().delete() # Simple approach: delete and recreate
+            for parcela_data in parcelas_data:
+                ParcelaCompra.objects.create(compra=instance, **parcela_data)
+
+        # Recalculate total and save
+        all_current_items = instance.itens.all()
+        total_bruto_calculado = sum(item.valor_total_item for item in all_current_items if item.valor_total_item is not None)
+        instance.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
+
+        instance.save()
+
+        # Return the serialized data
+        serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
