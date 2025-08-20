@@ -4,19 +4,19 @@ import { apiClient } from '../../services/api';
 function ObraFotosUpload({ obraId, onUploadSuccess }) {
   const [arquivo, setArquivo] = useState(null);
   const [descricao, setDescricao] = useState('');
-  const [categoria, setCategoria] = useState('Foto');
+  const [categoria, setCategoria] = useState('FOTO');
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const categorias = [
-    'Foto',
-    'Documento', 
-    'Planta',
-    'Contrato',
-    'Licença',
-    'Outros'
+    { value: 'FOTO', label: 'Foto' },
+    { value: 'DOCUMENTO', label: 'Documento' },
+    { value: 'PLANTA', label: 'Planta/Projeto' },
+    { value: 'CONTRATO', label: 'Contrato' },
+    { value: 'LICENCA', label: 'Licença' },
+    { value: 'OUTROS', label: 'Outros' },
   ];
 
   const acceptedFileTypes = {
@@ -116,7 +116,7 @@ function ObraFotosUpload({ obraId, onUploadSuccess }) {
       );
       setArquivo(null);
       setDescricao('');
-      setCategoria('Foto');
+      setCategoria('FOTO');
       if (fileInputRef.current) {
         fileInputRef.current.value = ''; // Reset file input
       }
@@ -191,8 +191,8 @@ function ObraFotosUpload({ obraId, onUploadSuccess }) {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             {categorias.map(cat => (
-              <option key={cat} value={cat}>
-                {cat}
+              <option key={cat.value} value={cat.value}>
+                {cat.label}
               </option>
             ))}
           </select>
