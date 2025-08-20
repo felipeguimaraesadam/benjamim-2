@@ -160,8 +160,12 @@ class EquipeViewSet(viewsets.ModelViewSet):
     API endpoint that allows equipes to be viewed or edited.
     """
     queryset = Equipe.objects.all().order_by('id')
-    serializer_class = EquipeComMembrosBasicSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return EquipeSerializer
+        return EquipeComMembrosBasicSerializer
 
     def get_queryset(self):
         return Equipe.objects.prefetch_related('membros').select_related('lider').all().order_by('id')
