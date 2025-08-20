@@ -455,6 +455,9 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'uploaded_at': {'read_only': True},
+            'nome_original': {'read_only': True},
+            'tipo_arquivo': {'read_only': True},
+            'arquivo_tamanho': {'read_only': True}, # Note: This field is also a SerializerMethodField now
         }
 
     def get_arquivo_url(self, obj):
