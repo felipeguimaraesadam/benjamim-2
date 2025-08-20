@@ -346,57 +346,10 @@ export const getDashboardStats = () => apiClient.get('/dashboard/stats/');
 // --- Compra Service Functions ---
 export const getCompras = params => apiClient.get('/compras/', { params });
 export const getCompraById = id => apiClient.get(`/compras/${id}/`);
-export const createCompra = compraData => {
-  const formData = new FormData();
-
-  Object.keys(compraData).forEach(key => {
-    if (key === 'itens' || key === 'pagamento_parcelado') {
-      formData.append(key, JSON.stringify(compraData[key]));
-    } else if (key === 'anexos') {
-      compraData[key].forEach(anexo => {
-        if (anexo.isTemp && anexo.arquivo instanceof File) {
-          formData.append('anexos', anexo.arquivo, anexo.nome_original);
-        }
-      });
-    } else if (compraData[key] !== null && compraData[key] !== undefined) {
-      formData.append(key, compraData[key]);
-    }
-  });
-
-  return apiClient.post('/compras/', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-};
-
-export const updateCompra = (id, compraData) => {
-  const formData = new FormData();
-
-  Object.keys(compraData).forEach(key => {
-    if (key === 'itens' || key === 'pagamento_parcelado') {
-      formData.append(key, JSON.stringify(compraData[key]));
-    } else if (key === 'anexos') {
-      compraData[key].forEach(anexo => {
-        if (anexo.isTemp && anexo.arquivo instanceof File) {
-          formData.append('anexos', anexo.arquivo, anexo.nome_original);
-        }
-      });
-    } else if (key === 'anexos_a_remover') {
-        compraData[key].forEach(anexoId => {
-            formData.append('anexos_a_remover', anexoId);
-        });
-    } else if (compraData[key] !== null && compraData[key] !== undefined) {
-      formData.append(key, compraData[key]);
-    }
-  });
-
-  return apiClient.put(`/compras/${id}/`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-};
+export const createCompra = compraData =>
+  apiClient.post('/compras/', compraData);
+export const updateCompra = (id, compraData) =>
+  apiClient.put(`/compras/${id}/`, compraData);
 export const deleteCompra = id => apiClient.delete(`/compras/${id}/`);
 export const updateCompraStatus = (id, data) =>
   apiClient.patch(`/compras/${id}/`, data);

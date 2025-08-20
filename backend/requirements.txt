@@ -9,3 +9,4 @@ whitenoise
 waitress
 pyinstaller
 django-extensions
+python-dateutil

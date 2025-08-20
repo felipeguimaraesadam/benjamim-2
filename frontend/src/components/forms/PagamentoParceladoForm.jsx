@@ -9,12 +9,11 @@ const PagamentoParceladoForm = ({
   onParcelasChange,
   valorTotal 
 }) => {
-  const [quantidadeParcelas, setQuantidadeParcelas] = useState(2);
+  const [quantidadeParcelas, setQuantidadeParcelas] = useState(1);
   const [parcelasCustomizadas, setParcelasCustomizadas] = useState([]);
 
   useEffect(() => {
-    console.log('PagamentoParceladoForm useEffect', { tipoPagamento, quantidadeParcelas, valorTotal });
-    if (tipoPagamento === 'PARCELADO' && quantidadeParcelas > 0) {
+    if (tipoPagamento === 'PARCELADO' && quantidadeParcelas > 1) {
       const valorParcela = valorTotal / quantidadeParcelas;
       const novasParcelas = Array.from({ length: quantidadeParcelas }, (_, index) => ({
         numero: index + 1,
@@ -52,12 +51,12 @@ const PagamentoParceladoForm = ({
           <label className="flex items-center cursor-pointer">
             <input
               type="radio"
-              value="AVISTA"
-              checked={tipoPagamento === 'AVISTA'}
+              value="UNICO"
+              checked={tipoPagamento === 'UNICO'}
               onChange={(e) => onTipoPagamentoChange(e.target.value)}
               className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
             />
-            <span className="text-sm font-medium text-gray-700">À Vista</span>
+            <span className="text-sm font-medium text-gray-700">Pagamento Único</span>
           </label>
           
           <label className="flex items-center cursor-pointer">
@@ -68,7 +67,7 @@ const PagamentoParceladoForm = ({
               onChange={(e) => onTipoPagamentoChange(e.target.value)}
               className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
             />
-            <span className="text-sm font-medium text-gray-700">Parcelado</span>
+            <span className="text-sm font-medium text-gray-700">Pagamento Parcelado</span>
           </label>
         </div>
 

@@ -279,8 +279,11 @@ class Compra(models.Model):
         if self.forma_pagamento == 'PARCELADO':
             self.data_pagamento = None
         
-        print(f"Salvando compra {self.id}, Forma de Pagamento: {self.forma_pagamento}, Data de Pagamento: {self.data_pagamento}")
         super().save(*args, **kwargs)
+
+        # Create installments if payment is parcelado and parcelas don't exist
+        if self.forma_pagamento == 'PARCELADO' and not self.parcelas.exists():
+            self.create_installments()
     
     def create_installments(self):
         """Create installment records for parcelado purchases"""
@@ -487,7 +490,6 @@ class AnexoCompra(models.Model):
             import os
             _, ext = os.path.splitext(self.arquivo.name)
             self.tipo_arquivo = ext.upper().lstrip('.')
-        print(f"Salvando anexo {self.nome_original} para a compra {self.compra.id}")
         super().save(*args, **kwargs)
 
 

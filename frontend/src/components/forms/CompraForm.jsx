@@ -309,6 +309,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [obraId, setObraId] = useState('');
   const [obraSelecionada, setObraSelecionada] = useState(null);
   const [dataCompra, setDataCompra] = useState('');
+  const [dataPagamento, setDataPagamento] = useState(''); // Added state for payment date
   const [fornecedor, setFornecedor] = useState('');
   const [notaFiscal, setNotaFiscal] = useState('');
   const [observacoes, setObservacoes] = useState('');
@@ -320,14 +321,20 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [itemToFocusId, setItemToFocusId] = useState(null);
   
   // New state for payment installments and attachments
-  const [pagamento, setPagamento] = useState({
-    forma_pagamento: 'AVISTA',
-    data_pagamento: null,
-    numero_parcelas: 1,
-    valor_entrada: '0.00',
-    parcelas: [],
+  const [pagamentoParcelado, setPagamentoParcelado] = useState({
+    tipo: 'avista', // 'avista' or 'parcelado'
+    parcelas: []
   });
   const [anexos, setAnexos] = useState([]);
+
+  // Memoized callbacks for payment installments to prevent infinite loops
+  const handleTipoPagamentoChange = useCallback((tipo) => {
+    setPagamentoParcelado(prev => ({ ...prev, tipo }));
+  }, []);
+
+  const handleParcelasChange = useCallback((parcelas) => {
+    setPagamentoParcelado(prev => ({ ...prev, parcelas }));
+  }, []);
 
   // Refs for keyboard navigation
   const tipoCompraRef = useRef(null);
@@ -589,6 +596,12 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         : new Date().toISOString().split('T')[0]; // Default to today if null
       setDataCompra(initialDataCompra);
 
+      setDataPagamento(
+        initialData.data_pagamento
+          ? new Date(initialData.data_pagamento).toISOString().split('T')[0]
+          : null // Keep payment date null for duplicates unless specified
+      );
+
       setFornecedor(initialData.fornecedor || '');
       setNotaFiscal(initialData.nota_fiscal || '');
       setObservacoes(initialData.observacoes || '');
@@ -599,13 +612,14 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       );
       
       // Handle payment installments
-      setPagamento({
-        forma_pagamento: initialData.forma_pagamento || 'AVISTA',
-        data_pagamento: initialData.data_pagamento ? new Date(initialData.data_pagamento) : null,
-        numero_parcelas: initialData.numero_parcelas || 1,
-        valor_entrada: initialData.valor_entrada || '0.00',
-        parcelas: initialData.parcelas || [],
-      });
+      if (initialData.pagamento_parcelado) {
+        setPagamentoParcelado(initialData.pagamento_parcelado);
+      } else {
+        setPagamentoParcelado({
+          tipo: 'avista',
+          parcelas: []
+        });
+      }
       
       // Handle attachments
       if (initialData.anexos && Array.isArray(initialData.anexos)) {
@@ -675,6 +689,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       // This block is now only for a completely new, blank form.
       const today = new Date().toISOString().split('T')[0];
       setDataCompra(today);
+      setDataPagamento(today);
       setFornecedor('');
       setNotaFiscal('');
       setObservacoes('');
@@ -684,12 +699,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       setObraSelecionada(null);
       
       // Initialize new state variables for new forms
-      setPagamento({
-        forma_pagamento: 'AVISTA',
-        data_pagamento: new Date(),
-        numero_parcelas: 1,
-        valor_entrada: '0.00',
-        parcelas: [],
+      setPagamentoParcelado({
+        tipo: 'avista',
+        parcelas: []
       });
       setAnexos([]);
       
@@ -699,6 +711,14 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       });
     }
   }, [initialData, obras]);
+
+  // Synchronize dataPagamento with dataCompra if dataPagamento is not manually set
+  useEffect(() => {
+    if (prevDataCompraRef.current === dataPagamento || !dataPagamento) {
+      setDataPagamento(dataCompra);
+    }
+    prevDataCompraRef.current = dataCompra;
+  }, [dataCompra]);
 
   const handleHeaderChange = e => {
     const { name, value } = e.target;
@@ -982,20 +1002,13 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         tipo,
         obra: parseInt(obraId, 10),
         data_compra: dataCompra,
+        data_pagamento: dataPagamento || null,
         fornecedor: fornecedor,
         nota_fiscal: notaFiscal || null,
         desconto: finalDesconto,
         observacoes: observacoes || null,
         itens: itemsToSubmit,
-        forma_pagamento: pagamento.forma_pagamento,
-        data_pagamento: pagamento.forma_pagamento === 'AVISTA' ? pagamento.data_pagamento.toISOString().split('T')[0] : null,
-        numero_parcelas: pagamento.forma_pagamento === 'PARCELADO' ? pagamento.numero_parcelas : 1,
-        valor_entrada: pagamento.forma_pagamento === 'PARCELADO' ? parseFloat(String(pagamento.valor_entrada).replace(',', '.')) || 0 : 0,
-        parcelas: pagamento.forma_pagamento === 'PARCELADO' ? pagamento.parcelas.map(p => ({
-            numero_parcela: p.numero,
-            valor_parcela: p.valor,
-            data_vencimento: p.dataVencimento.toISOString().split('T')[0],
-        })) : [],
+        pagamento_parcelado: pagamentoParcelado,
         anexos: anexos,
       };
       console.log('DEBUG: CompraForm submit payload:', compraData);
@@ -1110,6 +1123,26 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 <WarningIcon /> {errors.dataCompra}
               </p>
             )}
+          </div>
+          <div>
+            <label
+              htmlFor="dataPagamento"
+              className="block mb-1.5 text-sm font-medium text-gray-700"
+            >
+              Data de Pagamento
+            </label>
+            <DatePicker
+              selected={
+                dataPagamento ? new Date(dataPagamento + 'T00:00:00') : null
+              }
+              onChange={date =>
+                setDataPagamento(date.toISOString().split('T')[0])
+              }
+              dateFormat="dd/MM/yyyy"
+              locale="pt-BR"
+              customInput={<CustomDateInput />}
+            />
+            {/* Optional: {errors.dataPagamento && <p className="mt-1.5 text-xs text-red-600 flex items-center"><WarningIcon /> {errors.dataPagamento}</p>} */}
           </div>
           <div>
             <label
@@ -1282,72 +1315,25 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           )}
         </div>
         
-        {/* Pagamento e Anexos Section */}
+        {/* Payment Installments Section */}
         <div className="mt-8 pt-6 border-t border-slate-300">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">
-            Pagamento e Anexos
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-            <div>
-              <label className="block mb-1.5 text-sm font-medium text-gray-700">Forma de Pagamento</label>
-              <div className="flex space-x-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="forma_pagamento"
-                    value="AVISTA"
-                    checked={pagamento.forma_pagamento === 'AVISTA'}
-                    onChange={(e) => setPagamento({ ...pagamento, forma_pagamento: e.target.value })}
-                    className="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">À Vista</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="forma_pagamento"
-                    value="PARCELADO"
-                    checked={pagamento.forma_pagamento === 'PARCELADO'}
-                    onChange={(e) => setPagamento({ ...pagamento, forma_pagamento: e.target.value })}
-                    className="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Parcelado</span>
-                </label>
-              </div>
+          <PagamentoParceladoForm
+            valorTotal={totalGeralCalculado}
+            tipoPagamento={pagamentoParcelado?.tipo || 'UNICO'}
+            onTipoPagamentoChange={handleTipoPagamentoChange}
+            parcelas={pagamentoParcelado?.parcelas || []}
+            onParcelasChange={handleParcelasChange}
+            errors={errors}
+          />
+        </div>
 
-              {pagamento.forma_pagamento === 'AVISTA' && (
-                <div className="mt-4">
-                  <label htmlFor="dataPagamento" className="block mb-1.5 text-sm font-medium text-gray-700">Data de Pagamento</label>
-                  <DatePicker
-                    selected={pagamento.data_pagamento}
-                    onChange={date => setPagamento({ ...pagamento, data_pagamento: date })}
-                    dateFormat="dd/MM/yyyy"
-                    locale="pt-BR"
-                    customInput={<CustomDateInput />}
-                  />
-                </div>
-              )}
-
-              {pagamento.forma_pagamento === 'PARCELADO' && (
-                <PagamentoParceladoForm
-                    key={pagamento.forma_pagamento}
-                    valorTotal={totalGeralCalculado}
-                    tipoPagamento={pagamento.forma_pagamento}
-                    onTipoPagamentoChange={(tipo) => setPagamento({ ...pagamento, forma_pagamento: tipo })}
-                    parcelas={pagamento.parcelas}
-                    onParcelasChange={(parcelas) => setPagamento({ ...pagamento, parcelas })}
-                    errors={errors}
-                />
-              )}
-            </div>
-            <div>
-              <AnexosCompraManager
-                anexos={anexos}
-                onAnexosChange={setAnexos}
-                compraId={initialData?.id}
-              />
-            </div>
-          </div>
+        {/* Attachments Section */}
+        <div className="mt-8 pt-6 border-t border-slate-300">
+          <AnexosCompraManager
+            anexos={anexos}
+            onAnexosChange={setAnexos}
+            compraId={initialData?.id}
+          />
         </div>
 
         {/* Summary Section */}

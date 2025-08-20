@@ -410,31 +410,13 @@ class MaterialDetailAPIView(APIView):
 class CompraViewSet(viewsets.ModelViewSet):
     serializer_class = CompraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
-    parser_classes = (MultiPartParser, FormParser)
 
     def create(self, request, *args, **kwargs):
-        import json
-        data = request.data.copy()
-        if 'itens' in data and isinstance(data['itens'], str):
-            data['itens'] = json.loads(data['itens'])
-        if 'parcelas' in data and isinstance(data['parcelas'], str):
-            data['parcelas'] = json.loads(data['parcelas'])
-
-        serializer = self.get_serializer(data=data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         itens_data = validated_data.pop('itens')
-        parcelas_data = validated_data.pop('parcelas', [])
         compra = Compra.objects.create(**validated_data)
-
-        anexos_files = request.FILES.getlist('anexos')
-        for anexo_file in anexos_files:
-            AnexoCompra.objects.create(compra=compra, arquivo=anexo_file)
-
-        if compra.forma_pagamento == 'PARCELADO' and parcelas_data:
-            for parcela_data in parcelas_data:
-                ParcelaCompra.objects.create(compra=compra, **parcela_data)
-
         for item_data in itens_data:
             item = ItemCompra.objects.create(compra=compra, **item_data)
             material_obj = item_data.get('material')
@@ -479,77 +461,70 @@ class CompraViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-
-        # Start with a mutable copy of the request data
-        data = request.data.copy()
-
-        # Handle JSON string parsing for nested data
+        instance.tipo = request.data.get('tipo', instance.tipo)
+        instance.obra_id = request.data.get('obra', instance.obra_id)
+        instance.fornecedor = request.data.get('fornecedor', instance.fornecedor)
+        instance.data_compra = request.data.get('data_compra', instance.data_compra)
+        instance.nota_fiscal = request.data.get('nota_fiscal', instance.nota_fiscal)
+        desconto_str = request.data.get('desconto', str(instance.desconto))
         try:
-            if 'itens' in data and isinstance(data['itens'], str):
-                data['itens'] = json.loads(data['itens'])
-            if 'parcelas' in data and isinstance(data['parcelas'], str):
-                data['parcelas'] = json.loads(data['parcelas'])
-        except json.JSONDecodeError:
-            return Response({"error": "Invalid JSON format for itens or parcelas."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Handle file attachments
-        anexos_files = request.FILES.getlist('anexos')
-        for anexo_file in anexos_files:
-            AnexoCompra.objects.create(compra=instance, arquivo=anexo_file)
-
-        anexos_a_remover_ids = data.getlist('anexos_a_remover')
-        if anexos_a_remover_ids:
-            AnexoCompra.objects.filter(id__in=anexos_a_remover_ids, compra=instance).delete()
-
-        # Update instance fields manually from data
-        instance.tipo = data.get('tipo', instance.tipo)
-        instance.obra_id = data.get('obra', instance.obra_id)
-        instance.fornecedor = data.get('fornecedor', instance.fornecedor)
-        instance.data_compra = data.get('data_compra', instance.data_compra)
-        instance.nota_fiscal = data.get('nota_fiscal', instance.nota_fiscal)
-        instance.desconto = Decimal(data.get('desconto', instance.desconto))
-        instance.observacoes = data.get('observacoes', instance.observacoes)
-        instance.forma_pagamento = data.get('forma_pagamento', instance.forma_pagamento)
-        instance.numero_parcelas = int(data.get('numero_parcelas', instance.numero_parcelas))
-        instance.valor_entrada = Decimal(data.get('valor_entrada', instance.valor_entrada))
-
-        # Handle nested Itens
-        itens_data = data.get('itens')
+            instance.desconto = Decimal(desconto_str)
+        except ValueError:
+            instance.desconto = instance.desconto
+        instance.observacoes = request.data.get('observacoes', instance.observacoes)
+        itens_data = request.data.get('itens', None)
         if itens_data is not None:
-            # Your original robust logic for updating items
             existing_items_ids = set(instance.itens.values_list('id', flat=True))
             request_items_ids = set()
             for item_data in itens_data:
                 item_id = item_data.get('id', None)
                 material_id = item_data.get('material')
-                if not material_id: continue
-
+                categoria_uso = item_data.get('categoria_uso')
+                try:
+                    quantidade_str = item_data.get('quantidade', '0')
+                    quantidade = Decimal(quantidade_str)
+                    valor_unitario_str = item_data.get('valor_unitario', '0')
+                    valor_unitario = Decimal(valor_unitario_str)
+                except ValueError as e: continue
+                material_obj = None
+                if material_id:
+                    try:
+                        material_obj = Material.objects.get(id=material_id)
+                    except Material.DoesNotExist: continue
+                else: continue
                 if item_id:
-                    request_items_ids.add(item_id)
-                    ItemCompra.objects.update_or_create(id=item_id, compra=instance, defaults=item_data)
+                    if item_id in existing_items_ids:
+                        try:
+                            item_instance = ItemCompra.objects.get(id=item_id, compra=instance)
+                            item_instance.material = material_obj
+                            item_instance.quantidade = quantidade
+                            item_instance.valor_unitario = valor_unitario
+                            if categoria_uso is not None:
+                                item_instance.categoria_uso = categoria_uso
+                            item_instance.save()
+                            request_items_ids.add(item_id)
+                        except ItemCompra.DoesNotExist: continue
+                    else: continue
                 else:
-                    item = ItemCompra.objects.create(compra=instance, **item_data)
-                    request_items_ids.add(item.id)
-
+                    if not material_obj: continue
+                    item_instance_data = {
+                        'compra': instance, 'material': material_obj,
+                        'quantidade': quantidade, 'valor_unitario': valor_unitario
+                    }
+                    if categoria_uso is not None:
+                        item_instance_data['categoria_uso'] = categoria_uso
+                    item_instance = ItemCompra.objects.create(**item_instance_data)
+                    request_items_ids.add(item_instance.id)
+                if categoria_uso and material_obj:
+                    material_obj.categoria_uso_padrao = categoria_uso
+                    material_obj.save(update_fields=['categoria_uso_padrao'])
             ids_to_delete = existing_items_ids - request_items_ids
             if ids_to_delete:
-                instance.itens.filter(id__in=ids_to_delete).delete()
-
-        # Handle nested Parcelas
-        parcelas_data = data.get('parcelas')
-        if instance.forma_pagamento == 'PARCELADO' and parcelas_data is not None:
-            instance.parcelas.all().delete() # Simple approach: delete and recreate
-            for parcela_data in parcelas_data:
-                ParcelaCompra.objects.create(compra=instance, **parcela_data)
-
-        # Recalculate total and save
+                ItemCompra.objects.filter(id__in=ids_to_delete, compra=instance).delete()
         all_current_items = instance.itens.all()
         total_bruto_calculado = sum(item.valor_total_item for item in all_current_items if item.valor_total_item is not None)
         instance.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
-
         instance.save()
-
-        # Return the serialized data
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 

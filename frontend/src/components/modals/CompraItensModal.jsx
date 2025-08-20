@@ -1,16 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Download, Trash2, PlusCircle, Upload } from 'lucide-react';
-import { deleteAnexoCompra, uploadAnexoCompra, getCompraById } from '../../services/api';
-import { toast } from 'sonner';
+import React from 'react';
 
-const CompraItensModal = ({ isOpen, onClose, compra: initialCompra }) => {
-    const [compra, setCompra] = useState(initialCompra);
-    const fileInputRef = useRef(null);
-
-    useEffect(() => {
-        setCompra(initialCompra);
-    }, [initialCompra]);
-
+const CompraItensModal = ({ isOpen, onClose, compra }) => {
   if (!isOpen || !compra) {
     return null;
   }
@@ -77,35 +67,6 @@ const CompraItensModal = ({ isOpen, onClose, compra: initialCompra }) => {
       </dd>
     </div>
   );
-
-  const handleDeleteAnexo = async (anexoId) => {
-    try {
-      await deleteAnexoCompra(compra.id, anexoId);
-      const updatedAnexos = compra.anexos.filter(anexo => anexo.id !== anexoId);
-      setCompra({ ...compra, anexos: updatedAnexos });
-      toast.success('Anexo removido com sucesso!');
-    } catch (error) {
-      toast.error('Falha ao remover anexo.');
-    }
-  };
-
-  const handleFileChange = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('arquivo', file);
-    formData.append('compra', compra.id);
-
-    try {
-      const response = await uploadAnexoCompra(compra.id, formData);
-      const newAnexo = response.data;
-      setCompra({ ...compra, anexos: [...compra.anexos, newAnexo] });
-      toast.success('Anexo adicionado com sucesso!');
-    } catch (error) {
-      toast.error('Falha ao adicionar anexo.');
-    }
-  };
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full flex justify-center items-center z-50 px-4">
@@ -243,57 +204,6 @@ const CompraItensModal = ({ isOpen, onClose, compra: initialCompra }) => {
             </table>
           </div>
         )}
-
-        <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-          Anexos
-        </h3>
-        {compra.anexos && compra.anexos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {compra.anexos.map(anexo => (
-              <div key={anexo.id} className="border rounded-lg p-2 flex flex-col justify-between">
-                <div className="flex-grow">
-                  {anexo.arquivo_url.endsWith('.pdf') ? (
-                    <div className="h-32 bg-gray-100 flex items-center justify-center rounded">
-                      <FileText size={48} className="text-gray-500" />
-                    </div>
-                  ) : (
-                    <img src={anexo.arquivo_url} alt={anexo.arquivo_nome} className="w-full h-32 object-cover rounded" />
-                  )}
-                  <p className="text-sm mt-2 truncate" title={anexo.arquivo_nome}>{anexo.arquivo_nome}</p>
-                  <p className="text-xs text-gray-500">{(anexo.arquivo_tamanho / 1024).toFixed(2)} KB</p>
-                </div>
-                <div className="flex justify-end space-x-2 mt-2">
-                  <a href={anexo.arquivo_url} download target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
-                    <Download size={18} />
-                  </a>
-                  <button onClick={() => handleDeleteAnexo(anexo.id)} className="text-red-500 hover:text-red-700">
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-center text-gray-500 dark:text-gray-400 py-4">
-            Nenhum anexo encontrado para esta compra.
-          </p>
-        )}
-        <div className="mt-4">
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-            />
-            <button
-                onClick={() => fileInputRef.current.click()}
-                className="w-full flex items-center justify-center px-4 py-2 border border-dashed rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50"
-            >
-                <PlusCircle size={18} className="mr-2" />
-                Adicionar Anexo
-            </button>
-        </div>
-
         <div className="mt-8 flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-700 pt-5">
           <button
             onClick={onClose}
