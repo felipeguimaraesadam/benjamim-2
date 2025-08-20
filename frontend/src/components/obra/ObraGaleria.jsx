@@ -71,18 +71,20 @@ function ObraGaleria({ obraId, newArquivo }) {
     setDeleteConfirm(null);
   };
 
+  const isImage = (arquivo) => {
+    if (!arquivo || !arquivo.tipo_arquivo) return false;
+    const imageExtensions = ['JPG', 'JPEG', 'PNG', 'GIF', 'BMP', 'WEBP'];
+    return imageExtensions.includes(arquivo.tipo_arquivo.toUpperCase());
+  };
+
   const getFileIcon = (arquivo) => {
-    if (arquivo.tipo_arquivo?.startsWith('image/')) {
+    if (isImage(arquivo)) {
       return <Image className="h-8 w-8 text-blue-500" />;
-    } else if (arquivo.tipo_arquivo === 'application/pdf') {
+    } else if (arquivo.tipo_arquivo?.toUpperCase() === 'PDF') {
       return <FileText className="h-8 w-8 text-red-500" />;
     } else {
       return <FileIcon className="h-8 w-8 text-gray-500" />;
     }
-  };
-
-  const isImage = (arquivo) => {
-    return arquivo.tipo_arquivo?.startsWith('image/');
   };
 
   const formatFileSize = (bytes) => {
@@ -306,7 +308,7 @@ function ObraGaleria({ obraId, newArquivo }) {
                 alt={selectedArquivo.descricao || 'Arquivo da obra em tamanho maior'}
                 className="max-w-full max-h-[80vh] object-contain rounded"
               />
-            ) : selectedArquivo.tipo_arquivo === 'application/pdf' ? (
+            ) : selectedArquivo.tipo_arquivo?.toUpperCase() === 'PDF' ? (
               <div className="w-full h-[80vh]">
                 <iframe
                   src={selectedArquivo.arquivo_url}
