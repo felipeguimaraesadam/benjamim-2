@@ -112,7 +112,7 @@
                 <tbody>
                     <tr><td style="width:30%;"><strong>Data da Compra:</strong></td><td>{{ compra.data_compra|date:"d/m/Y" }}</td></tr>
                     <tr><td><strong>Fornecedor:</strong></td><td>{{ compra.fornecedor|default:"Não informado" }}</td></tr>
-                    <tr><td><strong>Obra:</strong></td><td>{{ compra.obra.nome_obra|default:"Não informada" }}</td></tr>
+                    <tr><td><strong>Obra:</strong></td><td>{% if compra.obra %}{{ compra.obra.nome_obra }}{% else %}Não informada{% endif %}</td></tr>
                     <tr><td><strong>Status:</strong></td><td>{{ compra.get_status_orcamento_display|default:"Não informado" }}</td></tr>
                     <tr><td><strong>Tipo:</strong></td><td>{{ compra.get_tipo_display|default:"Não informado" }}</td></tr>
                     {% if compra.forma_pagamento %}
@@ -146,12 +146,12 @@
                         <td>{{ item.quantidade|floatformat:"2" }}</td>
                         <td>{{ item.material.unidade_medida }}</td>
                         <td class="text-right">R$ {{ item.valor_unitario|floatformat:"2" }}</td>
-                        <td class="text-right">R$ {{ item.valor_total|floatformat:"2" }}</td>
+                        <td class="text-right">R$ {{ item.valor_total_item|floatformat:"2" }}</td>
                     </tr>
                     {% endfor %}
                     <tr class="total-row">
                         <th colspan="4">Total da Compra</th>
-                        <th class="text-right">R$ {{ compra.valor_total|floatformat:"2" }}</th>
+                        <th class="text-right">R$ {{ compra.valor_total_liquido|floatformat:"2" }}</th>
                     </tr>
                 </tbody>
             </table>
