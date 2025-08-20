@@ -414,40 +414,26 @@ class CompraViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         import json
-        print("Request data in CompraViewSet.create:", request.data)
         data = request.data.copy()
-
         if 'itens' in data and isinstance(data['itens'], str):
             data['itens'] = json.loads(data['itens'])
-
         if 'parcelas' in data and isinstance(data['parcelas'], str):
             data['parcelas'] = json.loads(data['parcelas'])
-
-        if 'pagamento_parcelado' in data and isinstance(data['pagamento_parcelado'], str):
-            pagamento_data = json.loads(data['pagamento_parcelado'])
-            data['forma_pagamento'] = pagamento_data.get('tipo')
-            if data['forma_pagamento'] == 'parcelado':
-                data['numero_parcelas'] = pagamento_data.get('numero_parcelas', 1)
-                data['valor_entrada'] = pagamento_data.get('valor_entrada', 0)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         itens_data = validated_data.pop('itens')
-        parcelas_data = validated_data.pop('parcelas', None)
+        parcelas_data = validated_data.pop('parcelas', [])
         compra = Compra.objects.create(**validated_data)
 
-        # Handle attachments
         anexos_files = request.FILES.getlist('anexos')
         for anexo_file in anexos_files:
             AnexoCompra.objects.create(compra=compra, arquivo=anexo_file)
 
-        if compra.forma_pagamento == 'PARCELADO':
-            if parcelas_data:
-                for parcela_data in parcelas_data:
-                    ParcelaCompra.objects.create(compra=compra, **parcela_data)
-            else:
-                compra.create_installments()
+        if compra.forma_pagamento == 'PARCELADO' and parcelas_data:
+            for parcela_data in parcelas_data:
+                ParcelaCompra.objects.create(compra=compra, **parcela_data)
 
         for item_data in itens_data:
             item = ItemCompra.objects.create(compra=compra, **item_data)
@@ -498,7 +484,6 @@ class CompraViewSet(viewsets.ModelViewSet):
 
         if 'itens' in data and isinstance(data['itens'], str):
             data['itens'] = json.loads(data['itens'])
-
         if 'parcelas' in data and isinstance(data['parcelas'], str):
             data['parcelas'] = json.loads(data['parcelas'])
 
@@ -515,7 +500,6 @@ class CompraViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
 
         if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been used, we need to manually update the prefetch cache.
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
@@ -1871,26 +1855,56 @@ class AnexoCompraViewSet(viewsets.ModelViewSet):
         Cria um novo anexo para uma compra.
         """
         try:
+            # Validar se arquivo foi enviado
             if 'arquivo' not in request.FILES:
                 return Response(
                     {'error': 'Nenhum arquivo foi enviado'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            compra_id = request.data.get('compra')
-            if not compra_id:
-                return Response({'error': 'ID da compra é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                compra = Compra.objects.get(id=compra_id)
-            except Compra.DoesNotExist:
-                return Response({'error': 'Compra não encontrada'}, status=status.HTTP_404_NOT_FOUND)
-
-            anexo_file = request.FILES['arquivo']
-            anexo = AnexoCompra.objects.create(compra=compra, arquivo=anexo_file, uploaded_by=request.user if request.user.is_authenticated else None)
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
             
-            serializer = self.get_serializer(anexo)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Validar tamanho do arquivo (máximo 10MB)
+            arquivo = serializer.validated_data.get('arquivo')
+            if arquivo and arquivo.size > 10 * 1024 * 1024:  # 10MB
+                return Response(
+                    {'error': 'Arquivo muito grande. Tamanho máximo: 10MB'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validar tipo de arquivo
+            if arquivo:
+                allowed_types = [
+                    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                    'application/pdf', 'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'text/plain'
+                ]
+
+                if arquivo.content_type not in allowed_types:
+                    return Response(
+                        {'error': 'Tipo de arquivo não permitido'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            # Validar se a compra existe
+            compra_id = serializer.validated_data.get('compra')
+            if compra_id:
+                try:
+                    from .models import Compra
+                    Compra.objects.get(id=compra_id.id)
+                except Compra.DoesNotExist:
+                    return Response(
+                        {'error': 'Compra não encontrada'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+            serializer.save(usuario_upload=request.user)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
             
         except Exception as e:
             return Response(
