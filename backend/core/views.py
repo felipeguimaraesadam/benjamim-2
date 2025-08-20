@@ -414,10 +414,14 @@ class CompraViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         import json
+        print("Request data in CompraViewSet.create:", request.data)
         data = request.data.copy()
 
         if 'itens' in data and isinstance(data['itens'], str):
             data['itens'] = json.loads(data['itens'])
+
+        if 'parcelas' in data and isinstance(data['parcelas'], str):
+            data['parcelas'] = json.loads(data['parcelas'])
 
         if 'pagamento_parcelado' in data and isinstance(data['pagamento_parcelado'], str):
             pagamento_data = json.loads(data['pagamento_parcelado'])
@@ -494,6 +498,9 @@ class CompraViewSet(viewsets.ModelViewSet):
 
         if 'itens' in data and isinstance(data['itens'], str):
             data['itens'] = json.loads(data['itens'])
+
+        if 'parcelas' in data and isinstance(data['parcelas'], str):
+            data['parcelas'] = json.loads(data['parcelas'])
 
         if 'pagamento_parcelado' in data and isinstance(data['pagamento_parcelado'], str):
             pagamento_data = json.loads(data['pagamento_parcelado'])
