@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SpinnerIcon from '../utils/SpinnerIcon';
 import Autocomplete from './Autocomplete';
-import { searchObras } from '../../services/api';
+import * as api from '../../services/api';
+import { showSuccessToast, showErrorToast } from '../../utils/toastUtils';
+import { UploadCloud, X, Paperclip } from 'lucide-react';
 
 const DespesaExtraForm = ({
   initialData,
-  obras, // This is now used only for initial value lookup
+  obras,
   onSubmit,
   onCancel,
   isLoading,
@@ -15,10 +17,12 @@ const DespesaExtraForm = ({
     valor: '',
     data: '',
     categoria: 'Outros',
-    obra: null, // Changed to null
-    anexos: [],
+    obra: null,
+    anexos: [], // Holds only NEW files for upload
   });
+  const [existingAnexos, setExistingAnexos] = useState([]);
   const [obraInitial, setObraInitial] = useState(null);
+  const fileInputRef = useRef(null);
 
   const categoriasDespesa = [
     'Alimentação',
@@ -28,11 +32,11 @@ const DespesaExtraForm = ({
   ];
 
   useEffect(() => {
-    const obraData = initialData?.obra
-      ? obras.find(o => o.id === initialData.obra)
-      : null;
-
     if (initialData) {
+      const obraData = initialData.obra
+        ? obras.find(o => o.id === initialData.obra)
+        : null;
+
       setFormData({
         descricao: initialData.descricao || '',
         valor: initialData.valor || '',
@@ -41,21 +45,28 @@ const DespesaExtraForm = ({
           : '',
         categoria: initialData.categoria || 'Outros',
         obra: initialData.obra || null,
+        anexos: [], // Clear new anexos on edit
       });
+
+      setExistingAnexos(initialData.anexos || []);
+
       if (obraData) {
-        setObraInitial({
-          value: obraData.id,
-          label: obraData.nome_obra,
-        });
+        setObraInitial({ value: obraData.id, label: obraData.nome_obra });
+      } else {
+        setObraInitial(null);
       }
     } else {
+      // Reset form for new entry
       setFormData({
         descricao: '',
         valor: '',
         data: new Date().toISOString().split('T')[0],
         categoria: 'Outros',
         obra: null,
+        anexos: [],
       });
+      setExistingAnexos([]);
+      setObraInitial(null);
     }
   }, [initialData, obras]);
 
@@ -73,7 +84,7 @@ const DespesaExtraForm = ({
 
   const fetchObrasSuggestions = async query => {
     try {
-      const response = await searchObras(query);
+      const response = await api.searchObras(query);
       return response.data.map(obra => ({
         value: obra.id,
         label: obra.nome_obra,
@@ -85,10 +96,36 @@ const DespesaExtraForm = ({
   };
 
   const handleFileChange = e => {
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      anexos: [...e.target.files],
+    const newFiles = Array.from(e.target.files);
+    if (newFiles.length > 0) {
+      setFormData(prev => ({ ...prev, anexos: [...prev.anexos, ...newFiles] }));
+    }
+  };
+
+  const handleRemoveNewAnexo = index => {
+    setFormData(prev => ({
+      ...prev,
+      anexos: prev.anexos.filter((_, i) => i !== index),
     }));
+  };
+
+  const handleDeleteExistingAnexo = async anexoId => {
+    if (
+      !window.confirm(
+        'Tem certeza que deseja excluir este anexo? Esta ação não pode ser desfeita.'
+      )
+    )
+      return;
+    try {
+      await api.deleteAnexoDespesa(anexoId);
+      setExistingAnexos(prev => prev.filter(anexo => anexo.id !== anexoId));
+      showSuccessToast('Anexo excluído com sucesso!');
+    } catch (error) {
+      showErrorToast(
+        `Falha ao excluir o anexo: ${error.message || 'Erro desconhecido'}`
+      );
+      console.error('Erro ao excluir anexo:', error);
+    }
   };
 
   const handleSubmit = e => {
@@ -106,13 +143,13 @@ const DespesaExtraForm = ({
           Obra Associada
         </label>
         <Autocomplete
+          key={obraInitial ? obraInitial.value : 'new'}
           fetchSuggestions={fetchObrasSuggestions}
           onSelect={handleObraSelect}
           placeholder="Digite para buscar uma obra..."
           initialValue={obraInitial}
         />
       </div>
-
       <div>
         <label
           htmlFor="descricao"
@@ -130,7 +167,6 @@ const DespesaExtraForm = ({
           className="mt-1 block w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 px-3 py-2"
         ></textarea>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label
@@ -143,7 +179,7 @@ const DespesaExtraForm = ({
             type="number"
             name="valor"
             id="valor"
-            step="0.01" // Allows decimal input
+            step="0.01"
             value={formData.valor}
             onChange={handleChange}
             required
@@ -168,7 +204,6 @@ const DespesaExtraForm = ({
           />
         </div>
       </div>
-
       <div>
         <label
           htmlFor="categoria"
@@ -192,22 +227,108 @@ const DespesaExtraForm = ({
         </select>
       </div>
 
-      {/* Anexos Field Section */}
-      <div className="mt-6 pt-6 border-t">
-        <label
-          htmlFor="anexos"
-          className="block text-sm font-medium text-gray-900"
-        >
-          Anexos (PDF, Imagens)
-        </label>
-        <input
-          type="file"
-          name="anexos"
-          id="anexos"
-          onChange={handleFileChange}
-          multiple
-          className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 focus:outline-none"
-        />
+      <div className="mt-6 pt-6 border-t border-gray-200">
+        <h3 className="text-lg font-medium leading-6 text-gray-900">Anexos</h3>
+        <div className="mt-4 space-y-4">
+          {existingAnexos.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-600 mb-2">
+                Anexos Salvos
+              </h4>
+              <ul className="border border-gray-200 rounded-md divide-y divide-gray-200">
+                {existingAnexos.map(anexo => (
+                  <li
+                    key={anexo.id}
+                    className="pl-3 pr-4 py-3 flex items-center justify-between text-sm"
+                  >
+                    <div className="w-0 flex-1 flex items-center">
+                      <Paperclip
+                        className="flex-shrink-0 h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                      <span className="ml-2 flex-1 w-0 truncate">
+                        <a
+                          href={anexo.anexo}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-blue-600 hover:text-blue-500"
+                        >
+                          {anexo.descricao || anexo.anexo.split('/').pop()}
+                        </a>
+                      </span>
+                    </div>
+                    <div className="ml-4 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteExistingAnexo(anexo.id)}
+                        className="p-1 rounded-full text-red-500 hover:bg-red-100"
+                        title="Excluir anexo salvo"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {formData.anexos.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-600 mb-2">
+                Novos Anexos para Envio
+              </h4>
+              <ul className="border border-gray-200 rounded-md divide-y divide-gray-200">
+                {formData.anexos.map((file, index) => (
+                  <li
+                    key={index}
+                    className="pl-3 pr-4 py-3 flex items-center justify-between text-sm"
+                  >
+                    <div className="w-0 flex-1 flex items-center">
+                      <Paperclip
+                        className="flex-shrink-0 h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                      <span className="ml-2 flex-1 w-0 truncate">
+                        {file.name}
+                      </span>
+                    </div>
+                    <div className="ml-4 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveNewAnexo(index)}
+                        className="p-1 rounded-full text-red-500 hover:bg-red-100"
+                        title="Remover novo anexo"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current && fileInputRef.current.click()}
+              className="w-full flex justify-center py-2 px-4 border border-dashed border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              <UploadCloud className="mr-2 h-5 w-5 text-gray-400" />
+              Adicionar mais anexos
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              id="anexos-input"
+              name="anexos"
+              multiple
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">
@@ -222,14 +343,18 @@ const DespesaExtraForm = ({
         <button
           type="submit"
           disabled={isLoading}
-          className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300 flex items-center justify-center"
+          className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300 flex items-center justify-center min-w-[120px]"
         >
-          {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}
-          {isLoading
-            ? 'Salvando...'
-            : initialData
-              ? 'Atualizar Despesa'
-              : 'Adicionar Despesa'}
+          {isLoading ? (
+            <>
+              <SpinnerIcon className="w-5 h-5 mr-2" />
+              Salvando...
+            </>
+          ) : initialData ? (
+            'Atualizar Despesa'
+          ) : (
+            'Adicionar Despesa'
+          )}
         </button>
       </div>
     </form>

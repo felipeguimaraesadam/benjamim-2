@@ -1,6 +1,14 @@
 // Re-processing trigger for DespesasExtrasTable
 import React, { useState } from 'react';
-import { Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react'; // Add icon imports
+import {
+  Pencil,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  PlusCircle,
+  FileText,
+} from 'lucide-react';
+import * as api from '../../services/api';
 
 const DespesasExtrasTable = ({
   despesas,
@@ -15,31 +23,35 @@ const DespesasExtrasTable = ({
     setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleDeleteAnexo = async anexoId => {
+  const handleDeleteAnexo = async (despesaId, anexoId) => {
     if (window.confirm('Tem certeza que deseja excluir este anexo?')) {
       try {
         await api.deleteAnexoDespesa(anexoId);
-        // Ideally, the parent component should handle refetching the data.
-        // For now, we can just reload the page as a simple solution.
+        // This is a temporary solution. A better approach would be to update the state.
         window.location.reload();
       } catch (error) {
         console.error('Erro ao excluir anexo:', error);
+        // Handle error display to the user
       }
     }
   };
-  // Helper to find obra name by ID
+
   const getObraNome = obraId => {
     const obra = obras && obras.find(o => o.id === obraId);
     return obra ? obra.nome_obra : 'N/A';
   };
 
-  if (isLoading) {
+  const isImageFile = fileName => {
+    return /\.(jpg|jpeg|png|gif)$/i.test(fileName);
+  };
+
+  if (isLoading && (!despesas || despesas.length === 0)) {
     return <div className="text-center py-4">Carregando despesas...</div>;
   }
 
   if (!despesas || despesas.length === 0) {
     return (
-      <div className="text-center py-4 text-gray-600">
+      <div className="text-center py-4 text-gray-500">
         Nenhuma despesa extra encontrada.
       </div>
     );
@@ -48,7 +60,7 @@ const DespesasExtrasTable = ({
   return (
     <div className="overflow-x-auto shadow-md sm:rounded-lg">
       <table className="min-w-full text-sm text-left text-gray-500">
-        <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+        <thead className="text-xs text-gray-700 uppercase bg-gray-50">
           <tr>
             <th scope="col" className="px-6 py-3">
               Descrição
@@ -81,14 +93,16 @@ const DespesasExtrasTable = ({
                   R$ {parseFloat(despesa.valor).toFixed(2)}
                 </td>
                 <td className="px-6 py-4">
-                  {new Date(despesa.data).toLocaleDateString()}
+                  {new Date(despesa.data).toLocaleDateString('pt-BR', {
+                    timeZone: 'UTC',
+                  })}
                 </td>
                 <td className="px-6 py-4">{despesa.categoria}</td>
                 <td className="px-6 py-4">{getObraNome(despesa.obra)}</td>
-                <td className="px-6 py-4 flex space-x-2">
+                <td className="px-6 py-4 flex items-center space-x-2">
                   <button
                     onClick={() => onEdit(despesa)}
-                    className="text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+                    className="p-1 text-blue-600 hover:text-blue-800 disabled:text-gray-400"
                     disabled={isLoading}
                     aria-label="Editar Despesa"
                     title="Editar Despesa"
@@ -97,7 +111,7 @@ const DespesasExtrasTable = ({
                   </button>
                   <button
                     onClick={() => onDelete(despesa.id)}
-                    className="text-red-600 hover:text-red-800 disabled:text-gray-400"
+                    className="p-1 text-red-600 hover:text-red-800 disabled:text-gray-400"
                     disabled={isLoading}
                     aria-label="Excluir Despesa"
                     title="Excluir Despesa"
@@ -105,43 +119,93 @@ const DespesasExtrasTable = ({
                     <Trash2 size={18} />
                   </button>
                   {despesa.anexos && despesa.anexos.length > 0 && (
-                    <button onClick={() => toggleRow(despesa.id)}>
+                    <button
+                      onClick={() => toggleRow(despesa.id)}
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                      aria-label="Ver Anexos"
+                      title="Ver Anexos"
+                    >
                       {expandedRows[despesa.id] ? (
-                        <ChevronUp />
+                        <ChevronUp size={18} />
                       ) : (
-                        <ChevronDown />
+                        <ChevronDown size={18} />
                       )}
                     </button>
                   )}
                 </td>
               </tr>
               {expandedRows[despesa.id] && (
-                <tr className="bg-gray-50">
-                  <td colSpan="6" className="px-6 py-4">
-                    <h4 className="font-bold">Anexos:</h4>
-                    <ul className="list-disc list-inside">
+                <tr className="bg-gray-50 border-b">
+                  <td colSpan="6" className="p-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-md font-semibold text-gray-800">
+                        Anexos
+                      </h4>
+                      <button
+                        onClick={() => onEdit(despesa)}
+                        className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        title="Adicionar novo anexo"
+                      >
+                        <PlusCircle size={16} />
+                        <span>Adicionar Anexo</span>
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       {despesa.anexos.map(anexo => (
-                        <li
+                        <div
                           key={anexo.id}
-                          className="flex items-center space-x-2"
+                          className="relative group border rounded-lg p-2 flex items-center space-x-3 bg-white shadow-sm"
                         >
                           <a
                             href={anexo.anexo}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="flex-shrink-0"
                           >
-                            {anexo.descricao || anexo.anexo.split('/').pop()}
+                            {isImageFile(anexo.anexo) ? (
+                              <img
+                                src={anexo.anexo}
+                                alt={
+                                  anexo.descricao ||
+                                  'Prévia do anexo de despesa'
+                                }
+                                className="w-16 h-16 rounded-md object-cover"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 rounded-md bg-gray-200 flex items-center justify-center">
+                                <FileText
+                                  size={32}
+                                  className="text-gray-500"
+                                />
+                              </div>
+                            )}
                           </a>
+                          <div className="flex-grow overflow-hidden">
+                            <a
+                              href={anexo.anexo}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-blue-700 hover:underline truncate"
+                              title={
+                                anexo.descricao || anexo.anexo.split('/').pop()
+                              }
+                            >
+                              {anexo.descricao || anexo.anexo.split('/').pop()}
+                            </a>
+                          </div>
                           <button
-                            onClick={() => handleDeleteAnexo(anexo.id)}
-                            className="text-red-600 hover:text-red-800"
+                            onClick={() =>
+                              handleDeleteAnexo(despesa.id, anexo.id)
+                            }
+                            className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+                            aria-label="Excluir anexo"
+                            title="Excluir anexo"
                           >
-                            Excluir
+                            <Trash2 size={12} />
                           </button>
-                        </li>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </td>
                 </tr>
               )}

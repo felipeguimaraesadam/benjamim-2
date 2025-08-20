@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0025_add_status_orcamento_to_compra"),
+        ("core", "0024_compra_status_orcamento_compra_tipo"),
     ]
 
     operations = [
