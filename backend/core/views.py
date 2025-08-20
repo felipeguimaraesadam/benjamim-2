@@ -569,7 +569,7 @@ class CompraViewSet(viewsets.ModelViewSet):
             css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_compras.css')
             filename = f'Relatorio_Compras_Lote_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf'
             
-            return generate_pdf_response(template_path, context, css_path, filename)
+            return generate_pdf_response(request, template_path, context, css_path, filename)
             
         except Exception as e:
             return Response(
@@ -1426,7 +1426,7 @@ class GerarRelatorioPDFObraView(APIView):
         clean_obra_nome = "".join([c if c.isalnum() else "_" for c in obra_instance.nome_obra])
         filename = f'Relatorio_Obra_{clean_obra_nome}_{obra_instance.id}.pdf'
 
-        return generate_pdf_response(template_path, context, css_path, filename)
+        return generate_pdf_response(request, template_path, context, css_path, filename)
 
 
 # View para gerar PDF do Relatório de Pagamento de Locações
@@ -1564,7 +1564,7 @@ class GerarRelatorioPagamentoLocacoesPDFView(APIView):
         css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_pagamento_locacoes.css')
         filename = f'Relatorio_Pagamento_Locacoes_{start_date_str}_a_{end_date_str}.pdf'
 
-        return generate_pdf_response(template_path, context, css_path, filename)
+        return generate_pdf_response(request, template_path, context, css_path, filename)
 
         response = HttpResponse(pdf_file, content_type='application/pdf')
         filename = f"Relatorio_Pagamento_Locacoes_{start_date_str}_a_{end_date_str}.pdf"
@@ -2244,7 +2244,7 @@ class GerarPDFComprasLoteView(APIView):
             css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_compras.css')
             filename = f'Relatorio_Compras_Lote_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf'
             
-            return generate_pdf_response(template_path, context, css_path, filename)
+            return generate_pdf_response(request, template_path, context, css_path, filename)
             
         except Exception as e:
             return Response(

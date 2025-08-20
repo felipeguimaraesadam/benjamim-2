@@ -21,7 +21,7 @@ except Exception as e:
     
     WEASYPRINT_AVAILABLE = False
 
-def generate_pdf_response(template_name, context, css_path, filename):
+def generate_pdf_response(request, template_name, context, css_path, filename):
     """
     Gera uma resposta HTTP com um PDF a partir de um template HTML.
     """
@@ -36,7 +36,8 @@ def generate_pdf_response(template_name, context, css_path, filename):
         return HttpResponse("CSS file not found.", status=500)
 
     try:
-        html = HTML(string=html_string, base_url=settings.STATIC_ROOT)
+        base_url = request.build_absolute_uri('/')
+        html = HTML(string=html_string, base_url=base_url)
         css = CSS(string=css_string)
         
         pdf_file = html.write_pdf(stylesheets=[css])
