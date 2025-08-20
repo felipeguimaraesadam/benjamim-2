@@ -587,6 +587,47 @@ class CompraSerializer(serializers.ModelSerializer):
         
         return compra
 
+    def update(self, instance, validated_data):
+        instance.tipo = validated_data.get('tipo', instance.tipo)
+        instance.obra = validated_data.get('obra', instance.obra)
+        instance.fornecedor = validated_data.get('fornecedor', instance.fornecedor)
+        instance.data_compra = validated_data.get('data_compra', instance.data_compra)
+        instance.nota_fiscal = validated_data.get('nota_fiscal', instance.nota_fiscal)
+        instance.desconto = validated_data.get('desconto', instance.desconto)
+        instance.observacoes = validated_data.get('observacoes', instance.observacoes)
+        instance.forma_pagamento = validated_data.get('forma_pagamento', instance.forma_pagamento)
+        instance.numero_parcelas = validated_data.get('numero_parcelas', instance.numero_parcelas)
+        instance.valor_entrada = validated_data.get('valor_entrada', instance.valor_entrada)
+
+        itens_data = validated_data.pop('itens', None)
+        if itens_data is not None:
+            existing_items_ids = set(instance.itens.values_list('id', flat=True))
+            request_items_ids = set()
+            for item_data in itens_data:
+                item_id = item_data.get('id', None)
+                if item_id:
+                    request_items_ids.add(item_id)
+                    ItemCompra.objects.update_or_create(id=item_id, compra=instance, defaults=item_data)
+                else:
+                    item = ItemCompra.objects.create(compra=instance, **item_data)
+                    request_items_ids.add(item.id)
+
+            ids_to_delete = existing_items_ids - request_items_ids
+            if ids_to_delete:
+                instance.itens.filter(id__in=ids_to_delete).delete()
+
+        parcelas_data = validated_data.pop('parcelas', None)
+        if parcelas_data is not None:
+            instance.parcelas.all().delete()
+            for parcela_data in parcelas_data:
+                ParcelaCompra.objects.create(compra=instance, **parcela_data)
+
+        total_bruto_calculado = sum(item.valor_total_item for item in instance.itens.all())
+        instance.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
+
+        instance.save()
+        return instance
+
 
 # Serializers for RelatorioPagamentoMateriaisViewSet
 # class ItemCompraReportSerializer(serializers.ModelSerializer):

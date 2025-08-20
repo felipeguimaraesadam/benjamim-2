@@ -502,14 +502,6 @@ class CompraViewSet(viewsets.ModelViewSet):
         if 'parcelas' in data and isinstance(data['parcelas'], str):
             data['parcelas'] = json.loads(data['parcelas'])
 
-        if 'pagamento_parcelado' in data and isinstance(data['pagamento_parcelado'], str):
-            pagamento_data = json.loads(data['pagamento_parcelado'])
-            data['forma_pagamento'] = pagamento_data.get('tipo')
-            if data['forma_pagamento'] == 'parcelado':
-                data['numero_parcelas'] = pagamento_data.get('numero_parcelas', 1)
-                data['valor_entrada'] = pagamento_data.get('valor_entrada', 0)
-
-        # Handle attachments
         anexos_files = request.FILES.getlist('anexos')
         for anexo_file in anexos_files:
             AnexoCompra.objects.create(compra=instance, arquivo=anexo_file)
@@ -518,94 +510,14 @@ class CompraViewSet(viewsets.ModelViewSet):
         if anexos_a_remover_ids:
             AnexoCompra.objects.filter(id__in=anexos_a_remover_ids, compra=instance).delete()
 
-        instance.tipo = data.get('tipo', instance.tipo)
-        instance.obra_id = data.get('obra', instance.obra_id)
-        instance.fornecedor = data.get('fornecedor', instance.fornecedor)
-        instance.data_compra = data.get('data_compra', instance.data_compra)
-        instance.nota_fiscal = data.get('nota_fiscal', instance.nota_fiscal)
-        desconto_str = data.get('desconto', str(instance.desconto))
-        try:
-            instance.desconto = Decimal(desconto_str)
-        except ValueError:
-            instance.desconto = instance.desconto
-        instance.observacoes = data.get('observacoes', instance.observacoes)
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
 
-        # Handle parcelas
-        if instance.forma_pagamento == 'PARCELADO':
-            parcelas_data = data.get('parcelas', None)
-            if parcelas_data:
-                existing_parcelas_ids = set(instance.parcelas.values_list('id', flat=True))
-                request_parcelas_ids = set()
-                for parcela_data in parcelas_data:
-                    parcela_id = parcela_data.get('id')
-                    if parcela_id:
-                        request_parcelas_ids.add(parcela_id)
-                        ParcelaCompra.objects.update_or_create(
-                            id=parcela_id, compra=instance,
-                            defaults=parcela_data
-                        )
-                    else:
-                        parcela = ParcelaCompra.objects.create(compra=instance, **parcela_data)
-                        request_parcelas_ids.add(parcela.id)
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been used, we need to manually update the prefetch cache.
+            instance._prefetched_objects_cache = {}
 
-                ids_to_delete = existing_parcelas_ids - request_parcelas_ids
-                if ids_to_delete:
-                    instance.parcelas.filter(id__in=ids_to_delete).delete()
-
-        itens_data = data.get('itens', None)
-        if itens_data is not None:
-            existing_items_ids = set(instance.itens.values_list('id', flat=True))
-            request_items_ids = set()
-            for item_data in itens_data:
-                item_id = item_data.get('id', None)
-                material_id = item_data.get('material')
-                categoria_uso = item_data.get('categoria_uso')
-                try:
-                    quantidade_str = item_data.get('quantidade', '0')
-                    quantidade = Decimal(quantidade_str)
-                    valor_unitario_str = item_data.get('valor_unitario', '0')
-                    valor_unitario = Decimal(valor_unitario_str)
-                except ValueError as e: continue
-                material_obj = None
-                if material_id:
-                    try:
-                        material_obj = Material.objects.get(id=material_id)
-                    except Material.DoesNotExist: continue
-                else: continue
-                if item_id:
-                    if item_id in existing_items_ids:
-                        try:
-                            item_instance = ItemCompra.objects.get(id=item_id, compra=instance)
-                            item_instance.material = material_obj
-                            item_instance.quantidade = quantidade
-                            item_instance.valor_unitario = valor_unitario
-                            if categoria_uso is not None:
-                                item_instance.categoria_uso = categoria_uso
-                            item_instance.save()
-                            request_items_ids.add(item_id)
-                        except ItemCompra.DoesNotExist: continue
-                    else: continue
-                else:
-                    if not material_obj: continue
-                    item_instance_data = {
-                        'compra': instance, 'material': material_obj,
-                        'quantidade': quantidade, 'valor_unitario': valor_unitario
-                    }
-                    if categoria_uso is not None:
-                        item_instance_data['categoria_uso'] = categoria_uso
-                    item_instance = ItemCompra.objects.create(**item_instance_data)
-                    request_items_ids.add(item_instance.id)
-                if categoria_uso and material_obj:
-                    material_obj.categoria_uso_padrao = categoria_uso
-                    material_obj.save(update_fields=['categoria_uso_padrao'])
-            ids_to_delete = existing_items_ids - request_items_ids
-            if ids_to_delete:
-                ItemCompra.objects.filter(id__in=ids_to_delete, compra=instance).delete()
-        all_current_items = instance.itens.all()
-        total_bruto_calculado = sum(item.valor_total_item for item in all_current_items if item.valor_total_item is not None)
-        instance.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
-        instance.save()
-        serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
@@ -1975,7 +1887,7 @@ class AnexoCompraViewSet(viewsets.ModelViewSet):
                 return Response({'error': 'Compra não encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
             anexo_file = request.FILES['arquivo']
-            anexo = AnexoCompra.objects.create(compra=compra, arquivo=anexo_file)
+            anexo = AnexoCompra.objects.create(compra=compra, arquivo=anexo_file, uploaded_by=request.user if request.user.is_authenticated else None)
             
             serializer = self.get_serializer(anexo)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
