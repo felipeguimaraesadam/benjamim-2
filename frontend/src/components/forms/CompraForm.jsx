@@ -14,7 +14,6 @@ import * as api from '../../services/api';
 import MaterialAutocomplete from './MaterialAutocomplete';
 import ObraAutocomplete from './ObraAutocomplete';
 import SpinnerIcon from '../utils/SpinnerIcon';
-import PagamentoParceladoForm from './PagamentoParceladoForm';
 import AnexosCompraManager from './AnexosCompraManager';
 
 registerLocale('pt-BR', ptBR);
@@ -309,7 +308,6 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [obraId, setObraId] = useState('');
   const [obraSelecionada, setObraSelecionada] = useState(null);
   const [dataCompra, setDataCompra] = useState('');
-  const [dataPagamento, setDataPagamento] = useState(''); // Added state for payment date
   const [fornecedor, setFornecedor] = useState('');
   const [notaFiscal, setNotaFiscal] = useState('');
   const [observacoes, setObservacoes] = useState('');
@@ -321,20 +319,13 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [itemToFocusId, setItemToFocusId] = useState(null);
   
   // New state for payment installments and attachments
-  const [pagamentoParcelado, setPagamentoParcelado] = useState({
-    tipo: 'avista', // 'avista' or 'parcelado'
-    parcelas: []
+  const [pagamento, setPagamento] = useState({
+    forma_pagamento: 'AVISTA',
+    data_pagamento: null,
+    numero_parcelas: 1,
+    valor_entrada: '0.00',
   });
   const [anexos, setAnexos] = useState([]);
-
-  // Memoized callbacks for payment installments to prevent infinite loops
-  const handleTipoPagamentoChange = useCallback((tipo) => {
-    setPagamentoParcelado(prev => ({ ...prev, tipo }));
-  }, []);
-
-  const handleParcelasChange = useCallback((parcelas) => {
-    setPagamentoParcelado(prev => ({ ...prev, parcelas }));
-  }, []);
 
   // Refs for keyboard navigation
   const tipoCompraRef = useRef(null);
@@ -596,12 +587,6 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         : new Date().toISOString().split('T')[0]; // Default to today if null
       setDataCompra(initialDataCompra);
 
-      setDataPagamento(
-        initialData.data_pagamento
-          ? new Date(initialData.data_pagamento).toISOString().split('T')[0]
-          : null // Keep payment date null for duplicates unless specified
-      );
-
       setFornecedor(initialData.fornecedor || '');
       setNotaFiscal(initialData.nota_fiscal || '');
       setObservacoes(initialData.observacoes || '');
@@ -612,14 +597,12 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       );
       
       // Handle payment installments
-      if (initialData.pagamento_parcelado) {
-        setPagamentoParcelado(initialData.pagamento_parcelado);
-      } else {
-        setPagamentoParcelado({
-          tipo: 'avista',
-          parcelas: []
-        });
-      }
+      setPagamento({
+        forma_pagamento: initialData.forma_pagamento || 'AVISTA',
+        data_pagamento: initialData.data_pagamento ? new Date(initialData.data_pagamento) : null,
+        numero_parcelas: initialData.numero_parcelas || 1,
+        valor_entrada: initialData.valor_entrada || '0.00',
+      });
       
       // Handle attachments
       if (initialData.anexos && Array.isArray(initialData.anexos)) {
@@ -689,7 +672,6 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       // This block is now only for a completely new, blank form.
       const today = new Date().toISOString().split('T')[0];
       setDataCompra(today);
-      setDataPagamento(today);
       setFornecedor('');
       setNotaFiscal('');
       setObservacoes('');
@@ -699,9 +681,11 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       setObraSelecionada(null);
       
       // Initialize new state variables for new forms
-      setPagamentoParcelado({
-        tipo: 'avista',
-        parcelas: []
+      setPagamento({
+        forma_pagamento: 'AVISTA',
+        data_pagamento: new Date(),
+        numero_parcelas: 1,
+        valor_entrada: '0.00',
       });
       setAnexos([]);
       
@@ -1002,13 +986,15 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         tipo,
         obra: parseInt(obraId, 10),
         data_compra: dataCompra,
-        data_pagamento: dataPagamento || null,
         fornecedor: fornecedor,
         nota_fiscal: notaFiscal || null,
         desconto: finalDesconto,
         observacoes: observacoes || null,
         itens: itemsToSubmit,
-        pagamento_parcelado: pagamentoParcelado,
+        forma_pagamento: pagamento.forma_pagamento,
+        data_pagamento: pagamento.forma_pagamento === 'AVISTA' ? pagamento.data_pagamento.toISOString().split('T')[0] : null,
+        numero_parcelas: pagamento.forma_pagamento === 'PARCELADO' ? pagamento.numero_parcelas : 1,
+        valor_entrada: pagamento.forma_pagamento === 'PARCELADO' ? parseFloat(String(pagamento.valor_entrada).replace(',', '.')) || 0 : 0,
         anexos: anexos,
       };
       console.log('DEBUG: CompraForm submit payload:', compraData);
@@ -1123,26 +1109,6 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 <WarningIcon /> {errors.dataCompra}
               </p>
             )}
-          </div>
-          <div>
-            <label
-              htmlFor="dataPagamento"
-              className="block mb-1.5 text-sm font-medium text-gray-700"
-            >
-              Data de Pagamento
-            </label>
-            <DatePicker
-              selected={
-                dataPagamento ? new Date(dataPagamento + 'T00:00:00') : null
-              }
-              onChange={date =>
-                setDataPagamento(date.toISOString().split('T')[0])
-              }
-              dateFormat="dd/MM/yyyy"
-              locale="pt-BR"
-              customInput={<CustomDateInput />}
-            />
-            {/* Optional: {errors.dataPagamento && <p className="mt-1.5 text-xs text-red-600 flex items-center"><WarningIcon /> {errors.dataPagamento}</p>} */}
           </div>
           <div>
             <label
@@ -1315,27 +1281,87 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           )}
         </div>
         
-        {/* Payment Installments Section */}
+        {/* Pagamento e Anexos Section */}
         <div className="mt-8 pt-6 border-t border-slate-300">
-          <PagamentoParceladoForm
-            valorTotal={totalGeralCalculado}
-            tipoPagamento={pagamentoParcelado?.tipo || 'UNICO'}
-            onTipoPagamentoChange={handleTipoPagamentoChange}
-            parcelas={pagamentoParcelado?.parcelas || []}
-            onParcelasChange={handleParcelasChange}
-            errors={errors}
-          />
+          <h3 className="text-xl font-semibold text-gray-700 mb-4">
+            Pagamento e Anexos
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div>
+              <label className="block mb-1.5 text-sm font-medium text-gray-700">Forma de Pagamento</label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="forma_pagamento"
+                    value="AVISTA"
+                    checked={pagamento.forma_pagamento === 'AVISTA'}
+                    onChange={(e) => setPagamento({ ...pagamento, forma_pagamento: e.target.value })}
+                    className="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">À Vista</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="forma_pagamento"
+                    value="PARCELADO"
+                    checked={pagamento.forma_pagamento === 'PARCELADO'}
+                    onChange={(e) => setPagamento({ ...pagamento, forma_pagamento: e.target.value })}
+                    className="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Parcelado</span>
+                </label>
+              </div>
+
+              {pagamento.forma_pagamento === 'AVISTA' && (
+                <div className="mt-4">
+                  <label htmlFor="dataPagamento" className="block mb-1.5 text-sm font-medium text-gray-700">Data de Pagamento</label>
+                  <DatePicker
+                    selected={pagamento.data_pagamento}
+                    onChange={date => setPagamento({ ...pagamento, data_pagamento: date })}
+                    dateFormat="dd/MM/yyyy"
+                    locale="pt-BR"
+                    customInput={<CustomDateInput />}
+                  />
+                </div>
+              )}
+
+              {pagamento.forma_pagamento === 'PARCELADO' && (
+                <div className="mt-4 space-y-4 p-4 border rounded-md">
+                  <div>
+                    <label htmlFor="numero_parcelas" className="block mb-1.5 text-sm font-medium text-gray-700">Número de Parcelas</label>
+                    <input
+                      type="number"
+                      id="numero_parcelas"
+                      value={pagamento.numero_parcelas}
+                      onChange={(e) => setPagamento({ ...pagamento, numero_parcelas: parseInt(e.target.value, 10) || 1 })}
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="valor_entrada" className="block mb-1.5 text-sm font-medium text-gray-700">Valor de Entrada</label>
+                    <input
+                      type="text"
+                      id="valor_entrada"
+                      value={pagamento.valor_entrada}
+                      onChange={(e) => setPagamento({ ...pagamento, valor_entrada: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div>
+              <AnexosCompraManager
+                anexos={anexos}
+                onAnexosChange={setAnexos}
+                compraId={initialData?.id}
+              />
+            </div>
+          </div>
         </div>
-        
-        {/* Attachments Section */}
-        <div className="mt-8 pt-6 border-t border-slate-300">
-          <AnexosCompraManager
-            anexos={anexos}
-            onAnexosChange={setAnexos}
-            compraId={initialData?.id}
-          />
-        </div>
-        
+
         {/* Summary Section */}
         <div className="mt-8 pt-6 border-t border-slate-300">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">

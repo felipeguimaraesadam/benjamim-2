@@ -410,13 +410,33 @@ class MaterialDetailAPIView(APIView):
 class CompraViewSet(viewsets.ModelViewSet):
     serializer_class = CompraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+    parser_classes = (MultiPartParser, FormParser)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        import json
+        data = request.data.copy()
+
+        if 'itens' in data and isinstance(data['itens'], str):
+            data['itens'] = json.loads(data['itens'])
+
+        if 'pagamento_parcelado' in data and isinstance(data['pagamento_parcelado'], str):
+            pagamento_data = json.loads(data['pagamento_parcelado'])
+            data['forma_pagamento'] = pagamento_data.get('tipo')
+            if data['forma_pagamento'] == 'parcelado':
+                data['numero_parcelas'] = pagamento_data.get('numero_parcelas', 1)
+                data['valor_entrada'] = pagamento_data.get('valor_entrada', 0)
+
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         itens_data = validated_data.pop('itens')
         compra = Compra.objects.create(**validated_data)
+
+        # Handle attachments
+        anexos_files = request.FILES.getlist('anexos')
+        for anexo_file in anexos_files:
+            AnexoCompra.objects.create(compra=compra, arquivo=anexo_file)
+
         for item_data in itens_data:
             item = ItemCompra.objects.create(compra=compra, **item_data)
             material_obj = item_data.get('material')
@@ -459,20 +479,42 @@ class CompraViewSet(viewsets.ModelViewSet):
         return queryset
 
     def update(self, request, *args, **kwargs):
+        import json
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        instance.tipo = request.data.get('tipo', instance.tipo)
-        instance.obra_id = request.data.get('obra', instance.obra_id)
-        instance.fornecedor = request.data.get('fornecedor', instance.fornecedor)
-        instance.data_compra = request.data.get('data_compra', instance.data_compra)
-        instance.nota_fiscal = request.data.get('nota_fiscal', instance.nota_fiscal)
-        desconto_str = request.data.get('desconto', str(instance.desconto))
+        data = request.data.copy()
+
+        if 'itens' in data and isinstance(data['itens'], str):
+            data['itens'] = json.loads(data['itens'])
+
+        if 'pagamento_parcelado' in data and isinstance(data['pagamento_parcelado'], str):
+            pagamento_data = json.loads(data['pagamento_parcelado'])
+            data['forma_pagamento'] = pagamento_data.get('tipo')
+            if data['forma_pagamento'] == 'parcelado':
+                data['numero_parcelas'] = pagamento_data.get('numero_parcelas', 1)
+                data['valor_entrada'] = pagamento_data.get('valor_entrada', 0)
+
+        # Handle attachments
+        anexos_files = request.FILES.getlist('anexos')
+        for anexo_file in anexos_files:
+            AnexoCompra.objects.create(compra=instance, arquivo=anexo_file)
+
+        anexos_a_remover_ids = data.getlist('anexos_a_remover')
+        if anexos_a_remover_ids:
+            AnexoCompra.objects.filter(id__in=anexos_a_remover_ids, compra=instance).delete()
+
+        instance.tipo = data.get('tipo', instance.tipo)
+        instance.obra_id = data.get('obra', instance.obra_id)
+        instance.fornecedor = data.get('fornecedor', instance.fornecedor)
+        instance.data_compra = data.get('data_compra', instance.data_compra)
+        instance.nota_fiscal = data.get('nota_fiscal', instance.nota_fiscal)
+        desconto_str = data.get('desconto', str(instance.desconto))
         try:
             instance.desconto = Decimal(desconto_str)
         except ValueError:
             instance.desconto = instance.desconto
-        instance.observacoes = request.data.get('observacoes', instance.observacoes)
-        itens_data = request.data.get('itens', None)
+        instance.observacoes = data.get('observacoes', instance.observacoes)
+        itens_data = data.get('itens', None)
         if itens_data is not None:
             existing_items_ids = set(instance.itens.values_list('id', flat=True))
             request_items_ids = set()
