@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q, Sum, F, Case, When, Value, IntegerField
 from decimal import Decimal
@@ -21,12 +22,14 @@ from django.template.loader import render_to_string # Was present
 from django.conf import settings
 import os
 from .utils import generate_pdf_response
+from weasyprint import HTML
 # from weasyprint.fonts import FontConfiguration # Optional
 
 from .models import (
     Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material,
     Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra,
-    Backup, BackupSettings, AnexoLocacao, AnexoDespesa
+    Backup, BackupSettings, AnexoLocacao, AnexoDespesa, ParcelaCompra,
+    AnexoCompra, ArquivoObra
 )
 from .serializers import (
     UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer,
@@ -35,7 +38,8 @@ from .serializers import (
     ItemCompraSerializer, EquipeComMembrosBasicSerializer,
     FotoObraSerializer, FuncionarioDetailSerializer,
     EquipeDetailSerializer, MaterialDetailSerializer, CompraReportSerializer,
-    BackupSerializer, BackupSettingsSerializer, AnexoLocacaoSerializer, AnexoDespesaSerializer
+    BackupSerializer, BackupSettingsSerializer, AnexoLocacaoSerializer, AnexoDespesaSerializer,
+    ParcelaCompraSerializer, AnexoCompraSerializer, ArquivoObraSerializer
 )
 from .permissions import IsNivelAdmin, IsNivelGerente
 
@@ -123,6 +127,18 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
     queryset = Funcionario.objects.all().order_by('id')
     serializer_class = FuncionarioSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
+    
+    def get_queryset(self):
+        queryset = Funcionario.objects.all()
+        search = self.request.query_params.get('search', None)
+        
+        if search:
+            queryset = queryset.filter(
+                Q(nome_completo__icontains=search) |
+                Q(cargo__icontains=search)
+            )
+        
+        return queryset.order_by('nome_completo')
 
 
 # New FuncionarioDetailView
@@ -516,6 +532,51 @@ class CompraViewSet(viewsets.ModelViewSet):
             compra.save()
             return Response({'status': 'orçamento aprovado'})
         return Response({'status': 'compra já aprovada'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'], url_path='bulk-pdf')
+    def bulk_pdf(self, request):
+        """
+        Gera PDF em lote para múltiplas compras selecionadas.
+        """
+        compra_ids = request.data.get('compra_ids', [])
+        
+        if not compra_ids:
+            return Response(
+                {'error': 'Lista de IDs de compras é obrigatória'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            compras = Compra.objects.filter(id__in=compra_ids).prefetch_related(
+                'itens__material', 'parcelas', 'anexos'
+            )
+            
+            if not compras.exists():
+                return Response(
+                    {'error': 'Nenhuma compra encontrada com os IDs fornecidos'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Renderizar o template HTML
+            html_content = render_to_string('relatorios/relatorio_compras_lote.html', {
+                'compras': compras,
+                'data_geracao': timezone.now().strftime('%d/%m/%Y %H:%M:%S')
+            })
+            
+            # Gerar PDF usando WeasyPrint
+            pdf_file = HTML(string=html_content, base_url=request.build_absolute_uri()).write_pdf()
+            
+            # Criar resposta HTTP com o PDF
+            response = HttpResponse(pdf_file, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="relatorio_compras_lote_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
+            
+            return response
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao gerar PDF: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class DespesaExtraViewSet(viewsets.ModelViewSet):
@@ -1695,3 +1756,499 @@ class BackupSettingsViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class ParcelaCompraViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para gerenciar parcelas de compras.
+    """
+    queryset = ParcelaCompra.objects.all()
+    serializer_class = ParcelaCompraSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        try:
+            queryset = super().get_queryset()
+            compra_id = self.request.query_params.get('compra', None)
+            if compra_id:
+                try:
+                    compra_id = int(compra_id)
+                    queryset = queryset.filter(compra_id=compra_id)
+                except ValueError:
+                    return ParcelaCompra.objects.none()
+            return queryset.order_by('numero_parcela')
+        except Exception as e:
+            return ParcelaCompra.objects.none()
+    
+    @action(detail=True, methods=['post'])
+    def marcar_paga(self, request, pk=None):
+        """
+        Marca uma parcela como paga.
+        """
+        try:
+            parcela = self.get_object()
+            
+            # Validar se a parcela pode ser marcada como paga
+            if parcela.status == 'pago':
+                return Response(
+                    {'error': 'Parcela já está marcada como paga'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            parcela.status = 'pago'
+            parcela.data_pagamento = timezone.now().date()
+            parcela.save()
+            
+            serializer = self.get_serializer(parcela)
+            return Response(serializer.data)
+            
+        except ParcelaCompra.DoesNotExist:
+            return Response(
+                {'error': 'Parcela não encontrada'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao marcar parcela como paga: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['post'])
+    def marcar_pendente(self, request, pk=None):
+        """
+        Marca uma parcela como pendente.
+        """
+        try:
+            parcela = self.get_object()
+            
+            # Validar se a parcela pode ser marcada como pendente
+            if parcela.status == 'pendente':
+                return Response(
+                    {'error': 'Parcela já está marcada como pendente'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            parcela.status = 'pendente'
+            parcela.data_pagamento = None
+            parcela.save()
+            
+            serializer = self.get_serializer(parcela)
+            return Response(serializer.data)
+            
+        except ParcelaCompra.DoesNotExist:
+            return Response(
+                {'error': 'Parcela não encontrada'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao marcar parcela como pendente: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class AnexoCompraViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para gerenciar anexos de compras.
+    """
+    queryset = AnexoCompra.objects.all()
+    serializer_class = AnexoCompraSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def get_queryset(self):
+        try:
+            queryset = super().get_queryset()
+            compra_id = self.request.query_params.get('compra', None)
+            if compra_id:
+                try:
+                    compra_id = int(compra_id)
+                    queryset = queryset.filter(compra_id=compra_id)
+                except ValueError:
+                    return AnexoCompra.objects.none()
+            return queryset.order_by('-data_upload')
+        except Exception as e:
+            return AnexoCompra.objects.none()
+    
+    def create(self, request, *args, **kwargs):
+        """
+        Cria um novo anexo para uma compra.
+        """
+        try:
+            # Validar se arquivo foi enviado
+            if 'arquivo' not in request.FILES:
+                return Response(
+                    {'error': 'Nenhum arquivo foi enviado'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            
+            # Validar tamanho do arquivo (máximo 10MB)
+            arquivo = serializer.validated_data.get('arquivo')
+            if arquivo and arquivo.size > 10 * 1024 * 1024:  # 10MB
+                return Response(
+                    {'error': 'Arquivo muito grande. Tamanho máximo: 10MB'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validar tipo de arquivo
+            if arquivo:
+                allowed_types = [
+                    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                    'application/pdf', 'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'text/plain'
+                ]
+                
+                if arquivo.content_type not in allowed_types:
+                    return Response(
+                        {'error': 'Tipo de arquivo não permitido'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Validar se a compra existe
+            compra_id = serializer.validated_data.get('compra')
+            if compra_id:
+                try:
+                    from .models import Compra
+                    Compra.objects.get(id=compra_id.id)
+                except Compra.DoesNotExist:
+                    return Response(
+                        {'error': 'Compra não encontrada'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            
+            serializer.save(usuario_upload=request.user)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao fazer upload do arquivo: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        Remove um anexo e seu arquivo físico.
+        """
+        try:
+            anexo = self.get_object()
+            
+            # Tentar remover o arquivo físico
+            if anexo.arquivo:
+                try:
+                    import os
+                    if os.path.exists(anexo.arquivo.path):
+                        os.remove(anexo.arquivo.path)
+                except Exception as e:
+                    # Log do erro, mas não falha a operação
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f'Erro ao remover arquivo físico: {e}')
+            
+            return super().destroy(request, *args, **kwargs)
+            
+        except AnexoCompra.DoesNotExist:
+            return Response(
+                {'error': 'Anexo não encontrado'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao remover anexo: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['get'])
+    def download(self, request, pk=None):
+        """
+        Faz download de um anexo de compra.
+        """
+        try:
+            anexo = self.get_object()
+            
+            if not anexo.arquivo:
+                return Response(
+                    {'error': 'Arquivo não encontrado'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            import os
+            from django.http import FileResponse
+            from django.utils.encoding import smart_str
+            
+            if not os.path.exists(anexo.arquivo.path):
+                return Response(
+                    {'error': 'Arquivo físico não encontrado'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            response = FileResponse(
+                open(anexo.arquivo.path, 'rb'),
+                content_type='application/octet-stream'
+            )
+            response['Content-Disposition'] = f'attachment; filename="{smart_str(anexo.nome_arquivo)}"'
+            return response
+            
+        except AnexoCompra.DoesNotExist:
+            return Response(
+                {'error': 'Anexo não encontrado'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao fazer download do anexo: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ArquivoObraViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para gerenciar arquivos de obras.
+    """
+    queryset = ArquivoObra.objects.all()
+    serializer_class = ArquivoObraSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def get_queryset(self):
+        try:
+            queryset = super().get_queryset()
+            obra_id = self.request.query_params.get('obra', None)
+            if obra_id:
+                try:
+                    obra_id = int(obra_id)
+                    queryset = queryset.filter(obra_id=obra_id)
+                except ValueError:
+                    return ArquivoObra.objects.none()
+            
+            categoria = self.request.query_params.get('categoria', None)
+            if categoria:
+                # Validar se a categoria é válida
+                valid_categories = ['documento', 'imagem', 'planilha', 'outro']
+                if categoria in valid_categories:
+                    queryset = queryset.filter(categoria=categoria)
+                else:
+                    return ArquivoObra.objects.none()
+                
+            return queryset.order_by('-uploaded_at')
+        except Exception as e:
+            return ArquivoObra.objects.none()
+    
+    def create(self, request, *args, **kwargs):
+        """
+        Cria um novo arquivo para uma obra.
+        """
+        try:
+            # Validar se arquivo foi enviado
+            if 'arquivo' not in request.FILES:
+                return Response(
+                    {'error': 'Nenhum arquivo foi enviado'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            
+            # Validar tamanho do arquivo (máximo 50MB)
+            arquivo = serializer.validated_data.get('arquivo')
+            if arquivo and arquivo.size > 50 * 1024 * 1024:  # 50MB
+                return Response(
+                    {'error': 'Arquivo muito grande. Tamanho máximo: 50MB'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validar tipos de arquivo permitidos
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt']
+            if arquivo:
+                import os
+                _, ext = os.path.splitext(arquivo.name.lower())
+                if ext not in allowed_extensions:
+                    return Response(
+                        {'error': f'Tipo de arquivo não permitido. Tipos permitidos: {", ".join(allowed_extensions)}'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Validar se a obra existe
+            obra_id = request.data.get('obra')
+            if obra_id:
+                try:
+                    from .models import Obra
+                    obra = Obra.objects.get(id=obra_id)
+                except Obra.DoesNotExist:
+                    return Response(
+                        {'error': 'Obra não encontrada'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                except ValueError:
+                    return Response(
+                        {'error': 'ID da obra inválido'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                return Response(
+                    {'error': 'ID da obra é obrigatório'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            serializer.save(uploaded_by=request.user, obra=obra)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao fazer upload do arquivo: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        Remove um arquivo de obra e deleta o arquivo físico.
+        """
+        try:
+            instance = self.get_object()
+            
+            # Deletar arquivo físico se existir
+            if instance.arquivo:
+                try:
+                    import os
+                    if os.path.exists(instance.arquivo.path):
+                        os.remove(instance.arquivo.path)
+                except Exception as e:
+                    # Log do erro, mas não falha a operação
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f'Erro ao deletar arquivo físico: {e}')
+            
+            # Deletar registro do banco
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+            
+        except ArquivoObra.DoesNotExist:
+            return Response(
+                {'error': 'Arquivo não encontrado'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao remover arquivo: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def bulk_delete(self, request):
+        """
+        Deleta múltiplos arquivos em lote.
+        """
+        try:
+            arquivo_ids = request.data.get('arquivo_ids', [])
+            
+            if not arquivo_ids:
+                return Response(
+                    {'error': 'Lista de IDs de arquivos é obrigatória'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validar que todos os IDs são números
+            try:
+                arquivo_ids = [int(id_) for id_ in arquivo_ids]
+            except (ValueError, TypeError):
+                return Response(
+                    {'error': 'IDs devem ser números válidos'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            arquivos = ArquivoObra.objects.filter(id__in=arquivo_ids)
+            deleted_count = 0
+            errors = []
+            
+            for arquivo in arquivos:
+                try:
+                    # Deletar arquivo físico se existir
+                    if arquivo.arquivo:
+                        try:
+                            import os
+                            if os.path.exists(arquivo.arquivo.path):
+                                os.remove(arquivo.arquivo.path)
+                        except Exception as e:
+                            # Log do erro, mas não falha a operação
+                            import logging
+                            logger = logging.getLogger(__name__)
+                            logger.error(f'Erro ao deletar arquivo físico {arquivo.id}: {e}')
+                    
+                    arquivo.delete()
+                    deleted_count += 1
+                except Exception as e:
+                    errors.append(f'Erro ao deletar arquivo {arquivo.id}: {str(e)}')
+            
+            response_data = {
+                'message': f'{deleted_count} arquivo(s) deletado(s) com sucesso'
+            }
+            
+            if errors:
+                response_data['warnings'] = errors
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Erro na operação de exclusão em lote: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class GerarPDFComprasLoteView(APIView):
+    """
+    Endpoint para gerar PDFs de múltiplas compras em lote.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Test endpoint to verify URL routing works"""
+        return Response({'message': 'Endpoint is working', 'method': 'GET'}, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        compra_ids = request.data.get('compra_ids', [])
+        
+        if not compra_ids:
+            return Response(
+                {'error': 'Lista de IDs de compras é obrigatória'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            compras = Compra.objects.filter(id__in=compra_ids).prefetch_related(
+                'itens__material', 'parcelas', 'anexos'
+            )
+            
+            if not compras.exists():
+                return Response(
+                    {'error': 'Nenhuma compra encontrada com os IDs fornecidos'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Preparar contexto para o template
+            context = {
+                'compras': compras,
+                'data_geracao': timezone.now(),
+                'usuario': request.user,
+            }
+            
+            # Gerar PDF
+            template_path = 'relatorios/relatorio_compras_lote.html'
+            css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_compras.css')
+            filename = f'Relatorio_Compras_Lote_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+            
+            return generate_pdf_response(template_path, context, css_path, filename)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao gerar PDF: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

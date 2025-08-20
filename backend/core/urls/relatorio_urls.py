@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from ..views import (
     RelatorioFinanceiroObraView, RelatorioGeralComprasView, RelatorioDesempenhoEquipeView,
     RelatorioCustoGeralView, RelatorioFolhaPagamentoViewSet, RelatorioPagamentoMateriaisViewSet,
-    GerarRelatorioPagamentoLocacoesPDFView, GerarRelatorioPDFObraView
+    GerarRelatorioPagamentoLocacoesPDFView, GerarRelatorioPDFObraView, GerarPDFComprasLoteView
 )
 
 router = DefaultRouter()
@@ -18,4 +18,5 @@ urlpatterns = [
     path('custo-geral/', RelatorioCustoGeralView.as_view(), name='relatorio-custo-geral'),
     path('pagamento-locacoes/pdf/', GerarRelatorioPagamentoLocacoesPDFView.as_view(), name='gerar-relatorio-pagamento-locacoes-pdf'),
     path('obra/<int:pk>/pdf/', GerarRelatorioPDFObraView.as_view(), name='gerar-relatorio-obra-pdf'),
+    path('compras-lote/pdf/', GerarPDFComprasLoteView.as_view(), name='gerar-pdf-compras-lote'),
 ]

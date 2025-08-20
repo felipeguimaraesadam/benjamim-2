@@ -1,0 +1,189 @@
+{% load static %}
+{% load l10n %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório de Compras em Lote</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @top-left {
+                content: "Relatório de Compras em Lote";
+                font-size: 9pt;
+                color: #666;
+                padding-top: 0.5cm;
+            }
+            @top-right {
+                content: "SGO - Sistema de Gestão de Obras";
+                font-size: 9pt;
+                color: #666;
+                padding-top: 0.5cm;
+            }
+            @bottom-center {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 9pt;
+                color: #666;
+                padding-bottom: 0.5cm;
+            }
+        }
+        @page cover {
+            margin: 0;
+            @top-left { content: normal; }
+            @top-right { content: normal; }
+            @bottom-center { content: normal; }
+        }
+        .cover-page-content {
+            page: cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 29.7cm;
+            width: 21cm;
+            text-align: center;
+        }
+        .cover-page-content h1 { font-size: 26pt; margin-bottom: 20px; color: #333; }
+        .cover-page-content h2 { font-size: 20pt; margin-bottom: 40px; color: #444; }
+        .cover-page-content p { font-size: 12pt; margin-bottom: 8px; color: #555; }
+        .cover-page-content .emission-date { margin-top: 60px; font-size: 11pt; color: #555;}
+
+        body { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 10pt; color: #333; line-height: 1.4; }
+        .content-body { page-break-before: always; }
+
+        h1, h2, h3, h4 { font-weight: bold; color: #000; margin-top: 1.2em; margin-bottom: 0.6em; }
+        h1.main-title { font-size: 18pt; text-align: center; margin-bottom: 1em; color: #222;}
+        h2.section-title { font-size: 15pt; border-bottom: 1px solid #ccc; padding-bottom: 0.2em; margin-top:1.5em; color: #333; }
+        h3.subsection-title { font-size: 13pt; margin-top:1em; color: #444; }
+        h4.table-title { font-size: 11pt; margin-bottom: 0.3em; color: #555; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1em; page-break-inside: auto; }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        th, td { border: 1px solid #bbb; padding: 5px 7px; text-align: left; vertical-align: top; }
+        th { background-color: #e9e9e9; font-weight: bold; }
+
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+        .total-row th, .total-row td { background-color: #f8f8f8; font-weight: bold; }
+        .section { margin-bottom: 20px; }
+        .avoid-break { page-break-inside: avoid; }
+        .compra-item { margin-bottom: 30px; page-break-inside: avoid; }
+        .compra-header { background-color: #f0f0f0; padding: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="cover-page-content">
+        <h1>Relatório de Compras em Lote</h1>
+        <h2>Sistema de Gestão de Obras</h2>
+        <p><strong>Total de Compras:</strong> {{ compras.count }}</p>
+        <p><strong>Gerado por:</strong> {{ usuario.get_full_name|default:usuario.username }}</p>
+        <p class="emission-date">Data de Geração: {{ data_geracao|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <div class="content-body">
+        <h1 class="main-title">Relatório Detalhado de Compras</h1>
+        
+        <section class="section">
+            <h2 class="section-title">Resumo Geral</h2>
+            <table class="avoid-break">
+                <thead>
+                    <tr>
+                        <th style="width:30%;">Item</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Total de Compras</td><td>{{ compras.count }}</td></tr>
+                    <tr><td>Data de Geração</td><td>{{ data_geracao|date:"d/m/Y H:i" }}</td></tr>
+                    <tr><td>Usuário</td><td>{{ usuario.get_full_name|default:usuario.username }}</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        {% for compra in compras %}
+        <div class="compra-item">
+            <div class="compra-header">
+                <h3>Compra #{{ compra.id }} - {{ compra.data_compra|date:"d/m/Y" }}</h3>
+            </div>
+            
+            <h4 class="table-title">Informações Gerais</h4>
+            <table class="avoid-break">
+                <tbody>
+                    <tr><td style="width:30%;"><strong>Data da Compra:</strong></td><td>{{ compra.data_compra|date:"d/m/Y" }}</td></tr>
+                    <tr><td><strong>Fornecedor:</strong></td><td>{{ compra.fornecedor|default:"Não informado" }}</td></tr>
+                    <tr><td><strong>Obra:</strong></td><td>{{ compra.obra.nome_obra|default:"Não informada" }}</td></tr>
+                    <tr><td><strong>Status:</strong></td><td>{{ compra.get_status_orcamento_display|default:"Não informado" }}</td></tr>
+                    <tr><td><strong>Tipo:</strong></td><td>{{ compra.get_tipo_display|default:"Não informado" }}</td></tr>
+                    {% if compra.forma_pagamento %}
+                    <tr><td><strong>Forma de Pagamento:</strong></td><td>{{ compra.get_forma_pagamento_display }}</td></tr>
+                    {% endif %}
+                    {% if compra.numero_parcelas %}
+                    <tr><td><strong>Número de Parcelas:</strong></td><td>{{ compra.numero_parcelas }}</td></tr>
+                    {% endif %}
+                    {% if compra.observacoes %}
+                    <tr><td><strong>Observações:</strong></td><td>{{ compra.observacoes }}</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+
+            {% if compra.itens.all %}
+            <h4 class="table-title">Itens da Compra</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Quantidade</th>
+                        <th>Unidade</th>
+                        <th class="text-right">Valor Unitário</th>
+                        <th class="text-right">Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in compra.itens.all %}
+                    <tr>
+                        <td>{{ item.material.nome }}</td>
+                        <td>{{ item.quantidade|floatformat:"2" }}</td>
+                        <td>{{ item.material.unidade_medida }}</td>
+                        <td class="text-right">R$ {{ item.valor_unitario|floatformat:"2" }}</td>
+                        <td class="text-right">R$ {{ item.valor_total|floatformat:"2" }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <th colspan="4">Total da Compra</th>
+                        <th class="text-right">R$ {{ compra.valor_total|floatformat:"2" }}</th>
+                    </tr>
+                </tbody>
+            </table>
+            {% endif %}
+
+            {% if compra.parcelas.all %}
+            <h4 class="table-title">Parcelas</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Parcela</th>
+                        <th>Data de Vencimento</th>
+                        <th class="text-right">Valor</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for parcela in compra.parcelas.all %}
+                    <tr>
+                        <td>{{ parcela.numero_parcela }}</td>
+                        <td>{{ parcela.data_vencimento|date:"d/m/Y" }}</td>
+                        <td class="text-right">R$ {{ parcela.valor|floatformat:"2" }}</td>
+                        <td>{{ parcela.get_status_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p>Nenhuma compra encontrada.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

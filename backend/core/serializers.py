@@ -2,8 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from .models import (
     Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material,
-    Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra,
-    Backup, BackupSettings, AnexoLocacao, AnexoDespesa
+    Compra, ItemCompra, Despesa_Extra, Ocorrencia_Funcionario, FotoObra,
+    Backup, BackupSettings, AnexoLocacao, AnexoDespesa, ParcelaCompra,
+    AnexoCompra, ArquivoObra
 )
 from django.db.models import Sum, Q
 from decimal import Decimal
@@ -145,7 +146,7 @@ class EquipeComMembrosBasicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Equipe
-        fields = ['id', 'nome_equipe', 'lider', 'membros']
+        fields = ['id', 'nome_equipe', 'descricao', 'lider', 'membros']
 
 
 class AnexoLocacaoSerializer(serializers.ModelSerializer):
@@ -397,8 +398,84 @@ class ItemCompraSerializer(serializers.ModelSerializer):
         fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item', 'categoria_uso']  # Added field
 
 
+# Serializers for new models
+class ParcelaCompraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ParcelaCompra
+        fields = ['id', 'compra', 'numero_parcela', 'valor_parcela', 'data_vencimento', 'data_pagamento', 'status', 'observacoes']
+        extra_kwargs = {
+            'compra': {'read_only': True}  # Will be set automatically when creating through CompraSerializer
+        }
+
+
+class AnexoCompraSerializer(serializers.ModelSerializer):
+    arquivo_url = serializers.SerializerMethodField()
+    arquivo_nome = serializers.SerializerMethodField()
+    arquivo_tamanho = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = AnexoCompra
+        fields = ['id', 'compra', 'arquivo', 'arquivo_url', 'arquivo_nome', 'arquivo_tamanho', 'descricao', 'uploaded_at']
+        extra_kwargs = {
+            'compra': {'read_only': True},
+            'uploaded_at': {'read_only': True}
+        }
+    
+    def get_arquivo_url(self, obj):
+        if obj.arquivo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.arquivo.url)
+            return obj.arquivo.url
+        return None
+    
+    def get_arquivo_nome(self, obj):
+        if obj.arquivo:
+            return obj.arquivo.name.split('/')[-1]
+        return None
+    
+    def get_arquivo_tamanho(self, obj):
+        if obj.arquivo:
+            return obj.arquivo.size
+        return None
+
+
+class ArquivoObraSerializer(serializers.ModelSerializer):
+    arquivo_url = serializers.SerializerMethodField()
+    arquivo_nome = serializers.SerializerMethodField()
+    arquivo_tamanho = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ArquivoObra
+        fields = ['id', 'obra', 'arquivo', 'arquivo_url', 'arquivo_nome', 'arquivo_tamanho', 'nome_original', 'tipo_arquivo', 'categoria', 'descricao', 'uploaded_at']
+        extra_kwargs = {
+            'obra': {'read_only': True},
+            'uploaded_at': {'read_only': True}
+        }
+    
+    def get_arquivo_url(self, obj):
+        if obj.arquivo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.arquivo.url)
+            return obj.arquivo.url
+        return None
+    
+    def get_arquivo_nome(self, obj):
+        if obj.arquivo:
+            return obj.arquivo.name.split('/')[-1]
+        return None
+    
+    def get_arquivo_tamanho(self, obj):
+        if obj.arquivo:
+            return obj.arquivo.size
+        return None
+
+
 class CompraSerializer(serializers.ModelSerializer):
     itens = ItemCompraSerializer(many=True)
+    parcelas = ParcelaCompraSerializer(many=True, read_only=True)
+    anexos = AnexoCompraSerializer(many=True, read_only=True)
     # O campo 'obra' agora aceitará um ID para escrita por padrão.
     # Vamos customizar sua representação para leitura.
     # Removido: obra = ObraNestedSerializer(read_only=True)
@@ -417,6 +494,10 @@ class CompraSerializer(serializers.ModelSerializer):
             'valor_total_liquido',
             'observacoes',
             'itens',
+            'parcelas',
+            'anexos',
+            'forma_pagamento',
+            'numero_parcelas',
             'created_at',
             'updated_at',
             'tipo'
@@ -442,7 +523,13 @@ class CompraSerializer(serializers.ModelSerializer):
         return representation
 
     def create(self, validated_data):
+        from datetime import datetime, timedelta
+        from dateutil.relativedelta import relativedelta
+        
         itens_data = validated_data.pop('itens')
+        forma_pagamento = validated_data.get('forma_pagamento', 'avista')
+        numero_parcelas = validated_data.get('numero_parcelas', 1)
+        
         # O campo 'obra' em validated_data será o ID da Obra.
         # O ModelSerializer lida com isso automaticamente para campos ForeignKey.
         compra = Compra.objects.create(**validated_data)
@@ -458,6 +545,22 @@ class CompraSerializer(serializers.ModelSerializer):
 
         # Save Compra again to trigger valor_total_liquido calculation (and save valor_total_bruto)
         compra.save()
+        
+        # Create installments if payment is 'parcelado'
+        if forma_pagamento == 'parcelado' and numero_parcelas > 1:
+            valor_parcela = compra.valor_total_liquido / numero_parcelas
+            data_base = compra.data_compra or datetime.now().date()
+            
+            for i in range(numero_parcelas):
+                data_vencimento = data_base + relativedelta(months=i)
+                ParcelaCompra.objects.create(
+                    compra=compra,
+                    numero_parcela=i + 1,
+                    valor_parcela=valor_parcela,
+                    data_vencimento=data_vencimento,
+                    status='pendente'
+                )
+        
         return compra
 
 

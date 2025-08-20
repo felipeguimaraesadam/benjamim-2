@@ -14,8 +14,8 @@ from .views import (
     GerarRelatorioPDFObraView, GerarRelatorioPagamentoLocacoesPDFView,
     LocacaoSemanalView, RecursosMaisUtilizadosSemanaView,
     ObraCustosPorMaterialView, ObraCustosPorCategoriaMaterialView,
-    media_test_view,
-    CreateUsuarioView
+    media_test_view, CreateUsuarioView, ParcelaCompraViewSet,
+    AnexoCompraViewSet, ArquivoObraViewSet, GerarPDFComprasLoteView
 )
 
 router = DefaultRouter()
@@ -25,7 +25,7 @@ router.register(r'funcionarios', FuncionarioViewSet)
 router.register(r'equipes', EquipeViewSet)
 router.register(r'locacoes', LocacaoObrasEquipesViewSet)
 router.register(r'materiais', MaterialViewSet)
-router.register(r'compras', CompraViewSet)
+router.register(r'compras', CompraViewSet, basename='compra')
 router.register(r'despesas', DespesaExtraViewSet)
 router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
 router.register(r'fotos-obra', FotoObraViewSet)
@@ -33,6 +33,9 @@ router.register(r'anexos-locacao', AnexoLocacaoViewSet)
 router.register(r'anexos-despesa', AnexoDespesaViewSet)
 router.register(r'backups', BackupViewSet)
 router.register(r'backup-settings', BackupSettingsViewSet, basename='backupsettings')
+router.register(r'parcelas-compra', ParcelaCompraViewSet)
+router.register(r'anexos-compra', AnexoCompraViewSet)
+router.register(r'arquivos-obra', ArquivoObraViewSet)
 
 
 urlpatterns = [

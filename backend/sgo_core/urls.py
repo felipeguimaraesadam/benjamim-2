@@ -53,4 +53,5 @@ urlpatterns += [
 
 # Servir o frontend React
 # A rota catch-all deve ser a última para não interceptar as rotas de API ou mídia.
-urlpatterns.append(re_path(r'^.*$', TemplateView.as_view(template_name='index.html')))
+# Excluir rotas que começam com 'api/', 'admin/', ou 'media/'
+urlpatterns.append(re_path(r'^(?!api/|admin/|media/).*$', TemplateView.as_view(template_name='index.html')))

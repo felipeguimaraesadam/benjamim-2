@@ -4,10 +4,11 @@ from ..views import (
     CreateUsuarioView, UsuarioViewSet, FuncionarioViewSet, EquipeViewSet,
     LocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
     DespesaExtraViewSet, OcorrenciaFuncionarioViewSet, FotoObraViewSet,
-    AnexoLocacaoViewSet, AnexoDespesaViewSet,
+    AnexoLocacaoViewSet, AnexoDespesaViewSet, AnexoCompraViewSet,
     DashboardStatsView, FuncionarioDetailView, EquipeDetailView,
     MaterialDetailAPIView, LocacaoSemanalView,
-    RecursosMaisUtilizadosSemanaView, BackupViewSet, BackupSettingsViewSet
+    RecursosMaisUtilizadosSemanaView, BackupViewSet, BackupSettingsViewSet,
+    ArquivoObraViewSet
 )
 
 router = DefaultRouter()
@@ -21,9 +22,11 @@ router.register(r'despesas', DespesaExtraViewSet, basename='despesaextra')
 router.register(r'ocorrencias', OcorrenciaFuncionarioViewSet)
 router.register(r'anexos-locacao', AnexoLocacaoViewSet)
 router.register(r'anexos-despesa', AnexoDespesaViewSet)
+router.register(r'anexos-compra', AnexoCompraViewSet)
 router.register(r'backups', BackupViewSet)
 router.register(r'backup-settings', BackupSettingsViewSet)
 router.register(r'fotosobras', FotoObraViewSet, basename='foto-obra')
+router.register(r'arquivos-obra', ArquivoObraViewSet)
 
 urlpatterns = [
     path('register/', CreateUsuarioView.as_view(), name='create-user'),
