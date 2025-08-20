@@ -2056,7 +2056,7 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             
-            # Validar tamanho do arquivo (máximo 50MB)
+            # Validações específicas do arquivo
             arquivo = serializer.validated_data.get('arquivo')
             if arquivo and arquivo.size > 50 * 1024 * 1024:  # 50MB
                 return Response(
@@ -2064,7 +2064,6 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Validar tipos de arquivo permitidos
             allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt']
             if arquivo:
                 import os
@@ -2075,29 +2074,9 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
             
-            # Validar se a obra existe
-            obra_id = request.data.get('obra')
-            if obra_id:
-                try:
-                    from .models import Obra
-                    obra = Obra.objects.get(id=obra_id)
-                except Obra.DoesNotExist:
-                    return Response(
-                        {'error': 'Obra não encontrada'}, 
-                        status=status.HTTP_404_NOT_FOUND
-                    )
-                except ValueError:
-                    return Response(
-                        {'error': 'ID da obra inválido'}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            else:
-                return Response(
-                    {'error': 'ID da obra é obrigatório'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            serializer.save(uploaded_by=request.user, obra=obra)
+            # A validação da obra é feita pelo serializer, que espera um ID.
+            # O 'uploaded_by' é associado ao usuário da requisição.
+            serializer.save(uploaded_by=request.user)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
             
