@@ -4,7 +4,16 @@ import ComprasTable from '../components/tables/ComprasTable';
 import CompraForm from '../components/forms/CompraForm';
 import CompraItensModal from '../components/modals/CompraItensModal';
 import ObraAutocomplete from '../components/forms/ObraAutocomplete';
-import * as api from '../services/api';
+import {
+  getCompras,
+  getCompraById,
+  createCompra,
+  updateCompra,
+  deleteCompra,
+  updateCompraStatus,
+  approveOrcamento,
+  generateBulkComprasPDF,
+} from '../services/api';
 import PaginationControls from '../components/utils/PaginationControls';
 import { showSuccessToast, showErrorToast } from '../utils/toastUtils';
 import SpinnerIcon from '../components/utils/SpinnerIcon';
@@ -54,12 +63,16 @@ const ComprasPage = () => {
   // State for Itens Modal
   const [isItensModalOpen, setIsItensModalOpen] = useState(false);
   const [selectedCompraParaModal, setSelectedCompraParaModal] = useState(null); // Renamed and initialized to null
+  
+  // Selection state for bulk operations
+  const [selectedCompras, setSelectedCompras] = useState(new Set());
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const handleDuplicateCompra = async compraSummary => {
     setIsLoadingForm(true);
     setError(null);
     try {
-      const response = await api.getCompraById(compraSummary.id);
+      const response = await getCompraById(compraSummary.id);
       const fullCompraData = response.data || response;
       const duplicatedCompra = {
         ...fullCompraData,
@@ -83,7 +96,7 @@ const ComprasPage = () => {
 
   const handleToggleStatus = async (id, field) => {
     try {
-      await api.updateCompraStatus(id, { [field]: true });
+      await updateCompraStatus(id, { [field]: true });
       fetchCompras(currentPage, {
         dataInicio,
         dataFim,
@@ -92,7 +105,7 @@ const ComprasPage = () => {
         obraId,
       });
       showSuccessToast('Status da compra atualizado com sucesso!');
-    } catch (error) {
+    } catch {
       showErrorToast('Falha ao atualizar o status da compra.');
     }
   };
@@ -124,7 +137,7 @@ const ComprasPage = () => {
       if (currentFilters.obraId) params.obra_id = currentFilters.obraId;
 
       try {
-        const response = await api.getCompras(params);
+        const response = await getCompras(params);
         const comprasData = response.data.results || response.data || [];
         console.log('[DEBUG ComprasPage] Fetched Compras Array:', comprasData);
         if (comprasData.length > 0) {
@@ -203,7 +216,7 @@ const ComprasPage = () => {
     setError(null);
     // setSuccessMessage('');
     try {
-      const response = await api.getCompraById(compraSummary.id);
+      const response = await getCompraById(compraSummary.id);
       const fullCompraData = response.data || response;
 
       // Ensure `obra` is passed correctly to the form.
@@ -245,7 +258,7 @@ const ComprasPage = () => {
     setError(null);
     // setSuccessMessage('');
     try {
-      await api.deleteCompra(compraToDeleteId);
+      await deleteCompra(compraToDeleteId);
       showSuccessToast('Compra excluída com sucesso!');
       setCompraToDeleteId(null);
       setShowDeleteConfirm(false);
@@ -272,10 +285,10 @@ const ComprasPage = () => {
     const isEditing = currentCompra && currentCompra.id;
     try {
       if (isEditing) {
-        await api.updateCompra(currentCompra.id, formData);
+        await updateCompra(currentCompra.id, formData);
         showSuccessToast('Compra atualizada com sucesso!');
       } else {
-        await api.createCompra(formData);
+        await createCompra(formData);
         showSuccessToast('Compra registrada com sucesso!');
       }
       setCurrentCompra(null);
@@ -354,7 +367,7 @@ const ComprasPage = () => {
 
   const handleApprove = async compraId => {
     try {
-      await api.approveOrcamento(compraId);
+      await approveOrcamento(compraId);
       fetchCompras(currentPage, {
         dataInicio,
         dataFim,
@@ -363,7 +376,7 @@ const ComprasPage = () => {
         obraId,
       });
       showSuccessToast('Orçamento aprovado com sucesso!');
-    } catch (error) {
+    } catch {
       showErrorToast('Falha ao aprovar o orçamento.');
     }
   };
@@ -388,7 +401,69 @@ const ComprasPage = () => {
 
   const handleCloseItensModal = () => {
     setIsItensModalOpen(false);
-    setSelectedCompraParaModal(null); // Clear the selected compra object
+    setSelectedCompraParaModal(null);
+  };
+
+  // Selection handlers
+  const handleSelectCompra = (compraId, isSelected) => {
+    setSelectedCompras(prev => {
+      const newSet = new Set(prev);
+      if (isSelected) {
+        newSet.add(compraId);
+      } else {
+        newSet.delete(compraId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (isSelected) => {
+    if (isSelected) {
+      setSelectedCompras(new Set(compras.map(compra => compra.id)));
+    } else {
+      setSelectedCompras(new Set());
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedCompras(new Set());
+  };
+
+  // Bulk PDF generation handler
+  const handleGenerateBulkPDF = async () => {
+    if (selectedCompras.size === 0) {
+      setError('Selecione pelo menos uma compra para gerar o PDF.');
+      return;
+    }
+
+    setIsGeneratingPDF(true);
+    setError('');
+
+    try {
+      const selectedIds = Array.from(selectedCompras);
+      const response = await generateBulkComprasPDF(selectedIds);
+      
+      // Create blob URL and trigger download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `compras_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      showSuccessToast(`PDF gerado com sucesso para ${selectedIds.length} compra${selectedIds.length > 1 ? 's' : ''}!`);
+      setSelectedCompras(new Set()); // Clear selection after successful generation
+    } catch (err) {
+      console.error('Error generating bulk PDF:', err);
+      const errorMessage = err.response?.data?.message || 'Erro ao gerar PDF das compras selecionadas.';
+      setError(errorMessage);
+      showErrorToast(errorMessage);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   let formInitialData = null;
@@ -560,6 +635,39 @@ const ComprasPage = () => {
             </div>
           )}
 
+          {/* Selection Actions */}
+          {selectedCompras.size > 0 && (
+            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-md">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="text-sm text-blue-800 dark:text-blue-200">
+                  {selectedCompras.size} compra{selectedCompras.size > 1 ? 's' : ''} selecionada{selectedCompras.size > 1 ? 's' : ''}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleGenerateBulkPDF}
+                    disabled={isGeneratingPDF}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors flex items-center gap-2"
+                  >
+                    {isGeneratingPDF ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Gerando PDF...
+                      </>
+                    ) : (
+                      'Gerar PDF'
+                    )}
+                  </button>
+                  <button
+                    onClick={handleClearSelection}
+                    className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                  >
+                    Limpar Seleção
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Table and Pagination - only show if not initial loading or if data is present */}
           {(!isLoading || compras.length > 0) && (
             <>
@@ -572,6 +680,9 @@ const ComprasPage = () => {
                 onApprove={handleApprove}
                 onToggleStatus={handleToggleStatus}
                 isLoading={isLoading || isDeleting}
+                selectedCompras={selectedCompras}
+                onSelectCompra={handleSelectCompra}
+                onSelectAll={handleSelectAll}
               />
               {totalPages > 0 && (
                 <PaginationControls

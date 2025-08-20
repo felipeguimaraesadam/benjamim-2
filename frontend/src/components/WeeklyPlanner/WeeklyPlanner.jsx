@@ -376,7 +376,7 @@ function WeeklyPlanner({ selectedObra }) {
   const handleDeleteLocacao = async locacaoIdToDelete => {
     if (!locacaoIdToDelete) return;
 
-    // eslint-disable-next-line no-restricted-globals
+     
     if (confirm('Tem certeza que deseja excluir esta locação?')) {
       setIsLoading(true);
       try {

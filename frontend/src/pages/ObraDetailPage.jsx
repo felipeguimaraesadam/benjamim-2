@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import * as api from '../services/api.js';
 import { formatDateToDMY } from '../utils/dateUtils.js'; // Import the new formatter
@@ -42,28 +42,13 @@ const ObraDetailPage = () => {
     data: obra,
     isLoading: isLoadingObra,
     error: errorObra,
-    fetchData: fetchObraDetails,
-    setData: setObra,
   } = useApiData(api.getObraById, obraApiParams, null, true);
   const {
-    data: locacoesEquipe,
-    isLoading: isLoadingLocacoes,
-    error: errorLocacoes,
-    fetchData: fetchLocacoes,
-    setData: setLocacoesEquipe,
-  } = useApiData(api.getLocacoes, obraQueryObjParams, [], true);
-  const {
     data: historicoCustos,
-    isLoading: isLoadingHistoricoCustos,
-    error: errorHistoricoCustos,
-    fetchData: fetchHistoricoCustos,
   } = useApiData(api.getObraHistoricoCustos, obraApiParams, [], true);
 
   const {
     data: gastosPorCategoriaMaterial,
-    isLoading: isLoadingGastosPorCategoria,
-    error: errorGastosPorCategoria,
-    fetchData: fetchGastosPorCategoria,
   } = useApiData(
     api.getObraGastosPorCategoriaMaterial,
     obraApiParams,
@@ -72,16 +57,10 @@ const ObraDetailPage = () => {
   );
   const {
     data: todasAsComprasBruto,
-    isLoading: isLoadingTodasAsCompras,
-    error: errorTodasAsCompras,
-    fetchData: fetchTodasAsCompras,
   } = useApiData(api.getCompras, obraQueryObjParams, [], true);
 
   const {
     data: despesasExtrasObra,
-    isLoading: isLoadingDespesasExtras,
-    error: errorDespesasExtras,
-    fetchData: fetchDespesasExtras,
   } = useApiData(api.getDespesasExtras, obraQueryObjParams, [], true);
 
   const actualTodasAsCompras = useMemo(() => {
@@ -98,8 +77,6 @@ const ObraDetailPage = () => {
   // }, [actualTodasAsCompras]);
 
   // UI State
-  const [specificLocacaoError, setSpecificLocacaoError] = useState(null);
-  const [removingLocacaoId, setRemovingLocacaoId] = useState(null); // For loading state on remove button
   const [operationStatus, setOperationStatus] = useState({
     type: '',
     message: '',
@@ -119,39 +96,6 @@ const ObraDetailPage = () => {
   }, [operationStatus]);
 
   // Event Handlers
-  const handleRemoverLocacao = useCallback(
-    async locacaoId => {
-      if (
-        window.confirm('Tem certeza que deseja remover esta locação de equipe?')
-      ) {
-        setRemovingLocacaoId(locacaoId);
-        setSpecificLocacaoError(null);
-        try {
-          await api.deleteLocacao(locacaoId);
-          fetchLocacoes(); // Re-fetch alocacoes
-          fetchObraDetails(); // <<< ADD THIS LINE to re-fetch obra details for financial summary
-          setOperationStatus({
-            type: 'success',
-            message: 'Locação removida com sucesso!',
-          });
-        } catch (err) {
-          const errMsg =
-            err.response?.data?.detail ||
-            err.message ||
-            'Falha ao remover locação.';
-          setSpecificLocacaoError(errMsg); // Keep for specific error if needed at button level
-          setOperationStatus({
-            type: 'error',
-            message: `Falha ao remover locação: ${errMsg}`,
-          });
-          console.error('Delete Locação Error:', errMsg);
-        } finally {
-          setRemovingLocacaoId(null);
-        }
-      }
-    },
-    [fetchLocacoes, fetchObraDetails, setOperationStatus]
-  ); // Added fetchObraDetails to dependency array
 
   // NEW CALLBACK for photo upload
   const handlePhotoUploaded = newFotoData => {
@@ -428,8 +372,8 @@ const ObraDetailPage = () => {
             {/* EquipesLocadasList component removed - component not found */}
             <ObraPurchasesTabContent
               todasCompras={actualTodasAsCompras}
-              isLoading={isLoadingTodasAsCompras}
-              todasComprasError={errorTodasAsCompras}
+              isLoading={false}
+              todasComprasError={null}
               obraId={obra.id}
               obraNome={obra.nome_obra}
             />
@@ -445,8 +389,8 @@ const ObraDetailPage = () => {
             </div>
             <ObraExpensesTabContent
               despesasExtrasObra={despesasExtrasObra}
-              isLoading={isLoadingDespesasExtras}
-              despesasExtrasObraError={errorDespesasExtras}
+              isLoading={false}
+              despesasExtrasObraError={null}
               obraId={obra.id}
               obraNome={obra.nome_obra}
             />
@@ -455,13 +399,13 @@ const ObraDetailPage = () => {
           <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <CostHistoryChart
               historicoCustos={historicoCustos}
-              custosError={errorHistoricoCustos}
-              isLoading={isLoadingHistoricoCustos}
+              custosError={null}
+              isLoading={false}
             />
             <TopMaterialsChart
               custosMaterial={gastosPorCategoriaMaterial}
-              materialError={errorGastosPorCategoria}
-              isLoading={isLoadingGastosPorCategoria}
+              materialError={null}
+              isLoading={false}
             />
           </div>
         </>

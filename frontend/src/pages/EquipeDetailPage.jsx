@@ -127,6 +127,16 @@ const EquipeDetailPage = () => {
             )}
           </div>
         </div>
+        {equipeDetails.descricao && (
+          <div className="mt-4">
+            <p>
+              <strong>Descrição:</strong>
+            </p>
+            <p className="mt-2 text-gray-700 bg-gray-50 p-3 rounded-md border">
+              {equipeDetails.descricao}
+            </p>
+          </div>
+        )}
         <div className="mt-4">
           <h3 className="text-lg font-semibold text-gray-700 mb-2">Membros:</h3>
           {equipeDetails.membros && equipeDetails.membros.length > 0 ? (

@@ -3,6 +3,31 @@ import axios from 'axios';
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
+// Utility function to check if user is authenticated
+export const isAuthenticated = () => {
+  const token = localStorage.getItem('accessToken');
+  const refreshToken = localStorage.getItem('refreshToken');
+  return !!(token || refreshToken);
+};
+
+// Utility function to get current user info from token
+export const getCurrentUser = () => {
+  const token = localStorage.getItem('accessToken');
+  if (!token) return null;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return {
+      userId: payload.user_id,
+      username: payload.username,
+      exp: payload.exp
+    };
+  } catch (error) {
+    console.error('Error parsing token:', error);
+    return null;
+  }
+};
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
 });
@@ -331,6 +356,40 @@ export const updateCompraStatus = (id, data) =>
 export const approveOrcamento = id => apiClient.post(`/compras/${id}/approve/`);
 export const getObraComprasDetalhes = obraId =>
   apiClient.get(`/obras/${obraId}/compras-detalhes/`);
+export const generateBulkComprasPDF = compraIds =>
+  apiClient.post('/compras/bulk-pdf/', { compra_ids: compraIds }, {
+    responseType: 'blob',
+  });
+
+// --- Parcela Service Functions ---
+export const getParcelasByCompra = compraId =>
+  apiClient.get(`/compras/${compraId}/parcelas/`);
+export const createParcela = (compraId, parcelaData) =>
+  apiClient.post(`/compras/${compraId}/parcelas/`, parcelaData);
+export const updateParcela = (compraId, parcelaId, parcelaData) =>
+  apiClient.put(`/compras/${compraId}/parcelas/${parcelaId}/`, parcelaData);
+export const deleteParcela = (compraId, parcelaId) =>
+  apiClient.delete(`/compras/${compraId}/parcelas/${parcelaId}/`);
+export const updateParcelaStatus = (compraId, parcelaId, status) =>
+  apiClient.patch(`/compras/${compraId}/parcelas/${parcelaId}/`, { status });
+
+// --- Anexo Compra Service Functions ---
+export const getAnexosByCompra = compraId =>
+  apiClient.get(`/anexos-compra/`, { params: { compra: compraId } });
+export const uploadAnexoCompra = (compraId, formData) => {
+  formData.append('compra', compraId);
+  return apiClient.post(`/anexos-compra/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+export const deleteAnexoCompra = (compraId, anexoId) =>
+  apiClient.delete(`/anexos-compra/${anexoId}/`);
+export const downloadAnexoCompra = (compraId, anexoId) =>
+  apiClient.get(`/anexos-compra/${anexoId}/download/`, {
+    responseType: 'blob',
+  });
 
 // --- UsoMaterial Service Functions ---
 export const createUsoMaterial = data => apiClient.post('/usomateriais/', data);

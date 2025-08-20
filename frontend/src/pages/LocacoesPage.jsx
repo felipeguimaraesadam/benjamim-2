@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+// Removed unused imports: useLocation, useNavigate
 import {
   BarChart,
   Bar,
@@ -29,15 +29,11 @@ import WeeklyPlanner from '../components/WeeklyPlanner/WeeklyPlanner';
 import ObraAutocomplete from '../components/forms/ObraAutocomplete';
 
 const LocacoesPage = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const [locacoes, setLocacoes] = useState([]);
   const [obras, setObras] = useState([]);
   const [equipes, setEquipes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
   const PAGE_SIZE = 10;
   const [isLoadingForm, setIsLoadingForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -64,8 +60,6 @@ const LocacoesPage = () => {
         }
         const response = await api.getLocacoes(params);
         setLocacoes(response.data.results);
-        setTotalItems(response.data.count);
-        setTotalPages(Math.ceil(response.data.count / PAGE_SIZE));
         if (currentPage !== page) {
           setCurrentPage(page);
         }
@@ -139,32 +133,9 @@ const LocacoesPage = () => {
     setSelectedObraIdForChart(event.target.value);
   };
 
-  const handlePageChange = newPage => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
-  };
 
-  const handleAddNew = () => {
-    const obraIdFromState = location.state?.obraIdParaNovaAlocacao;
-    setCurrentLocacao(obraIdFromState ? { obra: obraIdFromState } : null);
-    setError(null);
-    setShowFormModal(true);
-    if (obraIdFromState) {
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  };
 
-  const handleEdit = locacao => {
-    setCurrentLocacao(locacao);
-    setError(null);
-    setShowFormModal(true);
-  };
 
-  const handleDelete = id => {
-    setLocacaoToDeleteId(id);
-    setShowDeleteConfirm(true);
-  };
 
   const confirmDelete = async () => {
     if (!locacaoToDeleteId) return;
@@ -278,10 +249,6 @@ const LocacoesPage = () => {
     showSuccessToast('Funcionário transferido com sucesso!');
     fetchLocacoes(currentPage, selectedObra?.id);
   }, [fetchLocacoes, currentPage, selectedObra]);
-
-  const handleViewDetails = locacaoId => {
-    setSelectedLocacaoId(locacaoId);
-  };
 
   const handleCloseDetailModal = () => {
     setSelectedLocacaoId(null);

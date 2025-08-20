@@ -14,6 +14,8 @@ import * as api from '../../services/api';
 import MaterialAutocomplete from './MaterialAutocomplete';
 import ObraAutocomplete from './ObraAutocomplete';
 import SpinnerIcon from '../utils/SpinnerIcon';
+import PagamentoParceladoForm from './PagamentoParceladoForm';
+import AnexosCompraManager from './AnexosCompraManager';
 
 registerLocale('pt-BR', ptBR);
 
@@ -317,6 +319,22 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [obras, setObras] = useState([]);
   const [errors, setErrors] = useState({});
   const [itemToFocusId, setItemToFocusId] = useState(null);
+  
+  // New state for payment installments and attachments
+  const [pagamentoParcelado, setPagamentoParcelado] = useState({
+    tipo: 'avista', // 'avista' or 'parcelado'
+    parcelas: []
+  });
+  const [anexos, setAnexos] = useState([]);
+
+  // Memoized callbacks for payment installments to prevent infinite loops
+  const handleTipoPagamentoChange = useCallback((tipo) => {
+    setPagamentoParcelado(prev => ({ ...prev, tipo }));
+  }, []);
+
+  const handleParcelasChange = useCallback((parcelas) => {
+    setPagamentoParcelado(prev => ({ ...prev, parcelas }));
+  }, []);
 
   // Refs for keyboard navigation
   const tipoCompraRef = useRef(null);
@@ -592,6 +610,23 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           ? String(initialData.desconto).replace(',', '.')
           : '0.00'
       );
+      
+      // Handle payment installments
+      if (initialData.pagamento_parcelado) {
+        setPagamentoParcelado(initialData.pagamento_parcelado);
+      } else {
+        setPagamentoParcelado({
+          tipo: 'avista',
+          parcelas: []
+        });
+      }
+      
+      // Handle attachments
+      if (initialData.anexos && Array.isArray(initialData.anexos)) {
+        setAnexos(initialData.anexos);
+      } else {
+        setAnexos([]);
+      }
 
       // Process items for both editing and duplication
       if (initialData.itens && Array.isArray(initialData.itens)) {
@@ -662,6 +697,14 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       setTipo('COMPRA');
       setObraId('');
       setObraSelecionada(null);
+      
+      // Initialize new state variables for new forms
+      setPagamentoParcelado({
+        tipo: 'avista',
+        parcelas: []
+      });
+      setAnexos([]);
+      
       dispatchItems({
         type: ITEM_ACTION_TYPES.SET_ITEMS,
         payload: [createNewEmptyItem()],
@@ -965,6 +1008,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         desconto: finalDesconto,
         observacoes: observacoes || null,
         itens: itemsToSubmit,
+        pagamento_parcelado: pagamentoParcelado,
+        anexos: anexos,
       };
       console.log('DEBUG: CompraForm submit payload:', compraData);
       onSubmit(compraData);
@@ -1269,6 +1314,28 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             </p>
           )}
         </div>
+        
+        {/* Payment Installments Section */}
+        <div className="mt-8 pt-6 border-t border-slate-300">
+          <PagamentoParceladoForm
+            valorTotal={totalGeralCalculado}
+            tipoPagamento={pagamentoParcelado?.tipo || 'UNICO'}
+            onTipoPagamentoChange={handleTipoPagamentoChange}
+            parcelas={pagamentoParcelado?.parcelas || []}
+            onParcelasChange={handleParcelasChange}
+            errors={errors}
+          />
+        </div>
+        
+        {/* Attachments Section */}
+        <div className="mt-8 pt-6 border-t border-slate-300">
+          <AnexosCompraManager
+            anexos={anexos}
+            onAnexosChange={setAnexos}
+            compraId={initialData?.id}
+          />
+        </div>
+        
         {/* Summary Section */}
         <div className="mt-8 pt-6 border-t border-slate-300">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">

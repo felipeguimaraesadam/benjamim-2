@@ -19,6 +19,9 @@ const ComprasTable = ({
   onApprove,
   isLoading,
   onDuplicate,
+  selectedCompras = new Set(),
+  onSelectCompra,
+  onSelectAll,
 }) => {
   const [contextMenu, setContextMenu] = useState(null);
 
@@ -33,6 +36,22 @@ const ComprasTable = ({
 
   const closeContextMenu = () => {
     setContextMenu(null);
+  };
+
+  // Calculate if all items are selected
+  const allSelected = compras.length > 0 && compras.every(compra => selectedCompras.has(compra.id));
+  const someSelected = compras.some(compra => selectedCompras.has(compra.id));
+
+  const handleSelectAllChange = (event) => {
+    if (onSelectAll) {
+      onSelectAll(event.target.checked);
+    }
+  };
+
+  const handleSelectCompraChange = (compraId, event) => {
+    if (onSelectCompra) {
+      onSelectCompra(compraId, event.target.checked);
+    }
   };
   const formatDate = dateString => {
     if (!dateString) return 'N/A';
@@ -112,6 +131,20 @@ const ComprasTable = ({
       <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
         <thead className="text-xs text-gray-700 dark:text-gray-300 uppercase bg-gray-50 dark:bg-gray-700">
           <tr>
+            {onSelectCompra && (
+              <th scope="col" className="px-6 py-3 w-12">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={input => {
+                    if (input) input.indeterminate = someSelected && !allSelected;
+                  }}
+                  onChange={handleSelectAllChange}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  aria-label="Selecionar todas as compras"
+                />
+              </th>
+            )}
             <th scope="col" className="px-6 py-3">
               Itens
             </th>
@@ -149,6 +182,17 @@ const ComprasTable = ({
                 className={`${rowClass} border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700`}
                 onContextMenu={e => handleContextMenu(e, compra)}
               >
+                {onSelectCompra && (
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedCompras.has(compra.id)}
+                      onChange={(e) => handleSelectCompraChange(compra.id, e)}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      aria-label={`Selecionar compra ${compra.id}`}
+                    />
+                  </td>
+                )}
                 <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-200 whitespace-nowrap">
                   {`${compra.itens?.length || 0} itens`}
                 </td>

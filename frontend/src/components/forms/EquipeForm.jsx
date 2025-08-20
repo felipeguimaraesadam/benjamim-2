@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as api from '../../services/api'; // Adjust path as needed
+import FuncionarioAutocomplete from './FuncionarioAutocomplete';
+import FuncionarioAutocompleteMultiple from './FuncionarioAutocompleteMultiple';
 
 // Warning Icon for validation errors
 const WarningIcon = (
@@ -24,59 +26,60 @@ import SpinnerIcon from '../utils/SpinnerIcon'; // Import SpinnerIcon
 const EquipeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
     nome_equipe: '',
-    lider: '', // Stores ID of the Funcionario
-    membros: [], // Stores array of IDs of Funcionarios
+    descricao: '',
+    lider: null, // Stores Funcionario object
+    membros: [], // Stores array of Funcionario objects
   });
-  const [funcionarios, setFuncionarios] = useState([]);
   const [errors, setErrors] = useState({});
-  const [isLoadingFuncionarios, setIsLoadingFuncionarios] = useState(false);
 
-  useEffect(() => {
-    setIsLoadingFuncionarios(true);
-    api
-      .getFuncionarios()
-      .then(response => {
-        // Ajuste para lidar com resposta paginada ou não paginada
-        const funcionariosData = response.data.results || response.data || [];
-        setFuncionarios(funcionariosData);
-      })
-      .catch(error => {
-        console.error('Failed to fetch funcionarios for form', error);
-        setErrors(prev => ({
-          ...prev,
-          form: 'Falha ao carregar lista de funcionários.',
-        }));
-      })
-      .finally(() => {
-        setIsLoadingFuncionarios(false);
-      });
-  }, []);
+
 
   useEffect(() => {
     if (initialData) {
       setFormData({
         nome_equipe: initialData.nome_equipe || '',
-        lider: initialData.lider || '',
+        descricao: initialData.descricao || '',
+        lider: initialData.lider || null,
         membros: initialData.membros || [],
       });
     } else {
       setFormData({
         nome_equipe: '',
-        lider: '',
+        descricao: '',
+        lider: null,
         membros: [],
       });
     }
   }, [initialData]);
 
   const handleChange = e => {
-    const { name, value, options, type } = e.target;
-    // Removed select-multiple logic from here
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'lider' ? (value ? parseInt(value, 10) : '') : value,
+      [name]: value,
     }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
+    }
+  };
+
+  const handleLiderSelect = funcionario => {
+    setFormData(prev => ({
+      ...prev,
+      lider: funcionario,
+    }));
+    if (errors.lider) {
+      setErrors(prev => ({ ...prev, lider: null }));
+    }
+  };
+
+  const handleMembrosSelect = funcionarios => {
+    setFormData(prev => ({
+      ...prev,
+      membros: funcionarios,
+    }));
+    if (errors.membros) {
+      setErrors(prev => ({ ...prev, membros: null }));
     }
   };
 
@@ -90,40 +93,21 @@ const EquipeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleMemberChange = event => {
-    const funcionarioId = parseInt(event.target.value, 10);
-    const isChecked = event.target.checked;
 
-    setFormData(prevFormData => {
-      const currentMembros = prevFormData.membros || [];
-      let newMembros;
-      if (isChecked) {
-        if (!currentMembros.includes(funcionarioId)) {
-          newMembros = [...currentMembros, funcionarioId];
-        } else {
-          newMembros = currentMembros; // Already includes, no change
-        }
-      } else {
-        newMembros = currentMembros.filter(id => id !== funcionarioId);
-      }
-      return { ...prevFormData, membros: newMembros };
-    });
-  };
 
   const handleSubmit = e => {
     e.preventDefault();
     if (validateForm()) {
       const dataToSubmit = {
-        ...formData,
-        lider: formData.lider || null, // Send null if leader is empty string (optional)
+        nome_equipe: formData.nome_equipe,
+        descricao: formData.descricao,
+        lider: formData.lider ? formData.lider.id : null,
+        membros: formData.membros.map(funcionario => funcionario.id),
       };
       onSubmit(dataToSubmit);
     }
   };
 
-  if (isLoadingFuncionarios) {
-    return <p className="text-center p-4">Carregando dados do formulário...</p>;
-  }
   if (errors.form) {
     return <p className="text-center p-4 text-red-500">{errors.form}</p>;
   }
@@ -153,26 +137,35 @@ const EquipeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       </div>
 
       <div>
-        <label
-          htmlFor="lider"
-          className="block mb-2 text-sm font-medium text-gray-900"
-        >
+        <label className="block mb-2 text-sm font-medium text-gray-900">
+          Descrição da Equipe
+        </label>
+        <textarea
+          name="descricao"
+          id="descricao"
+          value={formData.descricao}
+          onChange={handleChange}
+          rows={3}
+          placeholder="Descreva o propósito e responsabilidades da equipe..."
+          className={`bg-gray-50 border ${errors.descricao ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2 resize-vertical`}
+        />
+        {errors.descricao && (
+          <p className="mt-1 text-sm text-red-600 flex items-center">
+            <WarningIcon /> {errors.descricao}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label className="block mb-2 text-sm font-medium text-gray-900">
           Líder da Equipe
         </label>
-        <select
-          name="lider"
-          id="lider"
+        <FuncionarioAutocomplete
           value={formData.lider}
-          onChange={handleChange}
-          className={`bg-gray-50 border ${errors.lider ? 'border-red-500' : 'border-gray-300'} text-gray-900 sm:text-sm rounded-md focus:ring-primary-500 focus:border-primary-500 block w-full px-3 py-2`}
-        >
-          <option value="">Selecione um Líder (Opcional)</option>
-          {funcionarios.map(f => (
-            <option key={f.id} value={f.id}>
-              {f.nome_completo}
-            </option>
-          ))}
-        </select>
+          onFuncionarioSelect={handleLiderSelect}
+          error={errors.lider}
+          placeholder="Busque e selecione o líder da equipe..."
+        />
         {errors.lider && (
           <p className="mt-1 text-sm text-red-600 flex items-center">
             <WarningIcon /> {errors.lider}
@@ -184,33 +177,17 @@ const EquipeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         <label className="block mb-2 text-sm font-medium text-gray-900">
           Membros da Equipe
         </label>
-        <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-md p-2 bg-gray-50">
-          {funcionarios.length > 0 ? (
-            funcionarios.map(f => (
-              <div key={f.id} className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={`funcionario-checkbox-${f.id}`}
-                  value={f.id}
-                  checked={formData.membros.includes(f.id)}
-                  onChange={handleMemberChange}
-                  className="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <label
-                  htmlFor={`funcionario-checkbox-${f.id}`}
-                  className="ml-2 text-sm font-medium text-gray-900"
-                >
-                  {f.nome_completo}
-                </label>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-gray-500">
-              Nenhum funcionário disponível para seleção.
-            </p>
-          )}
-        </div>
-        {/* Removed the Ctrl/Cmd selection helper text as it's no longer applicable */}
+        <FuncionarioAutocompleteMultiple
+          value={formData.membros}
+          onFuncionariosSelect={handleMembrosSelect}
+          error={errors.membros}
+          placeholder="Busque e selecione os membros da equipe..."
+        />
+        {errors.membros && (
+          <p className="mt-1 text-sm text-red-600 flex items-center">
+            <WarningIcon /> {errors.membros}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center justify-end space-x-3 pt-2">
@@ -224,7 +201,7 @@ const EquipeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         </button>
         <button
           type="submit"
-          disabled={isLoading || isLoadingFuncionarios}
+          disabled={isLoading}
           className="py-2 px-4 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 disabled:bg-primary-300 flex items-center justify-center"
         >
           {isLoading ? <SpinnerIcon className="w-5 h-5 mr-2" /> : null}

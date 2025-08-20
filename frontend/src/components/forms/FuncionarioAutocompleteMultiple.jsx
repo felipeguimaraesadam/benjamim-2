@@ -21,16 +21,16 @@ const debounce = (func, delay) => {
   };
 };
 
-const FuncionarioAutocomplete = React.memo(
+const FuncionarioAutocompleteMultiple = React.memo(
   React.forwardRef(
     (
       {
-        value,
-        onFuncionarioSelect,
+        value = [],
+        onFuncionariosSelect,
         error,
         onBlur,
         onKeyDown,
-        placeholder = 'Digite para buscar um funcionário...',
+        placeholder = 'Digite para buscar funcionários...',
         required = false,
       },
       ref
@@ -40,7 +40,6 @@ const FuncionarioAutocomplete = React.memo(
       const [isLoading, setIsLoading] = useState(false);
       const [showSuggestions, setShowSuggestions] = useState(false);
       const [highlightedIndex, setHighlightedIndex] = useState(-1);
-      const [selectionMade, setSelectionMade] = useState(false);
 
       const [dropdownPosition, setDropdownPosition] = useState({
         top: 0,
@@ -62,23 +61,12 @@ const FuncionarioAutocomplete = React.memo(
         },
         getValue: () => value,
         setValue: newValue => {
-          if (newValue && newValue.nome_completo) {
-            setInputValue(newValue.nome_completo);
-          } else {
-            setInputValue('');
+          // newValue should be an array of funcionarios
+          if (Array.isArray(newValue)) {
+            onFuncionariosSelect(newValue);
           }
         },
       }));
-
-      useEffect(() => {
-        if (value && value.nome_completo) {
-          setInputValue(value.nome_completo);
-          setSelectionMade(true);
-        } else if (!value) {
-          setInputValue('');
-          setSelectionMade(false);
-        }
-      }, [value]);
 
       useEffect(() => {
         if (!showSuggestions || suggestions.length === 0) {
@@ -114,24 +102,25 @@ const FuncionarioAutocomplete = React.memo(
 
           // Verificar autenticação antes de fazer a requisição
           if (!isAuthenticated()) {
-            console.warn('🔐 Usuário não está autenticado - cancelando busca');
+            console.warn('🔐 [Multiple] Usuário não está autenticado - cancelando busca');
             setSuggestions([]);
             setIsLoading(false);
             return;
           }
           
           const currentUser = getCurrentUser();
-          console.log('👤 Usuário atual:', currentUser);
+          console.log('👤 [Multiple] Usuário atual:', currentUser);
           
           setIsLoading(true);
           try {
-            console.log('🔍 Iniciando busca de funcionários:', { searchTerm });
+            console.log('🔍 [Multiple] Iniciando busca de funcionários:', { searchTerm, selectedCount: value.length });
             const response = await api.getFuncionarios({ search: searchTerm });
-            console.log('✅ Resposta da API recebida:', {
+            console.log('✅ [Multiple] Resposta da API recebida:', {
               status: response.status,
               dataLength: response.data?.length || 0,
               data: response.data
             });
+            
             const funcionarios = response.data
               ? Array.isArray(response.data)
                 ? response.data
@@ -145,9 +134,20 @@ const FuncionarioAutocomplete = React.memo(
               setSuggestions([]);
               return;
             }
-            setSuggestions(funcionarios.slice(0, 10));
+            // Filter out already selected funcionarios
+            const filteredFuncionarios = funcionarios.filter(
+              funcionario => !value.some(selected => selected.id === funcionario.id)
+            );
+            
+            console.log('📋 [Multiple] Funcionários filtrados:', {
+              totalReceived: funcionarios.length,
+              afterFilter: filteredFuncionarios.length,
+              selectedIds: value.map(f => f.id)
+            });
+            
+            setSuggestions(filteredFuncionarios.slice(0, 10));
           } catch (error) {
-            console.error('❌ Erro detalhado ao buscar funcionários:', {
+            console.error('❌ [Multiple] Erro detalhado ao buscar funcionários:', {
               message: error.message,
               status: error.response?.status,
               statusText: error.response?.statusText,
@@ -162,11 +162,11 @@ const FuncionarioAutocomplete = React.memo(
             
             // Verificar se é erro de autenticação
             if (error.response?.status === 401) {
-              console.warn('🔐 Erro de autenticação - usuário não está logado');
+              console.warn('🔐 [Multiple] Erro de autenticação - usuário não está logado');
             } else if (error.response?.status === 403) {
-              console.warn('🚫 Erro de permissão - usuário não tem acesso');
+              console.warn('🚫 [Multiple] Erro de permissão - usuário não tem acesso');
             } else if (error.response?.status >= 500) {
-              console.warn('🔥 Erro do servidor - problema no backend');
+              console.warn('🔥 [Multiple] Erro do servidor - problema no backend');
             }
             
             setSuggestions([]);
@@ -174,18 +174,16 @@ const FuncionarioAutocomplete = React.memo(
             setIsLoading(false);
           }
         }, 300),
-        []
+        [value]
       );
 
       const handleInputChange = e => {
         const newValue = e.target.value;
         setInputValue(newValue);
-        setSelectionMade(false);
         setShowSuggestions(true);
         setHighlightedIndex(-1);
 
         if (!newValue.trim()) {
-          onFuncionarioSelect(null);
           setSuggestions([]);
           setIsLoading(false);
         } else {
@@ -194,12 +192,20 @@ const FuncionarioAutocomplete = React.memo(
       };
 
       const handleSuggestionClick = funcionario => {
-        setInputValue(funcionario.nome_completo);
-        setSelectionMade(true);
+        const newSelectedFuncionarios = [...value, funcionario];
+        onFuncionariosSelect(newSelectedFuncionarios);
+        setInputValue('');
         setShowSuggestions(false);
         setHighlightedIndex(-1);
-        onFuncionarioSelect(funcionario);
+        setSuggestions([]);
         inputRef.current?.focus();
+      };
+
+      const handleRemoveFuncionario = funcionarioToRemove => {
+        const newSelectedFuncionarios = value.filter(
+          funcionario => funcionario.id !== funcionarioToRemove.id
+        );
+        onFuncionariosSelect(newSelectedFuncionarios);
       };
 
       const handleKeyDown = e => {
@@ -260,6 +266,13 @@ const FuncionarioAutocomplete = React.memo(
             inputRef.current?.blur();
             break;
 
+          case 'Backspace':
+            if (!inputValue && value.length > 0) {
+              e.preventDefault();
+              handleRemoveFuncionario(value[value.length - 1]);
+            }
+            break;
+
           default:
             if (onKeyDown) {
               onKeyDown(e);
@@ -269,7 +282,7 @@ const FuncionarioAutocomplete = React.memo(
       };
 
       const handleInputFocus = () => {
-        if (inputValue && !selectionMade) {
+        if (inputValue) {
           setShowSuggestions(true);
           debouncedSearch(inputValue);
         }
@@ -292,11 +305,41 @@ const FuncionarioAutocomplete = React.memo(
       return (
         <div ref={containerRef} className="relative">
           <div
-            className={`relative cursor-text ${
-              error ? 'ring-2 ring-red-500' : ''
-            }`}
+            className={`relative cursor-text min-h-[42px] border rounded-md px-3 py-2 flex flex-wrap gap-1 items-center ${
+              error
+                ? 'border-red-500 ring-2 ring-red-500'
+                : 'border-slate-300 focus-within:ring-primary-500 focus-within:border-primary-500'
+            } transition-colors`}
             onClick={handleContainerClick}
           >
+            {/* Selected funcionarios tags */}
+            {value.map(funcionario => (
+              <span
+                key={funcionario.id}
+                className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-100 text-primary-800 border border-primary-200"
+              >
+                {funcionario.nome_completo}
+                <button
+                  type="button"
+                  className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full text-primary-600 hover:bg-primary-200 hover:text-primary-800 focus:outline-none focus:bg-primary-200 focus:text-primary-800"
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleRemoveFuncionario(funcionario);
+                  }}
+                  aria-label={`Remover ${funcionario.nome_completo}`}
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </span>
+            ))}
+
+            {/* Input field */}
             <input
               ref={inputRef}
               type="text"
@@ -305,24 +348,21 @@ const FuncionarioAutocomplete = React.memo(
               onKeyDown={handleKeyDown}
               onFocus={handleInputFocus}
               onBlur={handleInputBlur}
-              placeholder={placeholder}
-              className={`w-full px-3 py-2.5 border ${
-                error
-                  ? 'border-red-500 text-red-700 focus:ring-red-500 focus:border-red-500'
-                  : 'border-slate-300 text-slate-700 focus:ring-primary-500 focus:border-primary-500'
-              } rounded-md shadow-sm sm:text-sm transition-colors`}
+              placeholder={value.length === 0 ? placeholder : ''}
+              className="flex-1 min-w-[120px] outline-none bg-transparent text-slate-700 sm:text-sm"
               autoComplete="off"
               role="combobox"
               aria-expanded={showSuggestions}
               aria-haspopup="listbox"
               aria-autocomplete="list"
               aria-describedby={
-                error ? `funcionario-error-${Date.now()}` : undefined
+                error ? `funcionarios-error-${Date.now()}` : undefined
               }
-              required={required}
+              required={required && value.length === 0}
             />
+
             {isLoading && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="flex-shrink-0">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
               </div>
             )}
@@ -369,7 +409,9 @@ const FuncionarioAutocomplete = React.memo(
                 ) : (
                   !isLoading && (
                     <div className="px-3 py-2 text-sm text-slate-500">
-                      Nenhum funcionário encontrado
+                      {inputValue.trim()
+                        ? 'Nenhum funcionário encontrado'
+                        : 'Digite para buscar funcionários'}
                     </div>
                   )
                 )}
@@ -382,11 +424,11 @@ const FuncionarioAutocomplete = React.memo(
   )
 );
 
-FuncionarioAutocomplete.displayName = 'FuncionarioAutocomplete';
+FuncionarioAutocompleteMultiple.displayName = 'FuncionarioAutocompleteMultiple';
 
-FuncionarioAutocomplete.propTypes = {
-  value: PropTypes.object,
-  onFuncionarioSelect: PropTypes.func.isRequired,
+FuncionarioAutocompleteMultiple.propTypes = {
+  value: PropTypes.array,
+  onFuncionariosSelect: PropTypes.func.isRequired,
   error: PropTypes.string,
   onBlur: PropTypes.func,
   onKeyDown: PropTypes.func,
@@ -394,4 +436,4 @@ FuncionarioAutocomplete.propTypes = {
   required: PropTypes.bool,
 };
 
-export default FuncionarioAutocomplete;
+export default FuncionarioAutocompleteMultiple;

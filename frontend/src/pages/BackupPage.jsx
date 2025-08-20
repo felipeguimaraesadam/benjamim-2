@@ -152,7 +152,7 @@ const BackupPage = () => {
         </div>
         <div className="flex items-center space-x-3">
           {/* Botão discreto para testes de erro - apenas em desenvolvimento */}
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.MODE === 'development' && (
             <Link
               to="/error-tests"
               className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-3 rounded-md text-sm opacity-70 hover:opacity-100 transition-opacity"
