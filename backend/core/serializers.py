@@ -137,7 +137,25 @@ class FuncionarioSerializer(serializers.ModelSerializer):
 class EquipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Equipe
-        fields = '__all__'
+        fields = ['id', 'nome_equipe', 'descricao', 'lider', 'membros']
+
+    def create(self, validated_data):
+        membros_data = validated_data.pop('membros', [])
+        equipe = Equipe.objects.create(**validated_data)
+        equipe.membros.set(membros_data)
+        return equipe
+
+    def update(self, instance, validated_data):
+        membros_data = validated_data.pop('membros', None)
+
+        # Update other fields using the default update logic
+        instance = super().update(instance, validated_data)
+
+        # If membros data was provided, update the relationship
+        if membros_data is not None:
+            instance.membros.set(membros_data)
+
+        return instance
 
 # Novo Serializer para Equipe com detalhes básicos dos membros
 class EquipeComMembrosBasicSerializer(serializers.ModelSerializer):

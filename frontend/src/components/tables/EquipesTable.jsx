@@ -66,7 +66,7 @@ const EquipesTable = ({
               >
                 {equipe.nome_equipe}
               </th>
-              <td className="px-6 py-4">{getFuncionarioNome(equipe.lider)}</td>
+              <td className="px-6 py-4">{equipe.lider ? equipe.lider.nome_completo : 'N/A'}</td>
               <td className="px-6 py-4">
                 {equipe.membros ? equipe.membros.length : 0}
               </td>
