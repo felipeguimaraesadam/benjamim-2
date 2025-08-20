@@ -1126,26 +1126,6 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           </div>
           <div>
             <label
-              htmlFor="dataPagamento"
-              className="block mb-1.5 text-sm font-medium text-gray-700"
-            >
-              Data de Pagamento
-            </label>
-            <DatePicker
-              selected={
-                dataPagamento ? new Date(dataPagamento + 'T00:00:00') : null
-              }
-              onChange={date =>
-                setDataPagamento(date.toISOString().split('T')[0])
-              }
-              dateFormat="dd/MM/yyyy"
-              locale="pt-BR"
-              customInput={<CustomDateInput />}
-            />
-            {/* Optional: {errors.dataPagamento && <p className="mt-1.5 text-xs text-red-600 flex items-center"><WarningIcon /> {errors.dataPagamento}</p>} */}
-          </div>
-          <div>
-            <label
               htmlFor="obraId"
               className="block mb-1.5 text-sm font-medium text-gray-700"
             >
@@ -1315,25 +1295,33 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           )}
         </div>
         
-        {/* Payment Installments Section */}
+        {/* Payment and Attachments Section */}
         <div className="mt-8 pt-6 border-t border-slate-300">
-          <PagamentoParceladoForm
-            valorTotal={totalGeralCalculado}
-            tipoPagamento={pagamentoParcelado?.tipo || 'UNICO'}
-            onTipoPagamentoChange={handleTipoPagamentoChange}
-            parcelas={pagamentoParcelado?.parcelas || []}
-            onParcelasChange={handleParcelasChange}
-            errors={errors}
-          />
-        </div>
-
-        {/* Attachments Section */}
-        <div className="mt-8 pt-6 border-t border-slate-300">
-          <AnexosCompraManager
-            anexos={anexos}
-            onAnexosChange={setAnexos}
-            compraId={initialData?.id}
-          />
+          <h3 className="text-xl font-semibold text-gray-700 mb-4">
+            Pagamento e Anexos
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 bg-slate-50 p-4 rounded-lg">
+            <div>
+              <PagamentoParceladoForm
+                valorTotal={totalGeralCalculado}
+                tipoPagamento={pagamentoParcelado?.tipo || 'avista'}
+                onTipoPagamentoChange={handleTipoPagamentoChange}
+                parcelas={pagamentoParcelado?.parcelas || []}
+                onParcelasChange={handleParcelasChange}
+                errors={errors}
+                dataPagamento={dataPagamento}
+                onDataPagamentoChange={setDataPagamento}
+                CustomDateInput={CustomDateInput}
+              />
+            </div>
+            <div>
+              <AnexosCompraManager
+                anexos={anexos}
+                onAnexosChange={setAnexos}
+                compraId={initialData?.id}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Summary Section */}
