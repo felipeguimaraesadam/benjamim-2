@@ -14,6 +14,7 @@ import * as api from '../../services/api';
 import MaterialAutocomplete from './MaterialAutocomplete';
 import ObraAutocomplete from './ObraAutocomplete';
 import SpinnerIcon from '../utils/SpinnerIcon';
+import PagamentoParceladoForm from './PagamentoParceladoForm';
 import AnexosCompraManager from './AnexosCompraManager';
 
 registerLocale('pt-BR', ptBR);
@@ -324,6 +325,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     data_pagamento: null,
     numero_parcelas: 1,
     valor_entrada: '0.00',
+    parcelas: [],
   });
   const [anexos, setAnexos] = useState([]);
 
@@ -602,6 +604,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         data_pagamento: initialData.data_pagamento ? new Date(initialData.data_pagamento) : null,
         numero_parcelas: initialData.numero_parcelas || 1,
         valor_entrada: initialData.valor_entrada || '0.00',
+        parcelas: initialData.parcelas || [],
       });
       
       // Handle attachments
@@ -686,6 +689,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         data_pagamento: new Date(),
         numero_parcelas: 1,
         valor_entrada: '0.00',
+        parcelas: [],
       });
       setAnexos([]);
       
@@ -987,6 +991,11 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         data_pagamento: pagamento.forma_pagamento === 'AVISTA' ? pagamento.data_pagamento.toISOString().split('T')[0] : null,
         numero_parcelas: pagamento.forma_pagamento === 'PARCELADO' ? pagamento.numero_parcelas : 1,
         valor_entrada: pagamento.forma_pagamento === 'PARCELADO' ? parseFloat(String(pagamento.valor_entrada).replace(',', '.')) || 0 : 0,
+        parcelas: pagamento.forma_pagamento === 'PARCELADO' ? pagamento.parcelas.map(p => ({
+            numero_parcela: p.numero,
+            valor_parcela: p.valor,
+            data_vencimento: p.dataVencimento.toISOString().split('T')[0],
+        })) : [],
         anexos: anexos,
       };
       console.log('DEBUG: CompraForm submit payload:', compraData);
@@ -1320,28 +1329,14 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
               )}
 
               {pagamento.forma_pagamento === 'PARCELADO' && (
-                <div className="mt-4 space-y-4 p-4 border rounded-md">
-                  <div>
-                    <label htmlFor="numero_parcelas" className="block mb-1.5 text-sm font-medium text-gray-700">Número de Parcelas</label>
-                    <input
-                      type="number"
-                      id="numero_parcelas"
-                      value={pagamento.numero_parcelas}
-                      onChange={(e) => setPagamento({ ...pagamento, numero_parcelas: parseInt(e.target.value, 10) || 1 })}
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="valor_entrada" className="block mb-1.5 text-sm font-medium text-gray-700">Valor de Entrada</label>
-                    <input
-                      type="text"
-                      id="valor_entrada"
-                      value={pagamento.valor_entrada}
-                      onChange={(e) => setPagamento({ ...pagamento, valor_entrada: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    />
-                  </div>
-                </div>
+                <PagamentoParceladoForm
+                    valorTotal={totalGeralCalculado}
+                    tipoPagamento={pagamento.forma_pagamento}
+                    onTipoPagamentoChange={(tipo) => setPagamento({ ...pagamento, forma_pagamento: tipo })}
+                    parcelas={pagamento.parcelas}
+                    onParcelasChange={(parcelas) => setPagamento({ ...pagamento, parcelas })}
+                    errors={errors}
+                />
               )}
             </div>
             <div>

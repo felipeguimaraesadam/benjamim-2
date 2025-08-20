@@ -430,12 +430,20 @@ class CompraViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         itens_data = validated_data.pop('itens')
+        parcelas_data = validated_data.pop('parcelas', None)
         compra = Compra.objects.create(**validated_data)
 
         # Handle attachments
         anexos_files = request.FILES.getlist('anexos')
         for anexo_file in anexos_files:
             AnexoCompra.objects.create(compra=compra, arquivo=anexo_file)
+
+        if compra.forma_pagamento == 'PARCELADO':
+            if parcelas_data:
+                for parcela_data in parcelas_data:
+                    ParcelaCompra.objects.create(compra=compra, **parcela_data)
+            else:
+                compra.create_installments()
 
         for item_data in itens_data:
             item = ItemCompra.objects.create(compra=compra, **item_data)
@@ -514,6 +522,29 @@ class CompraViewSet(viewsets.ModelViewSet):
         except ValueError:
             instance.desconto = instance.desconto
         instance.observacoes = data.get('observacoes', instance.observacoes)
+
+        # Handle parcelas
+        if instance.forma_pagamento == 'PARCELADO':
+            parcelas_data = data.get('parcelas', None)
+            if parcelas_data:
+                existing_parcelas_ids = set(instance.parcelas.values_list('id', flat=True))
+                request_parcelas_ids = set()
+                for parcela_data in parcelas_data:
+                    parcela_id = parcela_data.get('id')
+                    if parcela_id:
+                        request_parcelas_ids.add(parcela_id)
+                        ParcelaCompra.objects.update_or_create(
+                            id=parcela_id, compra=instance,
+                            defaults=parcela_data
+                        )
+                    else:
+                        parcela = ParcelaCompra.objects.create(compra=instance, **parcela_data)
+                        request_parcelas_ids.add(parcela.id)
+
+                ids_to_delete = existing_parcelas_ids - request_parcelas_ids
+                if ids_to_delete:
+                    instance.parcelas.filter(id__in=ids_to_delete).delete()
+
         itens_data = data.get('itens', None)
         if itens_data is not None:
             existing_items_ids = set(instance.itens.values_list('id', flat=True))
@@ -1921,56 +1952,26 @@ class AnexoCompraViewSet(viewsets.ModelViewSet):
         Cria um novo anexo para uma compra.
         """
         try:
-            # Validar se arquivo foi enviado
             if 'arquivo' not in request.FILES:
                 return Response(
                     {'error': 'Nenhum arquivo foi enviado'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
+            compra_id = request.data.get('compra')
+            if not compra_id:
+                return Response({'error': 'ID da compra é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                compra = Compra.objects.get(id=compra_id)
+            except Compra.DoesNotExist:
+                return Response({'error': 'Compra não encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+            anexo_file = request.FILES['arquivo']
+            anexo = AnexoCompra.objects.create(compra=compra, arquivo=anexo_file)
             
-            # Validar tamanho do arquivo (máximo 10MB)
-            arquivo = serializer.validated_data.get('arquivo')
-            if arquivo and arquivo.size > 10 * 1024 * 1024:  # 10MB
-                return Response(
-                    {'error': 'Arquivo muito grande. Tamanho máximo: 10MB'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # Validar tipo de arquivo
-            if arquivo:
-                allowed_types = [
-                    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-                    'application/pdf', 'application/msword',
-                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                    'application/vnd.ms-excel',
-                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    'text/plain'
-                ]
-                
-                if arquivo.content_type not in allowed_types:
-                    return Response(
-                        {'error': 'Tipo de arquivo não permitido'}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            
-            # Validar se a compra existe
-            compra_id = serializer.validated_data.get('compra')
-            if compra_id:
-                try:
-                    from .models import Compra
-                    Compra.objects.get(id=compra_id.id)
-                except Compra.DoesNotExist:
-                    return Response(
-                        {'error': 'Compra não encontrada'}, 
-                        status=status.HTTP_404_NOT_FOUND
-                    )
-            
-            serializer.save(usuario_upload=request.user)
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            serializer = self.get_serializer(anexo)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
             
         except Exception as e:
             return Response(
