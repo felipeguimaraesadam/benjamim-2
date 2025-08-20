@@ -696,14 +696,6 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     }
   }, [initialData, obras]);
 
-  // Synchronize dataPagamento with dataCompra if dataPagamento is not manually set
-  useEffect(() => {
-    if (prevDataCompraRef.current === dataPagamento || !dataPagamento) {
-      setDataPagamento(dataCompra);
-    }
-    prevDataCompraRef.current = dataCompra;
-  }, [dataCompra]);
-
   const handleHeaderChange = e => {
     const { name, value } = e.target;
     let processedValue = value;
