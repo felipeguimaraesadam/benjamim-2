@@ -557,20 +557,19 @@ class CompraViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_404_NOT_FOUND
                 )
             
-            # Renderizar o template HTML
-            html_content = render_to_string('relatorios/relatorio_compras_lote.html', {
+            # Preparar contexto para o template
+            context = {
                 'compras': compras,
-                'data_geracao': timezone.now().strftime('%d/%m/%Y %H:%M:%S')
-            })
+                'data_geracao': timezone.now(),
+                'usuario': request.user,
+            }
             
-            # Gerar PDF usando WeasyPrint
-            pdf_file = HTML(string=html_content, base_url=request.build_absolute_uri()).write_pdf()
+            # Gerar PDF
+            template_path = 'relatorios/relatorio_compras_lote.html'
+            css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_compras.css')
+            filename = f'Relatorio_Compras_Lote_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf'
             
-            # Criar resposta HTTP com o PDF
-            response = HttpResponse(pdf_file, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="relatorio_compras_lote_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
-            
-            return response
+            return generate_pdf_response(template_path, context, css_path, filename)
             
         except Exception as e:
             return Response(

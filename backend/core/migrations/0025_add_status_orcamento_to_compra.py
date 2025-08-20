@@ -10,9 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='compra',
-            name='status_orcamento',
-            field=models.CharField(blank=True, choices=[('PENDENTE', 'Pendente'), ('APROVADO', 'Aprovado'), ('REJEITADO', 'Rejeitado')], default='PENDENTE', max_length=10, null=True, verbose_name='Status do Orçamento'),
-        ),
     ]
