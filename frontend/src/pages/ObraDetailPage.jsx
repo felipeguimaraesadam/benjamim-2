@@ -83,7 +83,7 @@ const ObraDetailPage = () => {
   }); // For success/error messages
 
   // NEW STATE for handling photo uploads
-  const [latestUploadedFoto, setLatestUploadedFoto] = useState(null);
+  const [latestUploadedArquivo, setLatestUploadedArquivo] = useState(null);
 
   // Effect to clear operation status messages
   useEffect(() => {
@@ -98,12 +98,12 @@ const ObraDetailPage = () => {
   // Event Handlers
 
   // NEW CALLBACK for photo upload
-  const handlePhotoUploaded = newFotoData => {
-    setLatestUploadedFoto(newFotoData);
+  const handleArquivoUploaded = newArquivoData => {
+    setLatestUploadedArquivo(newArquivoData);
     // Optionally, display a success message using operationStatus
     setOperationStatus({
       type: 'success',
-      message: 'Foto enviada com sucesso!',
+      message: 'Arquivo enviado com sucesso!',
     });
   };
 
@@ -383,9 +383,9 @@ const ObraDetailPage = () => {
               {/* Added some margin for separation */}
               <ObraFotosUpload
                 obraId={id}
-                onUploadSuccess={handlePhotoUploaded}
+                onUploadSuccess={handleArquivoUploaded}
               />
-              <ObraGaleria obraId={id} newFoto={latestUploadedFoto} />
+              <ObraGaleria obraId={id} newArquivo={latestUploadedArquivo} />
             </div>
             <ObraExpensesTabContent
               despesasExtrasObra={despesasExtrasObra}

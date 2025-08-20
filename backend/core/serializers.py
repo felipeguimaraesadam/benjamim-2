@@ -444,15 +444,21 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
     arquivo_url = serializers.SerializerMethodField()
     arquivo_nome = serializers.SerializerMethodField()
     arquivo_tamanho = serializers.SerializerMethodField()
-    
+    uploaded_by_name = serializers.CharField(source='uploaded_by.nome_completo', read_only=True)
+
     class Meta:
         model = ArquivoObra
-        fields = ['id', 'obra', 'arquivo', 'arquivo_url', 'arquivo_nome', 'arquivo_tamanho', 'nome_original', 'tipo_arquivo', 'categoria', 'descricao', 'uploaded_at']
+        fields = [
+            'id', 'obra', 'arquivo', 'arquivo_url', 'arquivo_nome',
+            'arquivo_tamanho', 'nome_original', 'tipo_arquivo', 'categoria',
+            'descricao', 'uploaded_at', 'uploaded_by_name'
+        ]
         extra_kwargs = {
-            'obra': {'read_only': True},
-            'uploaded_at': {'read_only': True}
+            'uploaded_at': {'read_only': True},
+            'nome_original': {'read_only': True},
+            'tipo_arquivo': {'read_only': True},
         }
-    
+
     def get_arquivo_url(self, obj):
         if obj.arquivo:
             request = self.context.get('request')
