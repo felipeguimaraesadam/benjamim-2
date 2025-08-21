@@ -975,12 +975,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;
       const itemsToSubmit = items
         .filter(
-          item =>
-            (item.materialId || item.material?.id) &&
-            String(item.quantidade).replace(',', '.').trim() !== '' &&
-            parseFloat(String(item.quantidade).replace(',', '.')) > 0 &&
-            String(item.valorUnitario).replace(',', '.').trim() !== '' &&
-            parseFloat(String(item.valorUnitario).replace(',', '.')) >= 0
+          item => (item.materialId || item.material?.id)
         )
         .map(item => ({
           id: item.originalId || undefined,
