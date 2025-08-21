@@ -11,6 +11,7 @@ try:
     WEASYPRINT_AVAILABLE = True
 except Exception as e:
     # If weasyprint fails to import, create dummy classes
+    WEASYPRINT_AVAILABLE = False
 
 # Handle image processing imports
 try:
