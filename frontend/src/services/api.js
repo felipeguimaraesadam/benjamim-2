@@ -346,10 +346,74 @@ export const getDashboardStats = () => apiClient.get('/dashboard/stats/');
 // --- Compra Service Functions ---
 export const getCompras = params => apiClient.get('/compras/', { params });
 export const getCompraById = id => apiClient.get(`/compras/${id}/`);
-export const createCompra = compraData =>
-  apiClient.post('/compras/', compraData);
-export const updateCompra = (id, compraData) =>
-  apiClient.put(`/compras/${id}/`, compraData);
+
+const prepareCompraFormData = (compraData) => {
+  const formData = new FormData();
+
+  // Append simple key-value pairs
+  Object.keys(compraData).forEach(key => {
+    if (key === 'itens' || key === 'parcelas' || key === 'anexos' || key === 'anexos_a_remover') {
+      // Handled separately
+      return;
+    }
+    if (compraData[key] !== null && compraData[key] !== undefined) {
+      formData.append(key, compraData[key]);
+    }
+  });
+
+  // Append complex data as JSON strings
+  if (compraData.itens) {
+    formData.append('itens', JSON.stringify(compraData.itens));
+  }
+  if (compraData.parcelas) {
+    formData.append('parcelas', JSON.stringify(compraData.parcelas));
+  }
+
+  // Append files
+  if (compraData.anexos) {
+    compraData.anexos.forEach(anexo => {
+      // If anexo is a file object from input
+      if (anexo instanceof File) {
+        formData.append('anexos', anexo, anexo.name);
+      }
+      // If anexo is an object with a file property (e.g., from a preview component)
+      else if (anexo.file instanceof File) {
+         formData.append('anexos', anexo.file, anexo.file.name);
+      }
+      // If anexo is a temporary attachment from AnexosCompraManager (has arquivo property)
+      else if (anexo.arquivo instanceof File && anexo.isTemp) {
+        formData.append('anexos', anexo.arquivo, anexo.nome_original || anexo.arquivo.name);
+      }
+    });
+  }
+
+  // Special handling for updates: include IDs of attachments to remove
+  if (compraData.anexos_a_remover) {
+      compraData.anexos_a_remover.forEach(anexoId => {
+          formData.append('anexos_a_remover', anexoId);
+      });
+  }
+
+  return formData;
+};
+
+export const createCompra = compraData => {
+  const formData = prepareCompraFormData(compraData);
+  return apiClient.post('/compras/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const updateCompra = (id, compraData) => {
+  const formData = prepareCompraFormData(compraData);
+  return apiClient.put(`/compras/${id}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
 export const deleteCompra = id => apiClient.delete(`/compras/${id}/`);
 export const updateCompraStatus = (id, data) =>
   apiClient.patch(`/compras/${id}/`, data);

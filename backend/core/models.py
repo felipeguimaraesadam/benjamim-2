@@ -280,7 +280,7 @@ class Compra(models.Model):
             self.data_pagamento = None
         
         super().save(*args, **kwargs)
-        
+
         # Create installments if payment is parcelado and parcelas don't exist
         if self.forma_pagamento == 'PARCELADO' and not self.parcelas.exists():
             self.create_installments()

@@ -1,11 +1,23 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, FileText, Image, File, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import * as api from '../../services/api';
 
 const AnexosCompraManager = ({ compraId, anexos = [], onAnexosChange, isEditing = false }) => {
+  // Garantir que anexos seja sempre um array
+  const anexosArray = Array.isArray(anexos) ? anexos : [];
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Debug logs
+  console.log('🔍 AnexosCompraManager - Props recebidas:', {
+    compraId,
+    anexos,
+    anexosLength: anexos?.length,
+    isEditing,
+    timestamp: new Date().toISOString()
+  });
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   const ACCEPTED_TYPES = {
@@ -36,70 +48,141 @@ const AnexosCompraManager = ({ compraId, anexos = [], onAnexosChange, isEditing 
   };
 
   const handleFileSelect = async (files) => {
-    const validFiles = Array.from(files).filter(validateFile);
-    if (validFiles.length === 0) return;
-
+    if (!files || files.length === 0) return;
+    
+    console.log('=== INÍCIO DO UPLOAD DE ARQUIVOS ===');
+    console.log('Número de arquivos selecionados:', files.length);
+    console.log('CompraId:', compraId);
+    
     setUploading(true);
+    const novosAnexos = [];
     
     try {
-      const novosAnexos = [];
-      
-      for (const file of validFiles) {
-        if (isEditing && compraId) {
-          // Upload direto para compra existente
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        console.log(`\n--- Processando arquivo ${i + 1}/${files.length} ---`);
+        console.log('Arquivo:', {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          lastModified: file.lastModified
+        });
+        
+        // Validações
+        if (file.size > MAX_FILE_SIZE) {
+          console.warn('Arquivo muito grande:', file.name, 'Tamanho:', file.size);
+          toast.error(`Arquivo ${file.name} é muito grande. Máximo permitido: 10MB`);
+          continue;
+        }
+        
+        if (!ACCEPTED_TYPES[file.type]) {
+          console.warn('Tipo de arquivo não suportado:', file.name, 'Tipo:', file.type);
+          toast.error(`Tipo de arquivo não suportado: ${file.name}`);
+          continue;
+        }
+        
+        console.log('Arquivo passou nas validações');
+        
+        if (compraId) {
+          // Upload imediato para compras existentes
+          console.log('Iniciando upload para compra existente. CompraId:', compraId);
+          
           try {
-            const formData = new FormData();
-            formData.append('arquivo', file);
-            formData.append('compra', compraId);
+             console.log('Criando FormData para upload...');
+             const formData = new FormData();
+             formData.append('arquivo', file);
+             formData.append('descricao', '');
+             
+             console.log('FormData criado:');
+             for (let [key, value] of formData.entries()) {
+               console.log(`${key}:`, value);
+             }
+             
+             console.log('Chamando api.uploadAnexoCompra...');
+             const response = await api.uploadAnexoCompra(compraId, formData);
+             console.log('Upload bem-sucedido! Resposta completa:', response);
+             console.log('Dados da resposta:', response.data);
             
-            const response = await api.uploadAnexoCompra(compraId, formData);
             const anexoSalvo = response.data;
-            
             const anexoFormatado = {
               id: anexoSalvo.id,
               arquivo: anexoSalvo.arquivo,
-              nome_original: anexoSalvo.nome_original,
-              tipo_arquivo: anexoSalvo.tipo_arquivo,
-              tamanho_arquivo: anexoSalvo.tamanho_arquivo,
+              nome_original: anexoSalvo.nome_original || anexoSalvo.arquivo_nome || file.name,
+              tipo_arquivo: anexoSalvo.tipo_arquivo || ACCEPTED_TYPES[file.type],
+              tamanho_arquivo: anexoSalvo.tamanho_arquivo || anexoSalvo.arquivo_tamanho || file.size,
               uploaded_at: anexoSalvo.uploaded_at,
               isTemp: false
             };
+            
+            console.log('Anexo formatado para exibição:', anexoFormatado);
             novosAnexos.push(anexoFormatado);
+            console.log('Arquivo adicionado à lista de novos anexos');
+            
           } catch (error) {
-            console.error('Erro ao fazer upload do arquivo:', error);
-            toast.error(`Erro ao enviar ${file.name}`);
+            console.error('\n!!! ERRO NO UPLOAD !!!');
+            console.error('Erro completo:', error);
+            console.error('Mensagem:', error.message);
+            console.error('Stack:', error.stack);
+            
+            if (error.response) {
+              console.error('Resposta do servidor:');
+              console.error('Status:', error.response.status);
+              console.error('Headers:', error.response.headers);
+              console.error('Data:', error.response.data);
+            } else if (error.request) {
+              console.error('Requisição feita mas sem resposta:', error.request);
+            } else {
+              console.error('Erro na configuração da requisição:', error.message);
+            }
+            
+            toast.error(`Erro ao fazer upload do arquivo ${file.name}: ${error.message}`);
             continue;
           }
         } else {
-          // Preparar para upload posterior (nova compra)
+          // Armazenar temporariamente para novas compras
+          console.log('Armazenando arquivo temporariamente (nova compra)');
           const anexoTemp = {
-            id: `temp-${Date.now()}-${Math.random()}`,
+            id: `temp-${Date.now()}-${i}`,
             arquivo: file,
             nome_original: file.name,
             tipo_arquivo: ACCEPTED_TYPES[file.type],
             tamanho_arquivo: file.size,
             isTemp: true
           };
+          console.log('Anexo temporário criado:', anexoTemp);
           novosAnexos.push(anexoTemp);
         }
       }
       
-      onAnexosChange([...anexos, ...novosAnexos]);
-      toast.success(`${novosAnexos.length} arquivo(s) adicionado(s) com sucesso`);
+      console.log('\n=== FINALIZANDO UPLOAD ===');
+      console.log('Total de novos anexos processados:', novosAnexos.length);
+      console.log('Anexos atuais:', anexosArray.length);
+      console.log('Anexos após adição:', anexosArray.length + novosAnexos.length);
+      
+      onAnexosChange([...anexosArray, ...novosAnexos]);
+      
+      if (novosAnexos.length > 0) {
+        toast.success(`${novosAnexos.length} arquivo(s) adicionado(s) com sucesso`);
+      }
+      
     } catch (error) {
-      console.error('Erro ao fazer upload:', error);
+      console.error('\n!!! ERRO GERAL NO PROCESSO DE UPLOAD !!!');
+      console.error('Erro:', error);
       toast.error('Erro ao fazer upload dos arquivos');
     } finally {
+      console.log('Finalizando processo de upload...');
       setUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      console.log('=== FIM DO UPLOAD DE ARQUIVOS ===\n');
     }
   };
 
   const handleRemoveAnexo = async (anexoId) => {
     try {
-      const anexo = anexos.find(a => a.id === anexoId);
+      const anexo = anexosArray.find(a => a.id === anexoId);
       
       if (!anexo.isTemp && compraId) {
         // Remover anexo do servidor
@@ -117,7 +200,7 @@ const AnexosCompraManager = ({ compraId, anexos = [], onAnexosChange, isEditing 
         URL.revokeObjectURL(anexo.arquivo);
       }
       
-      onAnexosChange(anexos.filter(a => a.id !== anexoId));
+      onAnexosChange(anexosArray.filter(a => a.id !== anexoId));
       toast.success('Arquivo removido com sucesso');
     } catch (error) {
       console.error('Erro ao remover anexo:', error);
@@ -188,7 +271,7 @@ const AnexosCompraManager = ({ compraId, anexos = [], onAnexosChange, isEditing 
         >
           <div className="text-center">
             <Upload className={`w-8 h-8 mx-auto mb-2 ${dragOver ? 'text-blue-500' : 'text-gray-400'}`} />
-            <p className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600">
               {uploading ? (
                 <span className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
@@ -199,7 +282,7 @@ const AnexosCompraManager = ({ compraId, anexos = [], onAnexosChange, isEditing 
                   <span className="font-medium text-blue-600">Clique para selecionar</span> ou arraste arquivos aqui
                 </>
               )}
-            </p>
+            </div>
             <p className="text-xs text-gray-500 mt-1">
               Formatos aceitos: PDF, imagens (JPG, PNG, GIF), documentos (DOC, XLS) • Máximo 10MB por arquivo
             </p>
@@ -208,14 +291,14 @@ const AnexosCompraManager = ({ compraId, anexos = [], onAnexosChange, isEditing 
       </div>
 
       {/* Lista de Anexos */}
-      {anexos.length > 0 && (
+      {anexosArray.length > 0 && (
         <div className="space-y-3">
           <h4 className="font-medium text-gray-700 flex items-center">
-            Arquivos Anexados ({anexos.length})
+            Arquivos Anexados ({anexosArray.length})
           </h4>
           
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {anexos.map((anexo) => (
+            {anexosArray.map((anexo) => (
               <div key={anexo.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
                   {getFileIcon(anexo.tipo_arquivo)}
@@ -256,7 +339,7 @@ const AnexosCompraManager = ({ compraId, anexos = [], onAnexosChange, isEditing 
             ))}
           </div>
           
-          {anexos.some(a => a.isTemp) && (
+          {anexosArray.some(a => a.isTemp) && (
             <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <div className="flex items-start">
                 <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 mr-2 flex-shrink-0" />

@@ -113,7 +113,7 @@ const itemsReducer = (state, action) => {
         }
         return item;
       });
-    case ITEM_ACTION_TYPES.SET_MATERIAL: // payload: { index, material }
+    case ITEM_ACTION_TYPES.SET_MATERIAL: { // payload: { index, material }
       console.log('🔍 REDUCER: SET_MATERIAL action received:', action.payload);
       const newState = state.map((item, i) => {
         if (i === action.payload.index) {
@@ -139,6 +139,7 @@ const itemsReducer = (state, action) => {
       });
       console.log('🔍 REDUCER: New state after SET_MATERIAL:', newState);
       return newState;
+    }
     default:
       return state;
   }
@@ -322,7 +323,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   
   // New state for payment installments and attachments
   const [pagamentoParcelado, setPagamentoParcelado] = useState({
-    tipo: 'avista', // 'avista' or 'parcelado'
+    tipo: 'UNICO', // 'UNICO' or 'PARCELADO'
     parcelas: []
   });
   const [anexos, setAnexos] = useState([]);
@@ -616,16 +617,41 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         setPagamentoParcelado(initialData.pagamento_parcelado);
       } else {
         setPagamentoParcelado({
-          tipo: 'avista',
+          tipo: 'UNICO',
           parcelas: []
         });
       }
       
       // Handle attachments
-      if (initialData.anexos && Array.isArray(initialData.anexos)) {
+      console.log('🔍 CompraForm - Processando anexos:', {
+        initialDataAnexos: initialData.anexos,
+        isArray: Array.isArray(initialData.anexos),
+        length: initialData.anexos?.length,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (initialData.anexos && Array.isArray(initialData.anexos) && initialData.anexos.length > 0) {
         setAnexos(initialData.anexos);
+        console.log('🔍 CompraForm - Anexos definidos do initialData:', initialData.anexos);
+      } else if (initialData.id) {
+        // Se estamos editando uma compra mas não temos anexos no initialData,
+        // vamos buscar os anexos diretamente da API
+        console.log('🔍 CompraForm - Buscando anexos da API para compra ID:', initialData.id);
+        const loadAnexos = async () => {
+          try {
+            const response = await api.getAnexosByCompra(initialData.id);
+            const anexosData = response.data || response;
+            console.log('🔍 CompraForm - Anexos carregados da API:', anexosData);
+            setAnexos(anexosData);
+          } catch (error) {
+            console.error('🔍 CompraForm - Erro ao carregar anexos:', error);
+            setAnexos([]);
+          }
+        };
+        loadAnexos();
       } else {
         setAnexos([]);
+        console.log('🔍 CompraForm - Anexos definidos como array vazio (nova compra)');
       }
 
       // Process items for both editing and duplication
@@ -700,7 +726,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       
       // Initialize new state variables for new forms
       setPagamentoParcelado({
-        tipo: 'avista',
+        tipo: 'UNICO',
         parcelas: []
       });
       setAnexos([]);
@@ -975,21 +1001,14 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;
       const itemsToSubmit = items
         .filter(
-          item =>
-            (item.materialId || item.material?.id) &&
-            String(item.quantidade).replace(',', '.').trim() !== '' &&
-            parseFloat(String(item.quantidade).replace(',', '.')) > 0 &&
-            String(item.valorUnitario).replace(',', '.').trim() !== '' &&
-            parseFloat(String(item.valorUnitario).replace(',', '.')) >= 0
+          item => item.materialId || item.quantidade || item.valorUnitario
         )
         .map(item => ({
           id: item.originalId || undefined,
           material: parseInt(item.materialId || item.material?.id, 10),
-          quantidade: parseFloat(String(item.quantidade).replace(',', '.')),
-          valor_unitario: parseFloat(
-            String(item.valorUnitario).replace(',', '.')
-          ),
-          categoria_uso: item.categoria_uso || null, // Added categoria_uso
+          quantidade: parseFloat(String(item.quantidade).replace(',', '.')) || 0,
+          valor_unitario: parseFloat(String(item.valorUnitario).replace(',', '.')) || 0,
+          categoria_uso: item.categoria_uso || null,
         }));
       if (itemsToSubmit.length === 0 && !(initialData && initialData.id)) {
         setErrors(prev => ({
@@ -1123,26 +1142,6 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 <WarningIcon /> {errors.dataCompra}
               </p>
             )}
-          </div>
-          <div>
-            <label
-              htmlFor="dataPagamento"
-              className="block mb-1.5 text-sm font-medium text-gray-700"
-            >
-              Data de Pagamento
-            </label>
-            <DatePicker
-              selected={
-                dataPagamento ? new Date(dataPagamento + 'T00:00:00') : null
-              }
-              onChange={date =>
-                setDataPagamento(date.toISOString().split('T')[0])
-              }
-              dateFormat="dd/MM/yyyy"
-              locale="pt-BR"
-              customInput={<CustomDateInput />}
-            />
-            {/* Optional: {errors.dataPagamento && <p className="mt-1.5 text-xs text-red-600 flex items-center"><WarningIcon /> {errors.dataPagamento}</p>} */}
           </div>
           <div>
             <label
@@ -1315,27 +1314,36 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           )}
         </div>
         
-        {/* Payment Installments Section */}
+        {/* Payment and Attachments Section */}
         <div className="mt-8 pt-6 border-t border-slate-300">
-          <PagamentoParceladoForm
-            valorTotal={totalGeralCalculado}
-            tipoPagamento={pagamentoParcelado?.tipo || 'UNICO'}
-            onTipoPagamentoChange={handleTipoPagamentoChange}
-            parcelas={pagamentoParcelado?.parcelas || []}
-            onParcelasChange={handleParcelasChange}
-            errors={errors}
-          />
+          <h3 className="text-xl font-semibold text-gray-700 mb-4">
+            Pagamento e Anexos
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 bg-slate-50 p-4 rounded-lg">
+            <div>
+              <PagamentoParceladoForm
+                valorTotal={totalGeralCalculado}
+                tipoPagamento={pagamentoParcelado?.tipo || 'UNICO'}
+                onTipoPagamentoChange={handleTipoPagamentoChange}
+                parcelas={pagamentoParcelado?.parcelas || []}
+                onParcelasChange={handleParcelasChange}
+                errors={errors}
+                dataPagamento={dataPagamento}
+                onDataPagamentoChange={setDataPagamento}
+                CustomDateInput={CustomDateInput}
+              />
+            </div>
+            <div>
+              <AnexosCompraManager
+                anexos={anexos}
+                onAnexosChange={setAnexos}
+                compraId={initialData?.id}
+                isEditing={!!(initialData?.id)}
+              />
+            </div>
+          </div>
         </div>
-        
-        {/* Attachments Section */}
-        <div className="mt-8 pt-6 border-t border-slate-300">
-          <AnexosCompraManager
-            anexos={anexos}
-            onAnexosChange={setAnexos}
-            compraId={initialData?.id}
-          />
-        </div>
-        
+
         {/* Summary Section */}
         <div className="mt-8 pt-6 border-t border-slate-300">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">

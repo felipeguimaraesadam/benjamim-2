@@ -151,38 +151,7 @@ const ArquivoObraManager = ({ obraId, arquivos = [], onArquivosChange, isEditing
     }
   };
 
-  const handleBulkDelete = async (arquivoIds) => {
-    if (arquivoIds.length === 0) return;
-    
-    try {
-      // Separar arquivos temporários dos permanentes
-      const tempIds = [];
-      const permanentIds = [];
-      
-      arquivoIds.forEach(id => {
-        const arquivo = arquivos.find(a => a.id === id);
-        if (arquivo?.isTemp) {
-          tempIds.push(id);
-        } else {
-          permanentIds.push(id);
-        }
-      });
-      
-      // Deletar arquivos permanentes do servidor
-      if (permanentIds.length > 0) {
-        await api.post('/arquivos-obra/bulk_delete/', {
-          arquivo_ids: permanentIds
-        });
-      }
-      
-      // Remover todos os arquivos da lista local
-      onArquivosChange(arquivos.filter(a => !arquivoIds.includes(a.id)));
-      toast.success(`${arquivoIds.length} arquivo(s) removido(s) com sucesso`);
-    } catch (error) {
-      console.error('Erro ao remover arquivos:', error);
-      toast.error('Erro ao remover arquivos');
-    }
-  };
+
 
   const getCategoryIcon = (categoria) => {
     const categoryInfo = CATEGORIA_CHOICES.find(c => c.value === categoria);

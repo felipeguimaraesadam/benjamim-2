@@ -7,26 +7,34 @@ const PagamentoParceladoForm = ({
   onTipoPagamentoChange, 
   parcelas, 
   onParcelasChange,
-  valorTotal 
+  valorTotal,
+  dataPagamento,
+  onDataPagamentoChange,
+  CustomDateInput
 }) => {
-  const [quantidadeParcelas, setQuantidadeParcelas] = useState(1);
+  const [quantidadeParcelas, setQuantidadeParcelas] = useState(2);
   const [parcelasCustomizadas, setParcelasCustomizadas] = useState([]);
 
   useEffect(() => {
-    if (tipoPagamento === 'PARCELADO' && quantidadeParcelas > 1) {
+    if (tipoPagamento === 'PARCELADO' && quantidadeParcelas >= 2) {
       const valorParcela = valorTotal / quantidadeParcelas;
-      const novasParcelas = Array.from({ length: quantidadeParcelas }, (_, index) => ({
-        numero: index + 1,
-        valor: parseFloat(valorParcela.toFixed(2)),
-        dataVencimento: new Date(Date.now() + (index + 1) * 30 * 24 * 60 * 60 * 1000)
-      }));
+      const hoje = new Date();
+      const novasParcelas = Array.from({ length: quantidadeParcelas }, (_, index) => {
+        const dataVencimento = new Date(hoje);
+        dataVencimento.setMonth(hoje.getMonth() + index + 1);
+        return {
+          numero: index + 1,
+          valor: parseFloat(valorParcela.toFixed(2)),
+          dataVencimento: dataVencimento
+        };
+      });
       setParcelasCustomizadas(novasParcelas);
       onParcelasChange(novasParcelas);
     } else {
       setParcelasCustomizadas([]);
       onParcelasChange([]);
     }
-  }, [tipoPagamento, quantidadeParcelas, valorTotal]);
+  }, [tipoPagamento, quantidadeParcelas, valorTotal, onParcelasChange]);
 
   const handleParcelaChange = (index, field, value) => {
     const novasParcelas = [...parcelasCustomizadas];
@@ -70,6 +78,21 @@ const PagamentoParceladoForm = ({
             <span className="text-sm font-medium text-gray-700">Pagamento Parcelado</span>
           </label>
         </div>
+
+        {tipoPagamento === 'UNICO' && CustomDateInput && (
+          <div className="mt-4">
+            <label htmlFor="dataPagamento" className="block text-sm font-medium text-gray-700 mb-1">
+              Data de Pagamento
+            </label>
+            <DatePicker
+              selected={dataPagamento ? new Date(dataPagamento + 'T00:00:00') : null}
+              onChange={date => onDataPagamentoChange(date.toISOString().split('T')[0])}
+              dateFormat="dd/MM/yyyy"
+              locale="pt-BR"
+              customInput={<CustomDateInput />}
+            />
+          </div>
+        )}
 
         {tipoPagamento === 'PARCELADO' && (
           <div className="space-y-4 mt-4 p-4 bg-gray-50 rounded-lg">

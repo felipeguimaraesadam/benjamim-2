@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import * as api from '../../services/api'; // Adjust path as needed
 import FuncionarioAutocomplete from './FuncionarioAutocomplete';
 import FuncionarioAutocompleteMultiple from './FuncionarioAutocompleteMultiple';
 
@@ -21,7 +20,7 @@ const WarningIcon = (
   </svg>
 );
 
-import SpinnerIcon from '../utils/SpinnerIcon'; // Import SpinnerIcon
+import SpinnerIcon from '../utils/SpinnerIcon';
 
 const EquipeForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState({
