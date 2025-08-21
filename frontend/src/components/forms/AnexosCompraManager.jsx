@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, FileText, Image, File, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import * as api from '../../services/api';
 
 const AnexosCompraManager = ({ compraId, anexos = [], onAnexosChange, isEditing = false }) => {
   const [uploading, setUploading] = useState(false);
