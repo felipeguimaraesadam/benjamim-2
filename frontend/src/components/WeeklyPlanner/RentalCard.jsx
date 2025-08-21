@@ -196,11 +196,6 @@ function RentalCard({
         ...listeners, // dnd-kit listeners only for the source item
       };
 
-  // Determine class names, applying opacity if it's the source item being dragged
-  const currentDndIsDragging =
-    !isDraggingOverlay && dndIsDragging && draggableId === activeDragItemId;
-  const opacityClass = currentDndIsDragging ? 'opacity-50' : ''; // Or use style.visibility for complete hiding
-
   // If using visibility: 'hidden' for the source item, we don't need opacityClass.
   // The style object already sets visibility: 'hidden' for isSourceItemDragging.
   // So, opacityClass can be removed if visibility:hidden is the chosen method.

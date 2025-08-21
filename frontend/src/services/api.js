@@ -380,6 +380,10 @@ const prepareCompraFormData = (compraData) => {
       else if (anexo.file instanceof File) {
          formData.append('anexos', anexo.file, anexo.file.name);
       }
+      // If anexo is a temporary attachment from AnexosCompraManager (has arquivo property)
+      else if (anexo.arquivo instanceof File && anexo.isTemp) {
+        formData.append('anexos', anexo.arquivo, anexo.nome_original || anexo.arquivo.name);
+      }
     });
   }
 

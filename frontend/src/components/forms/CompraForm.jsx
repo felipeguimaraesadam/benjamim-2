@@ -113,7 +113,7 @@ const itemsReducer = (state, action) => {
         }
         return item;
       });
-    case ITEM_ACTION_TYPES.SET_MATERIAL: // payload: { index, material }
+    case ITEM_ACTION_TYPES.SET_MATERIAL: { // payload: { index, material }
       console.log('🔍 REDUCER: SET_MATERIAL action received:', action.payload);
       const newState = state.map((item, i) => {
         if (i === action.payload.index) {
@@ -139,6 +139,7 @@ const itemsReducer = (state, action) => {
       });
       console.log('🔍 REDUCER: New state after SET_MATERIAL:', newState);
       return newState;
+    }
     default:
       return state;
   }
@@ -322,7 +323,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   
   // New state for payment installments and attachments
   const [pagamentoParcelado, setPagamentoParcelado] = useState({
-    tipo: 'avista', // 'avista' or 'parcelado'
+    tipo: 'UNICO', // 'UNICO' or 'PARCELADO'
     parcelas: []
   });
   const [anexos, setAnexos] = useState([]);
@@ -616,16 +617,41 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         setPagamentoParcelado(initialData.pagamento_parcelado);
       } else {
         setPagamentoParcelado({
-          tipo: 'avista',
+          tipo: 'UNICO',
           parcelas: []
         });
       }
       
       // Handle attachments
-      if (initialData.anexos && Array.isArray(initialData.anexos)) {
+      console.log('🔍 CompraForm - Processando anexos:', {
+        initialDataAnexos: initialData.anexos,
+        isArray: Array.isArray(initialData.anexos),
+        length: initialData.anexos?.length,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (initialData.anexos && Array.isArray(initialData.anexos) && initialData.anexos.length > 0) {
         setAnexos(initialData.anexos);
+        console.log('🔍 CompraForm - Anexos definidos do initialData:', initialData.anexos);
+      } else if (initialData.id) {
+        // Se estamos editando uma compra mas não temos anexos no initialData,
+        // vamos buscar os anexos diretamente da API
+        console.log('🔍 CompraForm - Buscando anexos da API para compra ID:', initialData.id);
+        const loadAnexos = async () => {
+          try {
+            const response = await api.getAnexosByCompra(initialData.id);
+            const anexosData = response.data || response;
+            console.log('🔍 CompraForm - Anexos carregados da API:', anexosData);
+            setAnexos(anexosData);
+          } catch (error) {
+            console.error('🔍 CompraForm - Erro ao carregar anexos:', error);
+            setAnexos([]);
+          }
+        };
+        loadAnexos();
       } else {
         setAnexos([]);
+        console.log('🔍 CompraForm - Anexos definidos como array vazio (nova compra)');
       }
 
       // Process items for both editing and duplication
@@ -700,7 +726,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       
       // Initialize new state variables for new forms
       setPagamentoParcelado({
-        tipo: 'avista',
+        tipo: 'UNICO',
         parcelas: []
       });
       setAnexos([]);
@@ -1297,7 +1323,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             <div>
               <PagamentoParceladoForm
                 valorTotal={totalGeralCalculado}
-                tipoPagamento={pagamentoParcelado?.tipo || 'avista'}
+                tipoPagamento={pagamentoParcelado?.tipo || 'UNICO'}
                 onTipoPagamentoChange={handleTipoPagamentoChange}
                 parcelas={pagamentoParcelado?.parcelas || []}
                 onParcelasChange={handleParcelasChange}
@@ -1312,6 +1338,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                 anexos={anexos}
                 onAnexosChange={setAnexos}
                 compraId={initialData?.id}
+                isEditing={!!(initialData?.id)}
               />
             </div>
           </div>

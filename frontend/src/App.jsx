@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
-import { useAuth } from './contexts/AuthContext';
 
 // Import pages
 import DashboardPage from './pages/DashboardPage';
@@ -25,7 +24,6 @@ import UsuariosPage from './pages/UsuariosPage';
 import BackupPage from './pages/BackupPage';
 
 function App() {
-  const { user } = useAuth();
 
   return (
     <Router>
