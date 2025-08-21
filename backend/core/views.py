@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q, Sum, F, Case, When, Value, IntegerField
+import json
 from decimal import Decimal
 from datetime import datetime, date, timedelta
 from django.db import transaction
@@ -473,6 +474,12 @@ class CompraViewSet(viewsets.ModelViewSet):
             instance.desconto = instance.desconto
         instance.observacoes = request.data.get('observacoes', instance.observacoes)
         itens_data = request.data.get('itens', None)
+        if isinstance(itens_data, str):
+            try:
+                itens_data = json.loads(itens_data)
+            except json.JSONDecodeError:
+                return Response({'error': 'JSON inválido no campo de itens.'}, status=status.HTTP_400_BAD_REQUEST)
+
         if itens_data is not None:
             existing_items_ids = set(instance.itens.values_list('id', flat=True))
             request_items_ids = set()
