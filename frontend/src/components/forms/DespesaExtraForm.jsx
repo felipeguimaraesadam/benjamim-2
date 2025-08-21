@@ -11,6 +11,7 @@ const DespesaExtraForm = ({
   onSubmit,
   onCancel,
   isLoading,
+  onRemoveAnexo,
 }) => {
   const [formData, setFormData] = useState({
     descricao: '',
@@ -260,11 +261,11 @@ const DespesaExtraForm = ({
                     <div className="ml-4 flex-shrink-0">
                       <button
                         type="button"
-                        onClick={() => handleDeleteExistingAnexo(anexo.id)}
-                        className="p-1 rounded-full text-red-500 hover:bg-red-100"
-                        title="Excluir anexo salvo"
+                        onClick={() => onRemoveAnexo(anexo.id)}
+                        className="font-medium text-red-600 hover:text-red-500"
+                        title="Excluir anexo"
                       >
-                        <X size={16} />
+                        Remover
                       </button>
                     </div>
                   </li>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Compras em Lote</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+        }
+        .info {
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .compra {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .compra-header {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: -15px -15px 15px -15px;
+            border-radius: 5px 5px 0 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .compra-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+            margin: 0;
+        }
+        .compra-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .info-item {
+            font-size: 14px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .itens-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .itens-table th,
+        .itens-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+        }
+        .itens-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .parcelas-section {
+            margin-top: 15px;
+        }
+        .parcelas-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .parcelas-table th,
+        .parcelas-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+            font-size: 12px;
+        }
+        .parcelas-table th {
+            background-color: #e9ecef;
+        }
+        .total {
+            font-size: 16px;
+            font-weight: bold;
+            color: #28a745;
+            text-align: right;
+            margin-top: 10px;
+        }
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Relatório de Compras em Lote</h1>
+        <div class="info">
+            <strong>Data de Geração:</strong> {{ data_geracao }}
+        </div>
+    </div>
+
+    {% for compra in compras %}
+    <div class="compra{% if not forloop.last %} page-break{% endif %}">
+        <div class="compra-header">
+            <h2 class="compra-title">Compra #{{ compra.id }}</h2>
+        </div>
+        
+        <div class="compra-info">
+            <div class="info-item">
+                <span class="info-label">Fornecedor:</span> {{ compra.fornecedor }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Data da Compra:</span> {{ compra.data_compra|date:"d/m/Y" }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Obra:</span> {{ compra.obra.nome_obra|default:"N/A" }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Forma de Pagamento:</span> {{ compra.get_forma_pagamento_display|default:"N/A" }}
+            </div>
+        </div>
+
+        {% if compra.observacoes %}
+        <div class="info-item">
+            <span class="info-label">Observações:</span> {{ compra.observacoes }}
+        </div>
+        {% endif %}
+
+        <h3>Itens da Compra</h3>
+        <table class="itens-table">
+            <thead>
+                <tr>
+                    <th>Material</th>
+                    <th>Quantidade</th>
+                    <th>Unidade</th>
+                    <th>Valor Unitário</th>
+                    <th>Valor Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in compra.itens.all %}
+                <tr>
+                    <td>{{ item.material.nome }}</td>
+                    <td>{{ item.quantidade }}</td>
+                    <td>{{ item.material.unidade_medida }}</td>
+                    <td>R$ {{ item.valor_unitario|floatformat:2 }}</td>
+                    <td>R$ {{ item.valor_total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">Nenhum item encontrado</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if compra.forma_pagamento == 'parcelado' and compra.parcelas.all %}
+        <div class="parcelas-section">
+            <h3>Parcelas</h3>
+            <table class="parcelas-table">
+                <thead>
+                    <tr>
+                        <th>Parcela</th>
+                        <th>Valor</th>
+                        <th>Data de Vencimento</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for parcela in compra.parcelas.all %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>R$ {{ parcela.valor|floatformat:2 }}</td>
+                        <td>{{ parcela.data_vencimento|date:"d/m/Y" }}</td>
+                        <td>{{ parcela.get_status_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <div class="total">
+            <strong>Valor Total: R$ {{ compra.valor_total_liquido|floatformat:2 }}</strong>
+        </div>
+    </div>
+    {% empty %}
+    <div class="compra">
+        <p>Nenhuma compra encontrada.</p>
+    </div>
+    {% endfor %}
+</body>
+</html>

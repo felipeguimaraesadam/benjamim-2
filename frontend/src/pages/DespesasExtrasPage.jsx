@@ -194,6 +194,24 @@ const DespesasExtrasPage = () => {
     setError(null);
   };
 
+  const handleRemoveAnexo = async anexoId => {
+    try {
+      await api.deleteAnexoDespesa(anexoId);
+      showSuccessToast('Anexo removido com sucesso!');
+      // Refresh the current despesa to update the anexos list
+      if (currentDespesa) {
+        const updatedDespesa = { ...currentDespesa };
+        updatedDespesa.anexos = updatedDespesa.anexos.filter(
+          anexo => anexo.id !== anexoId
+        );
+        setCurrentDespesa(updatedDespesa);
+      }
+    } catch (err) {
+      showErrorToast('Falha ao remover anexo.');
+      console.error('Remove Anexo Error:', err);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
@@ -297,12 +315,13 @@ const DespesasExtrasPage = () => {
               </div>
             )}
             <DespesaExtraForm
-              initialData={currentDespesa}
-              obras={obras} // Pass obras to the form for the dropdown
-              onSubmit={handleFormSubmit}
-              onCancel={handleFormCancel}
-              isLoading={isLoadingForm}
-            />
+                initialData={currentDespesa}
+                obras={obras}
+                onSubmit={handleFormSubmit}
+                onCancel={handleFormCancel}
+                isLoading={isLoadingForm}
+                onRemoveAnexo={handleRemoveAnexo}
+              />
           </div>
         </div>
       )}

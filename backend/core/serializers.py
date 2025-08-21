@@ -526,6 +526,7 @@ class CompraSerializer(serializers.ModelSerializer):
             'anexos',
             'forma_pagamento',
             'numero_parcelas',
+            'valor_entrada',
             'created_at',
             'updated_at',
             'tipo'
@@ -555,6 +556,20 @@ class CompraSerializer(serializers.ModelSerializer):
         from dateutil.relativedelta import relativedelta
         
         itens_data = validated_data.pop('itens')
+        
+        # Processar pagamento_parcelado do frontend
+        pagamento_parcelado = validated_data.pop('pagamento_parcelado', None)
+        if pagamento_parcelado:
+            if pagamento_parcelado.get('tipo') == 'PARCELADO':
+                validated_data['forma_pagamento'] = 'parcelado'
+                parcelas = pagamento_parcelado.get('parcelas', [])
+                validated_data['numero_parcelas'] = len(parcelas)
+                # Se houver parcelas customizadas, podemos usar a primeira como entrada
+                if parcelas:
+                    validated_data['valor_entrada'] = parcelas[0].get('valor', 0)
+            else:
+                validated_data['forma_pagamento'] = 'avista'
+                validated_data['numero_parcelas'] = 1
         
         # Atualiza a categoria de uso padrão para cada material nos itens
         for item_data in itens_data:
@@ -597,6 +612,21 @@ class CompraSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # Lidar com itens da compra
         itens_data = validated_data.pop('itens', None)
+        
+        # Processar pagamento_parcelado do frontend
+        pagamento_parcelado = validated_data.pop('pagamento_parcelado', None)
+        if pagamento_parcelado:
+            if pagamento_parcelado.get('tipo') == 'PARCELADO':
+                validated_data['forma_pagamento'] = 'parcelado'
+                parcelas = pagamento_parcelado.get('parcelas', [])
+                validated_data['numero_parcelas'] = len(parcelas)
+                # Se houver parcelas customizadas, podemos usar a primeira como entrada
+                if parcelas:
+                    validated_data['valor_entrada'] = parcelas[0].get('valor', 0)
+            else:
+                validated_data['forma_pagamento'] = 'avista'
+                validated_data['numero_parcelas'] = 1
+        
         if itens_data is not None:
             # Deletar itens antigos que não estão na nova lista
             itens_atuais_ids = [item.get('id') for item in itens_data if item.get('id')]
@@ -629,6 +659,7 @@ class CompraSerializer(serializers.ModelSerializer):
         instance.tipo = validated_data.get('tipo', instance.tipo)
         instance.forma_pagamento = forma_pagamento
         instance.numero_parcelas = numero_parcelas
+        instance.valor_entrada = validated_data.get('valor_entrada', instance.valor_entrada)
         
         # Recalcular valor_total_bruto após processar os itens
         if itens_data is not None:
@@ -649,6 +680,33 @@ class CompraSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+    
+    def to_representation(self, instance):
+        """Adiciona o campo pagamento_parcelado na resposta para o frontend"""
+        data = super().to_representation(instance)
+        
+        # Converter dados do modelo para o formato esperado pelo frontend
+        if instance.forma_pagamento == 'parcelado':
+            # Se há parcelas customizadas, usar elas
+            parcelas_customizadas = []
+            if hasattr(instance, 'parcelas') and instance.parcelas.exists():
+                for parcela in instance.parcelas.all():
+                    parcelas_customizadas.append({
+                        'valor': float(parcela.valor),
+                        'data_vencimento': parcela.data_vencimento.isoformat() if parcela.data_vencimento else None
+                    })
+            
+            data['pagamento_parcelado'] = {
+                'tipo': 'PARCELADO',
+                'parcelas': parcelas_customizadas
+            }
+        else:
+            data['pagamento_parcelado'] = {
+                'tipo': 'UNICO',
+                'parcelas': []
+            }
+        
+        return data
 
 # Serializers for RelatorioPagamentoMateriaisViewSet
 # class ItemCompraReportSerializer(serializers.ModelSerializer):

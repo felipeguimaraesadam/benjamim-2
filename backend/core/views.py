@@ -242,6 +242,25 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
         response_serializer = self.get_serializer(created_locacoes, many=True)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['delete'], url_path='remover-anexo/(?P<anexo_pk>[^/.]+)')
+    def remover_anexo(self, request, pk=None, anexo_pk=None):
+        try:
+            despesa = self.get_object()
+            anexo = AnexoDespesa.objects.get(pk=anexo_pk, despesa=despesa)
+            
+            # Deleta o arquivo físico
+            if anexo.anexo:
+                anexo.anexo.delete(save=False)
+            
+            # Deleta a instância do modelo
+            anexo.delete()
+            
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except AnexoDespesa.DoesNotExist:
+            return Response({'error': 'Anexo não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def update(self, request, *args, **kwargs):
         print("LocacaoObrasEquipesViewSet: Update method called")
         print("Request data:", request.data)
