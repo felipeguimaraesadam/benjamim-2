@@ -413,24 +413,38 @@ class CompraViewSet(viewsets.ModelViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        print("CompraViewSet: Create method called")
+        print("Request data:", request.data)
+        print("Request files:", request.FILES)
+        
+        data = request.data.copy()
+        if 'itens' in data and isinstance(data['itens'], str):
+            try:
+                data['itens'] = json.loads(data['itens'])
+            except json.JSONDecodeError:
+                return Response(
+                    {'error': 'Formato inválido para os itens da compra'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-        itens_data = validated_data.pop('itens')
-        compra = Compra.objects.create(**validated_data)
-        for item_data in itens_data:
-            item = ItemCompra.objects.create(compra=compra, **item_data)
-            material_obj = item_data.get('material')
-            categoria_uso = item_data.get('categoria_uso')
-            if categoria_uso and material_obj and isinstance(material_obj, Material):
-                material_obj.categoria_uso_padrao = categoria_uso
-                material_obj.save(update_fields=['categoria_uso_padrao'])
-        total_bruto_calculado = sum(item.valor_total_item for item in compra.itens.all())
-        compra.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
-        compra.save()
-        final_serializer = CompraSerializer(compra, context=self.get_serializer_context())
-        headers = self.get_success_headers(final_serializer.data)
-        return Response(final_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        
+        anexos_data = request.FILES.getlist('anexos')
+        print("Anexos data:", anexos_data)
+        
+        # Create the compra instance
+        compra = serializer.save()
+        print("Created compra:", compra)
+        
+        # Create anexos
+        for anexo_file in anexos_data:
+            anexo = AnexoCompra.objects.create(compra=compra, anexo=anexo_file, descricao=anexo_file.name)
+            print("Created anexo:", anexo)
+        
+        response_serializer = self.get_serializer(compra)
+        headers = self.get_success_headers(response_serializer.data)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset(self):
         queryset = Compra.objects.all().select_related('obra').order_by('-data_compra')
@@ -460,79 +474,40 @@ class CompraViewSet(viewsets.ModelViewSet):
         return queryset
 
     def update(self, request, *args, **kwargs):
+        print("CompraViewSet: Update method called")
+        print("Request data:", request.data)
+        print("Request files:", request.FILES)
+        
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        instance.tipo = request.data.get('tipo', instance.tipo)
-        instance.obra_id = request.data.get('obra', instance.obra_id)
-        instance.fornecedor = request.data.get('fornecedor', instance.fornecedor)
-        instance.data_compra = request.data.get('data_compra', instance.data_compra)
-        instance.nota_fiscal = request.data.get('nota_fiscal', instance.nota_fiscal)
-        desconto_str = request.data.get('desconto', str(instance.desconto))
-        try:
-            instance.desconto = Decimal(desconto_str)
-        except ValueError:
-            instance.desconto = instance.desconto
-        instance.observacoes = request.data.get('observacoes', instance.observacoes)
-        itens_data = request.data.get('itens', None)
-        if isinstance(itens_data, str):
-            try:
-                itens_data = json.loads(itens_data)
-            except json.JSONDecodeError:
-                return Response({'error': 'JSON inválido no campo de itens.'}, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data.copy()
 
-        if itens_data is not None:
-            existing_items_ids = set(instance.itens.values_list('id', flat=True))
-            request_items_ids = set()
-            for item_data in itens_data:
-                item_id = item_data.get('id', None)
-                material_id = item_data.get('material')
-                categoria_uso = item_data.get('categoria_uso')
-                try:
-                    quantidade_str = item_data.get('quantidade', '0')
-                    quantidade = Decimal(quantidade_str)
-                    valor_unitario_str = item_data.get('valor_unitario', '0')
-                    valor_unitario = Decimal(valor_unitario_str)
-                except ValueError as e: continue
-                material_obj = None
-                if material_id:
-                    try:
-                        material_obj = Material.objects.get(id=material_id)
-                    except Material.DoesNotExist: continue
-                else: continue
-                if item_id:
-                    if item_id in existing_items_ids:
-                        try:
-                            item_instance = ItemCompra.objects.get(id=item_id, compra=instance)
-                            item_instance.material = material_obj
-                            item_instance.quantidade = quantidade
-                            item_instance.valor_unitario = valor_unitario
-                            if categoria_uso is not None:
-                                item_instance.categoria_uso = categoria_uso
-                            item_instance.save()
-                            request_items_ids.add(item_id)
-                        except ItemCompra.DoesNotExist: continue
-                    else: continue
-                else:
-                    if not material_obj: continue
-                    item_instance_data = {
-                        'compra': instance, 'material': material_obj,
-                        'quantidade': quantidade, 'valor_unitario': valor_unitario
-                    }
-                    if categoria_uso is not None:
-                        item_instance_data['categoria_uso'] = categoria_uso
-                    item_instance = ItemCompra.objects.create(**item_instance_data)
-                    request_items_ids.add(item_instance.id)
-                if categoria_uso and material_obj:
-                    material_obj.categoria_uso_padrao = categoria_uso
-                    material_obj.save(update_fields=['categoria_uso_padrao'])
-            ids_to_delete = existing_items_ids - request_items_ids
-            if ids_to_delete:
-                ItemCompra.objects.filter(id__in=ids_to_delete, compra=instance).delete()
-        all_current_items = instance.itens.all()
-        total_bruto_calculado = sum(item.valor_total_item for item in all_current_items if item.valor_total_item is not None)
-        instance.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
-        instance.save()
-        serializer = self.get_serializer(instance)
+        # Lógica para converter 'itens' de string JSON para lista, se necessário
+        if 'itens' in data and isinstance(data['itens'], str):
+            try:
+                data['itens'] = json.loads(data['itens'])
+            except json.JSONDecodeError:
+                return Response(
+                    {'error': 'Formato inválido para o campo de itens.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        
+        anexos_data = request.FILES.getlist('anexos')
+        print("Anexos data:", anexos_data)
+        
+        self.perform_update(serializer)
+        
+        # Create new anexos
+        for anexo_file in anexos_data:
+            anexo = AnexoCompra.objects.create(compra=instance, anexo=anexo_file, descricao=anexo_file.name)
+            print("Created anexo:", anexo)
+        
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+        
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
@@ -1877,7 +1852,7 @@ class AnexoCompraViewSet(viewsets.ModelViewSet):
                     queryset = queryset.filter(compra_id=compra_id)
                 except ValueError:
                     return AnexoCompra.objects.none()
-            return queryset.order_by('-data_upload')
+            return queryset.order_by('-uploaded_at')
         except Exception as e:
             return AnexoCompra.objects.none()
     
@@ -1922,18 +1897,25 @@ class AnexoCompraViewSet(viewsets.ModelViewSet):
                     )
 
             # Validar se a compra existe
-            compra_id = serializer.validated_data.get('compra')
+            compra_id = request.data.get('compra')
             if compra_id:
                 try:
                     from .models import Compra
-                    Compra.objects.get(id=compra_id.id)
+                    Compra.objects.get(id=compra_id)
                 except Compra.DoesNotExist:
                     return Response(
                         {'error': 'Compra não encontrada'},
                         status=status.HTTP_404_NOT_FOUND
                     )
 
-            serializer.save(usuario_upload=request.user)
+            # Popular campos automaticamente baseado no arquivo
+            arquivo = request.FILES.get('arquivo')
+            serializer.save(
+                uploaded_by=request.user,
+                nome_original=arquivo.name if arquivo else '',
+                tipo_arquivo=arquivo.content_type if arquivo else '',
+                tamanho_arquivo=arquivo.size if arquivo else 0
+            )
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
             
@@ -2003,7 +1985,7 @@ class AnexoCompraViewSet(viewsets.ModelViewSet):
                 open(anexo.arquivo.path, 'rb'),
                 content_type='application/octet-stream'
             )
-            response['Content-Disposition'] = f'attachment; filename="{smart_str(anexo.nome_arquivo)}"'
+            response['Content-Disposition'] = f'attachment; filename="{smart_str(anexo.nome_original)}"'
             return response
             
         except AnexoCompra.DoesNotExist:
