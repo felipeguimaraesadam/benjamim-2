@@ -455,8 +455,11 @@ class AnexoCompraSerializer(serializers.ModelSerializer):
     
     def get_arquivo_tamanho(self, obj):
         if obj.arquivo:
-            return obj.arquivo.size
-        return None
+            try:
+                return obj.arquivo.size
+            except FileNotFoundError:
+                return 0
+        return 0
 
 
 class ArquivoObraSerializer(serializers.ModelSerializer):
