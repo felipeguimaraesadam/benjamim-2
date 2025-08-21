@@ -561,14 +561,14 @@ class CompraSerializer(serializers.ModelSerializer):
         pagamento_parcelado = validated_data.pop('pagamento_parcelado', None)
         if pagamento_parcelado:
             if pagamento_parcelado.get('tipo') == 'PARCELADO':
-                validated_data['forma_pagamento'] = 'parcelado'
+                validated_data['forma_pagamento'] = 'PARCELADO'
                 parcelas = pagamento_parcelado.get('parcelas', [])
                 validated_data['numero_parcelas'] = len(parcelas)
                 # Se houver parcelas customizadas, podemos usar a primeira como entrada
                 if parcelas:
                     validated_data['valor_entrada'] = parcelas[0].get('valor', 0)
             else:
-                validated_data['forma_pagamento'] = 'avista'
+                validated_data['forma_pagamento'] = 'AVISTA'
                 validated_data['numero_parcelas'] = 1
         
         # Atualiza a categoria de uso padrão para cada material nos itens
@@ -586,7 +586,7 @@ class CompraSerializer(serializers.ModelSerializer):
                         # Tratar o caso em que a categoria não é encontrada, se necessário
                         pass
 
-        forma_pagamento = validated_data.get('forma_pagamento', 'avista')
+        forma_pagamento = validated_data.get('forma_pagamento', 'AVISTA')
         numero_parcelas = validated_data.get('numero_parcelas', 1)
         
         compra = Compra.objects.create(**validated_data)
@@ -617,14 +617,14 @@ class CompraSerializer(serializers.ModelSerializer):
         pagamento_parcelado = validated_data.pop('pagamento_parcelado', None)
         if pagamento_parcelado:
             if pagamento_parcelado.get('tipo') == 'PARCELADO':
-                validated_data['forma_pagamento'] = 'parcelado'
+                validated_data['forma_pagamento'] = 'PARCELADO'
                 parcelas = pagamento_parcelado.get('parcelas', [])
                 validated_data['numero_parcelas'] = len(parcelas)
                 # Se houver parcelas customizadas, podemos usar a primeira como entrada
                 if parcelas:
                     validated_data['valor_entrada'] = parcelas[0].get('valor', 0)
             else:
-                validated_data['forma_pagamento'] = 'avista'
+                validated_data['forma_pagamento'] = 'AVISTA'
                 validated_data['numero_parcelas'] = 1
         
         if itens_data is not None:
@@ -667,15 +667,12 @@ class CompraSerializer(serializers.ModelSerializer):
             instance.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
 
         # Se a forma de pagamento mudou, ou se é parcelado e o número de parcelas mudou
-        if 'forma_pagamento' in validated_data or ('forma_pagamento' == 'parcelado' and 'numero_parcelas' in validated_data):
+        if 'forma_pagamento' in validated_data or (forma_pagamento == 'PARCELADO' and 'numero_parcelas' in validated_data):
             instance.parcelas.all().delete() # Deleta parcelas existentes
-            if forma_pagamento == 'parcelado' and numero_parcelas > 0:
+            if forma_pagamento == 'PARCELADO' and numero_parcelas > 0:
                 instance.create_installments()  # Chamada sem parâmetros
-            elif forma_pagamento == 'avista':
+            elif forma_pagamento == 'AVISTA':
                 # Lógica para pagamento 'avista', se necessário
-                pass
-            elif forma_pagamento == 'UNICO':
-                # Lógica para pagamento 'UNICO', se necessário
                 pass
 
         instance.save()
@@ -686,7 +683,7 @@ class CompraSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         
         # Converter dados do modelo para o formato esperado pelo frontend
-        if instance.forma_pagamento == 'parcelado':
+        if instance.forma_pagamento == 'PARCELADO':
             # Se há parcelas customizadas, usar elas
             parcelas_customizadas = []
             if hasattr(instance, 'parcelas') and instance.parcelas.exists():

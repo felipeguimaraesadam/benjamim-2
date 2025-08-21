@@ -4,6 +4,7 @@ djangorestframework-simplejwt==5.3.1
 django-cors-headers==3.14.0
 Pillow
 WeasyPrint
+pdf2image
 python-decouple
 whitenoise
 waitress

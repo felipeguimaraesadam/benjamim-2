@@ -22,7 +22,7 @@ from django.http import HttpResponse, Http404 # Http404 added, HttpResponse was 
 from django.template.loader import render_to_string # Was present
 from django.conf import settings
 import os
-from .utils import generate_pdf_response
+from .utils import generate_pdf_response, process_anexos_for_pdf
 from weasyprint import HTML
 # from weasyprint.fonts import FontConfiguration # Optional
 
@@ -562,9 +562,19 @@ class CompraViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_404_NOT_FOUND
                 )
             
+            # Preparar dados das compras com anexos processados
+            compras_data = []
+            for compra in compras:
+                anexos_processados = process_anexos_for_pdf(compra.anexos.all())
+                compras_data.append({
+                    'compra': compra,
+                    'anexos_processados': anexos_processados
+                })
+            
             # Renderizar o template HTML
             html_content = render_to_string('relatorios/relatorio_compras_lote.html', {
                 'compras': compras,
+                'compras_data': compras_data,
                 'data_geracao': timezone.now().strftime('%d/%m/%Y %H:%M:%S')
             })
             
@@ -1529,6 +1539,36 @@ class AnexoDespesaViewSet(viewsets.ModelViewSet):
         if despesa_id:
             return self.queryset.filter(despesa_id=despesa_id)
         return self.queryset.none()
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        Remove um anexo de despesa e seu arquivo físico.
+        """
+        try:
+            anexo = self.get_object()
+            
+            # Tentar remover o arquivo físico
+            if anexo.anexo:
+                try:
+                    import os
+                    if os.path.exists(anexo.anexo.path):
+                        os.remove(anexo.anexo.path)
+                except Exception as e:
+                    # Log do erro, mas não falha a operação
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f'Erro ao remover arquivo físico do anexo de despesa: {e}')
+            
+            # Remover o registro do banco
+            anexo.delete()
+            
+            return Response(status=status.HTTP_204_NO_CONTENT)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Erro ao remover anexo: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class GerarRelatorioPagamentoLocacoesPDFView(APIView):
     permission_classes = [IsNivelAdmin | IsNivelGerente]

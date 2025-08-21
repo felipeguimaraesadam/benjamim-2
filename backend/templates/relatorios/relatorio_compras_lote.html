@@ -100,6 +100,26 @@
         .page-break {
             page-break-after: always;
         }
+        .anexos-section {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+        .anexo-item {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .anexo-image {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .anexo-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -110,30 +130,30 @@
         </div>
     </div>
 
-    {% for compra in compras %}
+    {% for item in compras_data %}
     <div class="compra{% if not forloop.last %} page-break{% endif %}">
         <div class="compra-header">
-            <h2 class="compra-title">Compra #{{ compra.id }}</h2>
+            <h2 class="compra-title">Compra #{{ item.compra.id }}</h2>
         </div>
         
         <div class="compra-info">
             <div class="info-item">
-                <span class="info-label">Fornecedor:</span> {{ compra.fornecedor }}
+                <span class="info-label">Fornecedor:</span> {{ item.compra.fornecedor }}
             </div>
             <div class="info-item">
-                <span class="info-label">Data da Compra:</span> {{ compra.data_compra|date:"d/m/Y" }}
+                <span class="info-label">Data da Compra:</span> {{ item.compra.data_compra|date:"d/m/Y" }}
             </div>
             <div class="info-item">
-                <span class="info-label">Obra:</span> {{ compra.obra.nome_obra|default:"N/A" }}
+                <span class="info-label">Obra:</span> {{ item.compra.obra.nome_obra|default:"N/A" }}
             </div>
             <div class="info-item">
-                <span class="info-label">Forma de Pagamento:</span> {{ compra.get_forma_pagamento_display|default:"N/A" }}
+                <span class="info-label">Forma de Pagamento:</span> {{ item.compra.get_forma_pagamento_display|default:"N/A" }}
             </div>
         </div>
 
-        {% if compra.observacoes %}
+        {% if item.compra.observacoes %}
         <div class="info-item">
-            <span class="info-label">Observações:</span> {{ compra.observacoes }}
+            <span class="info-label">Observações:</span> {{ item.compra.observacoes }}
         </div>
         {% endif %}
 
@@ -149,13 +169,13 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in compra.itens.all %}
+                {% for item_compra in item.compra.itens.all %}
                 <tr>
-                    <td>{{ item.material.nome }}</td>
-                    <td>{{ item.quantidade }}</td>
-                    <td>{{ item.material.unidade_medida }}</td>
-                    <td>R$ {{ item.valor_unitario|floatformat:2 }}</td>
-                    <td>R$ {{ item.valor_total|floatformat:2 }}</td>
+                    <td>{{ item_compra.material.nome }}</td>
+                    <td>{{ item_compra.quantidade }}</td>
+                    <td>{{ item_compra.material.unidade_medida }}</td>
+                    <td>R$ {{ item_compra.valor_unitario|floatformat:2 }}</td>
+                    <td>R$ {{ item_compra.valor_total|floatformat:2 }}</td>
                 </tr>
                 {% empty %}
                 <tr>
@@ -165,7 +185,7 @@
             </tbody>
         </table>
 
-        {% if compra.forma_pagamento == 'parcelado' and compra.parcelas.all %}
+        {% if item.compra.forma_pagamento == 'parcelado' and item.compra.parcelas.all %}
         <div class="parcelas-section">
             <h3>Parcelas</h3>
             <table class="parcelas-table">
@@ -178,9 +198,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for parcela in compra.parcelas.all %}
+                    {% for parcela in item.compra.parcelas.all %}
                     <tr>
-                        <td>{{ forloop.counter }}</td>
+                        <td>{{ parcela.numero_parcela }}</td>
                         <td>R$ {{ parcela.valor|floatformat:2 }}</td>
                         <td>{{ parcela.data_vencimento|date:"d/m/Y" }}</td>
                         <td>{{ parcela.get_status_display }}</td>
@@ -191,8 +211,26 @@
         </div>
         {% endif %}
 
+        {% if item.anexos_processados %}
+         <div class="anexos-section">
+             <h3>Anexos</h3>
+             {% for anexo in item.anexos_processados %}
+            <div class="anexo-item">
+                {% if anexo.is_image %}
+                    <img src="data:image/{{ anexo.format }};base64,{{ anexo.base64_data }}" 
+                         alt="{{ anexo.nome }}" class="anexo-image">
+                {% endif %}
+                <div class="anexo-info">
+                    <strong>{{ anexo.nome }}</strong>
+                    {% if anexo.descricao %} - {{ anexo.descricao }}{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <div class="total">
-            <strong>Valor Total: R$ {{ compra.valor_total_liquido|floatformat:2 }}</strong>
+            <strong>Valor Total: R$ {{ item.compra.valor_total_liquido|floatformat:2 }}</strong>
         </div>
     </div>
     {% empty %}

@@ -198,7 +198,7 @@ const CompraItensModal = ({ isOpen, onClose, compra }) => {
           </dl>
 
           {/* Seção de Pagamento Parcelado */}
-          {compra.parcelas && compra.parcelas.length > 0 && (
+          {compra.pagamento_parcelado && compra.pagamento_parcelado.tipo === 'PARCELADO' && compra.pagamento_parcelado.parcelas && compra.pagamento_parcelado.parcelas.length > 0 && (
             <>
               <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3 pt-3">
                 Pagamento Parcelado
@@ -206,7 +206,7 @@ const CompraItensModal = ({ isOpen, onClose, compra }) => {
               <div className="bg-white dark:bg-gray-700 shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-600/20 sm:rounded-xl p-4">
                 <div className="mb-3">
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Total de {compra.parcelas.length} parcela{compra.parcelas.length > 1 ? 's' : ''}
+                    Total de {compra.pagamento_parcelado.parcelas.length} parcela{compra.pagamento_parcelado.parcelas.length > 1 ? 's' : ''}
                   </span>
                 </div>
                 <div className="overflow-x-auto">
@@ -216,44 +216,38 @@ const CompraItensModal = ({ isOpen, onClose, compra }) => {
                         <th className="px-3 py-2 text-left">Parcela</th>
                         <th className="px-3 py-2 text-right">Valor</th>
                         <th className="px-3 py-2 text-center">Vencimento</th>
-                        <th className="px-3 py-2 text-center">Status</th>
-                        <th className="px-3 py-2 text-center">Pagamento</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {compra.parcelas.map((parcela, index) => (
-                        <tr key={parcela.id || index} className="border-b border-gray-200 dark:border-gray-600">
+                      {compra.pagamento_parcelado.parcelas.map((parcela, index) => (
+                        <tr key={index} className="border-b border-gray-200 dark:border-gray-600">
                           <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-200">
-                            {parcela.numero_parcela}ª
+                            {index + 1}ª
                           </td>
                           <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">
-                            {formatCurrency(parcela.valor_parcela)}
+                            {formatCurrency(parcela.valor)}
                           </td>
                           <td className="px-3 py-2 text-center text-gray-700 dark:text-gray-300">
                             {formatDate(parcela.data_vencimento)}
-                          </td>
-                          <td className="px-3 py-2 text-center">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              parcela.status === 'PAGO' 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                : parcela.status === 'VENCIDO'
-                                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                : parcela.status === 'CANCELADO'
-                                ? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                            }`}>
-                              {parcela.status === 'PAGO' ? 'Pago' : 
-                               parcela.status === 'VENCIDO' ? 'Vencido' :
-                               parcela.status === 'CANCELADO' ? 'Cancelado' : 'Pendente'}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 text-center text-gray-700 dark:text-gray-300">
-                            {parcela.data_pagamento ? formatDate(parcela.data_pagamento) : '-'}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </>
+          )}
+          
+          {/* Seção de Pagamento Único */}
+          {compra.pagamento_parcelado && compra.pagamento_parcelado.tipo === 'UNICO' && (
+            <>
+              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3 pt-3">
+                Forma de Pagamento
+              </h3>
+              <div className="bg-white dark:bg-gray-700 shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-600/20 sm:rounded-xl p-4">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  <span className="font-medium">Pagamento Único:</span> {formatCurrency(compra.valor_total_liquido)}
                 </div>
               </div>
             </>
