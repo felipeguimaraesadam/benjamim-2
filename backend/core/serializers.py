@@ -534,6 +534,18 @@ class CompraSerializer(serializers.ModelSerializer):
         except json.JSONDecodeError:
             raise serializers.ValidationError({field_name: f"JSON inválido para o campo '{field_name}'."})
 
+    @staticmethod
+    def _validate_itens_data(itens_data):
+        if not itens_data:
+            raise serializers.ValidationError({'itens': 'A compra deve ter pelo menos um item.'})
+        for item_data in itens_data:
+            if not item_data.get('material'):
+                raise serializers.ValidationError({'itens': 'Cada item deve ter um material.'})
+            if not item_data.get('quantidade') or float(item_data.get('quantidade')) <= 0:
+                raise serializers.ValidationError({'itens': 'Quantidade deve ser um número positivo.'})
+            if item_data.get('valor_unitario') is None or float(item_data.get('valor_unitario')) < 0:
+                raise serializers.ValidationError({'itens': 'Valor unitário não pode ser negativo.'})
+
     def create(self, validated_data):
         from datetime import datetime, timedelta
         from dateutil.relativedelta import relativedelta
@@ -541,8 +553,7 @@ class CompraSerializer(serializers.ModelSerializer):
         itens_data = self._get_json_from_request('itens') or []
         pagamento_data = self._get_json_from_request('pagamento_parcelado')
 
-        if not itens_data:
-             raise serializers.ValidationError({'itens': 'A compra deve ter pelo menos um item.'})
+        self._validate_itens_data(itens_data)
 
         if pagamento_data and isinstance(pagamento_data, dict):
             if pagamento_data.get('tipo') == 'PARCELADO':
@@ -553,12 +564,17 @@ class CompraSerializer(serializers.ModelSerializer):
                 validated_data['forma_pagamento'] = 'AVISTA'
                 validated_data['numero_parcelas'] = 1
 
+        # Itens must be removed from validated_data before creating the Compra instance
+        # as the field is read-only.
+        validated_data.pop('itens', None)
+
         compra = Compra.objects.create(**validated_data)
 
         for item_data in itens_data:
+            item_data['material_id'] = item_data.pop('material')
             ItemCompra.objects.create(compra=compra, **item_data)
         
-        compra.save()
+        compra.save() # This will trigger the recalculation logic in the model's save method
         
         if compra.forma_pagamento == 'PARCELADO' and pagamento_data:
             compra.create_installments(pagamento_data.get('parcelas', []))
@@ -569,6 +585,10 @@ class CompraSerializer(serializers.ModelSerializer):
         itens_data = self._get_json_from_request('itens')
         pagamento_data = self._get_json_from_request('pagamento_parcelado')
 
+        # Pop read-only fields that might be in validated_data
+        validated_data.pop('itens', None)
+
+        # Update validated fields on the instance
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
@@ -581,14 +601,17 @@ class CompraSerializer(serializers.ModelSerializer):
                 instance.forma_pagamento = 'AVISTA'
                 instance.numero_parcelas = 1
 
-        instance.save()
-
+        # Handle items update (replace all)
         if itens_data is not None:
+            self._validate_itens_data(itens_data)
             instance.itens.all().delete()
             for item_data in itens_data:
+                item_data['material_id'] = item_data.pop('material')
                 ItemCompra.objects.create(compra=instance, **item_data)
-            instance.save()
 
+        instance.save() # Recalculate totals and save other changes
+
+        # Handle installments update (replace all)
         instance.parcelas.all().delete()
         if instance.forma_pagamento == 'PARCELADO' and pagamento_data:
             instance.create_installments(pagamento_data.get('parcelas', []))
