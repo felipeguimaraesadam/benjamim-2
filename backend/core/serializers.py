@@ -547,37 +547,50 @@ class CompraSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'itens': 'Valor unitário não pode ser negativo.'})
 
     def create(self, validated_data):
-        from datetime import datetime, timedelta
-        from dateutil.relativedelta import relativedelta
+        from django.db import transaction
 
         itens_data = self._get_json_from_request('itens') or []
         pagamento_data = self._get_json_from_request('pagamento_parcelado')
 
         self._validate_itens_data(itens_data)
 
-        if pagamento_data and isinstance(pagamento_data, dict):
-            if pagamento_data.get('tipo') == 'PARCELADO':
-                validated_data['forma_pagamento'] = 'PARCELADO'
-                parcelas = pagamento_data.get('parcelas', [])
-                validated_data['numero_parcelas'] = len(parcelas) if parcelas else 0
-            else:
-                validated_data['forma_pagamento'] = 'AVISTA'
-                validated_data['numero_parcelas'] = 1
-
-        # Itens must be removed from validated_data before creating the Compra instance
-        # as the field is read-only.
+        # Remove read-only 'itens' if it exists in validated_data
         validated_data.pop('itens', None)
 
-        compra = Compra.objects.create(**validated_data)
+        try:
+            with transaction.atomic():
+                # Set payment info in validated_data before creating the Compra
+                if pagamento_data and isinstance(pagamento_data, dict):
+                    if pagamento_data.get('tipo') == 'PARCELADO':
+                        validated_data['forma_pagamento'] = 'PARCELADO'
+                        parcelas = pagamento_data.get('parcelas', [])
+                        validated_data['numero_parcelas'] = len(parcelas) if parcelas else 0
+                    else: # Includes 'UNICO' or any other case
+                        validated_data['forma_pagamento'] = 'AVISTA'
+                        validated_data['numero_parcelas'] = 1
 
-        for item_data in itens_data:
-            item_data['material_id'] = item_data.pop('material')
-            ItemCompra.objects.create(compra=compra, **item_data)
-        
-        compra.save() # This will trigger the recalculation logic in the model's save method
-        
-        if compra.forma_pagamento == 'PARCELADO' and pagamento_data:
-            compra.create_installments(pagamento_data.get('parcelas', []))
+                # Create the Compra instance with all available data
+                compra = Compra.objects.create(**validated_data)
+
+                # Create related ItemCompra instances
+                for item_data in itens_data:
+                    item_data['material_id'] = item_data.pop('material')
+                    ItemCompra.objects.create(compra=compra, **item_data)
+
+                # The Compra model's save() method is automatically called by create()
+                # and will be called again here, which is fine. This ensures totals are calculated
+                # after items are added.
+                compra.save()
+
+                # Create installments if applicable
+                if compra.forma_pagamento == 'PARCELADO' and pagamento_data:
+                    compra.parcelas.all().delete() # Clear existing before creating new
+                    compra.create_installments(pagamento_data.get('parcelas', []))
+
+        except Exception as e:
+            # If any part of the transaction fails, it will be rolled back.
+            # Raise a validation error to inform the client.
+            raise serializers.ValidationError(f"Erro ao criar a compra: {str(e)}")
 
         return compra
 
