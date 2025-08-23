@@ -960,23 +960,11 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       try {
         const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;
         
-        // Filtrar apenas itens válidos usando a mesma lógica da validação
         const itemsToSubmit = items
-          .filter((item, index) => {
-            // Verificar se tem dados preenchidos
-            const hasMaterial = !!(item.material && item.material.id) || !!(item.materialId && String(item.materialId).trim());
-            const hasQuantidade = !!(item.quantidade && String(item.quantidade).trim());
-            const hasValorUnitario = !!(item.valorUnitario && String(item.valorUnitario).trim());
-            
-            if (hasMaterial || hasQuantidade || hasValorUnitario) {
-              // Se tem dados, verificar se todos os campos são válidos
-              const materialError = validateField('material', item.material || item.materialId, index);
-              const quantidadeError = validateField('quantidade', item.quantidade, index);
-              const valorError = validateField('valorUnitario', item.valorUnitario, index);
-              
-              return !materialError && !quantidadeError && !valorError;
-            }
-            return false;
+          .filter(item => {
+            const hasMaterial = !!(item.materialId || item.material?.id);
+            const quantidade = parseFloat(String(item.quantidade || '0').replace(',', '.'));
+            return hasMaterial && quantidade > 0;
           })
           .map(item => {
             const quantidade = parseFloat(String(item.quantidade).replace(',', '.')) || 0;
