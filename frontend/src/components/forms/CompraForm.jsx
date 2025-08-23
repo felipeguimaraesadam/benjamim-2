@@ -956,7 +956,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const handleSubmit = e => {
     e.preventDefault();
 
-    if (validateForm()) {
+    // VALIDATION BYPASSED AS PER USER REQUEST FOR DEBUGGING
+    // if (validateForm()) {
       try {
         const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;
 
@@ -974,7 +975,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
               const quantidadeError = validateField('quantidade', item.quantidade, index);
               const valorError = validateField('valorUnitario', item.valorUnitario, index);
 
-              return !materialError && !quantidadeError && !valorError;
+              // BYPASSING a parte da validação que impede o envio
+              // return !materialError && !quantidadeError && !valorError;
+              return true; // Força a inclusão do item para debug
             }
             return false;
           })
@@ -991,13 +994,14 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             };
           });
 
-        if (itemsToSubmit.length === 0) {
-          setErrors(prev => ({
-            ...prev,
-            form: 'Adicione pelo menos um item válido à compra.',
-          }));
-          return;
-        }
+        // BYPASSING a validação que impede o envio
+        // if (itemsToSubmit.length === 0) {
+        //   setErrors(prev => ({
+        //     ...prev,
+        //     form: 'Adicione pelo menos um item válido à compra.',
+        //   }));
+        //   return;
+        // }
         // Determinar forma de pagamento baseada no tipo de pagamento
         const formaPagamento = pagamentoParcelado?.tipo === 'PARCELADO' ? 'PARCELADO' : 'AVISTA';
 
@@ -1024,9 +1028,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           form: error.message,
         }));
       }
-    } else {
-
-    }
+    // } else {
+    //
+    // }
   };
 
   const subtotalCalculado = items.reduce(
