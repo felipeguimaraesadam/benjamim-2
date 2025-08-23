@@ -348,11 +348,12 @@ export const getCompras = params => apiClient.get('/compras/', { params });
 export const getCompraById = id => apiClient.get(`/compras/${id}/`);
 
 const prepareCompraFormData = (compraData) => {
+  console.log('>>> [DEBUG] Data received by prepareCompraFormData:', JSON.parse(JSON.stringify(compraData)));
   const formData = new FormData();
 
   // Append simple key-value pairs
   Object.keys(compraData).forEach(key => {
-    if (key === 'itens' || key === 'parcelas' || key === 'anexos' || key === 'anexos_a_remover') {
+    if (key === 'itens' || key === 'pagamento_parcelado' || key === 'anexos' || key === 'anexos_a_remover') {
       // Handled separately
       return;
     }
@@ -363,10 +364,30 @@ const prepareCompraFormData = (compraData) => {
 
   // Append complex data as JSON strings
   if (compraData.itens) {
-    formData.append('itens', JSON.stringify(compraData.itens));
+    let itemsToProcess = compraData.itens;
+    // Defensive check: if items is a string, parse it first.
+    if (typeof itemsToProcess === 'string') {
+      console.log(">>> [DEBUG] 'itens' was a string, parsing it.");
+      try {
+        itemsToProcess = JSON.parse(itemsToProcess);
+      } catch (e) {
+        console.error("Error parsing 'itens' string:", e);
+        itemsToProcess = [];
+      }
+    }
+    console.log('>>> [DEBUG] `itens` field before JSON.stringify:', JSON.parse(JSON.stringify(itemsToProcess)));
+    console.log('>>> [DEBUG] type of `itens` field:', typeof itemsToProcess);
+    formData.append('itens', JSON.stringify(itemsToProcess));
   }
-  if (compraData.parcelas) {
-    formData.append('parcelas', JSON.stringify(compraData.parcelas));
+
+  // Handle 'pagamento_parcelado' correctly.
+  if (compraData.pagamento_parcelado) {
+    let parcelasToProcess = compraData.pagamento_parcelado;
+    // The form should stringify it, but let's be safe.
+    if (typeof parcelasToProcess !== 'string') {
+      parcelasToProcess = JSON.stringify(parcelasToProcess);
+    }
+    formData.append('pagamento_parcelado', parcelasToProcess);
   }
 
   // Append files
@@ -398,7 +419,12 @@ const prepareCompraFormData = (compraData) => {
 };
 
 export const createCompra = compraData => {
+  console.log('>>> [DEBUG] Data received by createCompra:', JSON.parse(JSON.stringify(compraData)));
   const formData = prepareCompraFormData(compraData);
+  console.log('>>> [DEBUG] FormData content being sent for creation:');
+  for (let [key, value] of formData.entries()) {
+    console.log(`  ${key}: ${value}`);
+  }
   return apiClient.post('/compras/', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -407,7 +433,12 @@ export const createCompra = compraData => {
 };
 
 export const updateCompra = (id, compraData) => {
+  console.log(`>>> [DEBUG] Data received by updateCompra (ID: ${id}):`, JSON.parse(JSON.stringify(compraData)));
   const formData = prepareCompraFormData(compraData);
+  console.log('>>> [DEBUG] FormData content being sent for update:');
+  for (let [key, value] of formData.entries()) {
+    console.log(`  ${key}: ${value}`);
+  }
   return apiClient.put(`/compras/${id}/`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',

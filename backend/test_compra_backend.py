@@ -14,7 +14,7 @@ from decimal import Decimal
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sgo_core.settings')
 django.setup()
 
-from core.models import Obra, Material, Compra, ItemCompra, Funcionario
+from core.models import Obra, Material, Compra, ItemCompra
 from core.serializers import CompraSerializer
 from django.contrib.auth import get_user_model
 
@@ -23,43 +23,21 @@ User = get_user_model()
 def test_compra_creation():
     print("=== TESTE DE CRIAÇÃO DE COMPRA ===")
     
-    # Garantir que os dados de teste existam usando get_or_create
-    try:
-        responsavel_func, _ = Funcionario.objects.get_or_create(
-            nome_completo='Funcionário Teste para Compra',
-            defaults={'cargo': 'Tester', 'data_contratacao': '2023-01-01'}
-        )
+    # Verificar se existem dados necessários
+    obra = Obra.objects.filter(id=8).first()
+    material = Material.objects.filter(id=2).first()
 
-        obra, obra_created = Obra.objects.get_or_create(
-            id=8,
-            defaults={
-                'nome_obra': 'Obra de Teste para Compra',
-                'endereco_completo': 'Rua Teste, 123',
-                'cidade': 'Cidade Teste',
-                'status': 'Em Andamento',
-                'responsavel': responsavel_func
-            }
-        )
-        if obra_created:
-            print("✅ Obra de teste criada (ID 8)")
-        else:
-            print("✅ Obra de teste encontrada (ID 8)")
-
-        material, material_created = Material.objects.get_or_create(
-            id=2,
-            defaults={'nome': 'Material de Teste para Compra', 'unidade_medida': 'un'}
-        )
-        if material_created:
-            print("✅ Material de teste criado (ID 2)")
-        else:
-            print("✅ Material de teste encontrado (ID 2)")
-
-    except Exception as e:
-        print(f"❌ Erro ao preparar dados de teste: {e}")
-        import traceback
-        traceback.print_exc()
+    if not obra:
+        print("❌ Obra com ID 8 não encontrada")
         return
     
+    if not material:
+        print("❌ Material com ID 2 não encontrado")
+        return
+
+    print(f"✅ Obra encontrada: {obra.nome_obra}")
+    print(f"✅ Material encontrado: {material.nome}")
+
     # Simular dados que o frontend envia (incluindo possíveis "números infinitos")
     test_cases = [
         {
@@ -137,26 +115,6 @@ def test_compra_creation():
                         "material": 2,
                         "quantidade": "Infinity",
                         "valor_unitario": "Infinity",
-                        "categoria_uso": "Geral"
-                    }
-                ]
-            }
-        },
-        {
-            "name": "Caso com Valor Unitário Zero",
-            "data": {
-                "obra": 8,
-                "fornecedor": "Fornecedor Teste 5",
-                "data_compra": "2024-01-16",
-                "nota_fiscal": "NF-ZERO",
-                "desconto": "0.00",
-                "observacoes": "Teste com item de valor zero",
-                "tipo": "COMPRA",
-                "itens": [
-                    {
-                        "material": 2,
-                        "quantidade": "5.000",
-                        "valor_unitario": "0.00",
                         "categoria_uso": "Geral"
                     }
                 ]

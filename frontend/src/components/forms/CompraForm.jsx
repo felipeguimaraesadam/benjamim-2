@@ -49,6 +49,9 @@ const WarningIcon = (
   </svg>
 );
 
+// itemUniqueIdCounter and generateItemUniqueId are defined below CompraForm, will keep them there.
+// For now, ensure CompraForm has access if they are used within it for ID generation before dispatch.
+
 const ITEM_ACTION_TYPES = {
   SET_ITEMS: 'SET_ITEMS',
   ADD_ITEM: 'ADD_ITEM',
@@ -57,6 +60,7 @@ const ITEM_ACTION_TYPES = {
   SET_MATERIAL: 'SET_MATERIAL',
 };
 
+// Helper for reducer (does not generate ID)
 const createNewEmptyItemPayload = () => ({
   originalId: null,
   material: null,
@@ -66,21 +70,21 @@ const createNewEmptyItemPayload = () => ({
   unidadeMedida: '',
   valorUnitario: '',
   valorTotalItem: '0.00',
-  categoria_uso: '',
+  categoria_uso: '', // Added categoria_uso
 });
 
 const itemsReducer = (state, action) => {
   switch (action.type) {
     case ITEM_ACTION_TYPES.SET_ITEMS:
       return action.payload;
-    case ITEM_ACTION_TYPES.ADD_ITEM:
+    case ITEM_ACTION_TYPES.ADD_ITEM: // payload: { id }
       return [
         ...state,
         { ...createNewEmptyItemPayload(), id: action.payload.id },
       ];
-    case ITEM_ACTION_TYPES.REMOVE_ITEM:
+    case ITEM_ACTION_TYPES.REMOVE_ITEM: // payload: index
       return state.filter((_, i) => i !== action.payload);
-    case ITEM_ACTION_TYPES.UPDATE_ITEM_FIELD:
+    case ITEM_ACTION_TYPES.UPDATE_ITEM_FIELD: // payload: { index, fieldName, value }
       return state.map((item, i) => {
         if (i === action.payload.index) {
           let processedValue = action.payload.value;
@@ -109,37 +113,39 @@ const itemsReducer = (state, action) => {
         }
         return item;
       });
-    case ITEM_ACTION_TYPES.SET_MATERIAL: {
-      return state.map((item, i) => {
+    case ITEM_ACTION_TYPES.SET_MATERIAL: { // payload: { index, material }
+      console.log('🔍 REDUCER: SET_MATERIAL action received:', action.payload);
+      const newState = state.map((item, i) => {
         if (i === action.payload.index) {
-          const selectedMaterial = action.payload.material;
-          if (selectedMaterial) {
-            return {
-              ...item,
-              material: selectedMaterial,
-              materialId: String(selectedMaterial.id),
-              materialNome: selectedMaterial.nome,
-              unidadeMedida: selectedMaterial.unidade_medida,
-              categoria_uso: selectedMaterial.categoria_uso_padrao || '',
-            };
-          }
-          return {
-            ...item,
-            material: null,
-            materialId: '',
-            materialNome: '',
-            unidadeMedida: '',
-            categoria_uso: '',
-          };
+          const updatedItem = action.payload.material
+            ? {
+                ...item,
+                material: action.payload.material,
+                materialId: String(action.payload.material.id),
+                materialNome: action.payload.material.nome,
+                unidadeMedida: action.payload.material.unidade_medida,
+              }
+            : {
+                ...item,
+                material: null,
+                materialId: '',
+                materialNome: '',
+                unidadeMedida: '',
+              };
+
+          return updatedItem;
         }
         return item;
       });
+      console.log('🔍 REDUCER: New state after SET_MATERIAL:', newState);
+      return newState;
     }
     default:
       return state;
   }
 };
 
+// Define ItemRowInternal first
 const ItemRowInternal = ({
   item,
   index,
@@ -151,10 +157,10 @@ const ItemRowInternal = ({
   onMaterialSelectForItem,
   initialData,
   onItemKeyDown,
-  materialRef,
-  quantityRef,
-  unitPriceRef,
-  onItemFieldBlur,
+  materialRef, // input ref for MaterialAutocomplete's input
+  quantityRef, // input ref for quantity
+  unitPriceRef, // input ref for unitPrice
+  onItemFieldBlur, // New prop for blur handling
 }) => {
   const getError = fieldName => errors && errors[`item_${index}_${fieldName}`];
 
@@ -165,6 +171,7 @@ const ItemRowInternal = ({
     !item.quantidade &&
     !item.valorUnitario;
 
+  // Memoize the callback for MaterialAutocomplete's parentOnKeyDown
   const handleMaterialAutocompleteKeyDown = useCallback(
     e => {
       onItemKeyDown(e, index, 'material');
@@ -178,7 +185,7 @@ const ItemRowInternal = ({
     >
       <td className="px-3 py-2.5 border-b border-slate-200 text-sm min-w-[250px] md:min-w-[280px] align-top">
         <MaterialAutocomplete
-          ref={materialRef}
+          ref={materialRef} // Pass the ref to MaterialAutocomplete
           value={item.material}
           onMaterialSelect={onMaterialSelectForItem}
           itemIndex={index}
@@ -191,19 +198,19 @@ const ItemRowInternal = ({
               blurState.currentInputValue,
               blurState
             )
-          }
+          } // Pass the whole blurState
         />
       </td>
       <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top w-[120px]">
         <input
-          ref={quantityRef}
+          ref={quantityRef} // Pass the ref
           type="text"
           inputMode="decimal"
           name="quantidade"
           value={item.quantidade}
           onChange={e => onItemChange(index, 'quantidade', e.target.value)}
           onKeyDown={e => onItemKeyDown(e, index, 'quantity')}
-          onBlur={e => onItemFieldBlur(index, 'quantidade', e.target.value)}
+          onBlur={e => onItemFieldBlur(index, 'quantidade', e.target.value)} // Added onBlur
           className={`w-full p-2 border ${getError('quantidade') ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-right`}
           placeholder="0,000"
         />
@@ -219,14 +226,14 @@ const ItemRowInternal = ({
       </td>
       <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top w-[150px]">
         <input
-          ref={unitPriceRef}
+          ref={unitPriceRef} // Pass the ref
           type="text"
           inputMode="decimal"
           name="valorUnitario"
           value={item.valorUnitario}
           onChange={e => onItemChange(index, 'valorUnitario', e.target.value)}
           onKeyDown={e => onItemKeyDown(e, index, 'unitPrice')}
-          onBlur={e => onItemFieldBlur(index, 'valorUnitario', e.target.value)}
+          onBlur={e => onItemFieldBlur(index, 'valorUnitario', e.target.value)} // Added onBlur
           className={`w-full p-2 border ${getError('valorUnitario') ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-right`}
           placeholder="0,00"
         />
@@ -244,6 +251,8 @@ const ItemRowInternal = ({
           .replace('.', ',')}
       </td>
       <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top w-[180px]">
+        {' '}
+        {/* Added Categoria de Uso column */}
         <select
           name="categoria_uso"
           value={item.categoria_uso || ''}
@@ -271,6 +280,8 @@ const ItemRowInternal = ({
         )}
       </td>
       <td className="px-3 py-2.5 border-b border-slate-200 text-center align-middle w-[100px]">
+        {' '}
+        {/* Adjusted width */}
         <button
           type="button"
           onClick={() => onRemoveItem(index)}
@@ -288,36 +299,41 @@ const ItemRowInternal = ({
     </tr>
   );
 };
+// Wrap ItemRowInternal with React.memo for export
 const ItemRow = React.memo(ItemRowInternal);
 
 const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const itemFieldRefs = useRef([]);
   const [tipo, setTipo] = useState(
     initialData?.tipo ? initialData.tipo.toUpperCase() : 'COMPRA'
-  );
+  ); // 'COMPRA' or 'ORCAMENTO'
   const [obraId, setObraId] = useState('');
   const [obraSelecionada, setObraSelecionada] = useState(null);
   const [dataCompra, setDataCompra] = useState('');
-  const [dataPagamento, setDataPagamento] = useState('');
+  const [dataPagamento, setDataPagamento] = useState(''); // Added state for payment date
   const [fornecedor, setFornecedor] = useState('');
   const [notaFiscal, setNotaFiscal] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [desconto, setDesconto] = useState('0.00');
-  const [items, dispatchItems] = useReducer(itemsReducer, []);
+  // const [items, setItems] = useState([]); // Replaced with useReducer
+  const [items, dispatchItems] = useReducer(itemsReducer, []); // useReducer for items
   const [obras, setObras] = useState([]);
   const [errors, setErrors] = useState({});
   const [itemToFocusId, setItemToFocusId] = useState(null);
   
+  // New state for payment installments and attachments
   const [pagamentoParcelado, setPagamentoParcelado] = useState({
-    tipo: 'UNICO',
+    tipo: 'UNICO', // 'UNICO' or 'PARCELADO'
     parcelas: []
   });
   const [anexos, setAnexos] = useState([]);
 
+  // Memoized callbacks for payment installments to prevent infinite loops
   const handleTipoPagamentoChange = useCallback((tipo) => {
     setPagamentoParcelado(prev => ({ ...prev, tipo }));
   }, []);
 
+  // Separate useEffect to resolve obra when obras are loaded
   useEffect(() => {
     if (obras.length > 0 && obraId && !obraSelecionada) {
       const obraObj = obras.find(o => String(o.id) === String(obraId));
@@ -331,13 +347,19 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     setPagamentoParcelado(prev => ({ ...prev, parcelas }));
   }, []);
 
+  // Refs for keyboard navigation
   const tipoCompraRef = useRef(null);
   const tipoOrcamentoRef = useRef(null);
   const obraAutocompleteRef = useRef(null);
   const fornecedorRef = useRef(null);
-  const prevDataCompraRef = useRef();
 
+  const prevDataCompraRef = useRef(); // Added ref for previous dataCompra
+
+  // Function to get field error (can be defined outside or memoized if complex)
+  // For simplicity, defined here. If it used CompraForm state/props not passed as args, it would need useCallback.
+  // FUNÇÃO DE VALIDAÇÃO ÚNICA E CONSOLIDADA
   const validateField = (fieldName, value, itemIndex = null) => {
+    // Validação de campos do cabeçalho
     if (itemIndex === null) {
       if (fieldName === 'dataCompra' && !value)
         return 'Data da compra é obrigatória.';
@@ -356,6 +378,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       return null;
     }
     
+    // Validação de campos de itens
     const item = items[itemIndex];
     if (!item) return null;
 
@@ -383,6 +406,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     [items]
   );
 
+  // Handle obra selection
   const handleObraSelect = useCallback(obra => {
     if (obra) {
       setObraId(obra.id);
@@ -397,6 +421,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const handleItemFieldBlur = useCallback(
     (itemIndex, fieldName, fieldValue, blurState) => {
       if (fieldName === 'material') {
+        // Se uma seleção foi feita, limpar erro
         if (blurState?.selectionMade) {
           setErrors(prev => ({
             ...prev,
@@ -404,6 +429,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           }));
           return;
         }
+
+        // Validar após delay para permitir seleção
         setTimeout(() => {
           const error = validateField('material', fieldValue, itemIndex);
           setErrors(prev => ({
@@ -413,6 +440,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         }, 150);
         return;
       }
+
+      // Validação para outros campos
       const error = validateField(fieldName, fieldValue, itemIndex);
       setErrors(prev => ({
         ...prev,
@@ -423,22 +452,31 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   );
 
   useEffect(() => {
+    // This effect ensures that our refs array is in sync with the items array.
+    // It's crucial for focus management, especially when items are added or removed.
     itemFieldRefs.current = items.map((item, i) =>
+      // If a ref object already exists for this index, check if it corresponds
+      // to the correct item ID. If not, or if it doesn't exist, create a new one.
+      // This prevents refs from getting mismatched when items are reordered or removed.
       itemFieldRefs.current[i] && itemFieldRefs.current[i].id === item.id
         ? itemFieldRefs.current[i]
         : {
-            id: item.id,
+            id: item.id, // Associate ref with item's unique ID
             material: React.createRef(),
             quantity: React.createRef(),
             unitPrice: React.createRef(),
+            // categoria_uso is handled by a separate callback ref
           }
     );
-  }, [items]);
+  }, [items]); // Rerun whenever the items array instance changes.
 
+  // New useEffect for focusing based on itemToFocusId
   useEffect(() => {
     if (itemToFocusId && items.length > 0) {
       const focusIndex = items.findIndex(item => item.id === itemToFocusId);
+
       if (focusIndex !== -1) {
+        // Ensure the refs array for this index is populated and material ref exists
         if (
           itemFieldRefs.current &&
           itemFieldRefs.current[focusIndex] &&
@@ -453,15 +491,16 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           ) {
             setTimeout(() => {
               materialAutocompleteInstance.focus();
-            }, 0);
+              // setItemToFocusId(null); // Moved down to always consume ID after attempt
+            }, 0); // Delay to allow DOM updates and ref attachment
           }
         }
-        setItemToFocusId(null);
+        setItemToFocusId(null); // Consume the ID to prevent re-focusing on subsequent renders
       } else {
-        setItemToFocusId(null);
+        setItemToFocusId(null); // Item not found, consume ID
       }
     }
-  }, [items, itemToFocusId]);
+  }, [items, itemToFocusId]); // Removed itemFieldRefs dependency to prevent infinite loop
 
   useEffect(() => {
     const fetchObras = async () => {
@@ -492,7 +531,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     unidadeMedida: '',
     valorUnitario: '',
     valorTotalItem: '0.00',
-    categoria_uso: '',
+    categoria_uso: '', // Added categoria_uso
   });
 
   useEffect(() => {
@@ -500,26 +539,31 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     setErrors({});
 
     if (initialData) {
+      // This block now handles both editing and duplicating.
       setTipo(initialData.tipo ? initialData.tipo.toUpperCase() : 'COMPRA');
 
+      // Handle 'obra' which might be an object or just an ID
       if (initialData.obra_details) {
         setObraId(String(initialData.obra_details.id));
         setObraSelecionada(initialData.obra_details);
       } else if (initialData.obra) {
         const obraIdentifier = initialData.obra.id || initialData.obra;
         setObraId(String(obraIdentifier));
+        // Don't try to find obra in obras array here to avoid dependency loop
+        // The obra will be resolved when obras are loaded
         setObraSelecionada(null);
       }
 
+      // Set dates and other fields
       const initialDataCompra = initialData.data_compra
         ? new Date(initialData.data_compra).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0];
+        : new Date().toISOString().split('T')[0]; // Default to today if null
       setDataCompra(initialDataCompra);
 
       setDataPagamento(
         initialData.data_pagamento
           ? new Date(initialData.data_pagamento).toISOString().split('T')[0]
-          : null
+          : null // Keep payment date null for duplicates unless specified
       );
 
       setFornecedor(initialData.fornecedor || '');
@@ -531,6 +575,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           : '0.00'
       );
       
+      // Handle payment installments
       if (initialData.pagamento_parcelado) {
         setPagamentoParcelado(initialData.pagamento_parcelado);
       } else {
@@ -540,26 +585,42 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         });
       }
       
+      // Handle attachments
+      console.log('🔍 CompraForm - Processando anexos:', {
+        initialDataAnexos: initialData.anexos,
+        isArray: Array.isArray(initialData.anexos),
+        length: initialData.anexos?.length,
+        timestamp: new Date().toISOString()
+      });
+
       if (initialData.anexos && Array.isArray(initialData.anexos) && initialData.anexos.length > 0) {
         setAnexos(initialData.anexos);
+        console.log('🔍 CompraForm - Anexos definidos do initialData:', initialData.anexos);
       } else if (initialData.id) {
+        // Se estamos editando uma compra mas não temos anexos no initialData,
+        // vamos buscar os anexos diretamente da API
+        console.log('🔍 CompraForm - Buscando anexos da API para compra ID:', initialData.id);
         const loadAnexos = async () => {
           try {
             const response = await api.getAnexosByCompra(initialData.id);
             const anexosData = response.data || response;
+            console.log('🔍 CompraForm - Anexos carregados da API:', anexosData);
             setAnexos(anexosData);
           } catch (error) {
-            console.error('Erro ao carregar anexos:', error);
+            console.error('🔍 CompraForm - Erro ao carregar anexos:', error);
             setAnexos([]);
           }
         };
         loadAnexos();
       } else {
         setAnexos([]);
+        console.log('🔍 CompraForm - Anexos definidos como array vazio (nova compra)');
       }
 
+      // Process items for both editing and duplication
       if (initialData.itens && Array.isArray(initialData.itens)) {
         const mappedItems = initialData.itens.map(apiItem => {
+          // The logic to map API item to form item state
           let materialForState = null;
           if (apiItem.material_obj) materialForState = apiItem.material_obj;
           else if (apiItem.material && apiItem.material_nome)
@@ -573,6 +634,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
           const newItem = {
             id: generateItemUniqueId(),
+            // For duplicated items, originalId should be null to indicate they are new
             originalId: initialData.id ? apiItem.id : null,
             material: materialForState,
             materialId: materialForState ? String(materialForState.id) : '',
@@ -613,6 +675,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         });
       }
     } else {
+      // This block is now only for a completely new, blank form.
       const today = new Date().toISOString().split('T')[0];
       setDataCompra(today);
       setDataPagamento(today);
@@ -623,24 +686,28 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       setTipo('COMPRA');
       setObraId('');
       setObraSelecionada(null);
+
+      // Initialize new state variables for new forms
       setPagamentoParcelado({
         tipo: 'UNICO',
         parcelas: []
       });
       setAnexos([]);
+
       dispatchItems({
         type: ITEM_ACTION_TYPES.SET_ITEMS,
         payload: [createNewEmptyItem()],
       });
     }
-  }, [initialData]);
+  }, [initialData]); // Removed obras dependency to prevent infinite loops
 
+  // Synchronize dataPagamento with dataCompra if dataPagamento is not manually set
   useEffect(() => {
     if (prevDataCompraRef.current === dataPagamento || !dataPagamento) {
       setDataPagamento(dataCompra);
     }
     prevDataCompraRef.current = dataCompra;
-  }, [dataCompra, dataPagamento]);
+  }, [dataCompra, dataPagamento]); // Include dataPagamento to properly track changes
 
   const handleHeaderChange = e => {
     const { name, value } = e.target;
@@ -664,24 +731,75 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
   const handleMaterialSelected = useCallback(
     (index, selectedMaterialObj) => {
-      dispatchItems({
-        type: ITEM_ACTION_TYPES.SET_MATERIAL,
-        payload: { index, material: selectedMaterialObj },
+      console.log('🔍 DEBUG: Material selected in CompraForm:', {
+        index,
+        selectedMaterialObj,
+        timestamp: new Date().toISOString(),
       });
-      setErrors(prevErr => ({
-        ...prevErr,
-        [`item_${index}_material`]: null,
-        [`item_${index}_categoria_uso`]: null,
-      }));
-      if (
-        itemFieldRefs.current &&
-        itemFieldRefs.current[index] &&
-        itemFieldRefs.current[index].quantity &&
-        itemFieldRefs.current[index].quantity.current
-      ) {
-        setTimeout(() => {
-          itemFieldRefs.current[index].quantity.current.focus();
-        }, 50);
+      console.log(
+        '🔍 DEBUG: handleMaterialSelected call stack:',
+        new Error().stack
+      );
+      try {
+        dispatchItems({
+          type: ITEM_ACTION_TYPES.SET_MATERIAL,
+          payload: { index, material: selectedMaterialObj },
+        });
+
+        console.log('🔍 DEBUG: Dispatched SET_MATERIAL action');
+
+        // Autofill categoria_uso
+        if (selectedMaterialObj && selectedMaterialObj.categoria_uso_padrao) {
+          console.log(
+            '🔍 DEBUG: Autofilling categoria_uso for item',
+            index,
+            'to',
+            selectedMaterialObj.categoria_uso_padrao
+          );
+          dispatchItems({
+            type: ITEM_ACTION_TYPES.UPDATE_ITEM_FIELD,
+            payload: {
+              index,
+              fieldName: 'categoria_uso',
+              value: selectedMaterialObj.categoria_uso_padrao,
+            },
+          });
+        } else if (selectedMaterialObj === null) {
+          // Material cleared
+          console.log(
+            '🔍 DEBUG: Clearing categoria_uso for item',
+            index,
+            'due to material deselection'
+          );
+          dispatchItems({
+            type: ITEM_ACTION_TYPES.UPDATE_ITEM_FIELD,
+            payload: { index, fieldName: 'categoria_uso', value: '' },
+          });
+        }
+
+        // Clear material errors immediately since material was successfully selected
+
+        setErrors(prevErr => ({
+          ...prevErr,
+          [`item_${index}_material`]: null,
+          [`item_${index}_categoria_uso`]: null,
+        }));
+
+        // Focus on quantity field immediately after material selection
+        if (
+          itemFieldRefs.current &&
+          itemFieldRefs.current[index] &&
+          itemFieldRefs.current[index].quantity &&
+          itemFieldRefs.current[index].quantity.current
+        ) {
+          setTimeout(() => {
+            console.log('🔍 DEBUG: Focusing quantity field');
+            itemFieldRefs.current[index].quantity.current.focus();
+          }, 50);
+        }
+      } catch (error) {
+        console.error('❌ Error in handleMaterialSelected:', error);
+        // Optionally, set some error state here to inform the user if appropriate
       }
     },
     [dispatchItems]
@@ -696,19 +814,19 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       setErrors(prevErr => ({
         ...prevErr,
         [`item_${index}_${fieldName}`]: null,
-      }));
+      })); // setErrors is stable
     },
     [dispatchItems]
-  );
+  ); // dispatchItems is stable
 
   const addNewItemRow = useCallback(() => {
-    const newTempId = generateItemUniqueId();
-    setItemToFocusId(newTempId);
+    const newTempId = generateItemUniqueId(); // Global function
+    setItemToFocusId(newTempId); // setItemToFocusId is stable
     dispatchItems({
       type: ITEM_ACTION_TYPES.ADD_ITEM,
       payload: { id: newTempId },
     });
-  }, [dispatchItems]);
+  }, [dispatchItems]); // dispatchItems is stable
 
   const removeItemRow = useCallback(
     index => {
@@ -724,15 +842,19 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       dispatchItems({ type: ITEM_ACTION_TYPES.REMOVE_ITEM, payload: index });
     },
     [items, initialData, dispatchItems]
-  );
+  ); // items, initialData are dependencies
 
   const handleItemKeyDown = useCallback(
     (event, itemIndex, currentFieldType) => {
+      // For 'Enter', we prevent default and manage focus manually.
       if (event.key === 'Enter') {
         event.preventDefault();
         const currentItemRefs = itemFieldRefs.current[itemIndex];
         if (!currentItemRefs) return;
+
+        // For material field, let MaterialAutocomplete handle the focus management
         if (currentFieldType === 'material') {
+          // MaterialAutocomplete will handle focus after selection
           return;
         } else if (currentFieldType === 'quantity') {
           currentItemRefs.unitPrice?.current?.focus();
@@ -746,6 +868,8 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           }
         }
       } else if (event.key === 'Tab' && !event.shiftKey) {
+        // For 'Tab', we let the MaterialAutocomplete handle its own logic.
+        // We only intervene for other fields.
         if (currentFieldType !== 'material') {
           event.preventDefault();
           const currentItemRefs = itemFieldRefs.current[itemIndex];
@@ -763,6 +887,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             }
           }
         }
+        // If currentFieldType IS 'material', we do nothing here.
+        // The modified MaterialAutocomplete will select the item, and the default
+        // Tab behavior will correctly move focus to the next element (quantity).
       }
     },
     [items, addNewItemRow]
@@ -775,53 +902,86 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     itemFieldRefs.current[index].categoria_uso = element;
   }, []);
 
+  // FUNÇÃO DE VALIDAÇÃO COMPLETA CONSOLIDADA
   const validateForm = () => {
     const newErrors = {};
+
+    // Validar campos do cabeçalho usando a função consolidada
     const dataCompraError = validateField('dataCompra', dataCompra);
     if (dataCompraError) newErrors.dataCompra = dataCompraError;
+
     const obraError = validateField('obraId', obraId);
     if (obraError) newErrors.obraId = obraError;
+
     const descontoError = validateField('desconto', desconto);
     if (descontoError) newErrors.desconto = descontoError;
+
+    // Validar itens - lógica simplificada e consistente
     let hasValidItems = false;
+
     items.forEach((item, index) => {
+      // Verificar se o item tem pelo menos um campo preenchido
       const hasMaterial = !!(item.material && item.material.id) || !!(item.materialId && String(item.materialId).trim());
       const hasQuantidade = !!(item.quantidade && String(item.quantidade).trim());
       const hasValorUnitario = !!(item.valorUnitario && String(item.valorUnitario).trim());
+
       const itemHasAnyData = hasMaterial || hasQuantidade || hasValorUnitario;
+
       if (itemHasAnyData) {
+        // Se tem dados, validar todos os campos obrigatórios
         const materialError = validateField('material', item.material || item.materialId, index);
         const quantidadeError = validateField('quantidade', item.quantidade, index);
         const valorError = validateField('valorUnitario', item.valorUnitario, index);
+
         if (materialError) newErrors[`item_${index}_material`] = materialError;
         if (quantidadeError) newErrors[`item_${index}_quantidade`] = quantidadeError;
         if (valorError) newErrors[`item_${index}_valorUnitario`] = valorError;
+
+        // Se todos os campos estão válidos, temos um item válido
         if (!materialError && !quantidadeError && !valorError) {
           hasValidItems = true;
         }
       }
     });
+
+    // Verificar se há pelo menos um item válido
     if (!hasValidItems) {
       newErrors.form = 'Adicione pelo menos um item válido à compra.';
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = e => {
     e.preventDefault();
+
     if (validateForm()) {
       try {
         const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;
+
+        // Filtrar apenas itens válidos usando a mesma lógica da validação
         const itemsToSubmit = items
-          .filter(item => {
-            const hasMaterial = !!(item.materialId || item.material?.id);
-            const quantidade = parseFloat(String(item.quantidade || '0').replace(',', '.'));
-            return hasMaterial && quantidade > 0;
+          .filter((item, index) => {
+            // Verificar se tem dados preenchidos
+            const hasMaterial = !!(item.material && item.material.id) || !!(item.materialId && String(item.materialId).trim());
+            const hasQuantidade = !!(item.quantidade && String(item.quantidade).trim());
+            const hasValorUnitario = !!(item.valorUnitario && String(item.valorUnitario).trim());
+
+            if (hasMaterial || hasQuantidade || hasValorUnitario) {
+              // Se tem dados, verificar se todos os campos são válidos
+              const materialError = validateField('material', item.material || item.materialId, index);
+              const quantidadeError = validateField('quantidade', item.quantidade, index);
+              const valorError = validateField('valorUnitario', item.valorUnitario, index);
+
+              return !materialError && !quantidadeError && !valorError;
+            }
+            return false;
           })
           .map(item => {
             const quantidade = parseFloat(String(item.quantidade).replace(',', '.')) || 0;
             const valor_unitario = parseFloat(String(item.valorUnitario).replace(',', '.')) || 0;
+
             return {
               id: item.originalId || undefined,
               material: parseInt(item.materialId || item.material?.id, 10),
@@ -830,6 +990,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
               categoria_uso: item.categoria_uso || null,
             };
           });
+
         if (itemsToSubmit.length === 0) {
           setErrors(prev => ({
             ...prev,
@@ -837,7 +998,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           }));
           return;
         }
+        // Determinar forma de pagamento baseada no tipo de pagamento
         const formaPagamento = pagamentoParcelado?.tipo === 'PARCELADO' ? 'PARCELADO' : 'AVISTA';
+
         const compraData = {
           tipo,
           obra: parseInt(obraId, 10),
@@ -852,13 +1015,17 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           pagamento_parcelado: JSON.stringify(pagamentoParcelado),
           anexos: Array.isArray(anexos) ? anexos : [],
         };
+
         onSubmit(compraData);
       } catch (error) {
+
         setErrors(prev => ({
           ...prev,
           form: error.message,
         }));
       }
+    } else {
+
     }
   };
 
@@ -890,10 +1057,15 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         onSubmit={handleSubmit}
         className="w-full max-w-6xl mx-auto p-6 md:p-8 space-y-6 bg-white rounded-lg shadow-xl"
       >
+        {' '}
+        {/* Changed to max-w-6xl */}
         <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b border-slate-300 pb-3">
           Informações da Compra
         </h2>
+        {/* Header Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+          {' '}
+          {/* Adjusted to md:grid-cols-3 and gap-x-6 */}
           <div>
             <label
               htmlFor="tipo"
@@ -915,6 +1087,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                       e.preventDefault();
                       setTipo('COMPRA');
                     }
+                    // Tab will naturally move to next focusable element
                   }
                 }}
                 className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 ${tipo === 'COMPRA' ? 'bg-primary-600 text-white shadow' : 'bg-transparent text-slate-600 hover:bg-slate-200'}`}
@@ -934,6 +1107,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                       e.preventDefault();
                       setTipo('ORCAMENTO');
                     }
+                    // Tab will naturally move to next focusable element
                   }
                 }}
                 className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary-500 ${tipo === 'ORCAMENTO' ? 'bg-primary-600 text-white shadow' : 'bg-transparent text-slate-600 hover:bg-slate-200'}`}
@@ -1033,6 +1207,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             )}
           </div>
         </div>
+        {/* Dynamic Item Table Section */}
         <div className="mt-8 pt-6 border-t border-slate-300">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-semibold text-gray-700">
@@ -1048,7 +1223,11 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             </button>
           </div>
           <div className="overflow-visible rounded-md shadow-sm border border-slate-200">
+            {' '}
+            {/* Kept overflow-visible for autocomplete, might not be needed if portal is only solution */}
             <div className="overflow-x-auto">
+              {' '}
+              {/* Reverted: Removed overflow-y-visible as portal handles clipping */}
               <table className="min-w-full">
                 <thead className="bg-slate-100">
                   <tr>
@@ -1111,7 +1290,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
                       onItemKeyDown={handleItemKeyDown}
                       onItemFieldBlur={(...args) =>
                         handleItemFieldBlur(...args)
-                      }
+                      } // Pass blur handler to ItemRow
                       setCategoriaUsoRef={setCategoriaUsoRef}
                       materialRef={itemFieldRefs.current[index]?.material}
                       quantityRef={itemFieldRefs.current[index]?.quantity}
@@ -1129,6 +1308,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           )}
         </div>
         
+        {/* Payment and Attachments Section */}
         <div className="mt-8 pt-6 border-t border-slate-300">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">
             Pagamento e Anexos
@@ -1158,6 +1338,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           </div>
         </div>
 
+        {/* Summary Section */}
         <div className="mt-8 pt-6 border-t border-slate-300">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">
             Resumo da Compra
