@@ -17,6 +17,7 @@ import MateriaisPage from './pages/MateriaisPage';
 import MaterialDetailPage from './pages/MaterialDetailPage';
 import LocacoesPage from './pages/LocacoesPage';
 import ComprasPage from './pages/ComprasPage';
+import CompraDetailsPage from './pages/CompraDetailsPage';
 import DespesasExtrasPage from './pages/DespesasExtrasPage';
 import OcorrenciasPage from './pages/OcorrenciasPage';
 import RelatoriosPage from './pages/RelatoriosPage';
@@ -59,7 +60,11 @@ function App() {
             <Route path=":id" element={<MaterialDetailPage />} />
           </Route>
           <Route path="locacoes" element={<LocacoesPage />} />
-          <Route path="compras" element={<ComprasPage />} />
+          <Route path="compras">
+            <Route index element={<ComprasPage />} />
+            <Route path="nova" element={<ComprasPage />} />
+            <Route path=":id" element={<CompraDetailsPage />} />
+          </Route>
           <Route path="despesas" element={<DespesasExtrasPage />} />
           <Route path="ocorrencias" element={<OcorrenciasPage />} />
           <Route path="relatorios" element={<RelatoriosPage />} />

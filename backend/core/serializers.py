@@ -504,6 +504,7 @@ class CompraSerializer(serializers.ModelSerializer):
     itens = ItemCompraSerializer(many=True, required=False, allow_empty=True)
     parcelas = ParcelaCompraSerializer(many=True, read_only=True)
     anexos = AnexoCompraSerializer(many=True, read_only=True)
+    pagamento_parcelado = serializers.JSONField(write_only=True, required=False)
     # O campo 'obra' agora aceitará um ID para escrita por padrão.
     # Vamos customizar sua representação para leitura.
     # Removido: obra = ObraNestedSerializer(read_only=True)
@@ -529,7 +530,8 @@ class CompraSerializer(serializers.ModelSerializer):
             'valor_entrada',
             'created_at',
             'updated_at',
-            'tipo'
+            'tipo',
+            'pagamento_parcelado'
         ]
         # Removido extra_kwargs para 'obra' se houvesse.
         # Mantido extra_kwargs para outros campos, se necessário.
@@ -538,57 +540,106 @@ class CompraSerializer(serializers.ModelSerializer):
             'updated_at': {'read_only': True}
         }
 
-    def to_representation(self, instance):
+    def validate(self, data):
         """
-        Customiza a representação de saída.
-        Para GET, substitui o ID da obra pelo objeto aninhado.
+        Validação customizada para garantir que a compra tenha pelo menos um item.
         """
-        representation = super().to_representation(instance)
-        # Usando ObraNestedSerializer para manter a consistência com o que o frontend espera
-        if instance.obra: # Adicionado para evitar erro se obra for None
-            representation['obra'] = ObraNestedSerializer(instance.obra).data
-        else:
-            representation['obra'] = None # Ou outra representação apropriada para obra nula
-        return representation
+        itens_data = data.get('itens', [])
+        
+        # Debug: Log dos itens recebidos
+        print(f"[COMPRA VALIDATION DEBUG] Itens recebidos: {len(itens_data)} itens")
+        for i, item in enumerate(itens_data):
+            print(f"[COMPRA VALIDATION DEBUG] Item {i+1}: {item}")
+        
+        # Verificar se há itens na compra
+        if not itens_data or len(itens_data) == 0:
+            print("[COMPRA VALIDATION DEBUG] ERRO: Nenhum item encontrado")
+            raise serializers.ValidationError({
+                'itens': 'Adicione pelo menos um item válido à compra.'
+            })
+        
+        # Contar itens válidos (com material, quantidade e valor)
+        itens_validos = 0
+        for item_data in itens_data:
+            if (item_data.get('material') and 
+                item_data.get('quantidade', 0) > 0 and 
+                item_data.get('valor_unitario', 0) > 0):
+                itens_validos += 1
+        
+        print(f"[COMPRA VALIDATION DEBUG] Itens válidos encontrados: {itens_validos}")
+        
+        if itens_validos == 0:
+            print("[COMPRA VALIDATION DEBUG] ERRO: Nenhum item válido encontrado")
+            raise serializers.ValidationError({
+                'itens': 'Adicione pelo menos um item válido à compra.'
+            })
+        
+        # Verificar se todos os itens têm quantidade e valor válidos
+        for i, item_data in enumerate(itens_data):
+            quantidade = item_data.get('quantidade', 0)
+            valor_unitario = item_data.get('valor_unitario', 0)
+            
+            if quantidade <= 0:
+                raise serializers.ValidationError({
+                    'itens': f'Item {i+1}: A quantidade deve ser maior que zero.'
+                })
+            
+            if valor_unitario <= 0:
+                raise serializers.ValidationError({
+                    'itens': f'Item {i+1}: O valor unitário deve ser maior que zero.'
+                })
+        
+        return data
 
     def create(self, validated_data):
         from datetime import datetime, timedelta
         from dateutil.relativedelta import relativedelta
         
-        itens_data = validated_data.pop('itens')
+        itens_data = validated_data.pop('itens', [])
         
         # Processar pagamento_parcelado do frontend
         pagamento_parcelado = validated_data.pop('pagamento_parcelado', None)
+        
         if pagamento_parcelado:
-            if pagamento_parcelado.get('tipo') == 'PARCELADO':
-                validated_data['forma_pagamento'] = 'PARCELADO'
-                parcelas = pagamento_parcelado.get('parcelas', [])
-                validated_data['numero_parcelas'] = len(parcelas)
-                # Se houver parcelas customizadas, podemos usar a primeira como entrada
-                if parcelas:
-                    validated_data['valor_entrada'] = parcelas[0].get('valor', 0)
-            else:
-                validated_data['forma_pagamento'] = 'AVISTA'
-                validated_data['numero_parcelas'] = 1
+            # Verificar se pagamento_parcelado é um dicionário
+            if isinstance(pagamento_parcelado, dict):
+                if pagamento_parcelado.get('tipo') == 'PARCELADO':
+                    validated_data['forma_pagamento'] = 'PARCELADO'
+                    parcelas = pagamento_parcelado.get('parcelas', [])
+                    validated_data['numero_parcelas'] = len(parcelas)
+                    # Se houver parcelas customizadas, podemos usar a primeira como entrada
+                    if parcelas:
+                        validated_data['valor_entrada'] = Decimal(str(parcelas[0].get('valor', 0)))
+                else:
+                    validated_data['forma_pagamento'] = 'AVISTA'
+                    validated_data['numero_parcelas'] = 1
+            elif isinstance(pagamento_parcelado, str):
+                # Se for string, assumir que é o tipo de pagamento
+                if pagamento_parcelado == 'PARCELADO':
+                    validated_data['forma_pagamento'] = 'PARCELADO'
+                    validated_data['numero_parcelas'] = validated_data.get('numero_parcelas', 2)
+                else:
+                    validated_data['forma_pagamento'] = 'AVISTA'
+                    validated_data['numero_parcelas'] = 1
+        # BUGFIX: Se não há pagamento_parcelado, manter os valores originais dos campos
+        # Não forçar AVISTA - deixar os dados originais (forma_pagamento, numero_parcelas) intactos
         
         # Atualiza a categoria de uso padrão para cada material nos itens
-        for item_data in itens_data:
-            material = item_data.get('material')
-            if material:
-                nova_categoria_id = self.context['request'].data.get(f'categoria_uso_padrao_{material.id}')
-                if nova_categoria_id:
-                    try:
-                        nova_categoria = Categoria.objects.get(id=nova_categoria_id)
-                        if material.categoria_uso_padrao != nova_categoria:
-                            material.categoria_uso_padrao = nova_categoria
-                            material.save()
-                    except Categoria.DoesNotExist:
-                        # Tratar o caso em que a categoria não é encontrada, se necessário
-                        pass
+        # TODO: Implementar lógica de categoria quando o modelo Categoria for criado
+        # for item_data in itens_data:
+        #     material = item_data.get('material')
+        #     if material:
+        #         nova_categoria_id = self.context['request'].data.get(f'categoria_uso_padrao_{material.id}')
+        #         if nova_categoria_id:
+        #             try:
+        #                 nova_categoria = Categoria.objects.get(id=nova_categoria_id)
+        #                 if material.categoria_uso_padrao != nova_categoria:
+        #                     material.categoria_uso_padrao = nova_categoria
+        #                     material.save()
+        #             except Categoria.DoesNotExist:
+        #                 # Tratar o caso em que a categoria não é encontrada, se necessário
+        #                 pass
 
-        forma_pagamento = validated_data.get('forma_pagamento', 'AVISTA')
-        numero_parcelas = validated_data.get('numero_parcelas', 1)
-        
         compra = Compra.objects.create(**validated_data)
 
         # After Compra is created, create ItemCompra instances
@@ -602,85 +653,78 @@ class CompraSerializer(serializers.ModelSerializer):
         # Save Compra again to trigger valor_total_liquido calculation
         compra.save()
         
-        # Create installments if payment is 'parcelado'
-        if forma_pagamento == 'parcelado' and numero_parcelas > 1:
+        # Create installments if payment is 'PARCELADO'
+        if compra.forma_pagamento == 'PARCELADO' and compra.numero_parcelas > 1:
             compra.create_installments()
         
         return compra
 
 
     def update(self, instance, validated_data):
-        # Lidar com itens da compra
-        itens_data = validated_data.pop('itens', None)
-        
-        # Processar pagamento_parcelado do frontend
         pagamento_parcelado = validated_data.pop('pagamento_parcelado', None)
+        itens_data = validated_data.pop('itens', [])
+        anexos_data = validated_data.pop('anexos', [])
+        
+        # Processar dados de pagamento parcelado
+        old_forma_pagamento = instance.forma_pagamento
+        old_numero_parcelas = instance.numero_parcelas
+        
         if pagamento_parcelado:
-            if pagamento_parcelado.get('tipo') == 'PARCELADO':
-                validated_data['forma_pagamento'] = 'PARCELADO'
-                parcelas = pagamento_parcelado.get('parcelas', [])
-                validated_data['numero_parcelas'] = len(parcelas)
-                # Se houver parcelas customizadas, podemos usar a primeira como entrada
-                if parcelas:
-                    validated_data['valor_entrada'] = parcelas[0].get('valor', 0)
-            else:
-                validated_data['forma_pagamento'] = 'AVISTA'
-                validated_data['numero_parcelas'] = 1
-        
-        if itens_data is not None:
-            # Deletar itens antigos que não estão na nova lista
-            itens_atuais_ids = [item.get('id') for item in itens_data if item.get('id')]
-            instance.itens.exclude(id__in=itens_atuais_ids).delete()
-
-            for item_data in itens_data:
-                item_id = item_data.get('id', None)
-                if item_id:
-                    # Atualizar item existente
-                    item_instance = ItemCompra.objects.get(id=item_id, compra=instance)
-                    item_instance.material = item_data.get('material', item_instance.material)
-                    item_instance.quantidade = item_data.get('quantidade', item_instance.quantidade)
-                    item_instance.valor_unitario = item_data.get('valor_unitario', item_instance.valor_unitario)
-                    item_instance.unidade = item_data.get('unidade', item_instance.unidade)
-                    item_instance.save()
+            if isinstance(pagamento_parcelado, dict):
+                if pagamento_parcelado.get('tipo') == 'PARCELADO':
+                    validated_data['forma_pagamento'] = 'PARCELADO'
+                    parcelas = pagamento_parcelado.get('parcelas', [])
+                    validated_data['numero_parcelas'] = len(parcelas)
                 else:
-                    # Criar novo item
-                    ItemCompra.objects.create(compra=instance, **item_data)
-
-        # Lidar com a forma de pagamento e parcelas
-        forma_pagamento = validated_data.get('forma_pagamento', instance.forma_pagamento)
-        numero_parcelas = validated_data.get('numero_parcelas', instance.numero_parcelas)
-
-        # Atualiza a instância da compra com outros dados validados
-        instance.fornecedor = validated_data.get('fornecedor', instance.fornecedor)
-        instance.data_compra = validated_data.get('data_compra', instance.data_compra)
-        instance.nota_fiscal = validated_data.get('nota_fiscal', instance.nota_fiscal)
-        instance.desconto = validated_data.get('desconto', instance.desconto)
-        instance.observacoes = validated_data.get('observacoes', instance.observacoes)
-        instance.tipo = validated_data.get('tipo', instance.tipo)
-        instance.forma_pagamento = forma_pagamento
-        instance.numero_parcelas = numero_parcelas
-        instance.valor_entrada = validated_data.get('valor_entrada', instance.valor_entrada)
+                    validated_data['forma_pagamento'] = 'AVISTA'
+                    validated_data['numero_parcelas'] = 1
+            elif isinstance(pagamento_parcelado, str):
+                if pagamento_parcelado == 'PARCELADO':
+                    validated_data['forma_pagamento'] = 'PARCELADO'
+                    validated_data['numero_parcelas'] = validated_data.get('numero_parcelas', 2)
+                else:
+                    validated_data['forma_pagamento'] = 'AVISTA'
+                    validated_data['numero_parcelas'] = 1
+        else:
+            validated_data['forma_pagamento'] = 'AVISTA'
+            validated_data['numero_parcelas'] = 1
         
-        # Recalcular valor_total_bruto após processar os itens
-        if itens_data is not None:
-            total_bruto_calculado = sum(item.valor_total_item for item in instance.itens.all())
-            instance.valor_total_bruto = total_bruto_calculado if total_bruto_calculado is not None else Decimal('0.00')
-
-        # Se a forma de pagamento mudou, ou se é parcelado e o número de parcelas mudou
-        if 'forma_pagamento' in validated_data or (forma_pagamento == 'PARCELADO' and 'numero_parcelas' in validated_data):
-            instance.parcelas.all().delete() # Deleta parcelas existentes
-            if forma_pagamento == 'PARCELADO' and numero_parcelas > 0:
-                instance.create_installments()  # Chamada sem parâmetros
-            elif forma_pagamento == 'AVISTA':
-                # Lógica para pagamento 'avista', se necessário
-                pass
-
+        # Atualizar a compra
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         instance.save()
+        
+        # Recriar itens da compra
+        instance.itens.all().delete()
+        for item_data in itens_data:
+            ItemCompra.objects.create(compra=instance, **item_data)
+        
+        # Recriar anexos
+        instance.anexos.all().delete()
+        for anexo_data in anexos_data:
+            AnexoCompra.objects.create(compra=instance, **anexo_data)
+        
+        # Recriar parcelas se necessário
+        if (instance.forma_pagamento != old_forma_pagamento or 
+            instance.numero_parcelas != old_numero_parcelas):
+            # Deletar parcelas existentes
+            instance.parcelas.all().delete()
+            
+            # Criar novas parcelas se for pagamento parcelado
+            if pagamento_parcelado and pagamento_parcelado.get('tipo') == 'PARCELADO':
+                instance.create_installments(pagamento_parcelado.get('parcelas', []))
+        
         return instance
     
     def to_representation(self, instance):
-        """Adiciona o campo pagamento_parcelado na resposta para o frontend"""
+        """Adiciona o campo pagamento_parcelado na resposta para o frontend e customiza a obra"""
         data = super().to_representation(instance)
+        
+        # Customizar representação da obra
+        if instance.obra:
+            data['obra'] = ObraNestedSerializer(instance.obra).data
+        else:
+            data['obra'] = None
         
         # Converter dados do modelo para o formato esperado pelo frontend
         if instance.forma_pagamento == 'PARCELADO':
@@ -688,10 +732,19 @@ class CompraSerializer(serializers.ModelSerializer):
             parcelas_customizadas = []
             if hasattr(instance, 'parcelas') and instance.parcelas.exists():
                 for parcela in instance.parcelas.all():
-                    parcelas_customizadas.append({
-                        'valor': float(parcela.valor),
+                    try:
+                        valor_float = float(parcela.valor_parcela)
+                        # Verificar se o valor é finito
+                        if valor_float == float('inf') or valor_float == float('-inf') or valor_float != valor_float:  # Check for inf and NaN
+                            valor_float = 0.0
+                    except (ValueError, OverflowError):
+                        valor_float = 0.0
+                    
+                    parcela_info = {
+                        'valor': valor_float,
                         'data_vencimento': parcela.data_vencimento.isoformat() if parcela.data_vencimento else None
-                    })
+                    }
+                    parcelas_customizadas.append(parcela_info)
             
             data['pagamento_parcelado'] = {
                 'tipo': 'PARCELADO',
@@ -844,8 +897,13 @@ class BackupSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'size_bytes']
     
     def get_size_mb(self, obj):
-        if obj.size_bytes:
-            return round(obj.size_bytes / (1024 * 1024), 2)
+        if obj.size_bytes and obj.size_bytes > 0:
+            try:
+                size_mb = obj.size_bytes / (1024 * 1024)
+                if not (size_mb == float('inf') or size_mb == float('-inf') or size_mb != size_mb):  # Check for inf and NaN
+                    return round(size_mb, 2)
+            except (ZeroDivisionError, OverflowError, ValueError):
+                pass
         return 0
 
 

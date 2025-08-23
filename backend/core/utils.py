@@ -64,6 +64,7 @@ def process_anexos_for_pdf(anexos):
     """
     Processa anexos para inclusão no PDF.
     Converte PDFs em imagens e prepara imagens para base64.
+    Compatível com AnexoCompra (arquivo, nome_original) e AnexoDespesa (anexo, nome_arquivo).
     """
     if not IMAGE_PROCESSING_AVAILABLE:
         return []
@@ -72,12 +73,22 @@ def process_anexos_for_pdf(anexos):
     
     for anexo in anexos:
         try:
-            # Ler o arquivo
-            anexo.anexo.seek(0)
-            file_content = anexo.anexo.read()
-            anexo.anexo.seek(0)  # Reset para uso posterior
+            # Determinar qual campo usar baseado no modelo
+            if hasattr(anexo, 'arquivo'):  # AnexoCompra
+                file_field = anexo.arquivo
+                nome_arquivo = anexo.nome_original
+            elif hasattr(anexo, 'anexo'):  # AnexoDespesa
+                file_field = anexo.anexo
+                nome_arquivo = anexo.nome_arquivo
+            else:
+                continue
             
-            file_extension = anexo.nome_arquivo.lower().split('.')[-1] if anexo.nome_arquivo else ''
+            # Ler o arquivo
+            file_field.seek(0)
+            file_content = file_field.read()
+            file_field.seek(0)  # Reset para uso posterior
+            
+            file_extension = nome_arquivo.lower().split('.')[-1] if nome_arquivo else ''
             
             if file_extension == 'pdf':
                 # Converter PDF para imagem
@@ -100,14 +111,14 @@ def process_anexos_for_pdf(anexos):
                         img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
                         
                         processed_anexos.append({
-                            'nome': anexo.nome_arquivo or f'Anexo PDF {anexo.id}',
+                            'nome': nome_arquivo or f'Anexo PDF {anexo.id}',
                             'descricao': anexo.descricao or '',
                             'is_image': True,
                             'format': 'png',
                             'base64_data': img_base64
                         })
                 except Exception as pdf_error:
-                    print(f"Erro ao converter PDF {anexo.nome_arquivo}: {pdf_error}")
+                    print(f"Erro ao converter PDF {nome_arquivo}: {pdf_error}")
                     continue
                     
             elif file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']:
@@ -138,14 +149,14 @@ def process_anexos_for_pdf(anexos):
                     img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
                     
                     processed_anexos.append({
-                        'nome': anexo.nome_arquivo or f'Anexo {anexo.id}',
+                        'nome': nome_arquivo or f'Anexo {anexo.id}',
                         'descricao': anexo.descricao or '',
                         'is_image': True,
                         'format': save_format,
                         'base64_data': img_base64
                     })
                 except Exception as img_error:
-                    print(f"Erro ao processar imagem {anexo.nome_arquivo}: {img_error}")
+                    print(f"Erro ao processar imagem {nome_arquivo}: {img_error}")
                     continue
                     
         except Exception as e:

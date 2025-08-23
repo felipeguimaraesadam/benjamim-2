@@ -74,7 +74,8 @@ export const AuthProvider = ({ children }) => {
               `Bearer ${accessToken}`;
           } else {
             // Access token expired, try to refresh
-            if (refreshToken) {
+            const storedRefreshToken = localStorage.getItem('refreshToken');
+            if (storedRefreshToken) {
               await refreshAuthToken(); // This will set user if successful
             } else {
               // No refresh token, logout
@@ -89,7 +90,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(false);
     };
     initializeAuth();
-  }, [refreshToken]); // Add refreshToken to dependency array
+  }, []); // Remove refreshToken dependency to prevent infinite loops
 
   const login = async (loginUsername, password) => {
     try {
