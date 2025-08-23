@@ -9,7 +9,7 @@ def run(playwright):
 
     try:
         # Login
-        page.goto("http://localhost:5175/login")
+        page.goto("http://localhost:5176/login")
         page.fill("input[name='login']", "admin_test")
         page.fill("input[name='password']", "test123")
         page.click("button[type='submit']")
