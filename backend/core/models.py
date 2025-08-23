@@ -268,7 +268,21 @@ class Compra(models.Model):
         return f"Compra para {self.obra.nome_obra} em {self.data_compra}"
 
     def save(self, *args, **kwargs):
-        # Lógica para calcular o valor líquido antes de salvar
+        from django.db.models import Sum
+
+        # This logic is designed to be called *after* items have been associated
+        # with the purchase. The serializer's create/update methods handle this flow.
+        # We check for self.pk to ensure the Compra instance exists in the DB,
+        # which is a prerequisite for having related 'itens'.
+        if self.pk:
+            # Calculate the gross total from the sum of its items' totals.
+            # The .all() is technically not needed but makes it explicit.
+            total_bruto = self.itens.all().aggregate(
+                total=Sum('valor_total_item')
+            )['total'] or Decimal('0.00')
+            self.valor_total_bruto = total_bruto
+
+        # Now, calculate the net value based on the (potentially updated) gross value.
         self.valor_total_liquido = self.valor_total_bruto - self.desconto
         
         # For cash payments, set payment date automatically
@@ -279,11 +293,14 @@ class Compra(models.Model):
         if self.forma_pagamento == 'PARCELADO':
             self.data_pagamento = None
         
+        # Call the original save method
         super().save(*args, **kwargs)
 
-        # Create installments if payment is parcelado and parcelas don't exist
-        if self.forma_pagamento == 'PARCELADO' and not self.parcelas.exists():
-            self.create_installments()
+        # The creation of installments is handled in the serializer after the save
+        # to ensure all data is consistent. We can remove the automatic call from here
+        # to centralize control in the serializer.
+        # if self.forma_pagamento == 'PARCELADO' and not self.parcelas.exists():
+        #     self.create_installments()
     
     def create_installments(self, parcelas_customizadas=None):
         if self.numero_parcelas <= 1:
