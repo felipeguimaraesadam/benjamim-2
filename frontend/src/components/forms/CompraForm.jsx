@@ -902,84 +902,26 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     itemFieldRefs.current[index].categoria_uso = element;
   }, []);
 
-  // FUNÇÃO DE VALIDAÇÃO COMPLETA CONSOLIDADA
+  // FUNÇÃO DE VALIDAÇÃO COMPLETA CONSOLIDADA - BYPASSED
   const validateForm = () => {
-    const newErrors = {};
-
-    // Validar campos do cabeçalho usando a função consolidada
-    const dataCompraError = validateField('dataCompra', dataCompra);
-    if (dataCompraError) newErrors.dataCompra = dataCompraError;
-
-    const obraError = validateField('obraId', obraId);
-    if (obraError) newErrors.obraId = obraError;
-
-    const descontoError = validateField('desconto', desconto);
-    if (descontoError) newErrors.desconto = descontoError;
-
-    // Validar itens - lógica simplificada e consistente
-    let hasValidItems = false;
-
-    items.forEach((item, index) => {
-      // Verificar se o item tem pelo menos um campo preenchido
-      const hasMaterial = !!(item.material && item.material.id) || !!(item.materialId && String(item.materialId).trim());
-      const hasQuantidade = !!(item.quantidade && String(item.quantidade).trim());
-      const hasValorUnitario = !!(item.valorUnitario && String(item.valorUnitario).trim());
-
-      const itemHasAnyData = hasMaterial || hasQuantidade || hasValorUnitario;
-
-      if (itemHasAnyData) {
-        // Se tem dados, validar todos os campos obrigatórios
-        const materialError = validateField('material', item.material || item.materialId, index);
-        const quantidadeError = validateField('quantidade', item.quantidade, index);
-        const valorError = validateField('valorUnitario', item.valorUnitario, index);
-
-        if (materialError) newErrors[`item_${index}_material`] = materialError;
-        if (quantidadeError) newErrors[`item_${index}_quantidade`] = quantidadeError;
-        if (valorError) newErrors[`item_${index}_valorUnitario`] = valorError;
-
-        // Se todos os campos estão válidos, temos um item válido
-        if (!materialError && !quantidadeError && !valorError) {
-          hasValidItems = true;
-        }
-      }
-    });
-
-    // Verificar se há pelo menos um item válido
-    if (!hasValidItems) {
-      newErrors.form = 'Adicione pelo menos um item válido à compra.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // ALWAYS RETURN TRUE AS PER USER REQUEST TO FORCE SUBMISSION
+    setErrors({}); // Clear any previous errors
+    return true;
   };
 
   const handleSubmit = e => {
     e.preventDefault();
 
-    // VALIDATION BYPASSED AS PER USER REQUEST FOR DEBUGGING
-    // if (validateForm()) {
+    // if (validateForm()) { // BYPASSED
       try {
         const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;
 
         // Filtrar apenas itens válidos usando a mesma lógica da validação
         const itemsToSubmit = items
-          .filter((item, index) => {
-            // Verificar se tem dados preenchidos
+          .filter(item => {
+            // Include any item that has at least a material selected
             const hasMaterial = !!(item.material && item.material.id) || !!(item.materialId && String(item.materialId).trim());
-            const hasQuantidade = !!(item.quantidade && String(item.quantidade).trim());
-            const hasValorUnitario = !!(item.valorUnitario && String(item.valorUnitario).trim());
-
-            if (hasMaterial || hasQuantidade || hasValorUnitario) {
-              // Se tem dados, verificar se todos os campos são válidos
-              const materialError = validateField('material', item.material || item.materialId, index);
-              const quantidadeError = validateField('quantidade', item.quantidade, index);
-              const valorError = validateField('valorUnitario', item.valorUnitario, index);
-
-              // BYPASSING a parte da validação que impede o envio
-              // return !materialError && !quantidadeError && !valorError;
-              return true; // Força a inclusão do item para debug
-            }
-            return false;
+            return hasMaterial;
           })
           .map(item => {
             const quantidade = parseFloat(String(item.quantidade).replace(',', '.')) || 0;
@@ -994,8 +936,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
             };
           });
 
-        // BYPASSING a validação que impede o envio
-        // if (itemsToSubmit.length === 0) {
+        // if (itemsToSubmit.length === 0) { // BYPASSED
         //   setErrors(prev => ({
         //     ...prev,
         //     form: 'Adicione pelo menos um item válido à compra.',

@@ -501,7 +501,7 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
 
 
 class CompraSerializer(serializers.ModelSerializer):
-    itens = ItemCompraSerializer(many=True, required=False, allow_empty=True)
+    itens = serializers.JSONField(required=False)
     parcelas = ParcelaCompraSerializer(many=True, read_only=True)
     anexos = AnexoCompraSerializer(many=True, read_only=True)
     pagamento_parcelado = serializers.JSONField(write_only=True, required=False)
@@ -541,11 +541,20 @@ class CompraSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
+        import json
         """
         Validação customizada para garantir que a compra tenha pelo menos um item.
         """
-        itens_data = data.get('itens', [])
+        itens_data_str = data.get('itens', '[]')
         
+        if isinstance(itens_data_str, str):
+            try:
+                itens_data = json.loads(itens_data_str)
+            except json.JSONDecodeError:
+                raise serializers.ValidationError({'itens': 'Formato de itens inválido.'})
+        else:
+            itens_data = itens_data_str
+
         # Debug: Log dos itens recebidos
         print(f"[COMPRA VALIDATION DEBUG] Itens recebidos: {len(itens_data)} itens")
         for i, item in enumerate(itens_data):
@@ -563,7 +572,7 @@ class CompraSerializer(serializers.ModelSerializer):
         for item_data in itens_data:
             if (item_data.get('material') and
                 item_data.get('quantidade', 0) > 0 and
-                item_data.get('valor_unitario', 0) > 0):
+                item_data.get('valor_unitario', 0) >= 0): # Permitir valor 0
                 itens_validos += 1
 
         print(f"[COMPRA VALIDATION DEBUG] Itens válidos encontrados: {itens_validos}")
@@ -584,11 +593,12 @@ class CompraSerializer(serializers.ModelSerializer):
                     'itens': f'Item {i+1}: A quantidade deve ser maior que zero.'
                 })
 
-            if valor_unitario <= 0:
+            if valor_unitario < 0:
                 raise serializers.ValidationError({
-                    'itens': f'Item {i+1}: O valor unitário deve ser maior que zero.'
+                    'itens': f'Item {i+1}: O valor unitário não pode ser negativo.'
                 })
 
+        data['itens'] = itens_data # Replace string with parsed data
         return data
 
     def create(self, validated_data):
