@@ -123,7 +123,6 @@ const itemsReducer = (state, action) => {
               categoria_uso: selectedMaterial.categoria_uso_padrao || '',
             };
           }
-          // Material is being cleared
           return {
             ...item,
             material: null,
@@ -141,7 +140,6 @@ const itemsReducer = (state, action) => {
   }
 };
 
-// Define ItemRowInternal first
 const ItemRowInternal = ({
   item,
   index,
@@ -153,10 +151,10 @@ const ItemRowInternal = ({
   onMaterialSelectForItem,
   initialData,
   onItemKeyDown,
-  materialRef, // input ref for MaterialAutocomplete's input
-  quantityRef, // input ref for quantity
-  unitPriceRef, // input ref for unitPrice
-  onItemFieldBlur, // New prop for blur handling
+  materialRef,
+  quantityRef,
+  unitPriceRef,
+  onItemFieldBlur,
 }) => {
   const getError = fieldName => errors && errors[`item_${index}_${fieldName}`];
 
@@ -167,7 +165,6 @@ const ItemRowInternal = ({
     !item.quantidade &&
     !item.valorUnitario;
 
-  // Memoize the callback for MaterialAutocomplete's parentOnKeyDown
   const handleMaterialAutocompleteKeyDown = useCallback(
     e => {
       onItemKeyDown(e, index, 'material');
@@ -181,7 +178,7 @@ const ItemRowInternal = ({
     >
       <td className="px-3 py-2.5 border-b border-slate-200 text-sm min-w-[250px] md:min-w-[280px] align-top">
         <MaterialAutocomplete
-          ref={materialRef} // Pass the ref to MaterialAutocomplete
+          ref={materialRef}
           value={item.material}
           onMaterialSelect={onMaterialSelectForItem}
           itemIndex={index}
@@ -194,19 +191,19 @@ const ItemRowInternal = ({
               blurState.currentInputValue,
               blurState
             )
-          } // Pass the whole blurState
+          }
         />
       </td>
       <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top w-[120px]">
         <input
-          ref={quantityRef} // Pass the ref
+          ref={quantityRef}
           type="text"
           inputMode="decimal"
           name="quantidade"
           value={item.quantidade}
           onChange={e => onItemChange(index, 'quantidade', e.target.value)}
           onKeyDown={e => onItemKeyDown(e, index, 'quantity')}
-          onBlur={e => onItemFieldBlur(index, 'quantidade', e.target.value)} // Added onBlur
+          onBlur={e => onItemFieldBlur(index, 'quantidade', e.target.value)}
           className={`w-full p-2 border ${getError('quantidade') ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-right`}
           placeholder="0,000"
         />
@@ -222,14 +219,14 @@ const ItemRowInternal = ({
       </td>
       <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top w-[150px]">
         <input
-          ref={unitPriceRef} // Pass the ref
+          ref={unitPriceRef}
           type="text"
           inputMode="decimal"
           name="valorUnitario"
           value={item.valorUnitario}
           onChange={e => onItemChange(index, 'valorUnitario', e.target.value)}
           onKeyDown={e => onItemKeyDown(e, index, 'unitPrice')}
-          onBlur={e => onItemFieldBlur(index, 'valorUnitario', e.target.value)} // Added onBlur
+          onBlur={e => onItemFieldBlur(index, 'valorUnitario', e.target.value)}
           className={`w-full p-2 border ${getError('valorUnitario') ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-right`}
           placeholder="0,00"
         />
@@ -247,8 +244,6 @@ const ItemRowInternal = ({
           .replace('.', ',')}
       </td>
       <td className="px-3 py-2.5 border-b border-slate-200 text-sm align-top w-[180px]">
-        {' '}
-        {/* Added Categoria de Uso column */}
         <select
           name="categoria_uso"
           value={item.categoria_uso || ''}
@@ -276,8 +271,6 @@ const ItemRowInternal = ({
         )}
       </td>
       <td className="px-3 py-2.5 border-b border-slate-200 text-center align-middle w-[100px]">
-        {' '}
-        {/* Adjusted width */}
         <button
           type="button"
           onClick={() => onRemoveItem(index)}
@@ -295,18 +288,17 @@ const ItemRowInternal = ({
     </tr>
   );
 };
-// Wrap ItemRowInternal with React.memo for export
 const ItemRow = React.memo(ItemRowInternal);
 
 const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
   const itemFieldRefs = useRef([]);
   const [tipo, setTipo] = useState(
     initialData?.tipo ? initialData.tipo.toUpperCase() : 'COMPRA'
-  ); // 'COMPRA' or 'ORCAMENTO'
+  );
   const [obraId, setObraId] = useState('');
   const [obraSelecionada, setObraSelecionada] = useState(null);
   const [dataCompra, setDataCompra] = useState('');
-  const [dataPagamento, setDataPagamento] = useState(''); // Added state for payment date
+  const [dataPagamento, setDataPagamento] = useState('');
   const [fornecedor, setFornecedor] = useState('');
   const [notaFiscal, setNotaFiscal] = useState('');
   const [observacoes, setObservacoes] = useState('');
