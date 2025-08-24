@@ -286,31 +286,41 @@ const ComprasPage = () => {
 
   const handleFormSubmit = async formData => {
     setIsLoadingForm(true);
-    setError(null); // Clear previous form-specific errors
-    // setSuccessMessage('');
+    setError(null);
     const isEditing = currentCompra && currentCompra.id;
     try {
       if (isEditing) {
-        await updateCompra(currentCompra.id, formData);
+        const updatedCompra = await updateCompra(currentCompra.id, formData);
         showSuccessToast('Compra atualizada com sucesso!');
+        // Update the item in the list with the returned data
+        setCompras(prevCompras =>
+          prevCompras.map(c =>
+            c.id === currentCompra.id ? updatedCompra.data : c
+          )
+        );
       } else {
-        await createCompra(formData);
+        const newCompraResponse = await createCompra(formData);
         showSuccessToast('Compra registrada com sucesso!');
+        // Add the new item to the top of the list
+        // No need to refetch the whole page
+        setCompras(prevCompras => [newCompraResponse.data, ...prevCompras].slice(0, PAGE_SIZE));
+        setTotalItems(prev => prev + 1); // Increment total items
       }
       setCurrentCompra(null);
       setIsAddingNew(false);
-      // Navigate back to /compras if we're on /nova route
       if (location.pathname === '/compras/nova') {
         navigate('/compras');
       }
-      // Refetch with current filters, go to page 1 if new item created
-      fetchCompras(isEditing ? currentPage : 1, {
-        dataInicio,
-        dataFim,
-        fornecedor,
-        tipo,
-        obraId,
-      });
+      // No longer fetching immediately after create, only for edit
+      if (isEditing) {
+        fetchCompras(currentPage, {
+          dataInicio,
+          dataFim,
+          fornecedor,
+          tipo,
+          obraId,
+        });
+      }
     } catch (err) {
       let detailedError = isEditing
         ? 'Falha ao atualizar compra.'
