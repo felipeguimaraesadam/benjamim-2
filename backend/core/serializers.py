@@ -504,11 +504,12 @@ class CompraSerializer(serializers.ModelSerializer):
     itens = ItemCompraSerializer(many=True, read_only=True)
     parcelas = ParcelaCompraSerializer(many=True, read_only=True)
     anexos = AnexoCompraSerializer(many=True, read_only=True)
+    obra_nome = serializers.CharField(source='obra.nome_obra', read_only=True)
 
     class Meta:
         model = Compra
         fields = [
-            'id', 'obra', 'fornecedor', 'data_compra', 'data_pagamento',
+            'id', 'obra', 'obra_nome', 'fornecedor', 'data_compra', 'data_pagamento',
             'nota_fiscal', 'valor_total_bruto', 'desconto',
             'valor_total_liquido', 'observacoes', 'itens', 'parcelas',
             'anexos', 'forma_pagamento', 'numero_parcelas', 'valor_entrada',
