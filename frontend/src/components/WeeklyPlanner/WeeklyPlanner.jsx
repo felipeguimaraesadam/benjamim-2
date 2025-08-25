@@ -106,7 +106,7 @@ function WeeklyPlanner({ selectedObra }) {
 
   useEffect(() => {
     fetchWeekData(currentDate, selectedObra?.id);
-  }, [currentDate, selectedObra, fetchWeekData]);
+  }, [currentDate, selectedObra]);
 
   const handleDateChange = newDate => {
     setCurrentDate(newDate);

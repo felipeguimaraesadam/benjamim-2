@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import os
 from uuid import uuid4
 
@@ -268,7 +268,21 @@ class Compra(models.Model):
         return f"Compra para {self.obra.nome_obra} em {self.data_compra}"
 
     def save(self, *args, **kwargs):
-        # Lógica para calcular o valor líquido antes de salvar
+        from django.db.models import Sum
+
+        # This logic is designed to be called *after* items have been associated
+        # with the purchase. The serializer's create/update methods handle this flow.
+        # We check for self.pk to ensure the Compra instance exists in the DB,
+        # which is a prerequisite for having related 'itens'.
+        if self.pk:
+            # Calculate the gross total from the sum of its items' totals.
+            # The .all() is technically not needed but makes it explicit.
+            total_bruto = self.itens.all().aggregate(
+                total=Sum('valor_total_item')
+            )['total'] or Decimal('0.00')
+            self.valor_total_bruto = total_bruto
+
+        # Now, calculate the net value based on the (potentially updated) gross value.
         self.valor_total_liquido = self.valor_total_bruto - self.desconto
         
         # For cash payments, set payment date automatically
@@ -279,31 +293,92 @@ class Compra(models.Model):
         if self.forma_pagamento == 'PARCELADO':
             self.data_pagamento = None
         
+        # Call the original save method
         super().save(*args, **kwargs)
 
-        # Create installments if payment is parcelado and parcelas don't exist
-        if self.forma_pagamento == 'PARCELADO' and not self.parcelas.exists():
-            self.create_installments()
+        # The creation of installments is handled in the serializer after the save
+        # to ensure all data is consistent. We can remove the automatic call from here
+        # to centralize control in the serializer.
+        # if self.forma_pagamento == 'PARCELADO' and not self.parcelas.exists():
+        #     self.create_installments()
     
-    def create_installments(self):
-        """Create installment records for parcelado purchases"""
-        from dateutil.relativedelta import relativedelta
+    def create_installments(self, parcelas_customizadas=None):
+        if self.numero_parcelas <= 1:
+            return
         
-        # Calculate installment value
-        valor_a_parcelar = self.valor_total_liquido - self.valor_entrada
-        valor_parcela = valor_a_parcelar / self.numero_parcelas
+        # Deletar parcelas existentes
+        self.parcelas.all().delete()
         
-        # Create installments
-        for i in range(1, self.numero_parcelas + 1):
-            data_vencimento = self.data_compra + relativedelta(months=i)
+        if parcelas_customizadas:
+            for i, parcela_data in enumerate(parcelas_customizadas, 1):
+                ParcelaCompra.objects.create(
+                    compra=self,
+                    numero_parcela=i,
+                    valor_parcela=parcela_data.get('valor', 0),
+                    data_vencimento=parcela_data.get('dataVencimento') or parcela_data.get('data_vencimento'),
+                    status='PENDENTE'
+                )
+        else:
+            from dateutil.relativedelta import relativedelta
             
-            ParcelaCompra.objects.create(
-                compra=self,
-                numero_parcela=i,
-                valor_parcela=valor_parcela,
-                data_vencimento=data_vencimento,
-                status='PENDENTE'
-            )
+            # Validações robustas para evitar problemas
+            if self.numero_parcelas <= 0:
+                raise ValueError("Número de parcelas deve ser maior que zero")
+            
+            # Limite máximo de parcelas para evitar loops infinitos
+            if self.numero_parcelas > 360:  # Máximo 30 anos (360 meses)
+                raise ValueError("Número de parcelas não pode exceder 360 (30 anos)")
+            
+            valor_a_parcelar = self.valor_total_liquido - self.valor_entrada
+            
+            # Verificar se o valor a parcelar é válido
+            if valor_a_parcelar < 0:
+                valor_a_parcelar = Decimal('0.00')
+            
+            # Verificar se o valor a parcelar é muito pequeno
+            if valor_a_parcelar > 0 and valor_a_parcelar < Decimal('0.01'):
+                raise ValueError("Valor a parcelar é muito pequeno (menor que R$ 0,01)")
+            
+            try:
+                valor_parcela = Decimal(str(valor_a_parcelar / self.numero_parcelas))
+                
+                # Verificar se o resultado é finito e válido
+                if not valor_parcela.is_finite():
+                    raise ValueError("Valor da parcela resultou em número infinito")
+                
+                # Verificar se o valor da parcela é muito pequeno
+                if valor_parcela < Decimal('0.01'):
+                    raise ValueError("Valor da parcela é muito pequeno (menor que R$ 0,01)")
+                
+                # Verificar se o valor da parcela é muito grande
+                if valor_parcela > Decimal('999999999.99'):
+                    raise ValueError("Valor da parcela é muito grande")
+                    
+            except (ZeroDivisionError, InvalidOperation, OverflowError) as e:
+                raise ValueError(f"Erro no cálculo da parcela: {str(e)}")
+            
+            # Criar parcelas com validação adicional
+            for i in range(1, self.numero_parcelas + 1):
+                try:
+                    data_vencimento = self.data_compra + relativedelta(months=i)
+                    
+                    # Verificar se a data de vencimento não é muito distante no futuro
+                    from datetime import date
+                    max_date = date(2099, 12, 31)
+                    if data_vencimento > max_date:
+                        raise ValueError(f"Data de vencimento muito distante no futuro: {data_vencimento}")
+                    
+                    ParcelaCompra.objects.create(
+                        compra=self,
+                        numero_parcela=i,
+                        valor_parcela=valor_parcela,
+                        data_vencimento=data_vencimento,
+                        status='PENDENTE'
+                    )
+                except Exception as e:
+                    # Se houver erro na criação de uma parcela, deletar todas as criadas
+                    self.parcelas.all().delete()
+                    raise ValueError(f"Erro ao criar parcela {i}: {str(e)}")
     
     @property
     def valor_pago(self):
@@ -458,7 +533,7 @@ class ParcelaCompra(models.Model):
         
         # Check if overdue
         from django.utils import timezone
-        if self.status == 'PENDENTE' and self.data_vencimento < timezone.now().date():
+        if self.status == 'PENDENTE' and self.data_vencimento and self.data_vencimento < timezone.now().date():
             self.status = 'VENCIDO'
         
         super().save(*args, **kwargs)

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ComprasTable from '../components/tables/ComprasTable';
 import CompraForm from '../components/forms/CompraForm';
-import CompraItensModal from '../components/modals/CompraItensModal';
+
 import ObraAutocomplete from '../components/forms/ObraAutocomplete';
 import {
   getCompras,
@@ -60,9 +60,7 @@ const ComprasPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [compraToDeleteId, setCompraToDeleteId] = useState(null);
 
-  // State for Itens Modal
-  const [isItensModalOpen, setIsItensModalOpen] = useState(false);
-  const [selectedCompraParaModal, setSelectedCompraParaModal] = useState(null); // Renamed and initialized to null
+
   
   // Selection state for bulk operations
   const [selectedCompras, setSelectedCompras] = useState(new Set());
@@ -204,6 +202,14 @@ const ComprasPage = () => {
     }
   }, [location.state, navigate, currentCompra, isAddingNew]);
 
+  // Detect /nova route and show form automatically
+  useEffect(() => {
+    if (location.pathname === '/compras/nova' && !isAddingNew && !currentCompra) {
+      setIsAddingNew(true);
+      setError(null);
+    }
+  }, [location.pathname, isAddingNew, currentCompra]);
+
   const handleAddNewCompraClick = () => {
     setCurrentCompra(null);
     setIsAddingNew(true);
@@ -280,27 +286,41 @@ const ComprasPage = () => {
 
   const handleFormSubmit = async formData => {
     setIsLoadingForm(true);
-    setError(null); // Clear previous form-specific errors
-    // setSuccessMessage('');
+    setError(null);
     const isEditing = currentCompra && currentCompra.id;
     try {
       if (isEditing) {
-        await updateCompra(currentCompra.id, formData);
+        const updatedCompra = await updateCompra(currentCompra.id, formData);
         showSuccessToast('Compra atualizada com sucesso!');
+        // Update the item in the list with the returned data
+        setCompras(prevCompras =>
+          prevCompras.map(c =>
+            c.id === currentCompra.id ? updatedCompra.data : c
+          )
+        );
       } else {
-        await createCompra(formData);
+        const newCompraResponse = await createCompra(formData);
         showSuccessToast('Compra registrada com sucesso!');
+        // Add the new item to the top of the list
+        // No need to refetch the whole page
+        setCompras(prevCompras => [newCompraResponse.data, ...prevCompras].slice(0, PAGE_SIZE));
+        setTotalItems(prev => prev + 1); // Increment total items
       }
       setCurrentCompra(null);
       setIsAddingNew(false);
-      // Refetch with current filters, go to page 1 if new item created
-      fetchCompras(isEditing ? currentPage : 1, {
-        dataInicio,
-        dataFim,
-        fornecedor,
-        tipo,
-        obraId,
-      });
+      if (location.pathname === '/compras/nova') {
+        navigate('/compras');
+      }
+      // No longer fetching immediately after create, only for edit
+      if (isEditing) {
+        fetchCompras(currentPage, {
+          dataInicio,
+          dataFim,
+          fornecedor,
+          tipo,
+          obraId,
+        });
+      }
     } catch (err) {
       let detailedError = isEditing
         ? 'Falha ao atualizar compra.'
@@ -345,6 +365,10 @@ const ComprasPage = () => {
     setCurrentCompra(null);
     setIsAddingNew(false);
     setError(null);
+    // Navigate back to /compras if we're on /nova route
+    if (location.pathname === '/compras/nova') {
+      navigate('/compras');
+    }
     // setSuccessMessage(''); // Replaced by toasts
   };
 
@@ -395,14 +419,10 @@ const ComprasPage = () => {
   };
 
   const handleViewCompraItens = compra => {
-    setSelectedCompraParaModal(compra); // Store the whole compra object
-    setIsItensModalOpen(true);
+    navigate(`/compras/${compra.id}`);
   };
 
-  const handleCloseItensModal = () => {
-    setIsItensModalOpen(false);
-    setSelectedCompraParaModal(null);
-  };
+
 
   // Selection handlers
   const handleSelectCompra = (compraId, isSelected) => {
@@ -727,11 +747,7 @@ const ComprasPage = () => {
           </div>
         </div>
       )}
-      <CompraItensModal
-        isOpen={isItensModalOpen}
-        onClose={handleCloseItensModal}
-        compra={selectedCompraParaModal} // Pass the whole compra object
-      />
+
     </div>
   );
 };

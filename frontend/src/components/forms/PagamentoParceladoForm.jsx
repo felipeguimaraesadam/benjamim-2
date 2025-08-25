@@ -17,7 +17,20 @@ const PagamentoParceladoForm = ({
 
   useEffect(() => {
     if (tipoPagamento === 'PARCELADO' && quantidadeParcelas >= 2) {
-      const valorParcela = valorTotal / quantidadeParcelas;
+      // PROTEÇÃO CONTRA VALORES INFINITOS E NaN
+      const valorTotalSeguro = isFinite(valorTotal) && valorTotal > 0 ? valorTotal : 0;
+      const valorParcela = valorTotalSeguro / quantidadeParcelas;
+      
+      // Verificar se o valor da parcela é válido
+      if (!isFinite(valorParcela) || valorParcela < 0) {
+        console.warn('Valor de parcela inválido detectado:', valorParcela);
+        setParcelasCustomizadas([]);
+        if (onParcelasChange) {
+          onParcelasChange([]);
+        }
+        return;
+      }
+      
       const hoje = new Date();
       const novasParcelas = Array.from({ length: quantidadeParcelas }, (_, index) => {
         const dataVencimento = new Date(hoje);
@@ -29,16 +42,33 @@ const PagamentoParceladoForm = ({
         };
       });
       setParcelasCustomizadas(novasParcelas);
-      onParcelasChange(novasParcelas);
+      if (onParcelasChange) {
+        onParcelasChange(novasParcelas);
+      }
     } else {
       setParcelasCustomizadas([]);
-      onParcelasChange([]);
+      if (onParcelasChange) {
+        onParcelasChange([]);
+      }
     }
-  }, [tipoPagamento, quantidadeParcelas, valorTotal, onParcelasChange]);
+  }, [tipoPagamento, quantidadeParcelas, valorTotal]); // Removido onParcelasChange das dependências
 
   const handleParcelaChange = (index, field, value) => {
     const novasParcelas = [...parcelasCustomizadas];
-    novasParcelas[index][field] = value;
+    
+    // PROTEÇÃO CONTRA VALORES INFINITOS E NaN
+    if (field === 'valor') {
+      const valorNumerico = parseFloat(value) || 0;
+      if (!isFinite(valorNumerico) || valorNumerico < 0) {
+        console.warn('Valor de parcela inválido detectado:', valorNumerico);
+        novasParcelas[index][field] = 0;
+      } else {
+        novasParcelas[index][field] = valorNumerico;
+      }
+    } else {
+      novasParcelas[index][field] = value;
+    }
+    
     setParcelasCustomizadas(novasParcelas);
     onParcelasChange(novasParcelas);
   };

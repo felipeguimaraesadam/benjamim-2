@@ -15,12 +15,15 @@ export const useApiData = (
   const [currentParams, setCurrentParams] = useState(initialParams);
 
   // Effect to update currentParams if initialParams prop changes
+  const prevInitialParamsRef = useRef(initialParams);
   useEffect(() => {
-    // Only update if initialParams has actually changed to avoid unnecessary re-renders/fetches
-    if (JSON.stringify(initialParams) !== JSON.stringify(currentParams)) {
+    // Deep comparison to avoid unnecessary updates
+    const paramsChanged = JSON.stringify(initialParams) !== JSON.stringify(prevInitialParamsRef.current);
+    if (paramsChanged) {
       setCurrentParams(initialParams);
+      prevInitialParamsRef.current = initialParams;
     }
-  }, [initialParams]); // currentParams removed from dep array to avoid loop with its own setter
+  }, [initialParams]);
 
   const executeFetch = useCallback(
     async fetchParamsToUse => {
@@ -112,7 +115,7 @@ export const useApiData = (
     } else {
       setIsLoading(false);
     }
-  }, [executeFetch, currentParams, autoFetch, apiFunction]);
+  }, [executeFetch, currentParams, autoFetch]); // Removed apiFunction from dependencies to prevent loops
 
   const fetchData = useCallback(
     async paramsForThisFetchOverride => {

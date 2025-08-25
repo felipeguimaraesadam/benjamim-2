@@ -132,7 +132,7 @@ const itemsReducer = (state, action) => {
                 materialNome: '',
                 unidadeMedida: '',
               };
-          console.log('🔍 REDUCER: Updated item at index', i, ':', updatedItem);
+
           return updatedItem;
         }
         return item;
@@ -333,6 +333,16 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     setPagamentoParcelado(prev => ({ ...prev, tipo }));
   }, []);
 
+  // Separate useEffect to resolve obra when obras are loaded
+  useEffect(() => {
+    if (obras.length > 0 && obraId && !obraSelecionada) {
+      const obraObj = obras.find(o => String(o.id) === String(obraId));
+      if (obraObj) {
+        setObraSelecionada(obraObj);
+      }
+    }
+  }, [obras, obraId, obraSelecionada]);
+
   const handleParcelasChange = useCallback((parcelas) => {
     setPagamentoParcelado(prev => ({ ...prev, parcelas }));
   }, []);
@@ -347,19 +357,16 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
   // Function to get field error (can be defined outside or memoized if complex)
   // For simplicity, defined here. If it used CompraForm state/props not passed as args, it would need useCallback.
-  const getFieldError = (
-    fieldName,
-    value,
-    itemIndex = null,
-    currentItems = null
-  ) => {
-    // Header fields
+  // FUNÇÃO DE VALIDAÇÃO ÚNICA E CONSOLIDADA
+  const validateField = (fieldName, value, itemIndex = null) => {
+    // Validação de campos do cabeçalho
     if (itemIndex === null) {
       if (fieldName === 'dataCompra' && !value)
         return 'Data da compra é obrigatória.';
-      if (fieldName === 'obraId' && !value) return 'Obra é obrigatória.';
+      if (fieldName === 'obraId' && !value) 
+        return 'Obra é obrigatória.';
       if (fieldName === 'desconto') {
-        const standardizedDesconto = String(value).replace(',', '.');
+        const standardizedDesconto = String(value || '').replace(',', '.');
         if (
           standardizedDesconto.trim() !== '' &&
           (isNaN(parseFloat(standardizedDesconto)) ||
@@ -368,49 +375,36 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           return 'Desconto deve ser um número válido e não negativo.';
         }
       }
-      // No onBlur validation for fornecedor or notaFiscal in this scope, but can be added.
-    } else {
-      // Item fields
-      const itemToValidate = currentItems && currentItems[itemIndex];
-      if (!itemToValidate) return null;
-
-      if (fieldName === 'material') {
-        console.log('🔍 DEBUG: getFieldError validating material:', {
-          value,
-          valueId: value?.id,
-          valueNome: value?.nome,
-          hasValue: !!value,
-          hasId: !!(value && value.id),
-          willReturnError: !value || !value.id,
-        });
-        if (!value || !value.id) return 'Material é obrigatório.';
-      } else if (fieldName === 'quantidade') {
-        const stdQty = String(value).replace(',', '.');
-        if (stdQty.trim() === '' || parseFloat(stdQty) <= 0)
-          return 'Quantidade deve ser positiva.';
-      } else if (fieldName === 'valorUnitario') {
-        const stdVU = String(value).replace(',', '.');
-        // Validate if field is not empty or if other related item fields have values
-        if (
-          stdVU.trim() !== '' ||
-          itemToValidate.materialId ||
-          itemToValidate.quantidade.trim() !== ''
-        ) {
-          if (stdVU.trim() === '' || parseFloat(stdVU) < 0)
-            return 'Valor unitário deve ser positivo ou zero.';
-        }
-      }
+      return null;
     }
-    return null; // No error
+    
+    // Validação de campos de itens
+    const item = items[itemIndex];
+    if (!item) return null;
+
+    if (fieldName === 'material') {
+      const materialIsValid = !!(item.material && item.material.id) || !!(item.materialId && String(item.materialId).trim());
+      if (!materialIsValid) return 'Material é obrigatório.';
+    } else if (fieldName === 'quantidade') {
+      const quantidadeStr = String(value || '').replace(',', '.').trim();
+      if (quantidadeStr === '' || isNaN(parseFloat(quantidadeStr)) || parseFloat(quantidadeStr) <= 0)
+        return 'Quantidade deve ser positiva.';
+    } else if (fieldName === 'valorUnitario') {
+      const valorStr = String(value || '').replace(',', '.').trim();
+      if (valorStr === '' || isNaN(parseFloat(valorStr)) || parseFloat(valorStr) < 0)
+        return 'Valor unitário deve ser positivo ou zero.';
+    }
+    
+    return null;
   };
 
   const handleFieldBlur = useCallback(
     (fieldName, fieldValue) => {
-      const error = getFieldError(fieldName, fieldValue);
+      const error = validateField(fieldName, fieldValue);
       setErrors(prev => ({ ...prev, [fieldName]: error }));
     },
-    [setErrors]
-  ); // getFieldError is stable if defined outside or has no external deps from CompraForm scope
+    [items]
+  );
 
   // Handle obra selection
   const handleObraSelect = useCallback(obra => {
@@ -426,19 +420,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 
   const handleItemFieldBlur = useCallback(
     (itemIndex, fieldName, fieldValue, blurState) => {
-      console.log('🔍 DEBUG: handleItemFieldBlur called:', {
-        itemIndex,
-        fieldName,
-        fieldValue,
-        blurState,
-      });
-
       if (fieldName === 'material') {
-        // If a selection was made, clear the error and skip validation.
+        // Se uma seleção foi feita, limpar erro
         if (blurState?.selectionMade) {
-          console.log(
-            '🔍 DEBUG: Skipping material validation as selection was made.'
-          );
           setErrors(prev => ({
             ...prev,
             [`item_${itemIndex}_material`]: null,
@@ -446,45 +430,25 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
           return;
         }
 
-        // If no selection was made, validate after a short delay.
-        // This allows state to update if a click/selection is in progress.
+        // Validar após delay para permitir seleção
         setTimeout(() => {
-          const currentItem = items[itemIndex];
-          const materialIsTrulyEmpty = !currentItem?.material?.id;
-          const inputIsAlsoEmpty = !fieldValue.trim();
-
-          console.log('🔍 DEBUG: Material validation check (delayed):', {
-            materialIsTrulyEmpty,
-            inputIsAlsoEmpty,
-            currentItem,
-          });
-
-          if (materialIsTrulyEmpty && inputIsAlsoEmpty) {
-            const error = getFieldError('material', null, itemIndex, items);
-            setErrors(prev => ({
-              ...prev,
-              [`item_${itemIndex}_material`]: error,
-            }));
-          } else {
-            // If input has text but no valid material is set, or if material is set, clear error.
-            setErrors(prev => ({
-              ...prev,
-              [`item_${itemIndex}_material`]: null,
-            }));
-          }
-        }, 150); // Delay to allow for selection state to propagate
-
-        return; // Stop further execution for the material field
+          const error = validateField('material', fieldValue, itemIndex);
+          setErrors(prev => ({
+            ...prev,
+            [`item_${itemIndex}_material`]: error,
+          }));
+        }, 150);
+        return;
       }
 
-      // Original logic for other fields
-      const error = getFieldError(fieldName, fieldValue, itemIndex, items);
+      // Validação para outros campos
+      const error = validateField(fieldName, fieldValue, itemIndex);
       setErrors(prev => ({
         ...prev,
         [`item_${itemIndex}_${fieldName}`]: error,
       }));
     },
-    [items] // Dependency on items is correct
+    [items]
   );
 
   useEffect(() => {
@@ -536,7 +500,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         setItemToFocusId(null); // Item not found, consume ID
       }
     }
-  }, [items, itemToFocusId, itemFieldRefs]); // Added itemFieldRefs
+  }, [items, itemToFocusId]); // Removed itemFieldRefs dependency to prevent infinite loop
 
   useEffect(() => {
     const fetchObras = async () => {
@@ -585,10 +549,9 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       } else if (initialData.obra) {
         const obraIdentifier = initialData.obra.id || initialData.obra;
         setObraId(String(obraIdentifier));
-        const obraObj = obras.find(
-          o => String(o.id) === String(obraIdentifier)
-        );
-        setObraSelecionada(obraObj || null);
+        // Don't try to find obra in obras array here to avoid dependency loop
+        // The obra will be resolved when obras are loaded
+        setObraSelecionada(null);
       }
 
       // Set dates and other fields
@@ -629,7 +592,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         length: initialData.anexos?.length,
         timestamp: new Date().toISOString()
       });
-      
+
       if (initialData.anexos && Array.isArray(initialData.anexos) && initialData.anexos.length > 0) {
         setAnexos(initialData.anexos);
         console.log('🔍 CompraForm - Anexos definidos do initialData:', initialData.anexos);
@@ -723,20 +686,20 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       setTipo('COMPRA');
       setObraId('');
       setObraSelecionada(null);
-      
+
       // Initialize new state variables for new forms
       setPagamentoParcelado({
         tipo: 'UNICO',
         parcelas: []
       });
       setAnexos([]);
-      
+
       dispatchItems({
         type: ITEM_ACTION_TYPES.SET_ITEMS,
         payload: [createNewEmptyItem()],
       });
     }
-  }, [initialData, obras]);
+  }, [initialData]); // Removed obras dependency to prevent infinite loops
 
   // Synchronize dataPagamento with dataCompra if dataPagamento is not manually set
   useEffect(() => {
@@ -744,7 +707,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       setDataPagamento(dataCompra);
     }
     prevDataCompraRef.current = dataCompra;
-  }, [dataCompra]);
+  }, [dataCompra, dataPagamento]); // Include dataPagamento to properly track changes
 
   const handleHeaderChange = e => {
     const { name, value } = e.target;
@@ -815,7 +778,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         }
 
         // Clear material errors immediately since material was successfully selected
-        console.log('🔍 DEBUG: Clearing material errors for item', index);
+
         setErrors(prevErr => ({
           ...prevErr,
           [`item_${index}_material`]: null,
@@ -863,7 +826,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
       type: ITEM_ACTION_TYPES.ADD_ITEM,
       payload: { id: newTempId },
     });
-  }, [dispatchItems, setItemToFocusId]); // dispatchItems and setItemToFocusId are stable
+  }, [dispatchItems]); // dispatchItems is stable
 
   const removeItemRow = useCallback(
     index => {
@@ -939,99 +902,130 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
     itemFieldRefs.current[index].categoria_uso = element;
   }, []);
 
+  // FUNÇÃO DE VALIDAÇÃO COMPLETA CONSOLIDADA
   const validateForm = () => {
-    // Not passed as prop, but if it were, it'd need useCallback with its own deps (obraId, dataCompra, desconto, items)
     const newErrors = {};
-    if (!obraId) newErrors.obraId = 'Obra é obrigatória.';
-    if (!dataCompra) newErrors.dataCompra = 'Data da compra é obrigatória.';
-    const currentDescontoStr = String(desconto);
-    const standardizedDesconto = currentDescontoStr.replace(',', '.');
-    if (
-      standardizedDesconto.trim() !== '' &&
-      (isNaN(parseFloat(standardizedDesconto)) ||
-        parseFloat(standardizedDesconto) < 0)
-    ) {
-      newErrors.desconto = 'Desconto deve ser um número válido e não negativo.';
-    }
-    let hasAtLeastOneValidItem = false;
+
+    // Validar campos do cabeçalho usando a função consolidada
+    const dataCompraError = validateField('dataCompra', dataCompra);
+    if (dataCompraError) newErrors.dataCompra = dataCompraError;
+
+    const obraError = validateField('obraId', obraId);
+    if (obraError) newErrors.obraId = obraError;
+
+    const descontoError = validateField('desconto', desconto);
+    if (descontoError) newErrors.desconto = descontoError;
+
+    // Validar itens - lógica simplificada e consistente
+    let hasValidItems = false;
+
     items.forEach((item, index) => {
-      const materialIsSet = item.material || item.materialId;
-      const quantidadeIsSet =
-        String(item.quantidade).replace(',', '.').trim() !== '';
-      const valorUnitarioIsSet =
-        String(item.valorUnitario).replace(',', '.').trim() !== '';
+      // Verificar se o item tem pelo menos um campo preenchido
+      const hasMaterial = !!(item.material && item.material.id) || !!(item.materialId && String(item.materialId).trim());
+      const hasQuantidade = !!(item.quantidade && String(item.quantidade).trim());
+      const hasValorUnitario = !!(item.valorUnitario && String(item.valorUnitario).trim());
 
-      if (
-        items.length === 1 ||
-        materialIsSet ||
-        quantidadeIsSet ||
-        valorUnitarioIsSet
-      ) {
-        if (!materialIsSet)
-          newErrors[`item_${index}_material`] = 'Material é obrigatório.';
-        const stdQty = String(item.quantidade).replace(',', '.');
-        if (stdQty === '' || parseFloat(stdQty) <= 0)
-          newErrors[`item_${index}_quantidade`] =
-            'Quantidade deve ser positiva.';
-        const stdVU = String(item.valorUnitario).replace(',', '.');
-        if (stdVU === '' || parseFloat(stdVU) < 0)
-          newErrors[`item_${index}_valorUnitario`] =
-            'Valor unitário deve ser positivo ou zero.';
+      const itemHasAnyData = hasMaterial || hasQuantidade || hasValorUnitario;
 
-        if (materialIsSet && parseFloat(stdQty) > 0 && parseFloat(stdVU) >= 0)
-          hasAtLeastOneValidItem = true;
+      if (itemHasAnyData) {
+        // Se tem dados, validar todos os campos obrigatórios
+        const materialError = validateField('material', item.material || item.materialId, index);
+        const quantidadeError = validateField('quantidade', item.quantidade, index);
+        const valorError = validateField('valorUnitario', item.valorUnitario, index);
+
+        if (materialError) newErrors[`item_${index}_material`] = materialError;
+        if (quantidadeError) newErrors[`item_${index}_quantidade`] = quantidadeError;
+        if (valorError) newErrors[`item_${index}_valorUnitario`] = valorError;
+
+        // Se todos os campos estão válidos, temos um item válido
+        if (!materialError && !quantidadeError && !valorError) {
+          hasValidItems = true;
+        }
       }
     });
-    if (
-      items.length > 0 &&
-      !hasAtLeastOneValidItem &&
-      items.some(i => i.materialId || i.quantidade || i.valorUnitario)
-    ) {
-      newErrors.form = 'Pelo menos um item deve ser preenchido corretamente.';
-    } else if (items.length === 0 && !(initialData && initialData.id)) {
-      newErrors.form = 'Uma compra deve ter pelo menos um item.';
+
+    // Verificar se há pelo menos um item válido
+    if (!hasValidItems) {
+      newErrors.form = 'Adicione pelo menos um item válido à compra.';
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = e => {
     e.preventDefault();
+
     if (validateForm()) {
-      const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;
-      const itemsToSubmit = items
-        .filter(
-          item => item.materialId || item.quantidade || item.valorUnitario
-        )
-        .map(item => ({
-          id: item.originalId || undefined,
-          material: parseInt(item.materialId || item.material?.id, 10),
-          quantidade: parseFloat(String(item.quantidade).replace(',', '.')) || 0,
-          valor_unitario: parseFloat(String(item.valorUnitario).replace(',', '.')) || 0,
-          categoria_uso: item.categoria_uso || null,
-        }));
-      if (itemsToSubmit.length === 0 && !(initialData && initialData.id)) {
+      try {
+        const finalDesconto = parseFloat(String(desconto).replace(',', '.')) || 0;
+
+        // Filtrar apenas itens válidos usando a mesma lógica da validação
+        const itemsToSubmit = items
+          .filter((item, index) => {
+            // Verificar se tem dados preenchidos
+            const hasMaterial = !!(item.material && item.material.id) || !!(item.materialId && String(item.materialId).trim());
+            const hasQuantidade = !!(item.quantidade && String(item.quantidade).trim());
+            const hasValorUnitario = !!(item.valorUnitario && String(item.valorUnitario).trim());
+
+            if (hasMaterial || hasQuantidade || hasValorUnitario) {
+              // Se tem dados, verificar se todos os campos são válidos
+              const materialError = validateField('material', item.material || item.materialId, index);
+              const quantidadeError = validateField('quantidade', item.quantidade, index);
+              const valorError = validateField('valorUnitario', item.valorUnitario, index);
+
+              return !materialError && !quantidadeError && !valorError;
+            }
+            return false;
+          })
+          .map(item => {
+            const quantidade = parseFloat(String(item.quantidade).replace(',', '.')) || 0;
+            const valor_unitario = parseFloat(String(item.valorUnitario).replace(',', '.')) || 0;
+
+            return {
+              id: item.originalId || undefined,
+              material: parseInt(item.materialId || item.material?.id, 10),
+              quantidade: quantidade,
+              valor_unitario: valor_unitario,
+              categoria_uso: item.categoria_uso || null,
+            };
+          });
+
+        if (itemsToSubmit.length === 0) {
+          setErrors(prev => ({
+            ...prev,
+            form: 'Adicione pelo menos um item válido à compra.',
+          }));
+          return;
+        }
+        // Determinar forma de pagamento baseada no tipo de pagamento
+        const formaPagamento = pagamentoParcelado?.tipo === 'PARCELADO' ? 'PARCELADO' : 'AVISTA';
+
+        const compraData = {
+          tipo,
+          obra: parseInt(obraId, 10),
+          data_compra: dataCompra,
+          data_pagamento: dataPagamento || null,
+          fornecedor: fornecedor,
+          nota_fiscal: notaFiscal || null,
+          desconto: finalDesconto,
+          observacoes: observacoes || null,
+          forma_pagamento: formaPagamento,
+          itens: itemsToSubmit,
+          pagamento_parcelado: JSON.stringify(pagamentoParcelado),
+          anexos: Array.isArray(anexos) ? anexos : [],
+        };
+
+        onSubmit(compraData);
+      } catch (error) {
+
         setErrors(prev => ({
           ...prev,
-          form: 'Adicione pelo menos um item válido à compra.',
+          form: error.message,
         }));
-        return;
       }
-      const compraData = {
-        tipo,
-        obra: parseInt(obraId, 10),
-        data_compra: dataCompra,
-        data_pagamento: dataPagamento || null,
-        fornecedor: fornecedor,
-        nota_fiscal: notaFiscal || null,
-        desconto: finalDesconto,
-        observacoes: observacoes || null,
-        itens: itemsToSubmit,
-        pagamento_parcelado: pagamentoParcelado,
-        anexos: anexos,
-      };
-      console.log('DEBUG: CompraForm submit payload:', compraData);
-      onSubmit(compraData);
+    } else {
+
     }
   };
 

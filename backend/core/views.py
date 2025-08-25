@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q, Sum, F, Case, When, Value, IntegerField
 import json
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, date, timedelta
 from django.db import transaction
 from rest_framework.decorators import action
@@ -458,7 +458,7 @@ class CompraViewSet(viewsets.ModelViewSet):
         
         # Create anexos
         for anexo_file in anexos_data:
-            anexo = AnexoCompra.objects.create(compra=compra, anexo=anexo_file, descricao=anexo_file.name)
+            anexo = AnexoCompra.objects.create(compra=compra, arquivo=anexo_file, descricao=anexo_file.name)
             print("Created anexo:", anexo)
         
         response_serializer = self.get_serializer(compra)
@@ -521,7 +521,7 @@ class CompraViewSet(viewsets.ModelViewSet):
         
         # Create new anexos
         for anexo_file in anexos_data:
-            anexo = AnexoCompra.objects.create(compra=instance, anexo=anexo_file, descricao=anexo_file.name)
+            anexo = AnexoCompra.objects.create(compra=instance, arquivo=anexo_file, descricao=anexo_file.name)
             print("Created anexo:", anexo)
         
         if getattr(instance, '_prefetched_objects_cache', None):
@@ -1416,8 +1416,14 @@ class GerarRelatorioPDFObraView(APIView):
         balanco_financeiro = (obra_instance.orcamento_previsto or Decimal('0.00')) - custo_total_realizado
 
         custo_por_m2 = Decimal('0.00')
-        if obra_instance.area_metragem and obra_instance.area_metragem > 0:
-            custo_por_m2 = custo_total_realizado / obra_instance.area_metragem
+        if obra_instance.area_metragem and obra_instance.area_metragem > Decimal('0.01'):  # Mínimo de 0.01 m²
+            try:
+                custo_por_m2 = custo_total_realizado / obra_instance.area_metragem
+                # Verificar se o resultado é finito e não muito grande
+                if not custo_por_m2.is_finite() or custo_por_m2 > Decimal('999999.99'):
+                    custo_por_m2 = Decimal('0.00')
+            except (ZeroDivisionError, InvalidOperation, OverflowError):
+                custo_por_m2 = Decimal('0.00')
 
         context = {
             'obra': obra_instance,
@@ -1538,7 +1544,8 @@ class AnexoDespesaViewSet(viewsets.ModelViewSet):
         despesa_id = self.request.query_params.get('despesa_id')
         if despesa_id:
             return self.queryset.filter(despesa_id=despesa_id)
-        return self.queryset.none()
+        # Para operações de delete/retrieve, permitir acesso a todos os anexos
+        return self.queryset.all()
     
     def destroy(self, request, *args, **kwargs):
         """
@@ -1551,8 +1558,8 @@ class AnexoDespesaViewSet(viewsets.ModelViewSet):
             if anexo.anexo:
                 try:
                     import os
-                    if os.path.exists(anexo.anexo.path):
-                        os.remove(anexo.anexo.path)
+                    # Usar o método delete() do FileField que é mais seguro
+                    anexo.anexo.delete(save=False)
                 except Exception as e:
                     # Log do erro, mas não falha a operação
                     import logging
@@ -1565,6 +1572,9 @@ class AnexoDespesaViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
             
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Erro completo ao remover anexo de despesa: {str(e)}')
             return Response(
                 {'error': f'Erro ao remover anexo: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -2264,9 +2274,19 @@ class GerarPDFComprasLoteView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
             
+            # Preparar dados das compras com anexos processados
+            compras_data = []
+            for compra in compras:
+                anexos_processados = process_anexos_for_pdf(compra.anexos.all())
+                compras_data.append({
+                    'compra': compra,
+                    'anexos_processados': anexos_processados
+                })
+            
             # Preparar contexto para o template
             context = {
                 'compras': compras,
+                'compras_data': compras_data,
                 'data_geracao': timezone.now(),
                 'usuario': request.user,
             }
