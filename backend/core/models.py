@@ -315,7 +315,7 @@ class Compra(models.Model):
                     compra=self,
                     numero_parcela=i,
                     valor_parcela=parcela_data.get('valor', 0),
-                    data_vencimento=parcela_data.get('data_vencimento'),
+                    data_vencimento=parcela_data.get('dataVencimento') or parcela_data.get('data_vencimento'),
                     status='PENDENTE'
                 )
         else:
