@@ -57,7 +57,11 @@ ECHO    - Ambiente virtual (.venv) verificado/criado.
 
 ECHO    - Ativando o ambiente virtual e instalando dependencias...
 call .venv\Scripts\activate.bat
-pip install -r requirements.txt
+
+ECHO    - Atualizando pip...
+python -m pip install --upgrade pip >NUL 2>&1
+
+pip install -q -r requirements.txt
 IF ERRORLEVEL 1 GOTO PIP_INSTALL_ERROR
 GOTO PIP_INSTALL_OK
 :PIP_INSTALL_ERROR
@@ -69,7 +73,7 @@ ECHO    - Dependencias do backend instaladas.
 
 ECHO.
 ECHO    - Executando migracoes do banco de dados...
-python manage.py migrate
+python manage.py migrate --verbosity 0
 IF ERRORLEVEL 1 GOTO MIGRATE_ERROR
 GOTO MIGRATE_OK
 :MIGRATE_ERROR
