@@ -663,12 +663,12 @@ class OcorrenciaFuncionarioViewSet(viewsets.ModelViewSet):
         if data_inicio_str:
             try:
                 data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
-                queryset = queryset.filter(data__gte=data_inicio)
+                queryset = queryset.filter(data_despesa__gte=data_inicio)
             except ValueError: pass
         if data_fim_str:
             try:
                 data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
-                queryset = queryset.filter(data__lte=data_fim)
+                queryset = queryset.filter(data_despesa__lte=data_fim)
             except ValueError: pass
         if funcionario_id_str:
             try:
@@ -702,7 +702,7 @@ class RelatorioFinanceiroObraView(APIView):
         except Obra.DoesNotExist:
             return Response({"error": f"Obra com id {obra_id} não encontrada."}, status=status.HTTP_404_NOT_FOUND)
         compras = Compra.objects.filter(obra_id=obra_id, data_compra__gte=data_inicio, data_compra__lte=data_fim)
-        despesas_extras = Despesa_Extra.objects.filter(obra_id=obra_id, data__gte=data_inicio, data__lte=data_fim)
+        despesas_extras = Despesa_Extra.objects.filter(obra_id=obra_id, data_despesa__gte=data_inicio, data_despesa__lte=data_fim)
         total_compras = compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         total_despesas_extras = despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
         custo_total_geral = total_compras + total_despesas_extras
@@ -757,8 +757,8 @@ class DashboardStatsView(APIView):
         obras_em_andamento = Obra.objects.filter(status='Em Andamento').count()
         current_month = timezone.now().month
         current_year = timezone.now().year
-        custo_compras_mes = Compra.objects.filter(data_compra__year=current_year, data_compra__month=current_month).aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
-        custo_despesas_extras_mes = Despesa_Extra.objects.filter(data__year=current_year, data__month=current_month).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+        custo_compras_mes = Compra.objects.filter(data_compra__year=current_year, data_compra__month=current_month).aggregate(total=Sum('valor_total'))['total'] or Decimal('0.00')
+        custo_despesas_extras_mes = Despesa_Extra.objects.filter(data_despesa__year=current_year, data_despesa__month=current_month).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
         custo_total_mes_corrente = custo_compras_mes + custo_despesas_extras_mes
         total_funcionarios = Funcionario.objects.count()
         stats = {
@@ -827,8 +827,8 @@ class RelatorioCustoGeralView(APIView):
         if data_inicio > data_fim:
             return Response({"error": "A data_inicio não pode ser posterior à data_fim."}, status=status.HTTP_400_BAD_REQUEST)
         applied_filters_echo = {"data_inicio": data_inicio_str, "data_fim": data_fim_str}
-        total_compras = Compra.objects.filter(data_compra__gte=data_inicio, data_compra__lte=data_fim).aggregate(total=Sum('valor_total_liquido', output_field=DecimalField()))['total'] or Decimal('0.00')
-        total_despesas_extras = Despesa_Extra.objects.filter(data__gte=data_inicio, data__lte=data_fim).aggregate(total=Sum('valor', output_field=DecimalField()))['total'] or Decimal('0.00')
+        total_compras = Compra.objects.filter(data_compra__gte=data_inicio, data_compra__lte=data_fim).aggregate(total=Sum('valor_total', output_field=DecimalField()))['total'] or Decimal('0.00')
+        total_despesas_extras = Despesa_Extra.objects.filter(data_despesa__gte=data_inicio, data_despesa__lte=data_fim).aggregate(total=Sum('valor', output_field=DecimalField()))['total'] or Decimal('0.00')
         custo_consolidado_total = total_compras + total_despesas_extras
         return Response({
             "filtros": applied_filters_echo, "total_compras": total_compras,
@@ -843,8 +843,8 @@ class ObraHistoricoCustosView(APIView):
             obra = Obra.objects.get(pk=pk)
         except Obra.DoesNotExist:
             return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
-        custos_compras = Compra.objects.filter(obra=obra).annotate(mes=TruncMonth('data_compra')).values('mes').annotate(total_compras=Sum('valor_total_liquido')).order_by('mes')
-        custos_despesas = Despesa_Extra.objects.filter(obra=obra).annotate(mes=TruncMonth('data')).values('mes').annotate(total_despesas=Sum('valor')).order_by('mes')
+        custos_compras = Compra.objects.filter(obra=obra).annotate(mes=TruncMonth('data_compra')).values('mes').annotate(total_compras=Sum('valor_total')).order_by('mes')
+        custos_despesas = Despesa_Extra.objects.filter(obra=obra).annotate(mes=TruncMonth('data_despesa')).values('mes').annotate(total_despesas=Sum('valor')).order_by('mes')
         historico = {}
         for compra in custos_compras:
             if compra['mes'] is None: continue
@@ -1247,7 +1247,7 @@ class RelatorioPagamentoMateriaisViewSet(viewsets.ViewSet): # type: ignore
 
             compra_detail = CompraReportSerializer(compra_item).data # type: ignore
             fornecedor_data["compras_a_pagar"].append(compra_detail) # type: ignore
-            valor_liquido = compra_item.valor_total_liquido or Decimal('0.00') # type: ignore
+            valor_liquido = compra_item.valor_total or Decimal('0.00') # type: ignore
             fornecedor_data["total_fornecedor_na_obra"] += valor_liquido
             obra_data["total_obra"] += valor_liquido
             grand_total += valor_liquido
@@ -1408,7 +1408,7 @@ class GerarRelatorioPDFObraView(APIView):
                 except Exception:
                     pass
 
-        custo_total_materiais = sum(c.valor_total_liquido for c in compras if c.valor_total_liquido) or Decimal('0.00')
+        custo_total_materiais = sum(c.valor_total for c in compras if c.valor_total) or Decimal('0.00')
         custo_total_despesas_extras = sum(de.valor for de in despesas_extras if de.valor) or Decimal('0.00')
         custo_total_locacoes = sum(loc.valor_pagamento for loc in locacoes if loc.valor_pagamento) or Decimal('0.00')
 

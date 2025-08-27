@@ -487,14 +487,7 @@ class AnexoLocacao(models.Model):
         return f"Anexo de {self.locacao.id} ({self.id})"
 
 
-class AnexoDespesa(models.Model):
-    despesa = models.ForeignKey(Despesa_Extra, related_name='anexos', on_delete=models.CASCADE)
-    anexo = models.FileField(upload_to=anexo_despesa_path)
-    descricao = models.CharField(max_length=255, blank=True, null=True)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Anexo de {self.despesa.id} ({self.id})"
+# AnexoDespesa model moved to core/models/despesa.py to avoid duplication
 
 
 class ParcelaCompra(models.Model):
