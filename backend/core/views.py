@@ -498,6 +498,82 @@ class CompraViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    @action(detail=False, methods=['get'], url_path='semanal')
+    def semanal(self, request):
+        inicio_semana_str = request.query_params.get('inicio')
+        obra_id_str = request.query_params.get('obra_id')
+        if not inicio_semana_str:
+            return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            inicio_semana = date.fromisoformat(inicio_semana_str)
+        except ValueError:
+            return Response({"error": "Formato de data inválido para 'inicio'. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        fim_semana = inicio_semana + timedelta(days=6)
+
+        compras_na_semana = Compra.objects.filter(
+            data_compra__gte=inicio_semana,
+            data_compra__lte=fim_semana,
+            tipo='COMPRA'  # Apenas compras, não orçamentos
+        ).select_related('obra').order_by('data_compra')
+
+        if obra_id_str:
+            compras_na_semana = compras_na_semana.filter(obra_id=obra_id_str)
+
+        resposta_semanal = {
+            (inicio_semana + timedelta(days=i)).isoformat(): [] for i in range(7)
+        }
+
+        for compra in compras_na_semana:
+            dia_str = compra.data_compra.isoformat()
+            if dia_str in resposta_semanal:
+                serializer = self.get_serializer(compra)
+                resposta_semanal[dia_str].append(serializer.data)
+
+        return Response(resposta_semanal)
+
+    @action(detail=False, methods=['get'], url_path='custo_diario_chart')
+    def custo_diario_chart(self, request):
+        today = timezone.now().date()
+        start_date = today - timedelta(days=29)
+        obra_id_str = request.query_params.get('obra_id')
+
+        compras_qs = Compra.objects.filter(
+            data_compra__gte=start_date,
+            data_compra__lte=today,
+            tipo='COMPRA'
+        )
+
+        if obra_id_str:
+            try:
+                obra_id = int(obra_id_str)
+                compras_qs = compras_qs.filter(obra_id=obra_id)
+            except ValueError:
+                return Response({"error": "ID de obra inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        daily_costs_db = compras_qs.values('data_compra').annotate(
+            total_cost_for_day=Sum('valor_total_liquido')
+        ).order_by('data_compra')
+
+        costs_by_date_map = {
+            item['data_compra']: item['total_cost_for_day']
+            for item in daily_costs_db
+        }
+
+        result_data = []
+        current_date = start_date
+        while current_date <= today:
+            cost = costs_by_date_map.get(current_date, Decimal('0.00'))
+            result_data.append({
+                "date": current_date.isoformat(),
+                "total_cost": cost,
+                "has_compras": cost > 0
+            })
+            current_date += timedelta(days=1)
+
+        return Response(result_data)
+
     def update(self, request, *args, **kwargs):
         print("CompraViewSet: Update method called")
         print("Request data:", request.data)

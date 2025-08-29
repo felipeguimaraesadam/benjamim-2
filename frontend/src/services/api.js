@@ -347,6 +347,22 @@ export const getDashboardStats = () => apiClient.get('/dashboard/stats/');
 export const getCompras = params => apiClient.get('/compras/', { params });
 export const getCompraById = id => apiClient.get(`/compras/${id}/`);
 
+export const getComprasDaSemana = (startDate, obraId) => {
+  const params = { inicio: startDate };
+  if (obraId) {
+    params.obra_id = obraId;
+  }
+  return apiClient.get('/compras/semanal/', { params });
+};
+
+export const getCompraCustoDiarioChart = (obraId = null) => {
+  let url = '/compras/custo_diario_chart/';
+  if (obraId) {
+    url += `?obra_id=${obraId}`;
+  }
+  return apiClient.get(url);
+};
+
 const prepareCompraFormData = (compraData) => {
   const formData = new FormData();
 
