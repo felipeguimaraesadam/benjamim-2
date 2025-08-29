@@ -98,7 +98,7 @@ class ObraSerializer(serializers.ModelSerializer):
 
     def get_custos_por_categoria(self, obj):
         # obj is the Obra instance
-        custo_materiais = obj.compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
+        custo_materiais = obj.compras.filter(tipo='COMPRA').aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         custo_locacoes = obj.locacao_obras_equipes_set.aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
         custo_despesas_extras = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
 
