@@ -701,7 +701,7 @@ class RelatorioFinanceiroObraView(APIView):
             obra = Obra.objects.get(pk=obra_id)
         except Obra.DoesNotExist:
             return Response({"error": f"Obra com id {obra_id} não encontrada."}, status=status.HTTP_404_NOT_FOUND)
-        compras = Compra.objects.filter(obra_id=obra_id, data_compra__gte=data_inicio, data_compra__lte=data_fim)
+        compras = Compra.objects.filter(obra_id=obra_id, data_compra__gte=data_inicio, data_compra__lte=data_fim, tipo='COMPRA')
         despesas_extras = Despesa_Extra.objects.filter(obra_id=obra_id, data__gte=data_inicio, data__lte=data_fim)
         total_compras = compras.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         total_despesas_extras = despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
@@ -741,7 +741,7 @@ class RelatorioGeralComprasView(APIView):
         if fornecedor_param:
             filters &= Q(fornecedor__icontains=fornecedor_param)
             applied_filters_echo["fornecedor"] = fornecedor_param
-        compras_qs = Compra.objects.filter(filters).distinct()
+        compras_qs = Compra.objects.filter(filters, tipo='COMPRA').distinct()
         soma_total_compras = compras_qs.aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         serializer = CompraSerializer(compras_qs, many=True)
         return Response({
@@ -757,7 +757,7 @@ class DashboardStatsView(APIView):
         obras_em_andamento = Obra.objects.filter(status='Em Andamento').count()
         current_month = timezone.now().month
         current_year = timezone.now().year
-        custo_compras_mes = Compra.objects.filter(data_compra__year=current_year, data_compra__month=current_month).aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
+        custo_compras_mes = Compra.objects.filter(data_compra__year=current_year, data_compra__month=current_month, tipo='COMPRA').aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
         custo_despesas_extras_mes = Despesa_Extra.objects.filter(data__year=current_year, data__month=current_month).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
         custo_total_mes_corrente = custo_compras_mes + custo_despesas_extras_mes
         total_funcionarios = Funcionario.objects.count()
@@ -827,7 +827,7 @@ class RelatorioCustoGeralView(APIView):
         if data_inicio > data_fim:
             return Response({"error": "A data_inicio não pode ser posterior à data_fim."}, status=status.HTTP_400_BAD_REQUEST)
         applied_filters_echo = {"data_inicio": data_inicio_str, "data_fim": data_fim_str}
-        total_compras = Compra.objects.filter(data_compra__gte=data_inicio, data_compra__lte=data_fim).aggregate(total=Sum('valor_total_liquido', output_field=DecimalField()))['total'] or Decimal('0.00')
+        total_compras = Compra.objects.filter(data_compra__gte=data_inicio, data_compra__lte=data_fim, tipo='COMPRA').aggregate(total=Sum('valor_total_liquido', output_field=DecimalField()))['total'] or Decimal('0.00')
         total_despesas_extras = Despesa_Extra.objects.filter(data__gte=data_inicio, data__lte=data_fim).aggregate(total=Sum('valor', output_field=DecimalField()))['total'] or Decimal('0.00')
         custo_consolidado_total = total_compras + total_despesas_extras
         return Response({
@@ -843,7 +843,7 @@ class ObraHistoricoCustosView(APIView):
             obra = Obra.objects.get(pk=pk)
         except Obra.DoesNotExist:
             return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
-        custos_compras = Compra.objects.filter(obra=obra).annotate(mes=TruncMonth('data_compra')).values('mes').annotate(total_compras=Sum('valor_total_liquido')).order_by('mes')
+        custos_compras = Compra.objects.filter(obra=obra, tipo='COMPRA').annotate(mes=TruncMonth('data_compra')).values('mes').annotate(total_compras=Sum('valor_total_liquido')).order_by('mes')
         custos_despesas = Despesa_Extra.objects.filter(obra=obra).annotate(mes=TruncMonth('data')).values('mes').annotate(total_despesas=Sum('valor')).order_by('mes')
         historico = {}
         for compra in custos_compras:
@@ -1291,7 +1291,7 @@ class ObraCustosPorMaterialView(APIView):
             obra_instance = Obra.objects.get(pk=pk) # type: ignore
         except Obra.DoesNotExist: # type: ignore
             return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
-        custos_por_material = ItemCompra.objects.filter(compra__obra=obra_instance).values('material__nome').annotate(total_custo=Sum('valor_total_item')).order_by('-total_custo') # type: ignore
+        custos_por_material = ItemCompra.objects.filter(compra__obra=obra_instance, compra__tipo='COMPRA').values('material__nome').annotate(total_custo=Sum('valor_total_item')).order_by('-total_custo') # type: ignore
         resultado_formatado = [
             {'name': item['material__nome'], 'value': item['total_custo'] or Decimal('0.00')}
             for item in custos_por_material
@@ -1309,7 +1309,7 @@ class ObraCustosPorCategoriaMaterialView(APIView):
             return Response({"error": "Obra não encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
         # Agrupar por 'categoria_uso' e somar 'valor_total_item'
-        custos = ItemCompra.objects.filter(compra__obra=obra)\
+        custos = ItemCompra.objects.filter(compra__obra=obra, compra__tipo='COMPRA')\
                                    .values('categoria_uso')\
                                    .annotate(total_custo=Sum('valor_total_item'))\
                                    .order_by('-total_custo')
@@ -1383,7 +1383,7 @@ class GerarRelatorioPDFObraView(APIView):
         except Obra.DoesNotExist:
             raise Http404("Obra não encontrada")
 
-        compras = Compra.objects.filter(obra=obra_instance).prefetch_related('itens__material').order_by('data_compra', 'nota_fiscal')
+        compras = Compra.objects.filter(obra=obra_instance, tipo='COMPRA').prefetch_related('itens__material').order_by('data_compra', 'nota_fiscal')
         despesas_extras = Despesa_Extra.objects.filter(obra=obra_instance).order_by('data')
         locacoes = Locacao_Obras_Equipes.objects.filter(obra=obra_instance).select_related(
             'equipe__lider',
