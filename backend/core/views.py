@@ -467,28 +467,34 @@ class CompraViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Compra.objects.all().select_related('obra').order_by('-data_compra')
-        obra_id = self.request.query_params.get('obra_id')
-        if obra_id:
-            queryset = queryset.filter(obra_id=obra_id)
-        data_inicio_str = self.request.query_params.get('data_inicio')
-        if data_inicio_str:
-            try:
-                data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
-                queryset = queryset.filter(data_compra__gte=data_inicio)
-            except ValueError: pass
-        data_fim_str = self.request.query_params.get('data_fim')
-        if data_fim_str:
-            try:
-                data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
-                queryset = queryset.filter(data_compra__lte=data_fim)
-            except ValueError: pass
-        fornecedor = self.request.query_params.get('fornecedor')
-        if fornecedor:
-            queryset = queryset.filter(fornecedor__icontains=fornecedor)
 
-        tipo = self.request.query_params.get('tipo')
-        if tipo:
-            queryset = queryset.filter(tipo=tipo)
+        if self.action == 'list':
+            obra_id = self.request.query_params.get('obra_id')
+            if obra_id:
+                queryset = queryset.filter(obra_id=obra_id)
+            data_inicio_str = self.request.query_params.get('data_inicio')
+            if data_inicio_str:
+                try:
+                    data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
+                    queryset = queryset.filter(data_compra__gte=data_inicio)
+                except ValueError: pass
+            data_fim_str = self.request.query_params.get('data_fim')
+            if data_fim_str:
+                try:
+                    data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
+                    queryset = queryset.filter(data_compra__lte=data_fim)
+                except ValueError: pass
+            fornecedor = self.request.query_params.get('fornecedor')
+            if fornecedor:
+                queryset = queryset.filter(fornecedor__icontains=fornecedor)
+
+            tipo = self.request.query_params.get('tipo')
+            if tipo:
+                queryset = queryset.filter(tipo=tipo)
+            elif obra_id:
+                # If listing for a specific obra, default to COMPRA only
+                queryset = queryset.filter(tipo='COMPRA')
+            # If no 'tipo' and no 'obra_id', all types are returned for a general list
 
         return queryset
 
@@ -1203,6 +1209,8 @@ class RelatorioPagamentoMateriaisViewSet(viewsets.ViewSet): # type: ignore
         if obra_id_str: filters_q &= Q(obra_id=obra_id_str) # type: ignore
         if fornecedor_str: filters_q &= Q(fornecedor__icontains=fornecedor_str) # type: ignore
 
+        filters_q &= Q(tipo='COMPRA')
+
         compras_no_periodo = Compra.objects.filter(filters_q).select_related('obra') # type: ignore
         compras_pagamento_pendente = []
         for compra_instance in compras_no_periodo: # type: ignore
@@ -1229,6 +1237,8 @@ class RelatorioPagamentoMateriaisViewSet(viewsets.ViewSet): # type: ignore
         filters_q = Q(data_compra__gte=start_date_parsed) & Q(data_compra__lte=end_date_parsed) # type: ignore
         if obra_id_str: filters_q &= Q(obra_id=obra_id_str) # type: ignore
         if fornecedor_str: filters_q &= Q(fornecedor__icontains=fornecedor_str) # type: ignore
+
+        filters_q &= Q(tipo='COMPRA')
 
         compras_do_periodo = Compra.objects.filter(filters_q).select_related('obra').order_by('obra__nome_obra', 'fornecedor', 'data_compra', 'data_pagamento') # type: ignore
         report = defaultdict(lambda: {"obra_id": None, "obra_nome": "", "fornecedores": defaultdict(lambda: {"fornecedor_nome": "", "compras_a_pagar": [], "total_fornecedor_na_obra": Decimal('0.00')}), "total_obra": Decimal('0.00')})
