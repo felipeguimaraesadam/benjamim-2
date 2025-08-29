@@ -6,17 +6,13 @@ ECHO.
 
 ECHO [INFO] Parando servidores Django e Vite...
 
-REM Parar processos Python (Django)
-for /f "tokens=2" %%i in ('tasklist /fi "imagename eq python.exe" /fo table /nh ^| findstr python') do (
-    ECHO Parando processo Python: %%i
-    taskkill /pid %%i /f >nul 2>&1
-)
+REM Parar o servidor do Backend (Django) se estiver em execucao
+ECHO [INFO] Tentando parar o servidor do Backend (se em execucao)...
+taskkill /fi "windowtitle eq SGO Backend - Django (Ctrl+C para parar)" /f >nul 2>&1
 
-REM Parar processos Node (Vite)
-for /f "tokens=2" %%i in ('tasklist /fi "imagename eq node.exe" /fo table /nh ^| findstr node') do (
-    ECHO Parando processo Node: %%i
-    taskkill /pid %%i /f >nul 2>&1
-)
+REM Parar o servidor do Frontend (Vite) se estiver em execucao
+ECHO [INFO] Tentando parar o servidor do Frontend (se em execucao)...
+taskkill /fi "windowtitle eq SGO Frontend - Vite (Ctrl+C para parar)" /f >nul 2>&1
 
 ECHO.
 ECHO [SUCESSO] Servidores foram parados.
