@@ -13,6 +13,9 @@ import {
   Activity,
   Clock,
   CheckCircle,
+  ChevronDown,
+  ShoppingCart,
+  Briefcase,
 } from 'lucide-react';
 import {
   PieChart,
@@ -51,6 +54,7 @@ const CHART_COLORS = [
 ];
 
 const DashboardPage = () => {
+  const [isManagementOpen, setManagementOpen] = useState(false);
   const [stats, setStats] = useState(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [errorStats, setErrorStats] = useState(null);
@@ -378,71 +382,101 @@ const DashboardPage = () => {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 text-center">
             Acesso Rápido
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {/* Obras */}
             <Link
               to="/obras"
               className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
             >
               <Building2 className="w-8 h-8 text-blue-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-1">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center">
                 Obras
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                Gerenciar projetos
-              </p>
             </Link>
 
+            {/* Compras */}
             <Link
-              to="/funcionarios"
+              to="/compras"
               className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
             >
-              <Users className="w-8 h-8 text-green-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-1">
-                Funcionários
+              <ShoppingCart className="w-8 h-8 text-green-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center">
+                Compras
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                Equipe e recursos
-              </p>
             </Link>
 
-            <Link
-              to="/relatorios"
-              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
-            >
-              <BarChart3 className="w-8 h-8 text-orange-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-1">
-                Relatórios
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                Análises e dados
-              </p>
-            </Link>
-
-            <Link
-              to="/materiais"
-              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
-            >
-              <Package className="w-8 h-8 text-purple-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-1">
-                Materiais
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                Estoque e compras
-              </p>
-            </Link>
-
+            {/* Locações */}
             <Link
               to="/locacoes"
               className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
             >
               <Calendar className="w-8 h-8 text-red-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-1">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center">
                 Locações
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                Equipamentos
-              </p>
             </Link>
+
+            {/* Despesas Extras */}
+            <Link
+              to="/despesas-extras"
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+            >
+              <DollarSign className="w-8 h-8 text-yellow-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center">
+                Despesas Extras
+              </h3>
+            </Link>
+
+            {/* Ocorrências */}
+            <Link
+              to="/ocorrencias"
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
+            >
+              <AlertTriangle className="w-8 h-8 text-orange-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center">
+                Ocorrências
+              </h3>
+            </Link>
+
+            {/* Gerenciamento Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setManagementOpen(!isManagementOpen)}
+                className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group w-full h-full flex flex-col items-center justify-center"
+              >
+                <Briefcase className="w-8 h-8 text-purple-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center">
+                  Gerenciamento
+                </h3>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 ml-1 transition-transform ${
+                    isManagementOpen ? 'transform rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {isManagementOpen && (
+                <div className="absolute z-10 mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+                  <Link
+                    to="/materiais"
+                    className="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Materiais
+                  </Link>
+                  <Link
+                    to="/equipes"
+                    className="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Equipes
+                  </Link>
+                  <Link
+                    to="/funcionarios"
+                    className="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Funcionários
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
