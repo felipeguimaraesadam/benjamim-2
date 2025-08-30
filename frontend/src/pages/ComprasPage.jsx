@@ -5,6 +5,7 @@ import * as api from '../services/api';
 
 import CompraForm from '../components/forms/CompraForm';
 import CompraDetailModal from '../components/modals/CompraDetailModal';
+import MoveOrDuplicateModal from '../components/modals/MoveOrDuplicateModal';
 import ContextMenu from '../components/utils/ContextMenu';
 import CompraCard from '../components/WeeklyPlanner/CompraCard';
 import { showSuccessToast, showErrorToast } from '../utils/toastUtils';
@@ -32,23 +33,14 @@ const ComprasPage = () => {
   };
 
   const handleDragEnd = async (event) => {
+    const { active, over } = event;
     setActiveDragId(null);
     setActiveItem(null);
 
-    const { active, over } = event;
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const newDate = over.id;
-    const compraId = active.id.split('-')[1];
-
-    try {
-      await api.updateCompraStatus(compraId, { data_compra: newDate });
-      showSuccessToast('Compra movida com sucesso!');
-      fetchWeekData(currentDate, selectedObra?.id);
-    } catch (err) {
-      showErrorToast(err.message || 'Erro ao mover a compra.');
+    if (over && active.id !== over.id) {
+      const item = Object.values(itemsPorDia).flat().find(i => `compra-${i.id}` === active.id);
+      const newDate = over.id;
+      setMoveOrDuplicateModal({ visible: true, item, newDate });
     }
   };
 
@@ -68,6 +60,7 @@ const ComprasPage = () => {
   const [currentCompra, setCurrentCompra] = useState(null);
   const [selectedCompraId, setSelectedCompraId] = useState(null);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, itemId: null });
+  const [moveOrDuplicateModal, setMoveOrDuplicateModal] = useState({ visible: false, item: null, newDate: null });
 
   const fetchObras = useCallback(async () => {
     try {
@@ -187,6 +180,13 @@ const ComprasPage = () => {
         />
       )}
       <div className="mb-8 flex flex-col">
+        {moveOrDuplicateModal.visible && (
+          <MoveOrDuplicateModal
+            onMove={() => handleMove(moveOrDuplicateModal.item, moveOrDuplicateModal.newDate)}
+            onDuplicate={() => handleDuplicate(moveOrDuplicateModal.item, moveOrDuplicateModal.newDate)}
+            onCancel={() => setMoveOrDuplicateModal({ visible: false, item: null, newDate: null })}
+          />
+        )}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
             Planejamento Semanal de Compras

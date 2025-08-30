@@ -612,6 +612,38 @@ class CompraViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
+    def duplicate(self, request, pk=None):
+        try:
+            original_compra = self.get_object()
+            new_date_str = request.data.get('new_date')
+            if not new_date_str:
+                return Response({'error': 'A nova data é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
+
+            with transaction.atomic():
+                # Duplicate Compra
+                new_compra = original_compra
+                new_compra.pk = None
+                new_compra.id = None
+                new_compra.data_compra = new_date
+                new_compra.nota_fiscal = None  # Clear nota_fiscal to avoid confusion
+                new_compra.save()
+
+                # Duplicate ItemCompra
+                for item in original_compra.itens.all():
+                    new_item = item
+                    new_item.pk = None
+                    new_item.id = None
+                    new_item.compra = new_compra
+                    new_item.save()
+
+            serializer = self.get_serializer(new_compra)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         compra = self.get_object()
         if compra.tipo == 'ORCAMENTO':

@@ -433,6 +433,8 @@ export const updateCompra = (id, compraData) => {
 export const deleteCompra = id => apiClient.delete(`/compras/${id}/`);
 export const updateCompraStatus = (id, data) =>
   apiClient.patch(`/compras/${id}/`, data);
+export const duplicateCompra = (id, newDate) =>
+  apiClient.post(`/compras/${id}/duplicate/`, { new_date: newDate });
 export const approveOrcamento = id => apiClient.post(`/compras/${id}/approve/`);
 export const getObraComprasDetalhes = obraId =>
   apiClient.get(`/obras/${obraId}/compras-detalhes/`);
