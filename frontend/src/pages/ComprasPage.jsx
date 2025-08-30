@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { toast } from 'react-toastify';
 import { format } from 'date-fns';
 import * as api from '../services/api';
 
@@ -69,10 +68,8 @@ const ComprasPage = () => {
     const optimisticState = { ...originalState };
 
     // Find and remove from old date
-    let originalDate;
     Object.keys(optimisticState).forEach(date => {
       if (optimisticState[date].find(i => i.id === item.id)) {
-        originalDate = date;
         optimisticState[date] = optimisticState[date].filter(i => i.id !== item.id);
       }
     });
@@ -160,6 +157,24 @@ const ComprasPage = () => {
   useEffect(() => {
     fetchWeekData(currentDate, selectedObra?.id);
   }, [currentDate, selectedObra, fetchWeekData]);
+
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.key === 'Escape') {
+        if (window.confirm('Tem certeza que deseja fechar o formulário? As alterações não salvas serão perdidas.')) {
+          setShowFormModal(false);
+        }
+      }
+    };
+
+    if (showFormModal) {
+      window.addEventListener('keydown', handleEsc);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [showFormModal]);
 
   const handleAddItem = (date) => {
     setCurrentCompra({ data_compra: date, obra: selectedObra ? selectedObra.id : null });
@@ -300,7 +315,7 @@ const ComprasPage = () => {
 
       {showFormModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
               {currentCompra && currentCompra.id ? 'Editar Compra' : 'Adicionar Nova Compra'}
             </h2>
