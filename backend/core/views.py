@@ -622,21 +622,43 @@ class CompraViewSet(viewsets.ModelViewSet):
             new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
 
             with transaction.atomic():
-                # Duplicate Compra
-                new_compra = original_compra
-                new_compra.pk = None
-                new_compra.id = None
-                new_compra.data_compra = new_date
-                new_compra.nota_fiscal = None  # Clear nota_fiscal to avoid confusion
+                # Create a new Compra instance by copying fields
+                new_compra_data = {
+                    'obra': original_compra.obra,
+                    'fornecedor': original_compra.fornecedor,
+                    'data_compra': new_date,
+                    'nota_fiscal': None,  # Clear nota_fiscal to avoid confusion
+                    'desconto': original_compra.desconto,
+                    'observacoes': original_compra.observacoes,
+                    'tipo': original_compra.tipo,
+                    'status_orcamento': original_compra.status_orcamento,
+                    'forma_pagamento': original_compra.forma_pagamento,
+                    'numero_parcelas': original_compra.numero_parcelas,
+                    'valor_entrada': original_compra.valor_entrada,
+                }
+
+                # Create the new Compra instance
+                new_compra = Compra(**new_compra_data)
+
+                # We need to save it first to get an ID for related items
                 new_compra.save()
 
                 # Duplicate ItemCompra
+                items_to_create = []
                 for item in original_compra.itens.all():
-                    new_item = item
-                    new_item.pk = None
-                    new_item.id = None
-                    new_item.compra = new_compra
-                    new_item.save()
+                    items_to_create.append(ItemCompra(
+                        compra=new_compra,
+                        material=item.material,
+                        quantidade=item.quantidade,
+                        valor_unitario=item.valor_unitario,
+                        categoria_uso=item.categoria_uso
+                        # valor_total_item is calculated on save
+                    ))
+                ItemCompra.objects.bulk_create(items_to_create)
+
+                # After creating items, call save() again on the Compra instance
+                # to trigger the calculation of valor_total_bruto and valor_total_liquido
+                new_compra.save()
 
             serializer = self.get_serializer(new_compra)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
