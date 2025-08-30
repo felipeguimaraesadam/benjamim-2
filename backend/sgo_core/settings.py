@@ -65,6 +65,10 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
+
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -76,7 +80,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.getenv('SGO_LOG_FILE', '/app/backend/logs/debug.log'),
+            'filename': os.getenv('SGO_LOG_FILE', LOGS_DIR / 'debug.log'),
         },
     },
     'loggers': {
