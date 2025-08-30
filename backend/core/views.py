@@ -646,13 +646,14 @@ class CompraViewSet(viewsets.ModelViewSet):
                 # Duplicate ItemCompra
                 items_to_create = []
                 for item in original_compra.itens.all():
+                    valor_total_item = item.quantidade * item.valor_unitario
                     items_to_create.append(ItemCompra(
                         compra=new_compra,
                         material=item.material,
                         quantidade=item.quantidade,
                         valor_unitario=item.valor_unitario,
+                        valor_total_item=valor_total_item,
                         categoria_uso=item.categoria_uso
-                        # valor_total_item is calculated on save
                     ))
                 ItemCompra.objects.bulk_create(items_to_create)
 
