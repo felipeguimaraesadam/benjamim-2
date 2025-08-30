@@ -33,7 +33,7 @@ function CompraCard({
     isDragging: dndIsDragging,
   } = useDraggable({
     id: draggableId,
-    data: { compra },
+    data: { compra, longPressOrDragHappenedRef },
     disabled: isDraggingOverlay,
   });
 

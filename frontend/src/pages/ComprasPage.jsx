@@ -37,10 +37,12 @@ const ComprasPage = () => {
     setActiveDragId(null);
     setActiveItem(null);
 
-    if (over && active.id !== over.id) {
-      const item = Object.values(itemsPorDia).flat().find(i => `compra-${i.id}` === active.id);
-      const newDate = over.id;
-      setMoveOrDuplicateModal({ visible: true, item, newDate });
+    if (over && active.data.current.longPressOrDragHappenedRef.current) {
+      if (active.id !== over.id) {
+        const item = Object.values(itemsPorDia).flat().find(i => `compra-${i.id}` === active.id);
+        const newDate = over.id;
+        setMoveOrDuplicateModal({ visible: true, item, newDate });
+      }
     }
   };
 
@@ -61,6 +63,51 @@ const ComprasPage = () => {
   const [selectedCompraId, setSelectedCompraId] = useState(null);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, itemId: null });
   const [moveOrDuplicateModal, setMoveOrDuplicateModal] = useState({ visible: false, item: null, newDate: null });
+
+  const handleMove = async (item, newDate) => {
+    const originalState = { ...itemsPorDia };
+    const optimisticState = { ...originalState };
+
+    // Find and remove from old date
+    let originalDate;
+    Object.keys(optimisticState).forEach(date => {
+      if (optimisticState[date].find(i => i.id === item.id)) {
+        originalDate = date;
+        optimisticState[date] = optimisticState[date].filter(i => i.id !== item.id);
+      }
+    });
+
+    // Add to new date
+    const updatedItem = { ...item, data_compra: newDate };
+    if (optimisticState[newDate]) {
+      optimisticState[newDate].push(updatedItem);
+    } else {
+      optimisticState[newDate] = [updatedItem];
+    }
+
+    setItemsPorDia(optimisticState);
+
+    try {
+      await api.updateCompraStatus(item.id, { data_compra: newDate });
+      showSuccessToast('Compra movida com sucesso!');
+    } catch (err) {
+      showErrorToast(err.message || 'Erro ao mover a compra.');
+      setItemsPorDia(originalState); // Revert on error
+    }
+  };
+
+  const handleDuplicate = async (item, newDate) => {
+    setIsLoadingPlanner(true); // Show loader for duplication as it's a new item
+    try {
+      await api.duplicateCompra(item.id, newDate);
+      showSuccessToast('Compra duplicada com sucesso!');
+      fetchWeekData(currentDate, selectedObra?.id); // Refetch to get the new item
+    } catch (err) {
+      showErrorToast(err.message || 'Erro ao duplicar a compra.');
+    } finally {
+      setIsLoadingPlanner(false);
+    }
+  };
 
   const fetchObras = useCallback(async () => {
     try {
@@ -142,7 +189,7 @@ const ComprasPage = () => {
       compra={item}
       isDragging={isDragging}
       onCardClick={() => setSelectedCompraId(item.id)}
-      onShowContextMenu={(e) => setContextMenu({ visible: true, x: e.clientX, y: e.clientY, itemId: item.id })}
+      onShowContextMenu={(itemId, e) => setContextMenu({ visible: true, x: e.clientX, y: e.clientY, itemId: itemId })}
     />
   );
 
@@ -182,8 +229,16 @@ const ComprasPage = () => {
       <div className="mb-8 flex flex-col">
         {moveOrDuplicateModal.visible && (
           <MoveOrDuplicateModal
-            onMove={() => handleMove(moveOrDuplicateModal.item, moveOrDuplicateModal.newDate)}
-            onDuplicate={() => handleDuplicate(moveOrDuplicateModal.item, moveOrDuplicateModal.newDate)}
+            onMove={() => {
+              const { item, newDate } = moveOrDuplicateModal;
+              handleMove(item, newDate);
+              setMoveOrDuplicateModal({ visible: false, item: null, newDate: null });
+            }}
+            onDuplicate={() => {
+              const { item, newDate } = moveOrDuplicateModal;
+              handleDuplicate(item, newDate);
+              setMoveOrDuplicateModal({ visible: false, item: null, newDate: null });
+            }}
             onCancel={() => setMoveOrDuplicateModal({ visible: false, item: null, newDate: null })}
           />
         )}
