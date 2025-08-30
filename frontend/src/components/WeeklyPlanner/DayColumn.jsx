@@ -47,7 +47,7 @@ function DayColumn({
 
       <div className="flex-grow overflow-y-auto p-2 space-y-2">
         {items && items.length > 0 ? (
-          items.map(item => renderItem(item, item.id === activeDragItemId))
+          items.map(item => <div key={item.id}>{renderItem(item, item.id === activeDragItemId)}</div>)
         ) : (
           <div className="text-center text-sm text-gray-400 pt-4">
             {noItemsText}
