@@ -90,6 +90,7 @@ const ComprasPage = () => {
     try {
       await api.updateCompraStatus(item.id, { data_compra: newDate });
       showSuccessToast('Compra movida com sucesso!');
+      fetchChartData(selectedObraIdForChart || null);
     } catch (err) {
       showErrorToast(err.message || 'Erro ao mover a compra.');
       setItemsPorDia(originalState); // Revert on error
@@ -102,6 +103,7 @@ const ComprasPage = () => {
       await api.duplicateCompra(item.id, newDate);
       showSuccessToast('Compra duplicada com sucesso!');
       fetchWeekData(currentDate, selectedObra?.id); // Refetch to get the new item
+      fetchChartData(selectedObraIdForChart || null);
     } catch (err) {
       showErrorToast(err.message || 'Erro ao duplicar a compra.');
     } finally {

@@ -536,8 +536,8 @@ class CompraSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({field_name: f"JSON inválido para o campo '{field_name}'."})
 
     @staticmethod
-    def _validate_itens_data(itens_data):
-        if not itens_data:
+    def _validate_itens_data(itens_data, tipo):
+        if tipo == 'COMPRA' and not itens_data:
             raise serializers.ValidationError({'itens': 'A compra deve ter pelo menos um item.'})
         for item_data in itens_data:
             if not item_data.get('material'):
@@ -553,7 +553,7 @@ class CompraSerializer(serializers.ModelSerializer):
         itens_data = self._get_json_from_request('itens') or []
         pagamento_data = self._get_json_from_request('pagamento_parcelado')
 
-        self._validate_itens_data(itens_data)
+        self._validate_itens_data(itens_data, validated_data.get('tipo'))
 
         # Remove read-only 'itens' if it exists in validated_data
         validated_data.pop('itens', None)
@@ -561,14 +561,15 @@ class CompraSerializer(serializers.ModelSerializer):
         try:
             with transaction.atomic():
                 # Set payment info in validated_data before creating the Compra
-                if pagamento_data and isinstance(pagamento_data, dict):
-                    if pagamento_data.get('tipo') == 'PARCELADO':
-                        validated_data['forma_pagamento'] = 'PARCELADO'
-                        parcelas = pagamento_data.get('parcelas', [])
-                        validated_data['numero_parcelas'] = len(parcelas) if parcelas else 0
-                    else: # Includes 'UNICO' or any other case
-                        validated_data['forma_pagamento'] = 'AVISTA'
-                        validated_data['numero_parcelas'] = 1
+                if validated_data.get('tipo') == 'COMPRA':
+                    if pagamento_data and isinstance(pagamento_data, dict):
+                        if pagamento_data.get('tipo') == 'PARCELADO':
+                            validated_data['forma_pagamento'] = 'PARCELADO'
+                            parcelas = pagamento_data.get('parcelas', [])
+                            validated_data['numero_parcelas'] = len(parcelas) if parcelas else 0
+                        else: # Includes 'UNICO' or any other case
+                            validated_data['forma_pagamento'] = 'AVISTA'
+                            validated_data['numero_parcelas'] = 1
 
                 # Create the Compra instance with all available data
                 compra = Compra.objects.create(**validated_data)
@@ -584,7 +585,7 @@ class CompraSerializer(serializers.ModelSerializer):
                 compra.save()
 
                 # Create installments if applicable
-                if compra.forma_pagamento == 'PARCELADO' and pagamento_data:
+                if compra.forma_pagamento == 'PARCELADO' and pagamento_data and validated_data.get('tipo') == 'COMPRA':
                     compra.parcelas.all().delete() # Clear existing before creating new
                     compra.create_installments(pagamento_data.get('parcelas', []))
 
