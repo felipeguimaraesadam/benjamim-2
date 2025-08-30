@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 # Configurar Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sgo_core.settings')
 django.setup()
 
 from core.models import Obra, Material, Compra, ItemCompra, ParcelaCompra
@@ -23,9 +23,11 @@ def test_compra_creation():
     obra, created = Obra.objects.get_or_create(
         nome_obra="Obra Teste",
         defaults={
-            'endereco': 'Rua Teste, 123',
+            'endereco_completo': 'Rua Teste, 123',
+            'cidade': 'Teste',
+            'status': 'Em Andamento',
             'data_inicio': date.today(),
-            'orcamento_inicial': Decimal('50000.00')
+            'orcamento_previsto': Decimal('50000.00')
         }
     )
     print(f"Obra: {obra.nome_obra} ({'criada' if created else 'existente'})")
@@ -34,8 +36,7 @@ def test_compra_creation():
     material, created = Material.objects.get_or_create(
         nome="Cimento Portland",
         defaults={
-            'unidade_medida': 'kg',
-            'preco_unitario': Decimal('0.50')
+            'unidade_medida': 'kg'
         }
     )
     print(f"Material: {material.nome} ({'criado' if created else 'existente'})")

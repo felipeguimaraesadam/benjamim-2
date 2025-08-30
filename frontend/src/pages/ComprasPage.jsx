@@ -4,11 +4,13 @@ import { format } from 'date-fns';
 import * as api from '../services/api';
 
 import CompraForm from '../components/forms/CompraForm';
+import CompraDetailModal from '../components/modals/CompraDetailModal';
+import ContextMenu from '../components/utils/ContextMenu';
+import CompraCard from '../components/WeeklyPlanner/CompraCard';
 import { showSuccessToast, showErrorToast } from '../utils/toastUtils';
 import WeeklyPlanner from '../components/WeeklyPlanner/WeeklyPlanner';
 import ObraAutocomplete from '../components/forms/ObraAutocomplete';
 import DailyCostChart from '../components/charts/DailyCostChart';
-import RentalCard from '../components/WeeklyPlanner/RentalCard'; // Re-using for now, can be generalized later
 import { getStartOfWeek } from '../utils/dateUtils';
 
 const ComprasPage = () => {
@@ -23,6 +25,38 @@ const ComprasPage = () => {
   const [activeDragId, setActiveDragId] = useState(null);
   const [activeItem, setActiveItem] = useState(null);
 
+  const handleDragStart = (event) => {
+    setActiveDragId(event.active.id);
+    const item = Object.values(itemsPorDia).flat().find(i => `compra-${i.id}` === event.active.id);
+    setActiveItem(item);
+  };
+
+  const handleDragEnd = async (event) => {
+    setActiveDragId(null);
+    setActiveItem(null);
+
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const newDate = over.id;
+    const compraId = active.id.split('-')[1];
+
+    try {
+      await api.updateCompraStatus(compraId, { data_compra: newDate });
+      showSuccessToast('Compra movida com sucesso!');
+      fetchWeekData(currentDate, selectedObra?.id);
+    } catch (err) {
+      showErrorToast(err.message || 'Erro ao mover a compra.');
+    }
+  };
+
+  const handleDragCancel = () => {
+    setActiveDragId(null);
+    setActiveItem(null);
+  };
+
   // State for Chart
   const [chartData, setChartData] = useState([]);
   const [selectedObraIdForChart, setSelectedObraIdForChart] = useState('');
@@ -32,6 +66,8 @@ const ComprasPage = () => {
   // State for Modals and Forms
   const [showFormModal, setShowFormModal] = useState(false);
   const [currentCompra, setCurrentCompra] = useState(null);
+  const [selectedCompraId, setSelectedCompraId] = useState(null);
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, itemId: null });
 
   const fetchObras = useCallback(async () => {
     try {
@@ -83,11 +119,6 @@ const ComprasPage = () => {
     fetchWeekData(currentDate, selectedObra?.id);
   }, [currentDate, selectedObra, fetchWeekData]);
 
-  const handleItemClick = (item) => {
-    setCurrentCompra(item);
-    setShowFormModal(true);
-  };
-
   const handleAddItem = (date) => {
     setCurrentCompra({ data_compra: date, obra: selectedObra ? selectedObra.id : null });
     setShowFormModal(true);
@@ -113,19 +144,48 @@ const ComprasPage = () => {
     }
   };
 
-  const renderCompraCard = (item, isDragging) => {
-    const cardData = {
-      id: item.id,
-      recurso_nome: item.fornecedor || 'Fornecedor não especificado',
-      details: `R$ ${item.valor_total_liquido}`,
-      status: item.tipo,
-      tipo: 'compra',
-    };
-    return <RentalCard locacao={cardData} isDragging={isDragging} onCardClick={() => handleItemClick(item)} />;
-  };
+  const renderCompraCard = (item, isDragging) => (
+    <CompraCard
+      compra={item}
+      isDragging={isDragging}
+      onCardClick={() => setSelectedCompraId(item.id)}
+      onShowContextMenu={(e) => setContextMenu({ visible: true, x: e.clientX, y: e.clientY, itemId: item.id })}
+    />
+  );
 
   return (
     <div className="container mx-auto px-4 py-6 bg-white dark:bg-gray-900 min-h-screen">
+       {contextMenu.visible && (
+        <ContextMenu
+          position={{ top: contextMenu.y, left: contextMenu.x }}
+          options={[
+            { label: 'Ver Detalhes', action: () => {
+                setSelectedCompraId(contextMenu.itemId);
+                setContextMenu({ visible: false });
+            }},
+            { label: 'Editar', action: () => {
+                const item = Object.values(itemsPorDia).flat().find(i => i.id === contextMenu.itemId);
+                if (item) {
+                    setCurrentCompra(item);
+                    setShowFormModal(true);
+                }
+                setContextMenu({ visible: false });
+            }},
+            { label: 'Excluir', action: () => {
+                if (window.confirm('Tem certeza que deseja excluir esta compra?')) {
+                    api.deleteCompra(contextMenu.itemId)
+                        .then(() => {
+                            showSuccessToast('Compra excluída com sucesso!');
+                            fetchWeekData(currentDate, selectedObra?.id);
+                        })
+                        .catch(err => showErrorToast(err.message));
+                }
+                setContextMenu({ visible: false });
+            }}
+          ]}
+          onClose={() => setContextMenu({ visible: false })}
+        />
+      )}
       <div className="mb-8 flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
@@ -152,10 +212,11 @@ const ComprasPage = () => {
             onAddItem={handleAddItem}
             addItemText="Adicionar Compra"
             noItemsText="Nenhuma compra agendada."
-            // Drag and drop is disabled for compras for now
-            onDragStart={() => {}}
-            onDragEnd={() => {}}
-            onDragCancel={() => {}}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
+            activeDragId={activeDragId}
+            activeItem={activeItem}
           />
         </div>
       </div>
@@ -172,6 +233,13 @@ const ComprasPage = () => {
         hasDataKey="has_compras"
         yAxisLabel="Custo (R$)"
       />
+
+      {selectedCompraId && (
+        <CompraDetailModal
+          compraId={selectedCompraId}
+          onClose={() => setSelectedCompraId(null)}
+        />
+      )}
 
       {showFormModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
