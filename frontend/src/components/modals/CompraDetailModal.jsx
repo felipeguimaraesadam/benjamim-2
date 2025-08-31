@@ -119,7 +119,6 @@ const CompraDetailModal = ({ compraId, onClose }) => {
               <DetailItem label="Data da Compra" value={formatDateToDMY(compra.data_compra)} />
               <DetailItem label="Tipo" value={compra.tipo?.replace(/_/g, ' ')} />
               <DetailItem label="Status Orçamento" value={compra.status_orcamento?.replace(/_/g, ' ')} />
-              <DetailItem label="Categoria de Uso" value={compra.categoria_uso} />
               <DetailItem label="Forma de Pagamento" value={compra.forma_pagamento?.replace(/_/g, ' ')} />
               {compra.forma_pagamento === 'parcelado' && (
                 <DetailItem label="Número de Parcelas" value={compra.numero_parcelas} />
@@ -130,7 +129,7 @@ const CompraDetailModal = ({ compraId, onClose }) => {
                   Valores
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6">
-                    <DetailItem label="Valor Total (Bruto)" value={formatCurrency(compra.valor_total)} />
+                    <DetailItem label="Valor Total (Bruto)" value={formatCurrency(compra.valor_total_bruto)} />
                     <DetailItem label="Desconto" value={formatCurrency(compra.desconto)} />
                     <DetailItem label="Valor Total (Líquido)" value={formatCurrency(compra.valor_total_liquido)} />
                 </div>
@@ -157,6 +156,9 @@ const CompraDetailModal = ({ compraId, onClose }) => {
                         <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                           Valor Unitário
                         </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Categoria de Uso
+                        </th>
                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                           Valor Total
                         </th>
@@ -176,6 +178,9 @@ const CompraDetailModal = ({ compraId, onClose }) => {
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                             {formatCurrency(item.valor_unitario)}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                            {item.categoria_uso || 'N/A'}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                             {formatCurrency(item.valor_total_item)}

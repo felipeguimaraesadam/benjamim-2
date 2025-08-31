@@ -258,6 +258,9 @@ const CompraDetailsPage = () => {
                           <th className="text-right py-3 px-4 font-medium text-gray-900">
                             Valor Unitário
                           </th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">
+                            Categoria de Uso
+                          </th>
                           <th className="text-right py-3 px-4 font-medium text-gray-900">
                             Valor Total
                           </th>
@@ -277,6 +280,9 @@ const CompraDetailsPage = () => {
                             </td>
                             <td className="py-4 px-4 text-right text-gray-700">
                               {formatCurrency(item.valor_unitario)}
+                            </td>
+                            <td className="py-4 px-4 text-gray-700">
+                              {item.categoria_uso || 'N/A'}
                             </td>
                             <td className="py-4 px-4 text-right font-medium text-gray-900">
                               {formatCurrency(item.quantidade * item.valor_unitario)}

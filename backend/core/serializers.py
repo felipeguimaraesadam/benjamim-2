@@ -414,7 +414,7 @@ class ItemCompraSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ItemCompra
-        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item']
+        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item', 'categoria_uso']
 
 
 # Serializers for new models
