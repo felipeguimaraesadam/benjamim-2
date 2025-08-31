@@ -149,7 +149,7 @@ const ComprasPage = () => {
     try {
       const params = { page: page, page_size: 15 };
       if (obraId) {
-        params.obra = obraId;
+        params.obra_id = obraId;
       }
       const response = await api.getCompras(params);
       setComprasList(response.data.results);
