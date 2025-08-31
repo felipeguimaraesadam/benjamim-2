@@ -115,7 +115,7 @@ const CompraDetailModal = ({ compraId, onClose }) => {
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
               <DetailItem label="Obra" value={compra.obra_nome} />
-              <DetailItem label="Fornecedor" value={compra.fornecedor_nome} />
+              <DetailItem label="Fornecedor" value={compra.fornecedor} />
               <DetailItem label="Data da Compra" value={formatDateToDMY(compra.data_compra)} />
               <DetailItem label="Tipo" value={compra.tipo?.replace(/_/g, ' ')} />
               <DetailItem label="Status Orçamento" value={compra.status_orcamento?.replace(/_/g, ' ')} />

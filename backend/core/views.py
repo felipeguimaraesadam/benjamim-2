@@ -658,8 +658,15 @@ class CompraViewSet(viewsets.ModelViewSet):
                     ))
                 ItemCompra.objects.bulk_create(items_to_create)
 
-                # After creating items, call save() again on the Compra instance
-                # to trigger the calculation of valor_total_bruto and valor_total_liquido
+                # After creating items, manually calculate totals and save again.
+                from django.db.models import Sum
+                from decimal import Decimal
+
+                total_bruto = new_compra.itens.aggregate(
+                    total=Sum('valor_total_item')
+                )['total'] or Decimal('0.00')
+
+                new_compra.valor_total_bruto = total_bruto
                 new_compra.save()
 
             serializer = self.get_serializer(new_compra)
