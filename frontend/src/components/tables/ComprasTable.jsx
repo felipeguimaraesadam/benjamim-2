@@ -22,6 +22,8 @@ const ComprasTable = ({
   selectedCompras = new Set(),
   onSelectCompra,
   onSelectAll,
+  pagination,
+  onPageChange,
 }) => {
   const [contextMenu, setContextMenu] = useState(null);
 
@@ -102,7 +104,7 @@ const ComprasTable = ({
     const isOrcamento = compra.tipo === 'ORCAMENTO';
 
     const items = [
-      { label: 'Visualizar', action: () => onViewDetails(compra) },
+      { label: 'Visualizar', action: () => onViewDetails(compra.id) },
       { label: 'Editar', action: () => onEdit(compra) },
       { label: 'Duplicar', action: () => onDuplicate(compra) },
     ];
@@ -213,7 +215,7 @@ const ComprasTable = ({
                 </td>
                 <td className="px-6 py-4 text-center flex items-center justify-center space-x-2">
                   <button
-                    onClick={() => onViewDetails(compra)}
+                    onClick={() => onViewDetails(compra.id)}
                     className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:text-gray-400 dark:disabled:text-gray-600"
                     disabled={isLoading}
                     aria-label="Ver Detalhes"
@@ -265,6 +267,29 @@ const ComprasTable = ({
           })}
         </tbody>
       </table>
+       {pagination && (
+        <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            Página <span className="font-medium">{pagination.currentPage}</span> de <span className="font-medium">{pagination.totalPages}</span>
+          </p>
+          <div className="flex-1 flex justify-end space-x-2">
+            <button
+              onClick={() => onPageChange(pagination.currentPage - 1)}
+              disabled={!pagination.hasPrevious || isLoading}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
+            >
+              Anterior
+            </button>
+            <button
+              onClick={() => onPageChange(pagination.currentPage + 1)}
+              disabled={!pagination.hasNext || isLoading}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
+            >
+              Próxima
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
