@@ -268,21 +268,13 @@ class Compra(models.Model):
         return f"Compra para {self.obra.nome_obra} em {self.data_compra}"
 
     def save(self, *args, **kwargs):
-        from django.db.models import Sum
+        # Calculation of totals is now handled explicitly in the serializer
+        # to ensure it happens after items are saved. This method ensures
+        # that valor_total_liquido is always consistent with valor_total_bruto.
 
-        # This logic is designed to be called *after* items have been associated
-        # with the purchase. The serializer's create/update methods handle this flow.
-        # We check for self.pk to ensure the Compra instance exists in the DB,
-        # which is a prerequisite for having related 'itens'.
-        if self.pk:
-            # Calculate the gross total from the sum of its items' totals.
-            # The .all() is technically not needed but makes it explicit.
-            total_bruto = self.itens.all().aggregate(
-                total=Sum('valor_total_item')
-            )['total'] or Decimal('0.00')
-            self.valor_total_bruto = total_bruto
+        if self.valor_total_bruto is None:
+            self.valor_total_bruto = Decimal('0.00')
 
-        # Now, calculate the net value based on the (potentially updated) gross value.
         self.valor_total_liquido = self.valor_total_bruto - self.desconto
         
         # For cash payments, set payment date automatically

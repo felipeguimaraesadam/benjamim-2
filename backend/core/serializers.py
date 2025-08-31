@@ -1,3 +1,4 @@
+import os
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from .models import (
@@ -413,7 +414,7 @@ class ItemCompraSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ItemCompra
-        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item', 'categoria_uso']  # Added field
+        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item', 'categoria_uso']
 
 
 # Serializers for new models
@@ -454,10 +455,11 @@ class AnexoCompraSerializer(serializers.ModelSerializer):
         return None
     
     def get_arquivo_tamanho(self, obj):
-        if obj.arquivo:
+        if obj.arquivo and hasattr(obj.arquivo, 'path'):
             try:
-                return obj.arquivo.size
-            except FileNotFoundError:
+                if os.path.exists(obj.arquivo.path):
+                    return obj.arquivo.size
+            except Exception:
                 return 0
         return 0
 
@@ -513,7 +515,7 @@ class CompraSerializer(serializers.ModelSerializer):
             'nota_fiscal', 'valor_total_bruto', 'desconto',
             'valor_total_liquido', 'observacoes', 'itens', 'parcelas',
             'anexos', 'forma_pagamento', 'numero_parcelas', 'valor_entrada',
-            'created_at', 'updated_at', 'tipo'
+            'created_at', 'updated_at', 'tipo', 'status_orcamento'
         ]
         extra_kwargs = {
             'created_at': {'read_only': True},
@@ -536,8 +538,8 @@ class CompraSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({field_name: f"JSON inválido para o campo '{field_name}'."})
 
     @staticmethod
-    def _validate_itens_data(itens_data):
-        if not itens_data:
+    def _validate_itens_data(itens_data, tipo):
+        if tipo == 'COMPRA' and not itens_data:
             raise serializers.ValidationError({'itens': 'A compra deve ter pelo menos um item.'})
         for item_data in itens_data:
             if not item_data.get('material'):
@@ -553,7 +555,7 @@ class CompraSerializer(serializers.ModelSerializer):
         itens_data = self._get_json_from_request('itens') or []
         pagamento_data = self._get_json_from_request('pagamento_parcelado')
 
-        self._validate_itens_data(itens_data)
+        self._validate_itens_data(itens_data, validated_data.get('tipo'))
 
         # Remove read-only 'itens' if it exists in validated_data
         validated_data.pop('itens', None)
@@ -561,14 +563,15 @@ class CompraSerializer(serializers.ModelSerializer):
         try:
             with transaction.atomic():
                 # Set payment info in validated_data before creating the Compra
-                if pagamento_data and isinstance(pagamento_data, dict):
-                    if pagamento_data.get('tipo') == 'PARCELADO':
-                        validated_data['forma_pagamento'] = 'PARCELADO'
-                        parcelas = pagamento_data.get('parcelas', [])
-                        validated_data['numero_parcelas'] = len(parcelas) if parcelas else 0
-                    else: # Includes 'UNICO' or any other case
-                        validated_data['forma_pagamento'] = 'AVISTA'
-                        validated_data['numero_parcelas'] = 1
+                if validated_data.get('tipo') == 'COMPRA':
+                    if pagamento_data and isinstance(pagamento_data, dict):
+                        if pagamento_data.get('tipo') == 'PARCELADO':
+                            validated_data['forma_pagamento'] = 'PARCELADO'
+                            parcelas = pagamento_data.get('parcelas', [])
+                            validated_data['numero_parcelas'] = len(parcelas) if parcelas else 0
+                        else: # Includes 'UNICO' or any other case
+                            validated_data['forma_pagamento'] = 'AVISTA'
+                            validated_data['numero_parcelas'] = 1
 
                 # Create the Compra instance with all available data
                 compra = Compra.objects.create(**validated_data)
@@ -578,13 +581,20 @@ class CompraSerializer(serializers.ModelSerializer):
                     item_data['material_id'] = item_data.pop('material')
                     ItemCompra.objects.create(compra=compra, **item_data)
 
-                # The Compra model's save() method is automatically called by create()
-                # and will be called again here, which is fine. This ensures totals are calculated
-                # after items are added.
+                # After creating items, recalculate totals and save the Compra instance again.
+                # This ensures that the valor_total_bruto is updated based on the newly created items.
+                from django.db.models import Sum
+                from decimal import Decimal
+
+                total_bruto = compra.itens.aggregate(
+                    total=Sum('valor_total_item')
+                )['total'] or Decimal('0.00')
+
+                compra.valor_total_bruto = total_bruto
                 compra.save()
 
                 # Create installments if applicable
-                if compra.forma_pagamento == 'PARCELADO' and pagamento_data:
+                if compra.forma_pagamento == 'PARCELADO' and pagamento_data and validated_data.get('tipo') == 'COMPRA':
                     compra.parcelas.all().delete() # Clear existing before creating new
                     compra.create_installments(pagamento_data.get('parcelas', []))
 
@@ -617,13 +627,21 @@ class CompraSerializer(serializers.ModelSerializer):
 
         # Handle items update (replace all)
         if itens_data is not None:
-            self._validate_itens_data(itens_data)
+            self._validate_itens_data(itens_data, instance.tipo)
             instance.itens.all().delete()
             for item_data in itens_data:
                 item_data['material_id'] = item_data.pop('material')
                 ItemCompra.objects.create(compra=instance, **item_data)
 
-        instance.save() # Recalculate totals and save other changes
+        # After items are potentially updated, recalculate and set totals before saving.
+        from django.db.models import Sum
+        from decimal import Decimal
+        total_bruto = instance.itens.aggregate(
+            total=Sum('valor_total_item')
+        )['total'] or Decimal('0.00')
+        instance.valor_total_bruto = total_bruto
+
+        instance.save() # Save all changes, including recalculated totals.
 
         # Handle installments update (replace all)
         instance.parcelas.all().delete()
@@ -657,6 +675,10 @@ class CompraSerializer(serializers.ModelSerializer):
             }
         data['pagamento_parcelado'] = pagamento_parcelado_data
         
+        # Defensively remove 'categoria_uso' if it ever exists on the instance
+        if 'categoria_uso' in data:
+            del data['categoria_uso']
+
         return data
 
 # Serializers for RelatorioPagamentoMateriaisViewSet

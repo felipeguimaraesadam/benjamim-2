@@ -1002,6 +1002,7 @@ const CompraForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
         const formaPagamento = pagamentoParcelado?.tipo === 'PARCELADO' ? 'PARCELADO' : 'AVISTA';
 
         const compraData = {
+          id: initialData?.id,
           tipo,
           obra: parseInt(obraId, 10),
           data_compra: dataCompra,

@@ -428,6 +428,7 @@ class MaterialDetailAPIView(APIView):
 
 
 class CompraViewSet(viewsets.ModelViewSet):
+    queryset = Compra.objects.all()
     serializer_class = CompraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
@@ -498,6 +499,81 @@ class CompraViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    @action(detail=False, methods=['get'], url_path='semanal')
+    def semanal(self, request):
+        inicio_semana_str = request.query_params.get('inicio')
+        obra_id_str = request.query_params.get('obra_id')
+        if not inicio_semana_str:
+            return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            inicio_semana = date.fromisoformat(inicio_semana_str)
+        except ValueError:
+            return Response({"error": "Formato de data inválido para 'inicio'. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        fim_semana = inicio_semana + timedelta(days=6)
+
+        compras_na_semana = Compra.objects.filter(
+            data_compra__gte=inicio_semana,
+            data_compra__lte=fim_semana,
+        ).select_related('obra').order_by('data_compra')
+
+        if obra_id_str:
+            compras_na_semana = compras_na_semana.filter(obra_id=obra_id_str)
+
+        resposta_semanal = {
+            (inicio_semana + timedelta(days=i)).isoformat(): [] for i in range(7)
+        }
+
+        for compra in compras_na_semana:
+            dia_str = compra.data_compra.isoformat()
+            if dia_str in resposta_semanal:
+                serializer = self.get_serializer(compra)
+                resposta_semanal[dia_str].append(serializer.data)
+
+        return Response(resposta_semanal)
+
+    @action(detail=False, methods=['get'], url_path='custo_diario_chart')
+    def custo_diario_chart(self, request):
+        today = timezone.now().date()
+        start_date = today - timedelta(days=29)
+        obra_id_str = request.query_params.get('obra_id')
+
+        compras_qs = Compra.objects.filter(
+            data_compra__gte=start_date,
+            data_compra__lte=today,
+            tipo='COMPRA'
+        )
+
+        if obra_id_str:
+            try:
+                obra_id = int(obra_id_str)
+                compras_qs = compras_qs.filter(obra_id=obra_id)
+            except ValueError:
+                return Response({"error": "ID de obra inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        daily_costs_db = compras_qs.values('data_compra').annotate(
+            total_cost_for_day=Sum('valor_total_liquido')
+        ).order_by('data_compra')
+
+        costs_by_date_map = {
+            item['data_compra']: item['total_cost_for_day']
+            for item in daily_costs_db
+        }
+
+        result_data = []
+        current_date = start_date
+        while current_date <= today:
+            cost = costs_by_date_map.get(current_date, Decimal('0.00'))
+            result_data.append({
+                "date": current_date.isoformat(),
+                "total_cost": cost,
+                "has_compras": cost > 0
+            })
+            current_date += timedelta(days=1)
+
+        return Response(result_data)
+
     def update(self, request, *args, **kwargs):
         print("CompraViewSet: Update method called")
         print("Request data:", request.data)
@@ -534,6 +610,68 @@ class CompraViewSet(viewsets.ModelViewSet):
             instance._prefetched_objects_cache = {}
         
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def duplicate(self, request, pk=None):
+        try:
+            original_compra = self.get_object()
+            new_date_str = request.data.get('new_date')
+            if not new_date_str:
+                return Response({'error': 'A nova data é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
+
+            with transaction.atomic():
+                # Create a new Compra instance by copying fields
+                new_compra_data = {
+                    'obra': original_compra.obra,
+                    'fornecedor': original_compra.fornecedor,
+                    'data_compra': new_date,
+                    'nota_fiscal': original_compra.nota_fiscal,
+                    'desconto': original_compra.desconto,
+                    'observacoes': original_compra.observacoes,
+                    'tipo': original_compra.tipo,
+                    'status_orcamento': original_compra.status_orcamento,
+                    'forma_pagamento': original_compra.forma_pagamento,
+                    'numero_parcelas': original_compra.numero_parcelas,
+                    'valor_entrada': original_compra.valor_entrada,
+                }
+
+                # Create the new Compra instance
+                new_compra = Compra(**new_compra_data)
+
+                # We need to save it first to get an ID for related items
+                new_compra.save()
+
+                # Duplicate ItemCompra
+                items_to_create = []
+                for item in original_compra.itens.all():
+                    valor_total_item = item.quantidade * item.valor_unitario
+                    items_to_create.append(ItemCompra(
+                        compra=new_compra,
+                        material=item.material,
+                        quantidade=item.quantidade,
+                        valor_unitario=item.valor_unitario,
+                        valor_total_item=valor_total_item,
+                        categoria_uso=item.categoria_uso
+                    ))
+                ItemCompra.objects.bulk_create(items_to_create)
+
+                # After creating items, manually calculate totals and save again.
+                from django.db.models import Sum
+                from decimal import Decimal
+
+                total_bruto = new_compra.itens.aggregate(
+                    total=Sum('valor_total_item')
+                )['total'] or Decimal('0.00')
+
+                new_compra.valor_total_bruto = total_bruto
+                new_compra.save()
+
+            serializer = self.get_serializer(new_compra)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
