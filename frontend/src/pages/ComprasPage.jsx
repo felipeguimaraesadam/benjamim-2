@@ -289,6 +289,12 @@ const ComprasPage = () => {
         setContextMenu({ visible: true, x: event.clientX, y: event.clientY, item: compra });
     };
 
+    const handleDuplicateFromTable = (item) => {
+        if (!item) return;
+        // By default, duplicate to the same date as the original
+        handleDuplicate(item, item.data_compra);
+    };
+
     const getContextMenuOptions = () => {
         const item = contextMenu.item;
         if (!item) return [];
@@ -296,6 +302,7 @@ const ComprasPage = () => {
         const options = [
             { label: 'Ver Detalhes', action: () => setSelectedCompraId(item.id) },
             { label: 'Editar', action: () => { setCurrentCompra(item); setShowFormModal(true); } },
+            { label: 'Duplicar', action: () => handleDuplicateFromTable(item) },
         ];
 
         if (item.tipo === 'ORCAMENTO') {
@@ -390,6 +397,7 @@ const ComprasPage = () => {
           onDelete={handleDeleteCompra}
           onViewDetails={(id) => setSelectedCompraId(id)}
           onApprove={handleApproveOrcamento}
+          onDuplicate={handleDuplicateFromTable}
           onRowContextMenu={handleTableRowContextMenu}
           pagination={paginationData}
           onPageChange={handlePageChange}
