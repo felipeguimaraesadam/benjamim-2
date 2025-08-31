@@ -104,7 +104,7 @@ const ComprasTable = ({
     const isOrcamento = compra.tipo === 'ORCAMENTO';
 
     const items = [
-      { label: 'Visualizar', action: () => onViewDetails(compra) },
+      { label: 'Visualizar', action: () => onViewDetails(compra.id) },
       { label: 'Editar', action: () => onEdit(compra) },
       { label: 'Duplicar', action: () => onDuplicate(compra) },
     ];
@@ -215,7 +215,7 @@ const ComprasTable = ({
                 </td>
                 <td className="px-6 py-4 text-center flex items-center justify-center space-x-2">
                   <button
-                    onClick={() => onViewDetails(compra)}
+                    onClick={() => onViewDetails(compra.id)}
                     className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:text-gray-400 dark:disabled:text-gray-600"
                     disabled={isLoading}
                     aria-label="Ver Detalhes"
