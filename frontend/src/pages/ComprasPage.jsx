@@ -12,10 +12,20 @@ import WeeklyPlanner from '../components/WeeklyPlanner/WeeklyPlanner';
 import ObraAutocomplete from '../components/forms/ObraAutocomplete';
 import DailyCostChart from '../components/charts/DailyCostChart';
 import { getStartOfWeek } from '../utils/dateUtils';
+import ComprasTable from '../components/tables/ComprasTable';
 
 const ComprasPage = () => {
   const [obras, setObras] = useState([]);
   const [selectedObra, setSelectedObra] = useState(null);
+
+  // State for the paginated list of all compras
+  const [comprasList, setComprasList] = useState([]);
+  const [paginationData, setPaginationData] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingList, setIsLoadingList] = useState(false);
+  const [listError, setListError] = useState(null);
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, item: null });
+
 
   // State for WeeklyPlanner
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -60,7 +70,6 @@ const ComprasPage = () => {
   const [showFormModal, setShowFormModal] = useState(false);
   const [currentCompra, setCurrentCompra] = useState(null);
   const [selectedCompraId, setSelectedCompraId] = useState(null);
-  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, itemId: null });
   const [moveOrDuplicateModal, setMoveOrDuplicateModal] = useState({ visible: false, item: null, newDate: null });
 
   const handleMove = async (item, newDate) => {
@@ -88,6 +97,7 @@ const ComprasPage = () => {
       await api.updateCompraStatus(item.id, { data_compra: newDate });
       showSuccessToast('Compra movida com sucesso!');
       fetchChartData(selectedObraIdForChart || null);
+      fetchComprasList(currentPage, selectedObra?.id);
     } catch (err) {
       showErrorToast(err.message || 'Erro ao mover a compra.');
       setItemsPorDia(originalState); // Revert on error
@@ -101,6 +111,7 @@ const ComprasPage = () => {
       showSuccessToast('Compra duplicada com sucesso!');
       fetchWeekData(currentDate, selectedObra?.id); // Refetch to get the new item
       fetchChartData(selectedObraIdForChart || null);
+      fetchComprasList(currentPage, selectedObra?.id);
     } catch (err) {
       showErrorToast(err.message || 'Erro ao duplicar a compra.');
     } finally {
@@ -132,6 +143,31 @@ const ComprasPage = () => {
     }
   }, []);
 
+  const fetchComprasList = useCallback(async (page, obraId) => {
+    setIsLoadingList(true);
+    setListError(null);
+    try {
+      const params = { page: page, page_size: 15 };
+      if (obraId) {
+        params.obra = obraId;
+      }
+      const response = await api.getCompras(params);
+      setComprasList(response.data.results);
+      setPaginationData({
+        count: response.data.count,
+        totalPages: Math.ceil(response.data.count / 15),
+        currentPage: page,
+        hasNext: !!response.data.next,
+        hasPrevious: !!response.data.previous,
+      });
+    } catch (err) {
+      setListError(err.message || 'Falha ao buscar lista de compras.');
+      showErrorToast('Não foi possível carregar a lista de compras.');
+    } finally {
+      setIsLoadingList(false);
+    }
+  }, []);
+
   const fetchChartData = useCallback(async (obraId) => {
     setIsLoadingChart(true);
     setChartError(null);
@@ -156,7 +192,8 @@ const ComprasPage = () => {
 
   useEffect(() => {
     fetchWeekData(currentDate, selectedObra?.id);
-  }, [currentDate, selectedObra, fetchWeekData]);
+    fetchComprasList(currentPage, selectedObra?.id);
+  }, [currentDate, selectedObra, fetchWeekData, currentPage, fetchComprasList]);
 
   useEffect(() => {
     const handleEsc = (event) => {
@@ -183,6 +220,7 @@ const ComprasPage = () => {
 
   const handleFormSubmit = async (formData) => {
     setIsLoadingPlanner(true);
+    setIsLoadingList(true);
     const isEditing = formData.id;
     try {
         if (isEditing) {
@@ -195,85 +233,89 @@ const ComprasPage = () => {
         setShowFormModal(false);
         fetchWeekData(currentDate, selectedObra?.id);
         fetchChartData(selectedObraIdForChart || null);
+        fetchComprasList(isEditing ? currentPage : 1, selectedObra?.id);
     } catch (err) {
         showErrorToast(err.message || "Erro ao salvar compra");
     } finally {
         setIsLoadingPlanner(false);
+        setIsLoadingList(false);
     }
   };
+
+    const handleDeleteCompra = async (compraId) => {
+        if (window.confirm('Tem certeza que deseja excluir esta compra?')) {
+            try {
+                await api.deleteCompra(compraId);
+                showSuccessToast('Compra excluída com sucesso!');
+                fetchWeekData(currentDate, selectedObra?.id);
+                fetchChartData(selectedObraIdForChart || null);
+                fetchComprasList(currentPage, selectedObra?.id);
+            } catch (err) {
+                showErrorToast(err.message || 'Erro ao excluir a compra.');
+            }
+        }
+    };
+
+    const handleApproveOrcamento = async (compraId) => {
+        try {
+            await api.approveOrcamento(compraId);
+            showSuccessToast('Orçamento aprovado com sucesso!');
+            fetchWeekData(currentDate, selectedObra?.id);
+            fetchChartData(selectedObraIdForChart || null);
+            fetchComprasList(currentPage, selectedObra?.id);
+        } catch (err) {
+            showErrorToast(err.message || 'Erro ao aprovar orçamento.');
+        }
+    };
 
   const renderCompraCard = (item, isDragging) => (
     <CompraCard
       compra={item}
       isDragging={isDragging}
       onCardClick={() => setSelectedCompraId(item.id)}
-      onShowContextMenu={(itemId, e) => setContextMenu({ visible: true, x: e.clientX, y: e.clientY, itemId: itemId })}
+      onShowContextMenu={(itemId, e) => {
+        const item = Object.values(itemsPorDia).flat().find(i => i.id === itemId);
+        setContextMenu({ visible: true, x: e.clientX, y: e.clientY, item: item });
+      }}
     />
   );
 
-  return (
-    <div className="container mx-auto px-4 py-6 bg-white dark:bg-gray-900 min-h-screen">
-      {contextMenu.visible && (() => {
-        const item = contextMenu.itemId ? Object.values(itemsPorDia).flat().find(i => i.id === contextMenu.itemId) : null;
-        const menuOptions = [
-          {
-            label: 'Ver Detalhes',
-            action: () => {
-              setSelectedCompraId(contextMenu.itemId);
-              setContextMenu({ visible: false });
-            },
-          },
-          {
-            label: 'Editar',
-            action: () => {
-              if (item) {
-                setCurrentCompra(item);
-                setShowFormModal(true);
-              }
-              setContextMenu({ visible: false });
-            },
-          },
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+    const handleTableRowContextMenu = (event, compra) => {
+        event.preventDefault();
+        setContextMenu({ visible: true, x: event.clientX, y: event.clientY, item: compra });
+    };
+
+    const getContextMenuOptions = () => {
+        const item = contextMenu.item;
+        if (!item) return [];
+
+        const options = [
+            { label: 'Ver Detalhes', action: () => setSelectedCompraId(item.id) },
+            { label: 'Editar', action: () => { setCurrentCompra(item); setShowFormModal(true); } },
         ];
 
-        if (item && item.tipo === 'ORCAMENTO') {
-          menuOptions.push({
-            label: 'Aprovar Orçamento',
-            action: () => {
-              api.approveOrcamento(item.id)
-                .then(() => {
-                  showSuccessToast('Orçamento aprovado com sucesso!');
-                  fetchWeekData(currentDate, selectedObra?.id);
-                  fetchChartData(selectedObraIdForChart || null);
-                })
-                .catch(err => showErrorToast(err.message || 'Erro ao aprovar orçamento.'))
-                .finally(() => setContextMenu({ visible: false }));
-            },
-          });
+        if (item.tipo === 'ORCAMENTO') {
+            options.push({ label: 'Aprovar Orçamento', action: () => handleApproveOrcamento(item.id) });
         }
 
-        menuOptions.push({
-          label: 'Excluir',
-          action: () => {
-            if (window.confirm('Tem certeza que deseja excluir este item?')) {
-              api.deleteCompra(contextMenu.itemId)
-                .then(() => {
-                  showSuccessToast('Item excluído com sucesso!');
-                  fetchWeekData(currentDate, selectedObra?.id);
-                })
-                .catch(err => showErrorToast(err.message));
-            }
-            setContextMenu({ visible: false });
-          },
-        });
+        options.push({ label: 'Excluir', action: () => handleDeleteCompra(item.id) });
 
-        return (
-          <ContextMenu
-            position={{ top: contextMenu.y, left: contextMenu.x }}
-            options={menuOptions}
-            onClose={() => setContextMenu({ visible: false })}
-          />
-        );
-      })()}
+        return options;
+    };
+
+  return (
+    <div className="container mx-auto px-4 py-6 bg-white dark:bg-gray-900 min-h-screen">
+       {contextMenu.visible && (
+                <ContextMenu
+                    position={{ top: contextMenu.y, left: contextMenu.x }}
+                    options={getContextMenuOptions()}
+                    onClose={() => setContextMenu({ visible: false })}
+                />
+        )}
       <div className="mb-8 flex flex-col">
         {moveOrDuplicateModal.visible && (
           <MoveOrDuplicateModal
@@ -337,10 +379,28 @@ const ComprasPage = () => {
         yAxisLabel="Custo (R$)"
       />
 
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4">
+          Lista de Todas as Compras
+        </h2>
+        <ComprasTable
+          compras={comprasList}
+          isLoading={isLoadingList}
+          onEdit={(compra) => { setCurrentCompra(compra); setShowFormModal(true); }}
+          onDelete={handleDeleteCompra}
+          onViewDetails={(id) => setSelectedCompraId(id)}
+          onApprove={handleApproveOrcamento}
+          onRowContextMenu={handleTableRowContextMenu}
+          pagination={paginationData}
+          onPageChange={handlePageChange}
+        />
+      </div>
+
       {selectedCompraId && (
         <CompraDetailModal
           compraId={selectedCompraId}
           onClose={() => setSelectedCompraId(null)}
+          onUpdate={() => fetchComprasList(currentPage, selectedObra?.id)}
         />
       )}
 
@@ -354,7 +414,7 @@ const ComprasPage = () => {
               initialData={currentCompra}
               onSubmit={handleFormSubmit}
               onCancel={() => setShowFormModal(false)}
-              isLoading={isLoadingPlanner}
+              isLoading={isLoadingPlanner || isLoadingList}
             />
           </div>
         </div>
