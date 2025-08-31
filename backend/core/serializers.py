@@ -414,7 +414,7 @@ class ItemCompraSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ItemCompra
-        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item', 'categoria_uso']  # Added field
+        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item']
 
 
 # Serializers for new models
@@ -581,9 +581,16 @@ class CompraSerializer(serializers.ModelSerializer):
                     item_data['material_id'] = item_data.pop('material')
                     ItemCompra.objects.create(compra=compra, **item_data)
 
-                # The Compra model's save() method is automatically called by create()
-                # and will be called again here, which is fine. This ensures totals are calculated
-                # after items are added.
+                # After creating items, recalculate totals and save the Compra instance again.
+                # This ensures that the valor_total_bruto is updated based on the newly created items.
+                from django.db.models import Sum
+                from decimal import Decimal
+
+                total_bruto = compra.itens.aggregate(
+                    total=Sum('valor_total_item')
+                )['total'] or Decimal('0.00')
+
+                compra.valor_total_bruto = total_bruto
                 compra.save()
 
                 # Create installments if applicable
@@ -626,7 +633,15 @@ class CompraSerializer(serializers.ModelSerializer):
                 item_data['material_id'] = item_data.pop('material')
                 ItemCompra.objects.create(compra=instance, **item_data)
 
-        instance.save() # Recalculate totals and save other changes
+        # After items are potentially updated, recalculate and set totals before saving.
+        from django.db.models import Sum
+        from decimal import Decimal
+        total_bruto = instance.itens.aggregate(
+            total=Sum('valor_total_item')
+        )['total'] or Decimal('0.00')
+        instance.valor_total_bruto = total_bruto
+
+        instance.save() # Save all changes, including recalculated totals.
 
         # Handle installments update (replace all)
         instance.parcelas.all().delete()
@@ -660,6 +675,10 @@ class CompraSerializer(serializers.ModelSerializer):
             }
         data['pagamento_parcelado'] = pagamento_parcelado_data
         
+        # Defensively remove 'categoria_uso' if it ever exists on the instance
+        if 'categoria_uso' in data:
+            del data['categoria_uso']
+
         return data
 
 # Serializers for RelatorioPagamentoMateriaisViewSet
