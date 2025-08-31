@@ -8,10 +8,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 django.setup()
 
-from compras.models import Compra
-from obras.models import Obra
-from materiais.models import Material
-from django.contrib.auth.models import User
+from core.models import Compra, Obra, Material, Usuario as User
 
 def test_tipo_field_direct():
     """Test tipo field directly using Django ORM"""

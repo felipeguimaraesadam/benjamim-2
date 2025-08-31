@@ -2,10 +2,7 @@
 import requests
 import json
 from django.core.management.base import BaseCommand
-from compras.models import Compra
-from obras.models import Obra
-from materiais.models import Material
-from django.contrib.auth.models import User
+from core.models import Compra, Obra, Material, Usuario as User
 
 def get_auth_token():
     """Get authentication token for API requests"""

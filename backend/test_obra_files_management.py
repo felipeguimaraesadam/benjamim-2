@@ -11,21 +11,21 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
 from rest_framework import status
-from core.models import Obra, ArquivoObra
+from core.models import Obra, ArquivoObra, Usuario
 
 print("=== INICIANDO TESTES DE ARQUIVO DA OBRA ===")
 
 # Criar usuário de teste
-user, created = User.objects.get_or_create(
-    username='testuser',
-    defaults={'email': 'test@example.com'}
+user, created = Usuario.objects.get_or_create(
+    login='testuser',
+    defaults={'email': 'test@example.com', 'nome_completo': 'Test User', 'nivel_acesso': 'admin'}
 )
 if created:
     user.set_password('testpass123')
     user.save()
-    print(f"✓ Usuário de teste criado: {user.username}")
+    print(f"✓ Usuário de teste criado: {user.login}")
 else:
-    print(f"✓ Usuário de teste já existe: {user.username}")
+    print(f"✓ Usuário de teste já existe: {user.login}")
 
 # Criar obra de teste
 obra, created = Obra.objects.get_or_create(

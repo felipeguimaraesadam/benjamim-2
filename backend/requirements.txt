@@ -11,3 +11,4 @@ waitress
 pyinstaller
 django-extensions
 python-dateutil
+requests

@@ -1,3 +1,4 @@
+import os
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from .models import (
@@ -454,10 +455,11 @@ class AnexoCompraSerializer(serializers.ModelSerializer):
         return None
     
     def get_arquivo_tamanho(self, obj):
-        if obj.arquivo:
+        if obj.arquivo and hasattr(obj.arquivo, 'path'):
             try:
-                return obj.arquivo.size
-            except FileNotFoundError:
+                if os.path.exists(obj.arquivo.path):
+                    return obj.arquivo.size
+            except Exception:
                 return 0
         return 0
 
@@ -513,7 +515,7 @@ class CompraSerializer(serializers.ModelSerializer):
             'nota_fiscal', 'valor_total_bruto', 'desconto',
             'valor_total_liquido', 'observacoes', 'itens', 'parcelas',
             'anexos', 'forma_pagamento', 'numero_parcelas', 'valor_entrada',
-            'created_at', 'updated_at', 'tipo'
+            'created_at', 'updated_at', 'tipo', 'status_orcamento'
         ]
         extra_kwargs = {
             'created_at': {'read_only': True},
@@ -618,7 +620,7 @@ class CompraSerializer(serializers.ModelSerializer):
 
         # Handle items update (replace all)
         if itens_data is not None:
-            self._validate_itens_data(itens_data)
+            self._validate_itens_data(itens_data, instance.tipo)
             instance.itens.all().delete()
             for item_data in itens_data:
                 item_data['material_id'] = item_data.pop('material')

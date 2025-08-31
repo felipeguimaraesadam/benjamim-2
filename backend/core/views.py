@@ -428,6 +428,7 @@ class MaterialDetailAPIView(APIView):
 
 
 class CompraViewSet(viewsets.ModelViewSet):
+    queryset = Compra.objects.all()
     serializer_class = CompraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
