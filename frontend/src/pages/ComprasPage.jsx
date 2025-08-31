@@ -194,6 +194,7 @@ const ComprasPage = () => {
         }
         setShowFormModal(false);
         fetchWeekData(currentDate, selectedObra?.id);
+        fetchChartData(selectedObraIdForChart || null);
     } catch (err) {
         showErrorToast(err.message || "Erro ao salvar compra");
     } finally {
