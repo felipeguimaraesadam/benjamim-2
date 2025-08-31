@@ -242,6 +242,7 @@ const ComprasPage = () => {
                 .then(() => {
                   showSuccessToast('Orçamento aprovado com sucesso!');
                   fetchWeekData(currentDate, selectedObra?.id);
+                  fetchChartData(selectedObraIdForChart || null);
                 })
                 .catch(err => showErrorToast(err.message || 'Erro ao aprovar orçamento.'))
                 .finally(() => setContextMenu({ visible: false }));
