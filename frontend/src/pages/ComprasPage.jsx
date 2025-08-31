@@ -212,37 +212,66 @@ const ComprasPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 bg-white dark:bg-gray-900 min-h-screen">
-       {contextMenu.visible && (
-        <ContextMenu
-          position={{ top: contextMenu.y, left: contextMenu.x }}
-          options={[
-            { label: 'Ver Detalhes', action: () => {
-                setSelectedCompraId(contextMenu.itemId);
-                setContextMenu({ visible: false });
-            }},
-            { label: 'Editar', action: () => {
-                const item = Object.values(itemsPorDia).flat().find(i => i.id === contextMenu.itemId);
-                if (item) {
-                    setCurrentCompra(item);
-                    setShowFormModal(true);
-                }
-                setContextMenu({ visible: false });
-            }},
-            { label: 'Excluir', action: () => {
-                if (window.confirm('Tem certeza que deseja excluir esta compra?')) {
-                    api.deleteCompra(contextMenu.itemId)
-                        .then(() => {
-                            showSuccessToast('Compra excluída com sucesso!');
-                            fetchWeekData(currentDate, selectedObra?.id);
-                        })
-                        .catch(err => showErrorToast(err.message));
-                }
-                setContextMenu({ visible: false });
-            }}
-          ]}
-          onClose={() => setContextMenu({ visible: false })}
-        />
-      )}
+      {contextMenu.visible && (() => {
+        const item = contextMenu.itemId ? Object.values(itemsPorDia).flat().find(i => i.id === contextMenu.itemId) : null;
+        const menuOptions = [
+          {
+            label: 'Ver Detalhes',
+            action: () => {
+              setSelectedCompraId(contextMenu.itemId);
+              setContextMenu({ visible: false });
+            },
+          },
+          {
+            label: 'Editar',
+            action: () => {
+              if (item) {
+                setCurrentCompra(item);
+                setShowFormModal(true);
+              }
+              setContextMenu({ visible: false });
+            },
+          },
+        ];
+
+        if (item && item.tipo === 'ORCAMENTO') {
+          menuOptions.push({
+            label: 'Aprovar Orçamento',
+            action: () => {
+              api.approveOrcamento(item.id)
+                .then(() => {
+                  showSuccessToast('Orçamento aprovado com sucesso!');
+                  fetchWeekData(currentDate, selectedObra?.id);
+                })
+                .catch(err => showErrorToast(err.message || 'Erro ao aprovar orçamento.'))
+                .finally(() => setContextMenu({ visible: false }));
+            },
+          });
+        }
+
+        menuOptions.push({
+          label: 'Excluir',
+          action: () => {
+            if (window.confirm('Tem certeza que deseja excluir este item?')) {
+              api.deleteCompra(contextMenu.itemId)
+                .then(() => {
+                  showSuccessToast('Item excluído com sucesso!');
+                  fetchWeekData(currentDate, selectedObra?.id);
+                })
+                .catch(err => showErrorToast(err.message));
+            }
+            setContextMenu({ visible: false });
+          },
+        });
+
+        return (
+          <ContextMenu
+            position={{ top: contextMenu.y, left: contextMenu.x }}
+            options={menuOptions}
+            onClose={() => setContextMenu({ visible: false })}
+          />
+        );
+      })()}
       <div className="mb-8 flex flex-col">
         {moveOrDuplicateModal.visible && (
           <MoveOrDuplicateModal

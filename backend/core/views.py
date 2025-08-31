@@ -516,7 +516,6 @@ class CompraViewSet(viewsets.ModelViewSet):
         compras_na_semana = Compra.objects.filter(
             data_compra__gte=inicio_semana,
             data_compra__lte=fim_semana,
-            tipo='COMPRA'  # Apenas compras, não orçamentos
         ).select_related('obra').order_by('data_compra')
 
         if obra_id_str:

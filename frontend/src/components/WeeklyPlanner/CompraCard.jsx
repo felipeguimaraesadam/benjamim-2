@@ -66,9 +66,19 @@ function CompraCard({
         };
   }
 
-  const cardColor = 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/40';
-  const textColor = 'text-purple-800 dark:text-purple-200';
-  const borderColor = 'border-purple-400 dark:border-purple-600';
+  const isOrcamento = tipo === 'ORCAMENTO';
+
+  const cardColor = isOrcamento
+    ? 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/40'
+    : 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/40';
+
+  const textColor = isOrcamento
+    ? 'text-blue-800 dark:text-blue-200'
+    : 'text-purple-800 dark:text-purple-200';
+
+  const borderColor = isOrcamento
+    ? 'border-blue-400 dark:border-blue-600'
+    : 'border-purple-400 dark:border-purple-600';
 
   const handleMouseDown = event => {
     if (event.button !== 0) return;
