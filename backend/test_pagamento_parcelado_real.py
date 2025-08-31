@@ -4,7 +4,7 @@ from datetime import date, timedelta
 import json
 from core.models import Obra, Material, Compra, ItemCompra, ParcelaCompra
 from core.serializers import CompraSerializer
-from core.models import Usuario
+from django.contrib.auth.models import User
 from unittest.mock import Mock
 
 print("=== TESTE DE PAGAMENTO PARCELADO ===")
@@ -19,24 +19,24 @@ Material.objects.filter(nome__icontains='Teste Parcelado').delete()
 obra = Obra.objects.create(
     nome_obra='Obra Teste Parcelado',
     endereco_completo='Rua Teste, 123',
-    cidade='Cidade Teste',
-    status='Planejada'
+    orcamento_previsto=Decimal('50000.00')
 )
 print(f"✅ Obra criada: {obra.id} - {obra.nome_obra}")
 
 # Criar material de teste
 material = Material.objects.create(
     nome='Material Teste Parcelado',
-    unidade_medida='un'
+    unidade='UN',
+    preco_medio=Decimal('100.00')
 )
 print(f"✅ Material criado: {material.id} - {material.nome}")
 
 # Criar usuário de teste se não existir
-user, created = Usuario.objects.get_or_create(
-    login='teste_parcelado',
-    defaults={'nome_completo': 'Teste Parcelado', 'nivel_acesso': 'admin'}
+user, created = User.objects.get_or_create(
+    username='teste_parcelado',
+    defaults={'email': 'teste@teste.com'}
 )
-print(f"✅ Usuário: {user.login} (criado: {created})")
+print(f"✅ Usuário: {user.username} (criado: {created})")
 
 # Dados da compra parcelada
 compra_data = {

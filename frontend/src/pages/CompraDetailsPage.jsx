@@ -224,7 +224,6 @@ const CompraDetailsPage = () => {
                   <DetailItem label="Obra" value={compra.obra_nome} />
                   <DetailItem label="Fornecedor" value={compra.fornecedor} />
                   <DetailItem label="Status Orçamento" value={compra.status_orcamento} />
-                  <DetailItem label="Forma de Pagamento" value={compra.forma_pagamento} />
                   <DetailItem label="Nota Fiscal" value={compra.nota_fiscal} />
                   <DetailItem label="Data da Compra" value={formatDate(compra.data_compra)} />
                   <DetailItem label="Data de Pagamento" value={formatDate(compra.data_pagamento)} />

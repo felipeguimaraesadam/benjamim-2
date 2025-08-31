@@ -8,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 django.setup()
 
-from core.models import Compra, Obra, Material, ItemCompra
+from core.models import Compra, Obra, Fornecedor, Material, ItemCompra
 from core.serializers import CompraSerializer
 from decimal import Decimal
 from datetime import date
@@ -19,21 +19,21 @@ def test_pagamento_parcelado():
     # Buscar dados existentes
     try:
         obra = Obra.objects.first()
-        fornecedor = "Test Supplier"
+        fornecedor = Fornecedor.objects.first()
         material = Material.objects.first()
         
         if not obra or not fornecedor or not material:
             print("Erro: Dados básicos não encontrados (obra, fornecedor, material)")
             return
             
-        print(f"Obra: {obra.nome_obra}")
-        print(f"Fornecedor: {fornecedor}")
+        print(f"Obra: {obra.nome}")
+        print(f"Fornecedor: {fornecedor.nome}")
         print(f"Material: {material.nome}")
         
         # Dados de teste para pagamento parcelado
         data = {
             'obra': obra.id,
-            'fornecedor': fornecedor,
+            'fornecedor': fornecedor.id,
             'data_compra': date.today(),
             'nota_fiscal': 'NF-TEST-001',
             'valor_total_bruto': Decimal('100.00'),

@@ -628,7 +628,7 @@ class CompraViewSet(viewsets.ModelViewSet):
                     'obra': original_compra.obra,
                     'fornecedor': original_compra.fornecedor,
                     'data_compra': new_date,
-                    'nota_fiscal': None,  # Clear nota_fiscal to avoid confusion
+                    'nota_fiscal': original_compra.nota_fiscal,
                     'desconto': original_compra.desconto,
                     'observacoes': original_compra.observacoes,
                     'tipo': original_compra.tipo,
