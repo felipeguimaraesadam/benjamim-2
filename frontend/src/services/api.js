@@ -288,8 +288,11 @@ export const getLocacaoCustoDiarioChart = (obraId = null) => {
 };
 
 // Funções para o Weekly Planner
-export const getLocacoesDaSemana = (startDate, obraId) => {
-  const params = { inicio: startDate };
+export const getLocacoesDaSemana = (startDate, obraId, filtroTipo) => {
+  const params = {
+    inicio: startDate,
+    filtro_tipo: filtroTipo || 'equipe_funcionario', // Garante um valor padrão
+  };
   if (obraId) {
     params.obra_id = obraId;
   }

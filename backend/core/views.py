@@ -49,6 +49,8 @@ class LocacaoSemanalView(APIView):
 
     def get(self, request, *args, **kwargs):
         inicio_str = request.query_params.get('inicio')
+        filtro_tipo = request.query_params.get('filtro_tipo', 'equipe_funcionario')
+
         if not inicio_str:
             return Response({"error": "O parâmetro 'inicio' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -63,6 +65,11 @@ class LocacaoSemanalView(APIView):
             data_locacao_inicio__lte=data_fim,
             data_locacao_fim__gte=data_inicio
         ).select_related('obra', 'equipe', 'funcionario_locado')
+
+        if filtro_tipo == 'equipe_funcionario':
+            locacoes = locacoes.filter(Q(equipe__isnull=False) | Q(funcionario_locado__isnull=False))
+        elif filtro_tipo == 'servico_externo':
+            locacoes = locacoes.filter(Q(servico_externo__isnull=False) & ~Q(servico_externo=''))
 
         serializer = LocacaoObrasEquipesSerializer(locacoes, many=True)
         return Response(serializer.data)

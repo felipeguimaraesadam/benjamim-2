@@ -18,6 +18,8 @@ const LocacoesPage = () => {
   const [equipes, setEquipes] = useState([]);
   const [selectedObra, setSelectedObra] = useState(null);
 
+  const [filtroTipo, setFiltroTipo] = useState('equipe_funcionario');
+
   // State for WeeklyPlanner
   const [currentDate, setCurrentDate] = useState(new Date());
   const [locacoesPorDia, setLocacoesPorDia] = useState({});
@@ -39,13 +41,13 @@ const LocacoesPage = () => {
   const [selectedLocacaoId, setSelectedLocacaoId] = useState(null);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, itemId: null });
 
-  const fetchWeekData = useCallback(async (dateForWeek, obraId) => {
+  const fetchWeekData = useCallback(async (dateForWeek, obraId, filtro) => {
     setIsLoadingPlanner(true);
     setPlannerError(null);
     const startDate = format(getStartOfWeek(dateForWeek), 'yyyy-MM-dd');
     try {
       const [locacoesRes, recursosRes] = await Promise.all([
-        api.getLocacoesDaSemana(startDate, obraId),
+        api.getLocacoesDaSemana(startDate, obraId, filtro),
         api.getRecursosMaisUtilizadosSemana(startDate, obraId),
       ]);
       setLocacoesPorDia(locacoesRes.data || {});
@@ -92,8 +94,8 @@ const LocacoesPage = () => {
   }, [fetchChartData, selectedObraIdForChart]);
 
   useEffect(() => {
-    fetchWeekData(currentDate, selectedObra?.id);
-  }, [currentDate, selectedObra, fetchWeekData]);
+    fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
+  }, [currentDate, selectedObra, fetchWeekData, filtroTipo]);
 
   const handleDragStart = (event) => {
     setActiveDragId(event.active.id);
@@ -185,6 +187,28 @@ const LocacoesPage = () => {
               />
             </div>
           </div>
+        </div>
+        <div className="flex justify-center space-x-4 mb-4">
+            <button
+              onClick={() => setFiltroTipo('equipe_funcionario')}
+              className={`px-6 py-2 text-sm font-medium rounded-md transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                filtroTipo === 'equipe_funcionario'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg scale-105'
+                  : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
+              }`}
+            >
+              Equipes e Funcionários
+            </button>
+            <button
+              onClick={() => setFiltroTipo('servico_externo')}
+              className={`px-6 py-2 text-sm font-medium rounded-md transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                filtroTipo === 'servico_externo'
+                  ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg scale-105'
+                  : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
+              }`}
+            >
+              Serviços Externos
+            </button>
         </div>
         <div className="flex-grow">
           <WeeklyPlanner
