@@ -272,6 +272,7 @@ export const updateLocacao = (id, alocacaoData, anexos) => {
 export const deleteAnexoLocacao = id =>
   apiClient.delete(`/anexos-locacao/${id}/`);
 export const deleteLocacao = id => apiClient.delete(`/locacoes/${id}/`);
+export const duplicateLocacao = (id, newDate) => apiClient.post(`/locacoes/${id}/duplicate/`, { new_date: newDate });
 export const transferFuncionarioLocacao = async transferData => {
   const response = await apiClient.post(
     '/locacoes/transferir-funcionario/',

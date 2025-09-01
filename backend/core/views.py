@@ -383,6 +383,38 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
             current_date += timedelta(days=1)
         return Response(result_data)
 
+    @action(detail=True, methods=['post'])
+    def duplicate(self, request, pk=None):
+        try:
+            original_locacao = self.get_object()
+            new_date_str = request.data.get('new_date')
+
+            if not new_date_str:
+                return Response({'error': 'A nova data é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
+
+            with transaction.atomic():
+                # Clone the instance
+                new_locacao = original_locacao
+                new_locacao.pk = None
+                new_locacao.id = None
+
+                # Update dates
+                new_locacao.data_locacao_inicio = new_date
+                new_locacao.data_locacao_fim = new_date # Assuming duplication creates a single-day event
+
+                # Reset any status fields if necessary
+                new_locacao.status_locacao = 'ativa'
+                new_locacao.data_pagamento = None
+
+                new_locacao.save()
+
+            serializer = self.get_serializer(new_locacao)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class MaterialViewSet(viewsets.ModelViewSet):
     queryset = Material.objects.all().order_by('nome')

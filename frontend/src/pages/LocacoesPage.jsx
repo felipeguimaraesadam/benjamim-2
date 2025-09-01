@@ -12,6 +12,8 @@ import { getStartOfWeek, formatDateToYYYYMMDD } from '../utils/dateUtils.js';
 import WeeklyPlanner from '../components/WeeklyPlanner/WeeklyPlanner';
 import ObraAutocomplete from '../components/forms/ObraAutocomplete';
 import DailyCostChart from '../components/charts/DailyCostChart';
+import MoveOrDuplicateModal from '../components/modals/MoveOrDuplicateModal';
+
 
 const LocacoesPage = () => {
   const [obras, setObras] = useState([]);
@@ -39,7 +41,9 @@ const LocacoesPage = () => {
   const [showFormModal, setShowFormModal] = useState(false);
   const [currentLocacao, setCurrentLocacao] = useState(null);
   const [selectedLocacaoId, setSelectedLocacaoId] = useState(null);
-  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, itemId: null });
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, item: null });
+  const [moveOrDuplicateModal, setMoveOrDuplicateModal] = useState({ visible: false, item: null, newDate: null });
+
 
   const fetchWeekData = useCallback(async (dateForWeek, obraId, filtro) => {
     setIsLoadingPlanner(true);
@@ -58,6 +62,49 @@ const LocacoesPage = () => {
       setIsLoadingPlanner(false);
     }
   }, []);
+
+  const handleMove = async (item, newDate) => {
+    const originalState = { ...locacoesPorDia };
+    const optimisticState = { ...originalState };
+
+    Object.keys(optimisticState).forEach(date => {
+        if (optimisticState[date].find(i => i.id === item.id)) {
+            optimisticState[date] = optimisticState[date].filter(i => i.id !== item.id);
+        }
+    });
+
+    const updatedItem = { ...item, data_locacao_inicio: newDate, data_locacao_fim: newDate };
+    if (optimisticState[newDate]) {
+        optimisticState[newDate].push(updatedItem);
+    } else {
+        optimisticState[newDate] = [updatedItem];
+    }
+
+    setLocacoesPorDia(optimisticState);
+
+    try {
+        await api.updateLocacao(item.id, { data_locacao_inicio: newDate, data_locacao_fim: newDate });
+        showSuccessToast('Locação movida com sucesso!');
+        fetchChartData(selectedObraIdForChart || null, filtroTipo);
+    } catch (err) {
+        showErrorToast(err.message || 'Erro ao mover a locação.');
+        setLocacoesPorDia(originalState);
+    }
+  };
+
+  const handleDuplicate = async (item, newDate) => {
+      setIsLoadingPlanner(true);
+      try {
+          await api.duplicateLocacao(item.id, newDate);
+          showSuccessToast('Locação duplicada com sucesso!');
+          fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
+          fetchChartData(selectedObraIdForChart || null, filtroTipo);
+      } catch (err) {
+          showErrorToast(err.message || 'Erro ao duplicar a locação.');
+      } finally {
+          setIsLoadingPlanner(false);
+      }
+  };
 
   const fetchChartData = useCallback(async (obraId, filtro) => {
     setIsLoadingChart(true);
@@ -99,12 +146,22 @@ const LocacoesPage = () => {
 
   const handleDragStart = (event) => {
     setActiveDragId(event.active.id);
-    setActiveItem(event.active.data.current?.item);
+    const item = Object.values(locacoesPorDia).flat().find(i => `rental-${i.id}` === event.active.id);
+    setActiveItem(item);
   };
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
     setActiveDragId(null);
     setActiveItem(null);
+
+    if (over && active.data.current.longPressOrDragHappenedRef.current) {
+        if (active.id !== over.id) {
+            const item = Object.values(locacoesPorDia).flat().find(i => `rental-${i.id}` === active.id);
+            const newDate = over.id;
+            setMoveOrDuplicateModal({ visible: true, item, newDate });
+        }
+    }
   };
 
   const handleDragCancel = () => {
@@ -112,8 +169,41 @@ const LocacoesPage = () => {
     setActiveItem(null);
   };
 
+  const handleDeleteLocacao = async (locacaoId) => {
+    if (window.confirm('Tem certeza que deseja excluir esta locação?')) {
+        try {
+            await api.deleteLocacao(locacaoId);
+            showSuccessToast('Locação excluída com sucesso!');
+            fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
+            fetchChartData(selectedObraIdForChart || null, filtroTipo);
+        } catch (err) {
+            showErrorToast(err.message || 'Erro ao excluir a locação.');
+        }
+    }
+  };
+
+  const getContextMenuOptions = () => {
+    const item = contextMenu.item;
+    if (!item) return [];
+
+    return [
+        { label: 'Ver Detalhes', action: () => setSelectedLocacaoId(item.id) },
+        { label: 'Editar', action: () => { setCurrentLocacao(item); setShowFormModal(true); } },
+        { label: 'Duplicar', action: () => handleDuplicate(item, item.data_locacao_inicio) },
+        { label: 'Excluir', action: () => handleDeleteLocacao(item.id) },
+    ];
+  };
+
   const renderLocacaoCard = (locacao, isDragging) => (
-    <RentalCard locacao={locacao} isDragging={isDragging} onCardClick={() => setSelectedLocacaoId(locacao.id)} onShowContextMenu={(e) => setContextMenu({ visible: true, x: e.clientX, y: e.clientY, itemId: locacao.id })} />
+    <RentalCard
+      locacao={locacao}
+      isDragging={isDragging}
+      onCardClick={() => setSelectedLocacaoId(locacao.id)}
+      onShowContextMenu={(itemId, e) => {
+        const item = Object.values(locacoesPorDia).flat().find(i => i.id === itemId);
+        setContextMenu({ visible: true, x: e.clientX, y: e.clientY, item: item });
+      }}
+    />
   );
 
   const renderSidebar = (data) => (
@@ -174,6 +264,27 @@ const LocacoesPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 bg-white dark:bg-gray-900 min-h-screen">
+      {contextMenu.visible && (
+                <ContextMenu
+                    position={{ top: contextMenu.y, left: contextMenu.x }}
+                    options={getContextMenuOptions()}
+                    onClose={() => setContextMenu({ visible: false, item: null })}
+                />
+        )}
+        {moveOrDuplicateModal.visible && (
+            <MoveOrDuplicateModal
+                onMove={() => {
+                    handleMove(moveOrDuplicateModal.item, moveOrDuplicateModal.newDate);
+                    setMoveOrDuplicateModal({ visible: false, item: null, newDate: null });
+                }}
+                onDuplicate={() => {
+                    handleDuplicate(moveOrDuplicateModal.item, moveOrDuplicateModal.newDate);
+                    setMoveOrDuplicateModal({ visible: false, item: null, newDate: null });
+                }}
+                onCancel={() => setMoveOrDuplicateModal({ visible: false, item: null, newDate: null })}
+                itemType="Locação"
+            />
+        )}
       <div className="mb-8 flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
