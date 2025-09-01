@@ -790,15 +790,17 @@ class CompraViewSet(viewsets.ModelViewSet):
 class RelatorioPagamentoViewSet(viewsets.ViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
-    def _get_locacoes(self, start_date, end_date, filtro_locacao):
-        locacoes = Locacao_Obras_Equipes.objects.filter(
-            data_pagamento__range=[start_date, end_date],
-            status_locacao='ativa'
-        )
+    def _get_locacoes_for_report(self, start_date, end_date, filtro_locacao):
+        # This is the main fix: Check for payment_date in range, OR if payment_date is null, check for locacao_date in range
+        date_filter = Q(data_pagamento__range=[start_date, end_date]) | Q(data_pagamento__isnull=True, data_locacao_inicio__range=[start_date, end_date])
+
+        locacoes = Locacao_Obras_Equipes.objects.filter(date_filter, status_locacao='ativa')
+
         if filtro_locacao == 'servicos':
             locacoes = locacoes.filter(servico_externo__isnull=False).exclude(servico_externo__exact='')
         elif filtro_locacao == 'funcionarios_e_equipes':
             locacoes = locacoes.filter(Q(funcionario_locado__isnull=False) | Q(equipe__isnull=False))
+
         return locacoes
 
     @action(detail=False, methods=['get'], url_path='pre-check')
@@ -827,8 +829,12 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             compras = Compra.objects.filter(data_pagamento__range=[start_date, end_date], tipo='COMPRA')
             dates_with_entries = set(compras.values_list('data_pagamento', flat=True))
         elif tipo == 'locacoes':
-            locacoes = self._get_locacoes(start_date, end_date, filtro_locacao)
-            dates_with_entries = set(locacoes.values_list('data_pagamento', flat=True))
+            locacoes = self._get_locacoes_for_report(start_date, end_date, filtro_locacao)
+            # Correctly check either payment date or locacao date
+            for loc in locacoes:
+                the_date = loc.data_pagamento if loc.data_pagamento else loc.data_locacao_inicio
+                if start_date <= the_date <= end_date:
+                    dates_with_entries.add(the_date)
         else:
             return Response({"error": "Tipo de relatório inválido. Use 'compras' ou 'locacoes'."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -855,19 +861,25 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
         if start_date > end_date:
             return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
 
-        report_data = []
         if tipo == 'compras':
             compras = Compra.objects.filter(data_pagamento__range=[start_date, end_date], tipo='COMPRA').order_by('data_pagamento')
             serializer = CompraSerializer(compras, many=True)
-            report_data = serializer.data
+            return Response(serializer.data)
+
         elif tipo == 'locacoes':
-            locacoes = self._get_locacoes(start_date, end_date, filtro_locacao).order_by('data_pagamento')
-            serializer = LocacaoObrasEquipesSerializer(locacoes, many=True)
-            report_data = serializer.data
+            # For rentals, we now return the same complex structure as the PDF
+            folha_pagamento_viewset = RelatorioFolhaPagamentoViewSet()
+            class AttrDict(dict):
+                def __init__(self, *args, **kwargs):
+                    super(AttrDict, self).__init__(*args, **kwargs)
+                    self.__dict__ = self
+
+            fake_request = AttrDict({'query_params': request.query_params})
+            response = folha_pagamento_viewset.generate_report_data_for_pdf(fake_request)
+            return response
+
         else:
             return Response({"error": "Tipo de relatório inválido. Use 'compras' ou 'locacoes'."}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(report_data)
 
     @action(detail=False, methods=['get'], url_path='generate-pdf')
     def generate_pdf(self, request):
@@ -875,6 +887,8 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
         end_date_str = request.query_params.get('end_date')
         tipo = request.query_params.get('tipo')
         filtro_locacao = request.query_params.get('filtro_locacao')
+        obra_id_str = request.query_params.get('obra_id')
+
 
         if not all([start_date_str, end_date_str, tipo]):
             return Response({"error": "Parâmetros start_date, end_date e tipo são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
@@ -888,21 +902,21 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
         if start_date > end_date:
             return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
 
-        context = {
-            'start_date': start_date,
-            'end_date': end_date,
-            'data_emissao': timezone.now()
-        }
-
         if tipo == 'compras':
             compras = Compra.objects.filter(data_pagamento__range=[start_date, end_date], tipo='COMPRA').order_by('data_pagamento')
-            context['data'] = compras
+            context = {
+                'data': compras,
+                'start_date': start_date,
+                'end_date': end_date,
+                'data_emissao': timezone.now()
+            }
             template_path = 'relatorios/relatorio_pagamento_compras.html'
             css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_compras.css')
             filename = f'relatorio_pagamento_compras_{start_date_str}_a_{end_date_str}.pdf'
+            return generate_pdf_response(template_path, context, css_path, filename)
+
         elif tipo == 'locacoes':
             folha_pagamento_viewset = RelatorioFolhaPagamentoViewSet()
-            # We need to build a request-like object for the other viewset
             class AttrDict(dict):
                 def __init__(self, *args, **kwargs):
                     super(AttrDict, self).__init__(*args, **kwargs)
@@ -914,14 +928,21 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             if response.status_code != 200:
                 return response
 
-            context.update(response.data)
+            context = response.data
+            context['data_emissao'] = timezone.now()
+            if obra_id_str:
+                try:
+                    context['obra_filter_nome'] = Obra.objects.get(pk=int(obra_id_str)).nome_obra
+                except (Obra.DoesNotExist, ValueError):
+                    context['obra_filter_nome'] = None
+
             template_path = 'relatorios/relatorio_pagamento_locacoes.html'
             css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_pagamento_locacoes.css')
             filename = f'relatorio_pagamento_locacoes_{start_date_str}_a_{end_date_str}.pdf'
+            return generate_pdf_response(template_path, context, css_path, filename)
+
         else:
             return Response({"error": "Tipo de relatório inválido. Use 'compras' ou 'locacoes'."}, status=status.HTTP_400_BAD_REQUEST)
-
-        return generate_pdf_response(template_path, context, css_path, filename)
 
 
 class DespesaExtraViewSet(viewsets.ModelViewSet):

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getStartOfWeek, formatDateToYYYYMMDD } from '../../utils/dateUtils';
+import { getStartOfWeek, formatDateToYYYYMMDD, formatDateToDMY } from '../../utils/dateUtils';
 import * as api from '../../services/api';
 import SpinnerIcon from '../utils/SpinnerIcon';
 import { toast } from 'react-toastify';
@@ -46,7 +46,7 @@ const RelatorioPagamento = ({ tipoRelatorio, onClose }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const params = { start_date: startDate, end_date: endDate, tipo: tipoRelatorio };
+      const params = { start_date: startDate, end_date: endDate, tipo: tipoRelatorio, filtro_locacao: filtroLocacao };
       const response = await api.getRelatorioPagamentoPreCheck(params);
       setPreCheckData(response.data);
       setStep(2);
@@ -101,6 +101,89 @@ const RelatorioPagamento = ({ tipoRelatorio, onClose }) => {
       setIsLoading(false);
     }
   };
+
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined) return 'N/A';
+    return parseFloat(value).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  };
+
+  const renderComprasReport = () => (
+    <table className="min-w-full text-sm text-left text-gray-500">
+      <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+        <tr>
+          <th className="px-4 py-2">Data Pagamento</th>
+          <th className="px-4 py-2">Fornecedor</th>
+          <th className="px-4 py-2">Obra</th>
+          <th className="px-4 py-2">Valor</th>
+          <th className="px-4 py-2">Nota Fiscal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {reportData.map(item => (
+          <tr key={item.id} className="bg-white border-b hover:bg-gray-50">
+            <td>{formatDateToDMY(item.data_pagamento)}</td>
+            <td>{item.fornecedor}</td>
+            <td>{item.obra.nome_obra}</td>
+            <td>{formatCurrency(item.valor_total_liquido)}</td>
+            <td>{item.nota_fiscal}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const renderLocacoesReport = () => (
+    <div>
+      {reportData.recursos_pagamentos.length > 0 ? (
+        reportData.recursos_pagamentos.map(recurso => (
+          <div key={recurso.recurso_nome} className="mb-6 p-3 border rounded-md">
+            <h4 className="text-lg font-semibold text-blue-600 mb-2">
+              {recurso.recurso_nome} - Total: {formatCurrency(recurso.total_a_pagar_periodo)}
+            </h4>
+            {recurso.detalhes_por_obra.map(obra => (
+              <div key={obra.obra_id} className="mb-3 pl-3 border-l-2">
+                <h5 className="text-md font-semibold text-gray-700">
+                  Obra: {obra.obra_nome} - Total: {formatCurrency(obra.total_a_pagar_obra)}
+                </h5>
+                <table className="min-w-full text-xs mt-1">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-2 py-1 text-left">Data Serviço</th>
+                      <th className="px-2 py-1 text-left">Tipo Pag.</th>
+                      <th className="px-2 py-1 text-left">Observações</th>
+                      <th className="px-2 py-1 text-right">Valor (R$)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {obra.locacoes_na_obra.map(loc => (
+                      <tr key={loc.locacao_id} className="border-b">
+                        <td className="px-2 py-1">{formatDateToDMY(loc.data_servico)}</td>
+                        <td className="px-2 py-1">{loc.tipo_pagamento}</td>
+                        <td className="px-2 py-1">{loc.observacoes}</td>
+                        <td className="px-2 py-1 text-right">{formatCurrency(loc.valor_atribuido)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+        ))
+      ) : (
+        <p>Nenhum pagamento de locação encontrado para o período e filtros selecionados.</p>
+      )}
+      {reportData.recursos_pagamentos.length > 0 && (
+        <div className="mt-4 pt-2 border-t text-right">
+          <p className="text-lg font-bold">
+            Total Geral do Relatório: {formatCurrency(reportData.total_geral_periodo)}
+          </p>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
@@ -201,13 +284,13 @@ const RelatorioPagamento = ({ tipoRelatorio, onClose }) => {
                 <p>Os seguintes dias não possuem pagamentos registrados:</p>
                 <ul className="list-disc list-inside">
                   {preCheckData.dias_sem_registros.map(day => (
-                    <li key={day}>{new Date(day + 'T00:00:00Z').toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</li>
+                    <li key={day}>{formatDateToDMY(day)}</li>
                   ))}
                 </ul>
               </div>
             ) : (
               <p className="p-4 bg-green-100 border-l-4 border-green-500 text-green-700">
-                Nenhuma pendência encontrada.
+                Nenhuma pendência encontrada. Todos os dias no período selecionado possuem registros.
               </p>
             )}
             <div className="flex justify-end space-x-3 mt-4">
@@ -230,52 +313,7 @@ const RelatorioPagamento = ({ tipoRelatorio, onClose }) => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Passo 3: Relatório Final</h3>
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm text-left text-gray-500">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                  {tipoRelatorio === 'compras' ? (
-                    <tr>
-                      <th className="px-4 py-2">Data Pagamento</th>
-                      <th className="px-4 py-2">Fornecedor</th>
-                      <th className="px-4 py-2">Obra</th>
-                      <th className="px-4 py-2">Valor</th>
-                      <th className="px-4 py-2">Nota Fiscal</th>
-                    </tr>
-                  ) : (
-                    <tr>
-                      <th className="px-4 py-2">Data Pagamento</th>
-                      <th className="px-4 py-2">Recurso</th>
-                      <th className="px-4 py-2">Obra</th>
-                      <th className="px-4 py-2">Valor</th>
-                    </tr>
-                  )}
-                </thead>
-                <tbody>
-                  {reportData.map(item => (
-                    <tr key={item.id} className="bg-white border-b hover:bg-gray-50">
-                      {tipoRelatorio === 'compras' ? (
-                        <>
-                          <td>{item.data_pagamento}</td>
-                          <td>{item.fornecedor}</td>
-                          <td>{item.obra.nome_obra}</td>
-                          <td>{item.valor_total_liquido}</td>
-                          <td>{item.nota_fiscal}</td>
-                        </>
-                      ) : (
-                        <>
-                          <td>{item.data_pagamento}</td>
-                          <td>
-                            {item.equipe ? item.equipe.nome_equipe :
-                             item.funcionario_locado ? item.funcionario_locado.nome_completo :
-                             item.servico_externo}
-                          </td>
-                          <td>{item.obra.nome_obra}</td>
-                          <td>{item.valor_pagamento}</td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {tipoRelatorio === 'compras' ? renderComprasReport() : renderLocacoesReport()}
             </div>
             <div className="flex justify-end space-x-3 mt-6">
               <button onClick={() => setStep(2)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md">
