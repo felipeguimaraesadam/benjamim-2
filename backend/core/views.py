@@ -341,14 +341,30 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='custo_diario_chart')
     def custo_diario_chart(self, request):
+        from calendar import monthrange
+
         today = timezone.now().date()
-        start_date = today - timedelta(days=29)
+        year_str = request.query_params.get('year')
+        month_str = request.query_params.get('month')
         obra_id_str = request.query_params.get('obra_id')
         filtro_tipo = request.query_params.get('filtro_tipo', 'equipe_funcionario')
 
+        if year_str and month_str:
+            try:
+                year = int(year_str)
+                month = int(month_str)
+                _, num_days = monthrange(year, month)
+                start_date = date(year, month, 1)
+                end_date = date(year, month, num_days)
+            except (ValueError, TypeError):
+                return Response({"error": "Ano e mês inválidos."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            start_date = today - timedelta(days=29)
+            end_date = today
+
         locacoes_qs = Locacao_Obras_Equipes.objects.filter(
             data_locacao_inicio__gte=start_date,
-            data_locacao_inicio__lte=today,
+            data_locacao_inicio__lte=end_date,
             status_locacao='ativa'
         )
 
@@ -373,7 +389,7 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
         }
         result_data = []
         current_date = start_date
-        while current_date <= today:
+        while current_date <= end_date:
             cost = costs_by_date_map.get(current_date, Decimal('0.00'))
             result_data.append({
                 "date": current_date.isoformat(),

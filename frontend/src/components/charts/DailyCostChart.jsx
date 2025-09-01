@@ -17,9 +17,6 @@ const DailyCostChart = ({
   data,
   isLoading,
   error,
-  obras,
-  selectedObraId,
-  onObraFilterChange,
   dataKey = 'total_cost',
   hasDataKey = 'has_data',
   yAxisLabel = 'Custo (R$)',
@@ -71,27 +68,6 @@ const DailyCostChart = ({
         <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
           {title}
         </h2>
-        <div className="flex items-center">
-          <label
-            htmlFor="obraChartFilter"
-            className="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Filtrar por Obra:
-          </label>
-          <select
-            id="obraChartFilter"
-            value={selectedObraId}
-            onChange={onObraFilterChange}
-            className="block w-full md:w-auto pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md shadow-sm"
-          >
-            <option value="">Todas as Obras</option>
-            {obras.map(obra => (
-              <option key={obra.id} value={obra.id}>
-                {obra.nome_obra}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
       {isLoading && (
         <p className="text-center text-gray-500 dark:text-gray-400">
