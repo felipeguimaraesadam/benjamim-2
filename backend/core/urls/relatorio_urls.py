@@ -3,12 +3,14 @@ from rest_framework.routers import DefaultRouter
 from ..views import (
     RelatorioFinanceiroObraView, RelatorioGeralComprasView, RelatorioDesempenhoEquipeView,
     RelatorioCustoGeralView, RelatorioFolhaPagamentoViewSet, RelatorioPagamentoMateriaisViewSet,
-    GerarRelatorioPagamentoLocacoesPDFView, GerarRelatorioPDFObraView, GerarPDFComprasLoteView
+    GerarRelatorioPagamentoLocacoesPDFView, GerarRelatorioPDFObraView, GerarPDFComprasLoteView,
+    RelatorioPagamentoViewSet
 )
 
 router = DefaultRouter()
 router.register(r'folha-pagamento', RelatorioFolhaPagamentoViewSet, basename='relatorio-folha-pagamento')
 router.register(r'pagamento-materiais', RelatorioPagamentoMateriaisViewSet, basename='relatorio-pagamento-materiais')
+router.register(r'pagamento', RelatorioPagamentoViewSet, basename='relatorio-pagamento')
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -203,6 +203,15 @@ export const getRelatorioPagamentoMateriaisPreCheck = params =>
   apiClient.get('/relatorios/pagamento-materiais/pre-check/', { params });
 export const generateRelatorioPagamentoMateriais = params =>
   apiClient.get('/relatorios/pagamento-materiais/generate/', { params });
+export const getRelatorioPagamentoPreCheck = params =>
+  apiClient.get('/relatorios/pagamento/pre-check/', { params });
+export const generateRelatorioPagamento = params =>
+  apiClient.get('/relatorios/pagamento/generate/', { params });
+export const generateRelatorioPagamentoPDF = params =>
+  apiClient.get('/relatorios/pagamento/generate-pdf/', {
+    params,
+    responseType: 'blob',
+  });
 
 // --- Despesa Extra Service Functions ---
 export const getDespesasExtras = params =>

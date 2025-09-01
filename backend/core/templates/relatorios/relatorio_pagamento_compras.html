@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório de Pagamento de Compras</title>
+    <style>
+        body { font-family: sans-serif; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Relatório de Pagamento de Compras</h1>
+    <p>Período: {{ start_date }} a {{ end_date }}</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Data Pagamento</th>
+                <th>Fornecedor</th>
+                <th>Obra</th>
+                <th>Valor</th>
+                <th>Nota Fiscal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for compra in data %}
+            <tr>
+                <td>{{ compra.data_pagamento }}</td>
+                <td>{{ compra.fornecedor }}</td>
+                <td>{{ compra.obra.nome_obra }}</td>
+                <td>{{ compra.valor_total_liquido }}</td>
+                <td>{{ compra.nota_fiscal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

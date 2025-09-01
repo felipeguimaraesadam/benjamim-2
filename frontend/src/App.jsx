@@ -21,6 +21,7 @@ import CompraDetailsPage from './pages/CompraDetailsPage';
 import DespesasExtrasPage from './pages/DespesasExtrasPage';
 import OcorrenciasPage from './pages/OcorrenciasPage';
 import RelatoriosPage from './pages/RelatoriosPage';
+import RelatorioPagamentoPage from './pages/RelatorioPagamentoPage';
 import UsuariosPage from './pages/UsuariosPage';
 import BackupPage from './pages/BackupPage';
 
@@ -68,6 +69,7 @@ function App() {
           <Route path="despesas" element={<DespesasExtrasPage />} />
           <Route path="ocorrencias" element={<OcorrenciasPage />} />
           <Route path="relatorios" element={<RelatoriosPage />} />
+          <Route path="relatorios/pagamento/:tipoRelatorio" element={<RelatorioPagamentoPage />} />
 
           {/* Admin Routes */}
           <Route element={<AdminLayout />}>

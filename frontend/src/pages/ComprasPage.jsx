@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import * as api from '../services/api';
 
@@ -344,6 +345,11 @@ const ComprasPage = () => {
             Planejamento Semanal de Compras
           </h2>
           <div className="flex items-center space-x-4">
+            <Link to="/relatorios/pagamento/compras">
+              <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                Relatório de Pagamentos
+              </button>
+            </Link>
             <div className="w-96">
               <ObraAutocomplete
                 value={selectedObra}

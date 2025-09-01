@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { format, addMonths, subMonths } from 'date-fns';
 import * as api from '../services/api';
@@ -309,6 +310,11 @@ const LocacoesPage = () => {
             Planejamento Semanal de Locações
           </h2>
           <div className="flex items-center space-x-4">
+            <Link to="/relatorios/pagamento/locacoes">
+              <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                Relatório de Pagamentos
+              </button>
+            </Link>
             <div className="w-96">
               <ObraAutocomplete
                 value={selectedObra}
