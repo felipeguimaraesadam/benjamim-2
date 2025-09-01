@@ -20,8 +20,6 @@ const DailyCostChart = ({
   dataKey = 'total_cost',
   hasDataKey = 'has_data',
   yAxisLabel = 'Custo (R$)',
-  chartMode,
-  chartDate,
 }) => {
   const formatDateTick = tickItem => {
     const date = new Date(tickItem + 'T00:00:00');
@@ -64,27 +62,12 @@ const DailyCostChart = ({
     return { ...entry, barValue: entry[dataKey] };
   });
 
-  const getChartSubtitle = () => {
-    if (chartMode === 'monthly') {
-      return chartDate.toLocaleDateString('pt-BR', {
-        month: 'long',
-        year: 'numeric',
-      });
-    }
-    return 'Últimos 30 dias';
-  };
-
   return (
     <div className="mb-8 p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow bg-white dark:bg-gray-800">
       <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
-            {title}
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {getChartSubtitle()}
-          </p>
-        </div>
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
+          {title}
+        </h2>
       </div>
       {isLoading && (
         <p className="text-center text-gray-500 dark:text-gray-400">

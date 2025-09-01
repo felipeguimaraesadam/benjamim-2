@@ -363,9 +363,20 @@ const LocacoesPage = () => {
       </div>
 
       <div className="flex justify-center items-center space-x-4 mb-4">
-        <button onClick={() => { setChartDate(subMonths(chartDate, 1)); setChartMode('monthly'); }} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md">Mês Anterior</button>
-        <button onClick={() => { setChartMode('last30days'); setChartDate(new Date()); }} className={`px-4 py-2 rounded-md ${chartMode === 'last30days' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>Últimos 30 dias</button>
-        <button onClick={() => { setChartDate(addMonths(chartDate, 1)); setChartMode('monthly'); }} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md">Próximo Mês</button>
+        <button onClick={() => { setChartDate(subMonths(chartDate, 1)); setChartMode('monthly'); }} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">‹</button>
+        <div className="w-64 text-center">
+          {chartMode === 'monthly' ? (
+            <span className="text-xl font-semibold text-blue-600 dark:text-blue-400">
+              {format(chartDate, 'MMMM yyyy', {})}
+            </span>
+          ) : (
+            <span className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+              Últimos 30 dias
+            </span>
+          )}
+        </div>
+        <button onClick={() => { setChartDate(addMonths(chartDate, 1)); setChartMode('monthly'); }} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">›</button>
+        <button onClick={() => { setChartMode('last30days'); setChartDate(new Date()); }} className={`px-4 py-2 rounded-md text-sm ${chartMode === 'last30days' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>30d</button>
       </div>
       <DailyCostChart
         title="Custo Diário de Locações"
