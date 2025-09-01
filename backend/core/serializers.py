@@ -100,19 +100,32 @@ class ObraSerializer(serializers.ModelSerializer):
     def get_custos_por_categoria(self, obj):
         # obj is the Obra instance
         custo_materiais = obj.compras.filter(tipo='COMPRA').aggregate(total=Sum('valor_total_liquido'))['total'] or Decimal('0.00')
-        custo_locacoes = obj.locacao_obras_equipes_set.aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
+
+        # mao_de_obra: equipe or funcionario_locado is not null
+        custo_mao_de_obra = obj.locacao_obras_equipes_set.filter(
+            Q(equipe__isnull=False) | Q(funcionario_locado__isnull=False)
+        ).aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
+
+        # servicos: servico_externo is not null and not empty
+        custo_servicos = obj.locacao_obras_equipes_set.filter(
+            servico_externo__isnull=False
+        ).exclude(
+            servico_externo__exact=''
+        ).aggregate(total=Sum('valor_pagamento'))['total'] or Decimal('0.00')
+
         custo_despesas_extras = obj.despesas_extras.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
 
         return {
             'materiais': custo_materiais,
-            'locacoes': custo_locacoes,
+            'mao_de_obra': custo_mao_de_obra,
+            'servicos': custo_servicos,
             'despesas_extras': custo_despesas_extras
         }
 
     def get_custo_total_realizado(self, obj):
         # Reuse the calculation from get_custos_por_categoria
         custos = self.get_custos_por_categoria(obj)
-        return custos['materiais'] + custos['locacoes'] + custos['despesas_extras']
+        return custos['materiais'] + custos['mao_de_obra'] + custos['servicos'] + custos['despesas_extras']
 
 # Novo Serializer Básico para Funcionário
 class FuncionarioBasicSerializer(serializers.ModelSerializer):

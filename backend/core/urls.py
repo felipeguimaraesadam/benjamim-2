@@ -15,7 +15,8 @@ from .views import (
     LocacaoSemanalView, RecursosMaisUtilizadosSemanaView,
     ObraCustosPorMaterialView, ObraCustosPorCategoriaMaterialView,
     media_test_view, CreateUsuarioView, ParcelaCompraViewSet,
-    AnexoCompraViewSet, ArquivoObraViewSet, GerarPDFComprasLoteView
+    AnexoCompraViewSet, ArquivoObraViewSet, GerarPDFComprasLoteView,
+    ObraMateriaisDetailView, ObraMaoDeObraDetailView, ObraServicosDetailView
 )
 
 router = DefaultRouter()
@@ -60,4 +61,7 @@ urlpatterns = [
     path('obras/<int:pk>/custos-por-material/', ObraCustosPorMaterialView.as_view(), name='obra-custos-por-material'),
     path('obras/<int:pk>/custos-por-categoria-material/', ObraCustosPorCategoriaMaterialView.as_view(), name='obra-custos-por-categoria-material'),
     path('media-test/', media_test_view, name='media-test'),
+    path('obras/<int:pk>/materiais-detalhes/', ObraMateriaisDetailView.as_view(), name='obra-materiais-detalhes'),
+    path('obras/<int:pk>/mao-de-obra-detalhes/', ObraMaoDeObraDetailView.as_view(), name='obra-mao-de-obra-detalhes'),
+    path('obras/<int:pk>/servicos-detalhes/', ObraServicosDetailView.as_view(), name='obra-servicos-detalhes'),
 ]
