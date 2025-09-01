@@ -795,6 +795,7 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
         start_date_str = request.query_params.get('start_date')
         end_date_str = request.query_params.get('end_date')
         tipo = request.query_params.get('tipo')
+        filtro_locacao = request.query_params.get('filtro_locacao')
 
         if not all([start_date_str, end_date_str, tipo]):
             return Response({"error": "Parâmetros start_date, end_date e tipo são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
@@ -816,6 +817,10 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             dates_with_entries = set(compras.values_list('data_pagamento', flat=True))
         elif tipo == 'locacoes':
             locacoes = Locacao_Obras_Equipes.objects.filter(data_pagamento__range=[start_date, end_date], status_locacao='ativa')
+            if filtro_locacao == 'servicos':
+                locacoes = locacoes.filter(servico_externo__isnull=False)
+            elif filtro_locacao == 'funcionarios_e_equipes':
+                locacoes = locacoes.filter(servico_externo__isnull=True)
             dates_with_entries = set(locacoes.values_list('data_pagamento', flat=True))
         else:
             return Response({"error": "Tipo de relatório inválido. Use 'compras' ou 'locacoes'."}, status=status.HTTP_400_BAD_REQUEST)
@@ -827,6 +832,42 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='generate')
     def generate_report(self, request):
         start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+        tipo = request.query_params.get('tipo')
+        filtro_locacao = request.query_params.get('filtro_locacao')
+
+        if not all([start_date_str, end_date_str, tipo]):
+            return Response({"error": "Parâmetros start_date, end_date e tipo são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            start_date = date.fromisoformat(start_date_str)
+            end_date = date.fromisoformat(end_date_str)
+        except ValueError:
+            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if start_date > end_date:
+            return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
+
+        report_data = []
+        if tipo == 'compras':
+            compras = Compra.objects.filter(data_pagamento__range=[start_date, end_date], tipo='COMPRA').order_by('data_pagamento')
+            serializer = CompraSerializer(compras, many=True)
+            report_data = serializer.data
+        elif tipo == 'locacoes':
+            locacoes = Locacao_Obras_Equipes.objects.filter(data_pagamento__range=[start_date, end_date], status_locacao='ativa')
+            if filtro_locacao == 'servicos':
+                locacoes = locacoes.filter(servico_externo__isnull=False, servico_externo__exact='')
+            elif filtro_locacao == 'funcionarios_e_equipes':
+                locacoes = locacoes.filter(servico_externo__isnull=True)
+
+            locacoes = locacoes.order_by('data_pagamento')
+            serializer = LocacaoObrasEquipesSerializer(locacoes, many=True)
+            report_data = serializer.data
+        else:
+            return Response({"error": "Tipo de relatório inválido. Use 'compras' ou 'locacoes'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(report_data)
+
     @action(detail=False, methods=['get'], url_path='generate-pdf')
     def generate_pdf(self, request):
         start_date_str = request.query_params.get('start_date')
@@ -874,41 +915,6 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             return Response({"error": "Tipo de relatório inválido. Use 'compras' ou 'locacoes'."}, status=status.HTTP_400_BAD_REQUEST)
 
         return generate_pdf_response(template_path, context, css_path, filename)
-        end_date_str = request.query_params.get('end_date')
-        tipo = request.query_params.get('tipo')
-        filtro_locacao = request.query_params.get('filtro_locacao')
-
-        if not all([start_date_str, end_date_str, tipo]):
-            return Response({"error": "Parâmetros start_date, end_date e tipo são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            start_date = date.fromisoformat(start_date_str)
-            end_date = date.fromisoformat(end_date_str)
-        except ValueError:
-            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if start_date > end_date:
-            return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
-
-        report_data = []
-        if tipo == 'compras':
-            compras = Compra.objects.filter(data_pagamento__range=[start_date, end_date], tipo='COMPRA').order_by('data_pagamento')
-            serializer = CompraSerializer(compras, many=True)
-            report_data = serializer.data
-        elif tipo == 'locacoes':
-            locacoes = Locacao_Obras_Equipes.objects.filter(data_pagamento__range=[start_date, end_date], status_locacao='ativa')
-            if filtro_locacao == 'servicos':
-                locacoes = locacoes.filter(servico_externo__isnull=False)
-            elif filtro_locacao == 'funcionarios_e_equipes':
-                locacoes = locacoes.filter(servico_externo__isnull=True)
-
-            locacoes = locacoes.order_by('data_pagamento')
-            serializer = LocacaoObrasEquipesSerializer(locacoes, many=True)
-            report_data = serializer.data
-        else:
-            return Response({"error": "Tipo de relatório inválido. Use 'compras' ou 'locacoes'."}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(report_data)
 
 
 class DespesaExtraViewSet(viewsets.ModelViewSet):
