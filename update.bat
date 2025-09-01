@@ -31,5 +31,9 @@ echo    ATUALIZACAO CONCLUIDA COM SUCESSO!
 echo ========================================
 echo.
 echo O projeto foi atualizado com as ultimas mudancas do GitHub.
+echo.
+echo Chamando script de configuracao (config.bat)...
+call scripts\config.bat
+echo.
 echo Pressione qualquer tecla para continuar...
 pause >nul
