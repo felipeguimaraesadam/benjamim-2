@@ -790,6 +790,17 @@ class CompraViewSet(viewsets.ModelViewSet):
 class RelatorioPagamentoViewSet(viewsets.ViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
+    def _get_locacoes(self, start_date, end_date, filtro_locacao):
+        locacoes = Locacao_Obras_Equipes.objects.filter(
+            data_pagamento__range=[start_date, end_date],
+            status_locacao='ativa'
+        )
+        if filtro_locacao == 'servicos':
+            locacoes = locacoes.filter(servico_externo__isnull=False).exclude(servico_externo__exact='')
+        elif filtro_locacao == 'funcionarios_e_equipes':
+            locacoes = locacoes.filter(Q(funcionario_locado__isnull=False) | Q(equipe__isnull=False))
+        return locacoes
+
     @action(detail=False, methods=['get'], url_path='pre-check')
     def pre_check(self, request):
         start_date_str = request.query_params.get('start_date')
@@ -816,11 +827,7 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             compras = Compra.objects.filter(data_pagamento__range=[start_date, end_date], tipo='COMPRA')
             dates_with_entries = set(compras.values_list('data_pagamento', flat=True))
         elif tipo == 'locacoes':
-            locacoes = Locacao_Obras_Equipes.objects.filter(data_pagamento__range=[start_date, end_date], status_locacao='ativa')
-            if filtro_locacao == 'servicos':
-                locacoes = locacoes.filter(servico_externo__isnull=False)
-            elif filtro_locacao == 'funcionarios_e_equipes':
-                locacoes = locacoes.filter(servico_externo__isnull=True)
+            locacoes = self._get_locacoes(start_date, end_date, filtro_locacao)
             dates_with_entries = set(locacoes.values_list('data_pagamento', flat=True))
         else:
             return Response({"error": "Tipo de relatório inválido. Use 'compras' ou 'locacoes'."}, status=status.HTTP_400_BAD_REQUEST)
@@ -854,13 +861,7 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             serializer = CompraSerializer(compras, many=True)
             report_data = serializer.data
         elif tipo == 'locacoes':
-            locacoes = Locacao_Obras_Equipes.objects.filter(data_pagamento__range=[start_date, end_date], status_locacao='ativa')
-            if filtro_locacao == 'servicos':
-                locacoes = locacoes.filter(servico_externo__isnull=False, servico_externo__exact='')
-            elif filtro_locacao == 'funcionarios_e_equipes':
-                locacoes = locacoes.filter(servico_externo__isnull=True)
-
-            locacoes = locacoes.order_by('data_pagamento')
+            locacoes = self._get_locacoes(start_date, end_date, filtro_locacao).order_by('data_pagamento')
             serializer = LocacaoObrasEquipesSerializer(locacoes, many=True)
             report_data = serializer.data
         else:
@@ -900,14 +901,20 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_compras.css')
             filename = f'relatorio_pagamento_compras_{start_date_str}_a_{end_date_str}.pdf'
         elif tipo == 'locacoes':
-            locacoes = Locacao_Obras_Equipes.objects.filter(data_pagamento__range=[start_date, end_date], status_locacao='ativa')
-            if filtro_locacao == 'servicos':
-                locacoes = locacoes.filter(servico_externo__isnull=False)
-            elif filtro_locacao == 'funcionarios_e_equipes':
-                locacoes = locacoes.filter(servico_externo__isnull=True)
+            folha_pagamento_viewset = RelatorioFolhaPagamentoViewSet()
+            # We need to build a request-like object for the other viewset
+            class AttrDict(dict):
+                def __init__(self, *args, **kwargs):
+                    super(AttrDict, self).__init__(*args, **kwargs)
+                    self.__dict__ = self
 
-            locacoes = locacoes.order_by('data_pagamento')
-            context['data'] = locacoes
+            fake_request = AttrDict({'query_params': request.query_params})
+            response = folha_pagamento_viewset.generate_report_data_for_pdf(fake_request)
+
+            if response.status_code != 200:
+                return response
+
+            context.update(response.data)
             template_path = 'relatorios/relatorio_pagamento_locacoes.html'
             css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_pagamento_locacoes.css')
             filename = f'relatorio_pagamento_locacoes_{start_date_str}_a_{end_date_str}.pdf'
