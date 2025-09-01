@@ -1,6 +1,6 @@
 import React from 'react';
 
-const MoveOrDuplicateModal = ({ onMove, onDuplicate, onCancel }) => {
+const MoveOrDuplicateModal = ({ onMove, onDuplicate, onCancel, itemType = 'item', isDuplicateDisabled = false }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-sm">
@@ -8,7 +8,7 @@ const MoveOrDuplicateModal = ({ onMove, onDuplicate, onCancel }) => {
           Mover ou Duplicar?
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Você deseja mover a compra para a nova data ou criar uma duplicata?
+          Você deseja mover o/a {itemType.toLowerCase()} para a nova data ou criar uma duplicata?
         </p>
         <div className="flex justify-end space-x-4">
           <button
@@ -25,7 +25,12 @@ const MoveOrDuplicateModal = ({ onMove, onDuplicate, onCancel }) => {
           </button>
           <button
             onClick={onDuplicate}
-            className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md"
+            disabled={isDuplicateDisabled}
+            className={`bg-green-500 text-white font-medium py-2 px-4 rounded-md ${
+              isDuplicateDisabled
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:bg-green-600'
+            }`}
           >
             Duplicar
           </button>

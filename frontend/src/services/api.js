@@ -272,6 +272,7 @@ export const updateLocacao = (id, alocacaoData, anexos) => {
 export const deleteAnexoLocacao = id =>
   apiClient.delete(`/anexos-locacao/${id}/`);
 export const deleteLocacao = id => apiClient.delete(`/locacoes/${id}/`);
+export const duplicateLocacao = (id, newDate) => apiClient.post(`/locacoes/${id}/duplicate/`, { new_date: newDate });
 export const transferFuncionarioLocacao = async transferData => {
   const response = await apiClient.post(
     '/locacoes/transferir-funcionario/',
@@ -279,17 +280,23 @@ export const transferFuncionarioLocacao = async transferData => {
   );
   return response.data;
 };
-export const getLocacaoCustoDiarioChart = (obraId = null) => {
-  let url = '/locacoes/custo_diario_chart/';
+export const getLocacaoCustoDiarioChart = (obraId = null, filtroTipo) => {
+  const params = new URLSearchParams();
   if (obraId) {
-    url += `?obra_id=${obraId}`;
+    params.append('obra_id', obraId);
   }
-  return apiClient.get(url);
+  if (filtroTipo) {
+    params.append('filtro_tipo', filtroTipo);
+  }
+  return apiClient.get(`/locacoes/custo_diario_chart/?${params.toString()}`);
 };
 
 // Funções para o Weekly Planner
-export const getLocacoesDaSemana = (startDate, obraId) => {
-  const params = { inicio: startDate };
+export const getLocacoesDaSemana = (startDate, obraId, filtroTipo) => {
+  const params = {
+    inicio: startDate,
+    filtro_tipo: filtroTipo || 'equipe_funcionario', // Garante um valor padrão
+  };
   if (obraId) {
     params.obra_id = obraId;
   }

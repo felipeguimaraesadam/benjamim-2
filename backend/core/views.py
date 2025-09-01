@@ -44,30 +44,6 @@ from .serializers import (
 )
 from .permissions import IsNivelAdmin, IsNivelGerente
 
-class LocacaoSemanalView(APIView):
-    permission_classes = [IsNivelAdmin | IsNivelGerente]
-
-    def get(self, request, *args, **kwargs):
-        inicio_str = request.query_params.get('inicio')
-        if not inicio_str:
-            return Response({"error": "O parâmetro 'inicio' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            data_inicio = datetime.strptime(inicio_str, '%Y-%m-%d').date()
-        except ValueError:
-            return Response({"error": "Formato de data inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-
-        data_fim = data_inicio + timedelta(days=6)
-
-        locacoes = Locacao_Obras_Equipes.objects.filter(
-            data_locacao_inicio__lte=data_fim,
-            data_locacao_fim__gte=data_inicio
-        ).select_related('obra', 'equipe', 'funcionario_locado')
-
-        serializer = LocacaoObrasEquipesSerializer(locacoes, many=True)
-        return Response(serializer.data)
-# django.db.models.Sum, Count, F, Decimal are already imported in the backup content
-
 class CreateUsuarioView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -368,17 +344,26 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
         today = timezone.now().date()
         start_date = today - timedelta(days=29)
         obra_id_str = request.query_params.get('obra_id')
+        filtro_tipo = request.query_params.get('filtro_tipo', 'equipe_funcionario')
+
         locacoes_qs = Locacao_Obras_Equipes.objects.filter(
             data_locacao_inicio__gte=start_date,
             data_locacao_inicio__lte=today,
             status_locacao='ativa'
         )
+
         if obra_id_str:
             try:
                 obra_id = int(obra_id_str)
                 locacoes_qs = locacoes_qs.filter(obra_id=obra_id)
             except ValueError:
                 return Response({"error": "ID de obra inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if filtro_tipo == 'equipe_funcionario':
+            locacoes_qs = locacoes_qs.filter(Q(equipe__isnull=False) | Q(funcionario_locado__isnull=False))
+        elif filtro_tipo == 'servico_externo':
+            locacoes_qs = locacoes_qs.filter(Q(servico_externo__isnull=False) & ~Q(servico_externo=''))
+
         daily_costs_db = locacoes_qs.values('data_locacao_inicio').annotate(
             total_cost_for_day=Sum('valor_pagamento')
         ).order_by('data_locacao_inicio')
@@ -397,6 +382,55 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
             })
             current_date += timedelta(days=1)
         return Response(result_data)
+
+    @action(detail=True, methods=['post'])
+    def duplicate(self, request, pk=None):
+        try:
+            original_locacao = self.get_object()
+            new_date_str = request.data.get('new_date')
+
+            if not new_date_str:
+                return Response({'error': 'A nova data é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
+
+            # Business logic validation
+            is_servico_externo = bool(original_locacao.servico_externo) and not original_locacao.funcionario_locado and not original_locacao.equipe
+            if not is_servico_externo:
+                resource_qs = Locacao_Obras_Equipes.objects.filter(
+                    data_locacao_inicio=new_date,
+                    status_locacao='ativa'
+                )
+                if original_locacao.funcionario_locado:
+                    if resource_qs.filter(funcionario_locado=original_locacao.funcionario_locado).exists():
+                        return Response({'error': 'Este funcionário já possui uma alocação nesta data.'}, status=status.HTTP_400_BAD_REQUEST)
+                elif original_locacao.equipe:
+                    if resource_qs.filter(equipe=original_locacao.equipe).exists():
+                        return Response({'error': 'Esta equipe já possui uma alocação nesta data.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            with transaction.atomic():
+                new_locacao_data = {
+                    'obra': original_locacao.obra,
+                    'equipe': original_locacao.equipe,
+                    'funcionario_locado': original_locacao.funcionario_locado,
+                    'servico_externo': original_locacao.servico_externo,
+                    'data_locacao_inicio': new_date,
+                    'data_locacao_fim': new_date,
+                    'tipo_pagamento': original_locacao.tipo_pagamento,
+                    'valor_pagamento': original_locacao.valor_pagamento,
+                    'data_pagamento': None,
+                    'status_locacao': 'ativa',
+                    'observacoes': f"Duplicado de locação ID {original_locacao.id}. {original_locacao.observacoes}",
+                }
+                new_locacao = Locacao_Obras_Equipes.objects.create(**new_locacao_data)
+
+            serializer = self.get_serializer(new_locacao)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Erro ao duplicar locação: {e}", exc_info=True)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class MaterialViewSet(viewsets.ModelViewSet):
@@ -1481,8 +1515,10 @@ class LocacaoSemanalView(APIView):
     def get(self, request, *args, **kwargs):
         inicio_semana_str = request.query_params.get('inicio')
         obra_id_str = request.query_params.get('obra_id')
+        filtro_tipo = request.query_params.get('filtro_tipo', 'equipe_funcionario')
+
         if not inicio_semana_str:
-            return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "O parâmetro 'inicio' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             inicio_semana = date.fromisoformat(inicio_semana_str)
@@ -1490,33 +1526,30 @@ class LocacaoSemanalView(APIView):
             return Response({"error": "Formato de data inválido para 'inicio'. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
 
         fim_semana = inicio_semana + timedelta(days=6)
-        print(f"[LocacaoSemanalView] Periodo: {inicio_semana_str} a {fim_semana.isoformat()}") # LOG BACKEND 1
 
-        locacoes_na_semana = Locacao_Obras_Equipes.objects.filter(
-            status_locacao='ativa'
-        ).filter(
-            # Locação começa antes ou durante o fim da semana E Locação termina depois ou durante o início da semana
-            Q(data_locacao_inicio__lte=fim_semana) & Q(data_locacao_fim__gte=inicio_semana)
+        # Correctly query for single-day locacao objects within the week range
+        locacoes_qs = Locacao_Obras_Equipes.objects.filter(
+            status_locacao='ativa',
+            data_locacao_inicio__range=[inicio_semana, fim_semana]
         ).select_related('obra', 'equipe', 'funcionario_locado').order_by('data_locacao_inicio')
 
         if obra_id_str:
-            locacoes_na_semana = locacoes_na_semana.filter(obra_id=obra_id_str)
+            locacoes_qs = locacoes_qs.filter(obra_id=obra_id_str)
 
-        print(f"[LocacaoSemanalView] Locações encontradas no período geral: {locacoes_na_semana.count()}") # LOG BACKEND 2
+        # Apply the type filter
+        if filtro_tipo == 'equipe_funcionario':
+            locacoes_qs = locacoes_qs.filter(Q(equipe__isnull=False) | Q(funcionario_locado__isnull=False))
+        elif filtro_tipo == 'servico_externo':
+            locacoes_qs = locacoes_qs.filter(Q(servico_externo__isnull=False) & ~Q(servico_externo=''))
 
-        resposta_semanal = {}
-        for i in range(7):
-            dia_corrente = inicio_semana + timedelta(days=i)
-            dia_str = dia_corrente.isoformat()
-            resposta_semanal[dia_str] = []
+        # Structure the response
+        resposta_semanal = { (inicio_semana + timedelta(days=i)).isoformat(): [] for i in range(7) }
+        for locacao in locacoes_qs:
+            dia_str = locacao.data_locacao_inicio.isoformat()
+            if dia_str in resposta_semanal:
+                serializer = LocacaoObrasEquipesSerializer(locacao, context={'request': request})
+                resposta_semanal[dia_str].append(serializer.data)
 
-            for locacao in locacoes_na_semana:
-                # Verifica se a locação está ativa no dia_corrente
-                if locacao.data_locacao_inicio <= dia_corrente <= locacao.data_locacao_fim:
-                    serializer = LocacaoObrasEquipesSerializer(locacao, context={'request': request})
-                    resposta_semanal[dia_str].append(serializer.data)
-
-        print(f"[LocacaoSemanalView] Resposta semanal final: {resposta_semanal}") # LOG BACKEND 3
         return Response(resposta_semanal)
 
 
