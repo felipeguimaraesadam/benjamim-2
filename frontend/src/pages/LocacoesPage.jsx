@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { format } from 'date-fns';
+import { format, addMonths, subMonths } from 'date-fns';
 import * as api from '../services/api';
 
 import LocacaoForm from '../components/forms/LocacaoForm';
@@ -33,9 +33,10 @@ const LocacoesPage = () => {
 
   // State for Chart
   const [chartData, setChartData] = useState([]);
-  const [selectedObraIdForChart, setSelectedObraIdForChart] = useState('');
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [chartError, setChartError] = useState(null);
+  const [chartDate, setChartDate] = useState(new Date());
+  const [chartMode, setChartMode] = useState('last30days'); // 'last30days' or 'monthly'
 
   // State for Modals and Forms
   const [showFormModal, setShowFormModal] = useState(false);
@@ -85,7 +86,7 @@ const LocacoesPage = () => {
     try {
         await api.updateLocacao(item.id, { data_locacao_inicio: newDate, data_locacao_fim: newDate });
         showSuccessToast('Locação movida com sucesso!');
-        fetchChartData(selectedObraIdForChart || null, filtroTipo);
+        fetchChartData(selectedObra?.id || null, filtroTipo, chartMode, chartDate);
     } catch (err) {
         showErrorToast(err.message || 'Erro ao mover a locação.');
         setLocacoesPorDia(originalState);
@@ -103,7 +104,7 @@ const LocacoesPage = () => {
           await api.duplicateLocacao(item.id, newDate);
           showSuccessToast('Locação duplicada com sucesso!');
           fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
-          fetchChartData(selectedObraIdForChart || null, filtroTipo);
+          fetchChartData(selectedObra?.id || null, filtroTipo, chartMode, chartDate);
       } catch (err) {
           showErrorToast(err.message || 'Erro ao duplicar a locação.');
       } finally {
@@ -111,11 +112,16 @@ const LocacoesPage = () => {
       }
   };
 
-  const fetchChartData = useCallback(async (obraId, filtro) => {
+  const fetchChartData = useCallback(async (obraId, filtro, mode, date) => {
     setIsLoadingChart(true);
     setChartError(null);
     try {
-      const response = await api.getLocacaoCustoDiarioChart(obraId, filtro);
+      let response;
+      if (mode === 'monthly') {
+        response = await api.getLocacaoCustoDiarioChart(obraId, filtro, date.getFullYear(), date.getMonth() + 1);
+      } else {
+        response = await api.getLocacaoCustoDiarioChart(obraId, filtro);
+      }
       const formattedData = response.data.map(item => ({ ...item, has_data: item.has_locacoes }));
       setChartData(formattedData);
     } catch (err) {
@@ -142,8 +148,8 @@ const LocacoesPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchChartData(selectedObraIdForChart || null, filtroTipo);
-  }, [fetchChartData, selectedObraIdForChart, filtroTipo]);
+    fetchChartData(selectedObra?.id || null, filtroTipo, chartMode, chartDate);
+  }, [fetchChartData, selectedObra, filtroTipo, chartMode, chartDate]);
 
   useEffect(() => {
     fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
@@ -180,7 +186,7 @@ const LocacoesPage = () => {
             await api.deleteLocacao(locacaoId);
             showSuccessToast('Locação excluída com sucesso!');
             fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
-            fetchChartData(selectedObraIdForChart || null, filtroTipo);
+            fetchChartData(selectedObra?.id || null, filtroTipo, chartMode, chartDate);
         } catch (err) {
             showErrorToast(err.message || 'Erro ao excluir a locação.');
         }
@@ -265,7 +271,7 @@ const LocacoesPage = () => {
         }
         setShowFormModal(false);
         fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
-        fetchChartData(selectedObraIdForChart || null, filtroTipo);
+        fetchChartData(selectedObra?.id || null, filtroTipo, chartMode, chartDate);
     } catch (err) {
         showErrorToast(err.message || "Erro ao salvar locação");
     } finally {
@@ -356,17 +362,21 @@ const LocacoesPage = () => {
         </div>
       </div>
 
+      <div className="flex justify-center items-center space-x-4 mb-4">
+        <button onClick={() => { setChartDate(subMonths(chartDate, 1)); setChartMode('monthly'); }} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md">Mês Anterior</button>
+        <button onClick={() => { setChartMode('last30days'); setChartDate(new Date()); }} className={`px-4 py-2 rounded-md ${chartMode === 'last30days' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>Últimos 30 dias</button>
+        <button onClick={() => { setChartDate(addMonths(chartDate, 1)); setChartMode('monthly'); }} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md">Próximo Mês</button>
+      </div>
       <DailyCostChart
-        title="Custo Diário de Locações (Últimos 30 dias)"
+        title="Custo Diário de Locações"
         data={chartData}
         isLoading={isLoadingChart}
         error={chartError}
-        obras={obras}
-        selectedObraId={selectedObraIdForChart}
-        onObraFilterChange={(e) => setSelectedObraIdForChart(e.target.value)}
         dataKey="total_cost"
         hasDataKey="has_locacoes"
         yAxisLabel="Custo (R$)"
+        chartMode={chartMode}
+        chartDate={chartDate}
       />
 
       {selectedLocacaoId && (
@@ -392,7 +402,7 @@ const LocacoesPage = () => {
                     onTransferSuccess={() => {
                         setShowFormModal(false);
                         fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
-                        fetchChartData(selectedObraIdForChart || null, filtroTipo);
+                        fetchChartData(selectedObra?.id || null, filtroTipo, chartMode, chartDate);
                     }}
                 />
             </div>

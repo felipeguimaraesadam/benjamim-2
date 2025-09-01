@@ -280,13 +280,22 @@ export const transferFuncionarioLocacao = async transferData => {
   );
   return response.data;
 };
-export const getLocacaoCustoDiarioChart = (obraId = null, filtroTipo) => {
+export const getLocacaoCustoDiarioChart = (
+  obraId = null,
+  filtroTipo,
+  year = null,
+  month = null
+) => {
   const params = new URLSearchParams();
   if (obraId) {
     params.append('obra_id', obraId);
   }
   if (filtroTipo) {
     params.append('filtro_tipo', filtroTipo);
+  }
+  if (year && month) {
+    params.append('year', year);
+    params.append('month', month);
   }
   return apiClient.get(`/locacoes/custo_diario_chart/?${params.toString()}`);
 };
