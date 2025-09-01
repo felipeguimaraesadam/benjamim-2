@@ -791,8 +791,8 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
     def _get_locacoes_for_report(self, start_date, end_date, filtro_locacao):
-        # This is the main fix: Check for payment_date in range, OR if payment_date is null, check for locacao_date in range
-        date_filter = Q(data_pagamento__range=[start_date, end_date]) | Q(data_pagamento__isnull=True, data_locacao_inicio__range=[start_date, end_date])
+        date_filter = Q(data_pagamento__range=[start_date, end_date]) | \
+                      Q(data_pagamento__isnull=True, data_locacao_inicio__range=[start_date, end_date])
 
         locacoes = Locacao_Obras_Equipes.objects.filter(date_filter, status_locacao='ativa')
 
@@ -830,7 +830,6 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             dates_with_entries = set(compras.values_list('data_pagamento', flat=True))
         elif tipo == 'locacoes':
             locacoes = self._get_locacoes_for_report(start_date, end_date, filtro_locacao)
-            # Correctly check either payment date or locacao date
             for loc in locacoes:
                 the_date = loc.data_pagamento if loc.data_pagamento else loc.data_locacao_inicio
                 if start_date <= the_date <= end_date:
@@ -867,7 +866,6 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             return Response(serializer.data)
 
         elif tipo == 'locacoes':
-            # For rentals, we now return the same complex structure as the PDF
             folha_pagamento_viewset = RelatorioFolhaPagamentoViewSet()
             class AttrDict(dict):
                 def __init__(self, *args, **kwargs):
@@ -916,25 +914,21 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             return generate_pdf_response(template_path, context, css_path, filename)
 
         elif tipo == 'locacoes':
-            folha_pagamento_viewset = RelatorioFolhaPagamentoViewSet()
-            class AttrDict(dict):
-                def __init__(self, *args, **kwargs):
-                    super(AttrDict, self).__init__(*args, **kwargs)
-                    self.__dict__ = self
-
-            fake_request = AttrDict({'query_params': request.query_params})
-            response = folha_pagamento_viewset.generate_report_data_for_pdf(fake_request)
-
+            # Re-use the data generation logic from the JSON report endpoint
+            response = self.generate_report(request)
             if response.status_code != 200:
                 return response
 
             context = response.data
             context['data_emissao'] = timezone.now()
+
+            # Ensure obra_filter_nome is always in context
+            context['obra_filter_nome'] = None
             if obra_id_str:
                 try:
                     context['obra_filter_nome'] = Obra.objects.get(pk=int(obra_id_str)).nome_obra
                 except (Obra.DoesNotExist, ValueError):
-                    context['obra_filter_nome'] = None
+                    pass # It remains None
 
             template_path = 'relatorios/relatorio_pagamento_locacoes.html'
             css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_pagamento_locacoes.css')
