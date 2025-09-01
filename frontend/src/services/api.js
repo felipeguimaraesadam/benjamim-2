@@ -300,7 +300,7 @@ export const getLocacaoCustoDiarioChart = (
     params.append('obra_id', obraId);
   }
   if (filtroTipo) {
-    params.append('filtro_tipo', filtroTipo);
+    params.append('filtro_locacao', filtroTipo);
   }
   if (year && month) {
     params.append('year', year);

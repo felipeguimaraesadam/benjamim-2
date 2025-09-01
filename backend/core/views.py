@@ -347,7 +347,7 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
         year_str = request.query_params.get('year')
         month_str = request.query_params.get('month')
         obra_id_str = request.query_params.get('obra_id')
-        filtro_tipo = request.query_params.get('filtro_tipo', 'equipe_funcionario')
+        filtro_tipo = request.query_params.get('filtro_locacao', 'equipe_funcionario')
 
         if year_str and month_str:
             try:
