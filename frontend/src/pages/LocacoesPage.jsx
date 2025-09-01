@@ -93,6 +93,11 @@ const LocacoesPage = () => {
   };
 
   const handleDuplicate = async (item, newDate) => {
+      if (item.tipo !== 'servico_externo' && item.data_locacao_inicio === newDate) {
+          showErrorToast('Funcionários e equipes não podem ser duplicados no mesmo dia.');
+          return;
+      }
+
       setIsLoadingPlanner(true);
       try {
           await api.duplicateLocacao(item.id, newDate);
@@ -186,12 +191,18 @@ const LocacoesPage = () => {
     const item = contextMenu.item;
     if (!item) return [];
 
-    return [
+    const options = [
         { label: 'Ver Detalhes', action: () => setSelectedLocacaoId(item.id) },
         { label: 'Editar', action: () => { setCurrentLocacao(item); setShowFormModal(true); } },
-        { label: 'Duplicar', action: () => handleDuplicate(item, item.data_locacao_inicio) },
-        { label: 'Excluir', action: () => handleDeleteLocacao(item.id) },
     ];
+
+    if (item.tipo === 'servico_externo') {
+        options.push({ label: 'Duplicar', action: () => handleDuplicate(item, item.data_locacao_inicio) });
+    }
+
+    options.push({ label: 'Excluir', action: () => handleDeleteLocacao(item.id) });
+
+    return options;
   };
 
   const renderLocacaoCard = (locacao, isDragging) => (
@@ -283,6 +294,7 @@ const LocacoesPage = () => {
                 }}
                 onCancel={() => setMoveOrDuplicateModal({ visible: false, item: null, newDate: null })}
                 itemType="Locação"
+                isDuplicateDisabled={moveOrDuplicateModal.item?.tipo !== 'servico_externo' && moveOrDuplicateModal.item?.data_locacao_inicio === moveOrDuplicateModal.newDate}
             />
         )}
       <div className="mb-8 flex flex-col">

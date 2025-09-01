@@ -36,7 +36,7 @@ function RentalCard({
     isDragging: dndIsDragging,
   } = useDraggable({
     id: draggableId,
-    data: { locacao },
+    data: { locacao, longPressOrDragHappenedRef },
     disabled: isDraggingOverlay, // Disable if this card is for the overlay
   });
 

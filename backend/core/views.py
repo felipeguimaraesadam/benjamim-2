@@ -394,6 +394,20 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
 
             new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
 
+            # Business logic validation
+            if original_locacao.tipo != 'servico_externo':
+                # Check for existing allocation on the same day for the same resource
+                resource_qs = Locacao_Obras_Equipes.objects.filter(
+                    data_locacao_inicio=new_date,
+                    status_locacao='ativa'
+                )
+                if original_locacao.funcionario_locado:
+                    if resource_qs.filter(funcionario_locado=original_locacao.funcionario_locado).exists():
+                        return Response({'error': 'Este funcionário já possui uma alocação nesta data.'}, status=status.HTTP_400_BAD_REQUEST)
+                elif original_locacao.equipe:
+                    if resource_qs.filter(equipe=original_locacao.equipe).exists():
+                        return Response({'error': 'Esta equipe já possui uma alocação nesta data.'}, status=status.HTTP_400_BAD_REQUEST)
+
             with transaction.atomic():
                 # Clone the instance
                 new_locacao = original_locacao
