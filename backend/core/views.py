@@ -909,6 +909,68 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             "total_geral_periodo": str(grand_total_geral)
         }
 
+    def _get_compras_report_data(self, compras_qs, start_date, end_date):
+        pagamentos_por_fornecedor = defaultdict(lambda: {
+            "fornecedor_nome": "",
+            "total_a_pagar_periodo": Decimal('0.00'),
+            "detalhes_por_obra": defaultdict(lambda: {
+                "obra_id": None, "obra_nome": "",
+                "total_a_pagar_obra": Decimal('0.00'),
+                "compras_na_obra": []
+            })
+        })
+        grand_total_geral = Decimal('0.00')
+
+        compras_qs = compras_qs.select_related('obra').prefetch_related('itens__material')
+
+        for compra in compras_qs:
+            fornecedor_nome = compra.fornecedor or "Fornecedor não especificado"
+            obra_nome = compra.obra.nome_obra if compra.obra else "Obra Desconhecida"
+            obra_id = compra.obra.id if compra.obra else 0
+            valor_pagamento = compra.valor_total_liquido or Decimal('0.00')
+
+            fornecedor_data = pagamentos_por_fornecedor[fornecedor_nome]
+            fornecedor_data["fornecedor_nome"] = fornecedor_nome
+            fornecedor_data["total_a_pagar_periodo"] += valor_pagamento
+
+            obra_details = fornecedor_data["detalhes_por_obra"][obra_id]
+            obra_details["obra_id"] = obra_id
+            obra_details["obra_nome"] = obra_nome
+            obra_details["total_a_pagar_obra"] += valor_pagamento
+
+            items_serializer = ItemCompraSerializer(compra.itens.all(), many=True)
+
+            obra_details["compras_na_obra"].append({
+                "compra_id": compra.id,
+                "data_pagamento": compra.data_pagamento,
+                "nota_fiscal": compra.nota_fiscal,
+                "valor_total_liquido": str(valor_pagamento),
+                "observacoes": compra.observacoes or "",
+                "itens": items_serializer.data,
+                "forma_pagamento": compra.get_forma_pagamento_display(),
+                "numero_parcelas": compra.numero_parcelas,
+            })
+            grand_total_geral += valor_pagamento
+
+        final_fornecedores_list = []
+        for f_nome, f_data in sorted(pagamentos_por_fornecedor.items()):
+            f_data["total_a_pagar_periodo"] = str(f_data["total_a_pagar_periodo"])
+            obras_list = []
+            for o_id, o_data in sorted(f_data["detalhes_por_obra"].items(), key=lambda item: item[1]['obra_nome']):
+                o_data["total_a_pagar_obra"] = str(o_data["total_a_pagar_obra"])
+                o_data["compras_na_obra"].sort(key=lambda x: x["data_pagamento"] or date.min)
+                obras_list.append(o_data)
+            f_data["detalhes_por_obra"] = obras_list
+            final_fornecedores_list.append(f_data)
+
+        final_fornecedores_list.sort(key=lambda x: x["fornecedor_nome"])
+
+        return {
+            "periodo": {"inicio": start_date, "fim": end_date},
+            "fornecedores_pagamentos": final_fornecedores_list,
+            "total_geral_periodo": str(grand_total_geral)
+        }
+
     @action(detail=False, methods=['get'], url_path='generate')
     def generate_report(self, request):
         start_date_str = request.query_params.get('start_date')
@@ -929,9 +991,20 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
 
         if tipo == 'compras':
-            compras = Compra.objects.filter(data_pagamento__range=[start_date, end_date], tipo='COMPRA').order_by('data_pagamento')
-            serializer = CompraSerializer(compras, many=True)
-            return Response(serializer.data)
+            compras_qs = Compra.objects.filter(
+                data_pagamento__range=[start_date, end_date],
+                tipo='COMPRA'
+            ).order_by('data_pagamento')
+            report_data = self._get_compras_report_data(compras_qs, start_date, end_date)
+            # Convert date objects to strings for JSON serialization
+            report_data['periodo']['inicio'] = report_data['periodo']['inicio'].isoformat()
+            report_data['periodo']['fim'] = report_data['periodo']['fim'].isoformat()
+            for f in report_data['fornecedores_pagamentos']:
+                for o in f['detalhes_por_obra']:
+                    for c in o['compras_na_obra']:
+                        if c['data_pagamento']:
+                            c['data_pagamento'] = c['data_pagamento'].isoformat()
+            return Response(report_data)
 
         elif tipo == 'locacoes':
             locacoes = self._get_locacoes(start_date, end_date, filtro_locacao)
@@ -969,13 +1042,12 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             return Response({"error": "start_date não pode ser posterior a end_date."}, status=status.HTTP_400_BAD_REQUEST)
 
         if tipo == 'compras':
-            compras = Compra.objects.filter(data_pagamento__range=[start_date, end_date], tipo='COMPRA').order_by('data_pagamento')
-            context = {
-                'data': compras,
-                'start_date': start_date,
-                'end_date': end_date,
-                'data_emissao': timezone.now()
-            }
+            compras_qs = Compra.objects.filter(
+                data_pagamento__range=[start_date, end_date],
+                tipo='COMPRA'
+            ).order_by('data_pagamento')
+            context = self._get_compras_report_data(compras_qs, start_date, end_date)
+            context['data_emissao'] = timezone.now()
             template_path = 'relatorios/relatorio_pagamento_compras.html'
             css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_compras.css')
             filename = f'relatorio_pagamento_compras_{start_date_str}_a_{end_date_str}.pdf'

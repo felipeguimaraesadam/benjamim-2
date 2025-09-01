@@ -1,39 +1,229 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <title>Relatório de Pagamento de Compras</title>
     <style>
-        body { font-family: sans-serif; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background-color: #f2f2f2; }
+        @page {
+            size: a4 portrait;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 9pt;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 18pt;
+            color: #2c3e50;
+        }
+        .header p {
+            margin: 5px 0;
+            font-size: 10pt;
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .report-table th, .report-table td {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: left;
+            vertical-align: top;
+            color: #333 !important;
+        }
+        .report-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .supplier-section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #eee;
+            page-break-inside: avoid;
+        }
+        .supplier-header {
+            background-color: #e9ecef;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #007bff;
+        }
+        .supplier-header h2 {
+            margin: 0;
+            font-size: 14pt;
+            color: #004085;
+        }
+        .supplier-total {
+            font-weight: bold;
+            font-size: 11pt;
+            text-align: right;
+            padding-top: 5px;
+        }
+        .obra-header {
+            background-color: #f8f9fa;
+            padding: 6px;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            border-left: 3px solid #17a2b8;
+        }
+        .obra-header h3 {
+            margin: 0;
+            font-size: 12pt;
+            color: #0c5460;
+        }
+        .obra-total {
+            font-weight: bold;
+            text-align: right;
+            font-size: 10pt;
+            padding-top: 3px;
+            color: #333;
+        }
+        .grand-total {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #333;
+            text-align: right;
+        }
+        .grand-total h2 {
+            font-size: 16pt;
+            color: #000;
+            margin:0;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .small-text { font-size: 8pt; }
+        .footer {
+            position: fixed;
+            bottom: -1cm;
+            left: 0;
+            right: 0;
+            height: 1cm;
+            text-align: center;
+            font-size: 8pt;
+            color: #777;
+        }
+        .footer .page-number:after {
+            content: counter(page);
+        }
+        .no-records {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #777;
+        }
+        table { page-break-inside: auto; }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        thead { display: table-header-group; }
+        tfoot { display: table-footer-group; }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        .items-table th, .items-table td {
+            border: 1px solid #e9e9e9;
+            padding: 4px;
+            font-size: 8pt;
+            color: #333 !important;
+        }
+        .items-table th {
+            background-color: #fafafa;
+        }
     </style>
 </head>
 <body>
-    <h1>Relatório de Pagamento de Compras</h1>
-    <p>Período: {{ start_date }} a {{ end_date }}</p>
-    <table>
-        <thead>
-            <tr>
-                <th>Data Pagamento</th>
-                <th>Fornecedor</th>
-                <th>Obra</th>
-                <th>Valor</th>
-                <th>Nota Fiscal</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for compra in data %}
-            <tr>
-                <td>{{ compra.data_pagamento }}</td>
-                <td>{{ compra.fornecedor }}</td>
-                <td>{{ compra.obra.nome_obra }}</td>
-                <td>{{ compra.valor_total_liquido }}</td>
-                <td>{{ compra.nota_fiscal }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="footer">
+        Relatório de Pagamento de Compras - Gerado em: {{ data_emissao|date:"d/m/Y H:i" }} - Página <span class="page-number"></span>
+    </div>
+
+    <div class="header">
+        <h1>Relatório de Pagamento de Compras</h1>
+        <p>Período: {{ periodo.inicio|date:"d/m/Y" }} a {{ periodo.fim|date:"d/m/Y" }}</p>
+    </div>
+
+    {% if fornecedores_pagamentos %}
+        {% for fornecedor in fornecedores_pagamentos %}
+            <div class="supplier-section">
+                <div class="supplier-header">
+                    <h2>Fornecedor: {{ fornecedor.fornecedor_nome }}</h2>
+                </div>
+
+                {% for obra_detalhe in fornecedor.detalhes_por_obra %}
+                    <div class="obra-section">
+                        <div class="obra-header">
+                            <h3>Obra: {{ obra_detalhe.obra_nome }}</h3>
+                        </div>
+                        {% for compra in obra_detalhe.compras_na_obra %}
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Data Pag.</th>
+                                        <th>Nota Fiscal</th>
+                                        <th>Forma Pag.</th>
+                                        <th class="text-right">Valor Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-center">{{ compra.data_pagamento|date:"d/m/Y" }}</td>
+                                        <td>{{ compra.nota_fiscal|default_if_none:"" }}</td>
+                                        <td>{{ compra.forma_pagamento }} ({{ compra.numero_parcelas }}x)</td>
+                                        <td class="text-right">{{ compra.valor_total_liquido }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" style="padding: 5px;">
+                                            <h4 style="margin:0 0 5px 0; font-size: 9pt;">Itens da Compra:</h4>
+                                            <table class="items-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Material</th>
+                                                        <th class="text-center">Qtd</th>
+                                                        <th class="text-right">Vlr. Unit.</th>
+                                                        <th class="text-right">Vlr. Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                {% for item in compra.itens %}
+                                                    <tr>
+                                                        <td>{{ item.material.nome }}</td>
+                                                        <td class="text-center">{{ item.quantidade|floatformat:2 }}</td>
+                                                        <td class="text-right">{{ item.valor_unitario|floatformat:2 }}</td>
+                                                        <td class="text-right">{{ item.valor_total_item|floatformat:2 }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="4" class="text-center">Nenhum item nesta compra.</td></tr>
+                                                {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        {% endfor %}
+                        <div class="obra-total">
+                            Total para {{ obra_detalhe.obra_nome }}: R$ {{ obra_detalhe.total_a_pagar_obra }}
+                        </div>
+                    </div>
+                {% endfor %}
+                <div class="supplier-total">
+                    Total a Pagar para {{ fornecedor.fornecedor_nome }}: R$ {{ fornecedor.total_a_pagar_periodo }}
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="grand-total">
+            <h2>Total Geral do Período: R$ {{ total_geral_periodo }}</h2>
+        </div>
+    {% else %}
+        <p class="no-records">Nenhuma compra encontrada para o período selecionado.</p>
+    {% endif %}
 </body>
 </html>

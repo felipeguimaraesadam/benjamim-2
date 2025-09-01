@@ -13,6 +13,7 @@ const RelatorioPagamento = ({ tipoRelatorio, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filtroLocacao, setFiltroLocacao] = useState('todos');
+  const [expandedCompra, setExpandedCompra] = useState(null);
 
   const weekOptions = [
     { label: 'Esta Semana', value: 0 },
@@ -110,29 +111,80 @@ const RelatorioPagamento = ({ tipoRelatorio, onClose }) => {
     });
   };
 
+  const toggleCompraItems = (compraId) => {
+    setExpandedCompra(expandedCompra === compraId ? null : compraId);
+  };
+
   const renderComprasReport = () => (
-    <table className="min-w-full text-sm text-left text-gray-500">
-      <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-        <tr>
-          <th className="px-4 py-2">Data Pagamento</th>
-          <th className="px-4 py-2">Fornecedor</th>
-          <th className="px-4 py-2">Obra</th>
-          <th className="px-4 py-2">Valor</th>
-          <th className="px-4 py-2">Nota Fiscal</th>
-        </tr>
-      </thead>
-      <tbody>
-        {reportData.map(item => (
-          <tr key={item.id} className="bg-white border-b hover:bg-gray-50">
-            <td>{formatDateToDMY(item.data_pagamento)}</td>
-            <td>{item.fornecedor}</td>
-            <td>{item.obra.nome_obra}</td>
-            <td>{formatCurrency(item.valor_total_liquido)}</td>
-            <td>{item.nota_fiscal}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div>
+      {reportData.fornecedores_pagamentos && reportData.fornecedores_pagamentos.length > 0 ? (
+        reportData.fornecedores_pagamentos.map(fornecedor => (
+          <div key={fornecedor.fornecedor_nome} className="mb-6 p-3 border rounded-md">
+            <h4 className="text-lg font-semibold text-blue-600 mb-2">
+              {fornecedor.fornecedor_nome} - Total: {formatCurrency(fornecedor.total_a_pagar_periodo)}
+            </h4>
+            {fornecedor.detalhes_por_obra.map(obra => (
+              <div key={obra.obra_id} className="mb-3 pl-3 border-l-2">
+                <h5 className="text-md font-semibold text-gray-700">
+                  Obra: {obra.obra_nome} - Total: {formatCurrency(obra.total_a_pagar_obra)}
+                </h5>
+                <table className="min-w-full text-xs mt-1">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-2 py-1 text-left">Data Pag.</th>
+                      <th className="px-2 py-1 text-left">Nota Fiscal</th>
+                      <th className="px-2 py-1 text-left">Forma Pag.</th>
+                      <th className="px-2 py-1 text-right">Valor (R$)</th>
+                      <th className="px-2 py-1 text-center">Itens</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {obra.compras_na_obra.map(compra => (
+                      <React.Fragment key={compra.compra_id}>
+                        <tr className="border-b">
+                          <td className="px-2 py-1">{formatDateToDMY(compra.data_pagamento)}</td>
+                          <td className="px-2 py-1">{compra.nota_fiscal}</td>
+                          <td className="px-2 py-1">{compra.forma_pagamento} ({compra.numero_parcelas}x)</td>
+                          <td className="px-2 py-1 text-right">{formatCurrency(compra.valor_total_liquido)}</td>
+                          <td className="px-2 py-1 text-center">
+                            <button onClick={() => toggleCompraItems(compra.compra_id)} className="text-blue-500 hover:underline">
+                              {expandedCompra === compra.compra_id ? 'Ocultar' : 'Ver'}
+                            </button>
+                          </td>
+                        </tr>
+                        {expandedCompra === compra.compra_id && (
+                          <tr>
+                            <td colSpan="5" className="p-2 bg-gray-50">
+                              <h6 className="font-semibold text-xs mb-1">Itens da Compra:</h6>
+                              <ul className="list-disc pl-5">
+                                {compra.itens.map(item => (
+                                  <li key={item.id} className="text-xs">
+                                    {item.quantidade}x {item.material.nome} @ {formatCurrency(item.valor_unitario)} = {formatCurrency(item.valor_total_item)}
+                                  </li>
+                                ))}
+                              </ul>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+        ))
+      ) : (
+        <p>Nenhum pagamento de compra encontrado para o período selecionado.</p>
+      )}
+      {reportData.fornecedores_pagamentos && reportData.fornecedores_pagamentos.length > 0 && (
+        <div className="mt-4 pt-2 border-t text-right">
+          <p className="text-lg font-bold">
+            Total Geral do Relatório: {formatCurrency(reportData.total_geral_periodo)}
+          </p>
+        </div>
+      )}
+    </div>
   );
 
   const renderLocacoesReport = () => (

@@ -409,12 +409,18 @@ class MaterialDetailSerializer(MaterialSerializer):
         return ItemCompraHistorySerializer(itens_comprados, many=True, context=self.context).data
 
 
+class MaterialNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Material
+        fields = ['id', 'nome', 'unidade_medida']
+
+
 class ItemCompraSerializer(serializers.ModelSerializer):
-    material_nome = serializers.CharField(source='material.nome', read_only=True)
+    material = MaterialNestedSerializer(read_only=True)
 
     class Meta:
         model = ItemCompra
-        fields = ['id', 'material', 'material_nome', 'quantidade', 'valor_unitario', 'valor_total_item', 'categoria_uso']
+        fields = ['id', 'material', 'quantidade', 'valor_unitario', 'valor_total_item', 'categoria_uso']
 
 
 # Serializers for new models
