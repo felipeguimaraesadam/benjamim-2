@@ -1469,7 +1469,7 @@ class LocacaoSemanalView(APIView):
         filtro_tipo = request.query_params.get('filtro_tipo', 'equipe_funcionario')
 
         if not inicio_semana_str:
-            return Response({"error": "O parâmetro 'inicio' (data de início da semana no formato YYYY-MM-DD) é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "O parâmetro 'inicio' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             inicio_semana = date.fromisoformat(inicio_semana_str)
@@ -1477,37 +1477,30 @@ class LocacaoSemanalView(APIView):
             return Response({"error": "Formato de data inválido para 'inicio'. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
 
         fim_semana = inicio_semana + timedelta(days=6)
-        print(f"[LocacaoSemanalView] Periodo: {inicio_semana_str} a {fim_semana.isoformat()}")
 
-        locacoes_na_semana = Locacao_Obras_Equipes.objects.filter(
+        # Correctly query for single-day locacao objects within the week range
+        locacoes_qs = Locacao_Obras_Equipes.objects.filter(
             status_locacao='ativa',
-            data_locacao_inicio__lte=fim_semana,
-            data_locacao_fim__gte=inicio_semana
+            data_locacao_inicio__range=[inicio_semana, fim_semana]
         ).select_related('obra', 'equipe', 'funcionario_locado').order_by('data_locacao_inicio')
 
         if obra_id_str:
-            locacoes_na_semana = locacoes_na_semana.filter(obra_id=obra_id_str)
+            locacoes_qs = locacoes_qs.filter(obra_id=obra_id_str)
 
+        # Apply the type filter
         if filtro_tipo == 'equipe_funcionario':
-            locacoes_na_semana = locacoes_na_semana.filter(Q(equipe__isnull=False) | Q(funcionario_locado__isnull=False))
+            locacoes_qs = locacoes_qs.filter(Q(equipe__isnull=False) | Q(funcionario_locado__isnull=False))
         elif filtro_tipo == 'servico_externo':
-            locacoes_na_semana = locacoes_na_semana.filter(Q(servico_externo__isnull=False) & ~Q(servico_externo=''))
+            locacoes_qs = locacoes_qs.filter(Q(servico_externo__isnull=False) & ~Q(servico_externo=''))
 
-        print(f"[LocacaoSemanalView] Locações encontradas no período geral (após filtro): {locacoes_na_semana.count()}")
-
+        # Structure the response
         resposta_semanal = { (inicio_semana + timedelta(days=i)).isoformat(): [] for i in range(7) }
+        for locacao in locacoes_qs:
+            dia_str = locacao.data_locacao_inicio.isoformat()
+            if dia_str in resposta_semanal:
+                serializer = LocacaoObrasEquipesSerializer(locacao, context={'request': request})
+                resposta_semanal[dia_str].append(serializer.data)
 
-        for locacao in locacoes_na_semana:
-            current_date = locacao.data_locacao_inicio
-            while current_date <= locacao.data_locacao_fim:
-                if inicio_semana <= current_date <= fim_semana:
-                    dia_str = current_date.isoformat()
-                    if dia_str in resposta_semanal:
-                        serializer = LocacaoObrasEquipesSerializer(locacao, context={'request': request})
-                        resposta_semanal[dia_str].append(serializer.data)
-                current_date += timedelta(days=1)
-
-        print(f"[LocacaoSemanalView] Resposta semanal final: {resposta_semanal}")
         return Response(resposta_semanal)
 
 
