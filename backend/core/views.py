@@ -347,7 +347,7 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
         year_str = request.query_params.get('year')
         month_str = request.query_params.get('month')
         obra_id_str = request.query_params.get('obra_id')
-        filtro_tipo = request.query_params.get('filtro_locacao', 'equipe_funcionario')
+        filtro_tipo = request.query_params.get('filtro_tipo', 'equipe_funcionario')
 
         if year_str and month_str:
             try:
@@ -375,10 +375,17 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
             except ValueError:
                 return Response({"error": "ID de obra inválido."}, status=status.HTTP_400_BAD_REQUEST)
 
+        print(f"DEBUG: Custo Diário Chart - Filtro_tipo: {filtro_tipo}")
+        print(f"DEBUG: Custo Diário Chart - Queryset antes do filtro: {locacoes_qs.count()}")
+
         if filtro_tipo == 'equipe_funcionario':
             locacoes_qs = locacoes_qs.filter(Q(equipe__isnull=False) | Q(funcionario_locado__isnull=False))
         elif filtro_tipo == 'servico_externo':
-            locacoes_qs = locacoes_qs.filter(Q(servico_externo__isnull=False) & ~Q(servico_externo=''))
+            locacoes_qs = locacoes_qs.filter(servico_externo__isnull=False).exclude(servico_externo__exact='')
+
+        print(f"DEBUG: Custo Diário Chart - Queryset depois do filtro: {locacoes_qs.count()}")
+        for loc in locacoes_qs:
+            print(f"  - Loc ID: {loc.id}, Servico: {loc.servico_externo}, Valor: {loc.valor_pagamento}")
 
         daily_costs_db = locacoes_qs.values('data_locacao_inicio').annotate(
             total_cost_for_day=Sum('valor_pagamento')
