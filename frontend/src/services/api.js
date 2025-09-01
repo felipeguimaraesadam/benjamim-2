@@ -154,6 +154,11 @@ export const getObraGastosPorCategoriaMaterial = obraId =>
 export const getItensDisponiveisPorObra = obraId =>
   apiClient.get(`/obras/${obraId}/itens-disponiveis/`);
 
+// New endpoints for modal details
+export const getObraMateriaisDetail = obraId => apiClient.get(`/obras/${obraId}/materiais-detalhes/`);
+export const getObraMaoDeObraDetail = obraId => apiClient.get(`/obras/${obraId}/mao-de-obra-detalhes/`);
+export const getObraServicosDetail = obraId => apiClient.get(`/obras/${obraId}/servicos-detalhes/`);
+
 // --- Funcionario Service Functions ---
 export const getFuncionarios = params =>
   apiClient.get('/funcionarios/', { params });

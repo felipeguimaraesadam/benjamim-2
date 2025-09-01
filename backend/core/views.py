@@ -96,6 +96,127 @@ class ObraViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(obras, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get'], url_path='materiais-detalhes')
+    def materiais_detalhes(self, request, pk=None):
+        obra = self.get_object()
+        structured_data = {}
+        items = ItemCompra.objects.filter(compra__obra=obra, compra__tipo='COMPRA').select_related('material', 'compra')
+
+        for item in items:
+            category = item.categoria_uso or 'Geral'
+            material_name = item.material.nome
+
+            if category not in structured_data:
+                structured_data[category] = {}
+
+            if material_name not in structured_data[category]:
+                structured_data[category][material_name] = {
+                    'material_nome': material_name,
+                    'total_valor': Decimal('0.00'),
+                    'unidade_medida': item.material.unidade_medida,
+                    'compras': []
+                }
+
+            structured_data[category][material_name]['total_valor'] += item.valor_total_item
+            structured_data[category][material_name]['compras'].append({
+                'compra_id': item.compra.id,
+                'data_compra': item.compra.data_compra,
+                'quantidade': item.quantidade,
+                'valor_unitario': item.valor_unitario,
+                'valor_total_item': item.valor_total_item,
+                'nota_fiscal': item.compra.nota_fiscal,
+                'fornecedor': item.compra.fornecedor
+            })
+
+        for category, materials in structured_data.items():
+            structured_data[category] = list(materials.values())
+
+        return Response(structured_data)
+
+    @action(detail=True, methods=['get'], url_path='mao-de-obra-detalhes')
+    def mao_de_obra_detalhes(self, request, pk=None):
+        obra = self.get_object()
+        locacoes = Locacao_Obras_Equipes.objects.filter(
+            obra=obra
+        ).filter(
+            Q(equipe__isnull=False) | Q(funcionario_locado__isnull=False)
+        ).select_related('funcionario_locado', 'equipe').prefetch_related('equipe__membros')
+
+        if not obra.data_inicio:
+            obra_duration_days = 0
+        else:
+            end_date = obra.data_real_fim if obra.data_real_fim else date.today()
+            obra_duration_days = (end_date - obra.data_inicio).days + 1
+            if obra_duration_days <= 0:
+                obra_duration_days = 1
+
+        funcionarios_data = {}
+        for loc in locacoes:
+            funcionarios_to_process = []
+            if loc.funcionario_locado:
+                funcionarios_to_process = [loc.funcionario_locado]
+            elif loc.equipe:
+                funcionarios_to_process = loc.equipe.membros.all()
+
+            if not funcionarios_to_process:
+                continue
+
+            valor_pago_loc_per_member = loc.valor_pagamento
+            if loc.equipe and len(funcionarios_to_process) > 0:
+                valor_pago_loc_per_member = loc.valor_pagamento / len(funcionarios_to_process)
+
+            dias_trabalhados_loc = (loc.data_locacao_fim - loc.data_locacao_inicio).days + 1
+
+            for func in funcionarios_to_process:
+                if func.id not in funcionarios_data:
+                    funcionarios_data[func.id] = {
+                        'funcionario_id': func.id,
+                        'nome_completo': func.nome_completo,
+                        'locacoes_count': 0,
+                        'total_pago': Decimal('0.00'),
+                        'dias_trabalhados': 0,
+                        'pagamentos': []
+                    }
+
+                funcionarios_data[func.id]['locacoes_count'] += 1
+                funcionarios_data[func.id]['total_pago'] += valor_pago_loc_per_member
+                funcionarios_data[func.id]['dias_trabalhados'] += dias_trabalhados_loc
+                funcionarios_data[func.id]['pagamentos'].append({
+                    'locacao_id': loc.id,
+                    'data_inicio': loc.data_locacao_inicio,
+                    'data_fim': loc.data_locacao_fim,
+                    'tipo_pagamento': loc.get_tipo_pagamento_display(),
+                    'valor_pago': valor_pago_loc_per_member,
+                    'recurso': loc.equipe.nome_equipe if loc.equipe else loc.funcionario_locado.nome_completo
+                })
+
+        final_data = list(funcionarios_data.values())
+        for data_item in final_data:
+            if data_item['dias_trabalhados'] > 0:
+                data_item['media_diaria'] = data_item['total_pago'] / data_item['dias_trabalhados']
+            else:
+                data_item['media_diaria'] = Decimal('0.00')
+
+            if obra_duration_days > 0:
+                data_item['participacao_percentual'] = (data_item['dias_trabalhados'] / obra_duration_days) * 100
+            else:
+                data_item['participacao_percentual'] = 0
+
+        return Response(final_data)
+
+    @action(detail=True, methods=['get'], url_path='servicos-detalhes')
+    def servicos_detalhes(self, request, pk=None):
+        obra = self.get_object()
+        locacoes_servicos = Locacao_Obras_Equipes.objects.filter(
+            obra=obra,
+            servico_externo__isnull=False
+        ).exclude(
+            servico_externo__exact=''
+        ).order_by('-data_locacao_inicio')
+
+        serializer = LocacaoObrasEquipesSerializer(locacoes_servicos, many=True)
+        return Response(serializer.data)
+
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
     """
@@ -1124,6 +1245,7 @@ class DespesaExtraViewSet(viewsets.ModelViewSet):
             print("Created anexo:", anexo)
 
         if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been used, we need to manually update the prefetch cache.
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
@@ -2724,6 +2846,8 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
                 {'error': f'Erro na operação de exclusão em lote: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
 
 
 class GerarPDFComprasLoteView(APIView):
