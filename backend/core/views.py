@@ -790,18 +790,18 @@ class CompraViewSet(viewsets.ModelViewSet):
 class RelatorioPagamentoViewSet(viewsets.ViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
-    def _get_locacoes_for_report(self, start_date, end_date, filtro_locacao):
+    def _get_locacoes(self, start_date, end_date, filtro_locacao):
         date_filter = Q(data_pagamento__range=[start_date, end_date]) | \
-                      Q(data_pagamento__isnull=True, data_locacao_inicio__range=[start_date, end_date])
+                      (Q(data_pagamento__isnull=True) & Q(data_locacao_inicio__range=[start_date, end_date]))
 
-        locacoes = Locacao_Obras_Equipes.objects.filter(date_filter, status_locacao='ativa')
+        locacoes_qs = Locacao_Obras_Equipes.objects.filter(date_filter, status_locacao='ativa').select_related('obra', 'funcionario_locado', 'equipe')
 
         if filtro_locacao == 'servicos':
-            locacoes = locacoes.filter(servico_externo__isnull=False).exclude(servico_externo__exact='')
+            locacoes_qs = locacoes_qs.filter(servico_externo__isnull=False).exclude(servico_externo__exact='')
         elif filtro_locacao == 'funcionarios_e_equipes':
-            locacoes = locacoes.filter(Q(funcionario_locado__isnull=False) | Q(equipe__isnull=False))
+            locacoes_qs = locacoes_qs.filter(Q(funcionario_locado__isnull=False) | Q(equipe__isnull=False))
 
-        return locacoes
+        return locacoes_qs
 
     @action(detail=False, methods=['get'], url_path='pre-check')
     def pre_check(self, request):
@@ -829,7 +829,7 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             compras = Compra.objects.filter(data_pagamento__range=[start_date, end_date], tipo='COMPRA')
             dates_with_entries = set(compras.values_list('data_pagamento', flat=True))
         elif tipo == 'locacoes':
-            locacoes = self._get_locacoes_for_report(start_date, end_date, filtro_locacao)
+            locacoes = self._get_locacoes(start_date, end_date, filtro_locacao)
             for loc in locacoes:
                 the_date = loc.data_pagamento if loc.data_pagamento else loc.data_locacao_inicio
                 if start_date <= the_date <= end_date:
@@ -840,6 +840,61 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
         dias_sem_registros = sorted([dt.isoformat() for dt in (all_dates_in_range - dates_with_entries)])
 
         return Response({'dias_sem_registros': dias_sem_registros})
+
+    def _get_locacoes_report_data(self, locacoes, start_date, end_date):
+        pagamentos_por_recurso = defaultdict(lambda: {
+            "recurso_nome": "",
+            "total_a_pagar_periodo": Decimal('0.00'),
+            "detalhes_por_obra": defaultdict(lambda: {
+                "obra_id": None, "obra_nome": "",
+                "total_a_pagar_obra": Decimal('0.00'),
+                "locacoes_na_obra": []
+            })
+        })
+        grand_total_geral = Decimal('0.00')
+
+        for locacao in locacoes:
+            recurso_nome = get_recurso_nome_folha(locacao)
+            obra_nome = locacao.obra.nome_obra if locacao.obra else "Obra Desconhecida"
+            obra_id = locacao.obra.id if locacao.obra else 0
+            valor_pagamento = locacao.valor_pagamento or Decimal('0.00')
+
+            recurso_data = pagamentos_por_recurso[recurso_nome]
+            recurso_data["recurso_nome"] = recurso_nome
+            recurso_data["total_a_pagar_periodo"] += valor_pagamento
+
+            obra_details = recurso_data["detalhes_por_obra"][obra_id]
+            obra_details["obra_id"] = obra_id
+            obra_details["obra_nome"] = obra_nome
+            obra_details["total_a_pagar_obra"] += valor_pagamento
+
+            obra_details["locacoes_na_obra"].append({
+                "locacao_id": locacao.id,
+                "data_servico": locacao.data_pagamento if locacao.data_pagamento else locacao.data_locacao_inicio,
+                "tipo_pagamento": locacao.get_tipo_pagamento_display(),
+                "valor_atribuido": str(valor_pagamento),
+                "observacoes": locacao.observacoes or ""
+            })
+            grand_total_geral += valor_pagamento
+
+        final_recursos_list = []
+        for rec_nome, rec_data in sorted(pagamentos_por_recurso.items()):
+            rec_data["total_a_pagar_periodo"] = str(rec_data["total_a_pagar_periodo"])
+            obras_list = []
+            for ob_id, ob_data in sorted(rec_data["detalhes_por_obra"].items(), key=lambda item: item[1]['obra_nome']):
+                ob_data["total_a_pagar_obra"] = str(ob_data["total_a_pagar_obra"])
+                ob_data["locacoes_na_obra"].sort(key=lambda x: x["data_servico"])
+                obras_list.append(ob_data)
+            rec_data["detalhes_por_obra"] = obras_list
+            final_recursos_list.append(rec_data)
+
+        final_recursos_list.sort(key=lambda x: x["recurso_nome"])
+
+        return {
+            "periodo": {"inicio": start_date, "fim": end_date},
+            "recursos_pagamentos": final_recursos_list,
+            "total_geral_periodo": str(grand_total_geral)
+        }
 
     @action(detail=False, methods=['get'], url_path='generate')
     def generate_report(self, request):
@@ -866,15 +921,16 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             return Response(serializer.data)
 
         elif tipo == 'locacoes':
-            folha_pagamento_viewset = RelatorioFolhaPagamentoViewSet()
-            class AttrDict(dict):
-                def __init__(self, *args, **kwargs):
-                    super(AttrDict, self).__init__(*args, **kwargs)
-                    self.__dict__ = self
-
-            fake_request = AttrDict({'query_params': request.query_params})
-            response = folha_pagamento_viewset.generate_report_data_for_pdf(fake_request)
-            return response
+            locacoes = self._get_locacoes(start_date, end_date, filtro_locacao)
+            report_data = self._get_locacoes_report_data(locacoes, start_date, end_date)
+            # Convert date objects to strings for JSON serialization
+            report_data['periodo']['inicio'] = report_data['periodo']['inicio'].isoformat()
+            report_data['periodo']['fim'] = report_data['periodo']['fim'].isoformat()
+            for r in report_data['recursos_pagamentos']:
+                for o in r['detalhes_por_obra']:
+                    for l in o['locacoes_na_obra']:
+                        l['data_servico'] = l['data_servico'].isoformat()
+            return Response(report_data)
 
         else:
             return Response({"error": "Tipo de relatório inválido. Use 'compras' ou 'locacoes'."}, status=status.HTTP_400_BAD_REQUEST)
@@ -886,7 +942,6 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
         tipo = request.query_params.get('tipo')
         filtro_locacao = request.query_params.get('filtro_locacao')
         obra_id_str = request.query_params.get('obra_id')
-
 
         if not all([start_date_str, end_date_str, tipo]):
             return Response({"error": "Parâmetros start_date, end_date e tipo são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
@@ -914,21 +969,15 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
             return generate_pdf_response(template_path, context, css_path, filename)
 
         elif tipo == 'locacoes':
-            # Re-use the data generation logic from the JSON report endpoint
-            response = self.generate_report(request)
-            if response.status_code != 200:
-                return response
-
-            context = response.data
+            locacoes = self._get_locacoes(start_date, end_date, filtro_locacao)
+            context = self._get_locacoes_report_data(locacoes, start_date, end_date)
             context['data_emissao'] = timezone.now()
-
-            # Ensure obra_filter_nome is always in context
             context['obra_filter_nome'] = None
             if obra_id_str:
                 try:
                     context['obra_filter_nome'] = Obra.objects.get(pk=int(obra_id_str)).nome_obra
                 except (Obra.DoesNotExist, ValueError):
-                    pass # It remains None
+                    pass
 
             template_path = 'relatorios/relatorio_pagamento_locacoes.html'
             css_path = os.path.join(settings.BASE_DIR, 'core', 'static', 'css', 'relatorio_pagamento_locacoes.css')
