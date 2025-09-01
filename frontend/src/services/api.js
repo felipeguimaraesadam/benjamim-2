@@ -293,7 +293,8 @@ export const getLocacaoCustoDiarioChart = (
   obraId = null,
   filtroTipo,
   year = null,
-  month = null
+  month = null,
+  endDate = null
 ) => {
   const params = new URLSearchParams();
   if (obraId) {
@@ -305,6 +306,8 @@ export const getLocacaoCustoDiarioChart = (
   if (year && month) {
     params.append('year', year);
     params.append('month', month);
+  } else if (endDate) {
+    params.append('end_date', endDate);
   }
   return apiClient.get(`/locacoes/custo_diario_chart/?${params.toString()}`);
 };

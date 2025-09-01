@@ -343,9 +343,9 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
     def custo_diario_chart(self, request):
         from calendar import monthrange
 
-        today = timezone.now().date()
         year_str = request.query_params.get('year')
         month_str = request.query_params.get('month')
+        end_date_str = request.query_params.get('end_date')
         obra_id_str = request.query_params.get('obra_id')
         filtro_tipo = request.query_params.get('filtro_tipo', 'equipe_funcionario')
 
@@ -358,9 +358,15 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
                 end_date = date(year, month, num_days)
             except (ValueError, TypeError):
                 return Response({"error": "Ano e mês inválidos."}, status=status.HTTP_400_BAD_REQUEST)
+        elif end_date_str:
+            try:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                start_date = end_date - timedelta(days=29)
+            except ValueError:
+                return Response({'error': 'Invalid date format for end_date. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            start_date = today - timedelta(days=29)
-            end_date = today
+            end_date = timezone.now().date()
+            start_date = end_date - timedelta(days=29)
 
         locacoes_qs = Locacao_Obras_Equipes.objects.filter(
             data_locacao_inicio__gte=start_date,

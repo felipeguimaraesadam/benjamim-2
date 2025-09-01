@@ -121,7 +121,8 @@ const LocacoesPage = () => {
       if (mode === 'monthly') {
         response = await api.getLocacaoCustoDiarioChart(obraId, filtro, date.getFullYear(), date.getMonth() + 1);
       } else {
-        response = await api.getLocacaoCustoDiarioChart(obraId, filtro);
+        const endDate = format(new Date(), 'yyyy-MM-dd');
+        response = await api.getLocacaoCustoDiarioChart(obraId, filtro, null, null, endDate);
       }
       const formattedData = response.data.map(item => ({ ...item, has_data: item.has_locacoes }));
       setChartData(formattedData);
