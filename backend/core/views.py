@@ -395,8 +395,8 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
             new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
 
             # Business logic validation
-            if original_locacao.tipo != 'servico_externo':
-                # Check for existing allocation on the same day for the same resource
+            is_servico_externo = bool(original_locacao.servico_externo) and not original_locacao.funcionario_locado and not original_locacao.equipe
+            if not is_servico_externo:
                 resource_qs = Locacao_Obras_Equipes.objects.filter(
                     data_locacao_inicio=new_date,
                     status_locacao='ativa'
@@ -409,24 +409,27 @@ class LocacaoObrasEquipesViewSet(viewsets.ModelViewSet):
                         return Response({'error': 'Esta equipe já possui uma alocação nesta data.'}, status=status.HTTP_400_BAD_REQUEST)
 
             with transaction.atomic():
-                # Clone the instance
-                new_locacao = original_locacao
-                new_locacao.pk = None
-                new_locacao.id = None
-
-                # Update dates
-                new_locacao.data_locacao_inicio = new_date
-                new_locacao.data_locacao_fim = new_date # Assuming duplication creates a single-day event
-
-                # Reset any status fields if necessary
-                new_locacao.status_locacao = 'ativa'
-                new_locacao.data_pagamento = None
-
-                new_locacao.save()
+                new_locacao_data = {
+                    'obra': original_locacao.obra,
+                    'equipe': original_locacao.equipe,
+                    'funcionario_locado': original_locacao.funcionario_locado,
+                    'servico_externo': original_locacao.servico_externo,
+                    'data_locacao_inicio': new_date,
+                    'data_locacao_fim': new_date,
+                    'tipo_pagamento': original_locacao.tipo_pagamento,
+                    'valor_pagamento': original_locacao.valor_pagamento,
+                    'data_pagamento': None,
+                    'status_locacao': 'ativa',
+                    'observacoes': f"Duplicado de locação ID {original_locacao.id}. {original_locacao.observacoes}",
+                }
+                new_locacao = Locacao_Obras_Equipes.objects.create(**new_locacao_data)
 
             serializer = self.get_serializer(new_locacao)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Erro ao duplicar locação: {e}", exc_info=True)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
