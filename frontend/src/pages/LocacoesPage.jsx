@@ -59,11 +59,11 @@ const LocacoesPage = () => {
     }
   }, []);
 
-  const fetchChartData = useCallback(async (obraId) => {
+  const fetchChartData = useCallback(async (obraId, filtro) => {
     setIsLoadingChart(true);
     setChartError(null);
     try {
-      const response = await api.getLocacaoCustoDiarioChart(obraId);
+      const response = await api.getLocacaoCustoDiarioChart(obraId, filtro);
       const formattedData = response.data.map(item => ({ ...item, has_data: item.has_locacoes }));
       setChartData(formattedData);
     } catch (err) {
@@ -90,8 +90,8 @@ const LocacoesPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchChartData(selectedObraIdForChart || null);
-  }, [fetchChartData, selectedObraIdForChart]);
+    fetchChartData(selectedObraIdForChart || null, filtroTipo);
+  }, [fetchChartData, selectedObraIdForChart, filtroTipo]);
 
   useEffect(() => {
     fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
@@ -163,7 +163,8 @@ const LocacoesPage = () => {
             showSuccessToast('Locação criada com sucesso!');
         }
         setShowFormModal(false);
-        fetchWeekData(currentDate, selectedObra?.id);
+        fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
+        fetchChartData(selectedObraIdForChart || null, filtroTipo);
     } catch (err) {
         showErrorToast(err.message || "Erro ao salvar locação");
     } finally {
@@ -267,7 +268,8 @@ const LocacoesPage = () => {
                     isLoading={isLoadingPlanner}
                     onTransferSuccess={() => {
                         setShowFormModal(false);
-                        fetchWeekData(currentDate, selectedObra?.id);
+                        fetchWeekData(currentDate, selectedObra?.id, filtroTipo);
+                        fetchChartData(selectedObraIdForChart || null, filtroTipo);
                     }}
                 />
             </div>

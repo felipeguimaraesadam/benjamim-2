@@ -279,12 +279,15 @@ export const transferFuncionarioLocacao = async transferData => {
   );
   return response.data;
 };
-export const getLocacaoCustoDiarioChart = (obraId = null) => {
-  let url = '/locacoes/custo_diario_chart/';
+export const getLocacaoCustoDiarioChart = (obraId = null, filtroTipo) => {
+  const params = new URLSearchParams();
   if (obraId) {
-    url += `?obra_id=${obraId}`;
+    params.append('obra_id', obraId);
   }
-  return apiClient.get(url);
+  if (filtroTipo) {
+    params.append('filtro_tipo', filtroTipo);
+  }
+  return apiClient.get(`/locacoes/custo_diario_chart/?${params.toString()}`);
 };
 
 // Funções para o Weekly Planner
