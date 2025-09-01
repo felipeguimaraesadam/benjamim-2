@@ -203,6 +203,15 @@ export const getRelatorioPagamentoMateriaisPreCheck = params =>
   apiClient.get('/relatorios/pagamento-materiais/pre-check/', { params });
 export const generateRelatorioPagamentoMateriais = params =>
   apiClient.get('/relatorios/pagamento-materiais/generate/', { params });
+export const getRelatorioPagamentoPreCheck = params =>
+  apiClient.get('/relatorios/pagamento/pre-check/', { params });
+export const generateRelatorioPagamento = params =>
+  apiClient.get('/relatorios/pagamento/generate/', { params });
+export const generateRelatorioPagamentoPDF = params =>
+  apiClient.get('/relatorios/pagamento/generate-pdf/', {
+    params,
+    responseType: 'blob',
+  });
 
 // --- Despesa Extra Service Functions ---
 export const getDespesasExtras = params =>
@@ -284,7 +293,8 @@ export const getLocacaoCustoDiarioChart = (
   obraId = null,
   filtroTipo,
   year = null,
-  month = null
+  month = null,
+  endDate = null
 ) => {
   const params = new URLSearchParams();
   if (obraId) {
@@ -296,6 +306,8 @@ export const getLocacaoCustoDiarioChart = (
   if (year && month) {
     params.append('year', year);
     params.append('month', month);
+  } else if (endDate) {
+    params.append('end_date', endDate);
   }
   return apiClient.get(`/locacoes/custo_diario_chart/?${params.toString()}`);
 };

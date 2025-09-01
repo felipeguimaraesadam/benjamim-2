@@ -90,7 +90,7 @@ def run_monitoring_tests():
 def run_integration_tests():
     """Executa os testes de integração"""
     print("\n🔗 Executando testes de integração...")
-    success, stdout, stderr = run_command("python test_integration_complete.py")
+    success, stdout, stderr = run_command("python test_compra_creation.py", cwd="backend")
     
     if success:
         print("✅ Testes de integração concluídos com sucesso")
@@ -116,7 +116,7 @@ def generate_summary_report():
     
     # Busca pelos arquivos de relatório mais recentes
     monitoring_reports = list(Path('.').glob('monitoring_test_report_*.json'))
-    integration_reports = list(Path('.').glob('integration_test_report_*.json'))
+    integration_reports = list(Path('backend').glob('integration_test_report_*.json'))
     
     if not monitoring_reports and not integration_reports:
         print("❌ Nenhum relatório encontrado")

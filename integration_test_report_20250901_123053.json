@@ -1,0 +1,18 @@
+{
+  "test_name": "Criação de Compra via API",
+  "timestamp": "2025-09-01T12:30:53.354249",
+  "summary": {
+    "total_tests": 1,
+    "passed_tests": 0,
+    "failed_tests": 1,
+    "success_rate": 0.0
+  },
+  "details": [
+    {
+      "check_name": "Configuração Django",
+      "status": "FAIL",
+      "message": "Falha ao configurar Django: No module named 'backend.settings'",
+      "details": {}
+    }
+  ]
+}
