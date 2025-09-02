@@ -10,13 +10,12 @@ try:
     from weasyprint import HTML, CSS
     WEASYPRINT_AVAILABLE = True
 except Exception as e:
-    # If weasyprint fails to import, create dummy classes
     WEASYPRINT_AVAILABLE = False
 
 # Handle image processing imports
 try:
     from PIL import Image, ImageDraw, ImageFont
-    from pdf2image import convert_from_bytes
+    import fitz  # PyMuPDF
     IMAGE_PROCESSING_AVAILABLE = True
 except ImportError as e:
     IMAGE_PROCESSING_AVAILABLE = False
@@ -38,16 +37,16 @@ def docx_to_html(file_content):
         return "<html><body><p>DOCX processing library not available.</p></body></html>"
     try:
         document = docx.Document(BytesIO(file_content))
-        html = "<html><body>"
+        html = "<html><head><style>body { font-family: sans-serif; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; }</style></head><body>"
         html += "<h1>Documento Word</h1>"
         for para in document.paragraphs:
             html += f"<p>{para.text}</p>"
         for table in document.tables:
-            html += "<table border='1' style='border-collapse: collapse; width: 100%;'>"
+            html += "<table>"
             for row in table.rows:
                 html += "<tr>"
                 for cell in row.cells:
-                    html += f"<td style='padding: 4px;'>{cell.text}</td>"
+                    html += f"<td>{cell.text}</td>"
                 html += "</tr>"
             html += "</table><br>"
         html += "</body></html>"
@@ -64,14 +63,14 @@ def xlsx_to_html(file_content):
     try:
         workbook = openpyxl.load_workbook(BytesIO(file_content))
         sheet = workbook.active
-        html = "<html><body>"
+        html = "<html><head><style>body { font-family: sans-serif; } table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; }</style></head><body>"
         html += "<h1>Planilha Excel</h1>"
-        html += "<table border='1' style='border-collapse: collapse; width: 100%;'>"
+        html += "<table>"
         for row in sheet.iter_rows():
             html += "<tr>"
             for cell in row:
                 cell_value = cell.value if cell.value is not None else ""
-                html += f"<td style='padding: 4px;'>{cell_value}</td>"
+                html += f"<td>{cell_value}</td>"
             html += "</tr>"
         html += "</table>"
         html += "</body></html>"
@@ -90,14 +89,13 @@ def generate_pdf_response(template_name, context, css_path, filename):
     
     try:
         css_string = open(css_path, 'r').read()
+        css = CSS(string=css_string)
     except FileNotFoundError:
-        return HttpResponse("CSS file not found.", status=500)
+        css = None
 
     try:
         html = HTML(string=html_string, base_url=settings.STATIC_ROOT)
-        css = CSS(string=css_string)
-        
-        pdf_file = html.write_pdf(stylesheets=[css])
+        pdf_file = html.write_pdf(stylesheets=[css] if css else None)
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -110,10 +108,6 @@ def generate_pdf_response(template_name, context, css_path, filename):
 def process_attachments_for_pdf(attachments):
     """
     Processes various attachment types for inclusion in a PDF.
-    - Converts PDFs to images.
-    - Converts DOCX/XLSX to HTML, then to an image.
-    - Prepares images for base64 embedding.
-    Accepts a list of attachment model instances (e.g., ArquivoObra, AnexoCompra).
     """
     if not IMAGE_PROCESSING_AVAILABLE or not WEASYPRINT_AVAILABLE:
         return []
@@ -122,10 +116,7 @@ def process_attachments_for_pdf(attachments):
     
     for anexo in attachments:
         try:
-            # Generic attribute access
-            file_field = getattr(anexo, 'arquivo', getattr(anexo, 'anexo', None))
-            if not file_field:
-                file_field = getattr(anexo, 'imagem', None) # Fallback for FotoObra
+            file_field = getattr(anexo, 'arquivo', getattr(anexo, 'anexo', getattr(anexo, 'imagem', None)))
             if not file_field:
                 continue
 
@@ -139,30 +130,16 @@ def process_attachments_for_pdf(attachments):
             file_extension = nome_arquivo.lower().split('.')[-1] if nome_arquivo else ''
             img_base64 = None
             
-            if file_extension == 'pdf':
-                try:
-                    images = convert_from_bytes(file_content, first_page=1, last_page=1, dpi=150)
-                    if images:
-                        img = images[0]
-                        buffer = BytesIO()
-                        img.save(buffer, format='PNG')
-                        img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                except Exception as pdf_error:
-                    print(f"Error converting PDF {nome_arquivo}: {pdf_error}")
-                    # Create a placeholder image indicating the error
-                    try:
-                        font = ImageFont.truetype("arial.ttf", 15)
-                    except IOError:
-                        font = ImageFont.load_default()
+            pdf_bytes_for_conversion = None
 
-                    img = Image.new('RGB', (800, 200), color = (230, 230, 230))
-                    d = ImageDraw.Draw(img)
-                    d.text((10,10), f"Could not render PDF: {nome_arquivo}", fill=(0,0,0), font=font)
-                    d.text((10,35), "Reason: Missing system dependency 'poppler'.", fill=(0,0,0), font=font)
-                    buffer = BytesIO()
-                    img.save(buffer, format='PNG')
-                    img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                    
+            if file_extension == 'pdf':
+                pdf_bytes_for_conversion = file_content
+            elif file_extension == 'docx':
+                html_content = docx_to_html(file_content)
+                pdf_bytes_for_conversion = HTML(string=html_content).write_pdf()
+            elif file_extension == 'xlsx':
+                html_content = xlsx_to_html(file_content)
+                pdf_bytes_for_conversion = HTML(string=html_content).write_pdf()
             elif file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']:
                 try:
                     img = Image.open(BytesIO(file_content))
@@ -175,15 +152,16 @@ def process_attachments_for_pdf(attachments):
                     print(f"Error processing image {nome_arquivo}: {img_error}")
                     continue
 
-            elif file_extension == 'docx':
-                html_content = docx_to_html(file_content)
-                png_bytes = HTML(string=html_content).write_png()
-                img_base64 = base64.b64encode(png_bytes).decode('utf-8')
-
-            elif file_extension == 'xlsx':
-                html_content = xlsx_to_html(file_content)
-                png_bytes = HTML(string=html_content).write_png()
-                img_base64 = base64.b64encode(png_bytes).decode('utf-8')
+            if pdf_bytes_for_conversion:
+                try:
+                    pdf_doc = fitz.open(stream=pdf_bytes_for_conversion, filetype="pdf")
+                    page = pdf_doc.load_page(0)
+                    pix = page.get_pixmap(dpi=150)
+                    img_bytes = pix.tobytes("png")
+                    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+                except Exception as pdf_conv_error:
+                    print(f"Error converting PDF-based file {nome_arquivo} with PyMuPDF: {pdf_conv_error}")
+                    continue
 
             if img_base64:
                 processed_attachments.append({
@@ -194,7 +172,7 @@ def process_attachments_for_pdf(attachments):
                 })
                     
         except Exception as e:
-            print(f"Error processing attachment ID {anexo.id}: {e}")
+            print(f"Error processing attachment ID {getattr(anexo, 'id', 'N/A')}: {e}")
             continue
     
     return processed_attachments
