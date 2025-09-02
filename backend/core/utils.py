@@ -105,6 +105,42 @@ def generate_pdf_response(template_name, context, css_path, filename):
         return HttpResponse(f"Error generating PDF: {str(e)}", status=500)
 
 
+def _create_placeholder_image(nome_arquivo, error_message):
+    """Creates a placeholder image with an error message."""
+    img_base64 = None
+    try:
+        try:
+            font = ImageFont.truetype("arial.ttf", 15)
+        except IOError:
+            font = ImageFont.load_default()
+
+        img = Image.new('RGB', (800, 100), color = (230, 230, 230))
+        d = ImageDraw.Draw(img)
+        d.text((10,10), f"Could not render: {nome_arquivo}", fill=(200,0,0), font=font)
+        # Wrap error message text
+        lines = []
+        line = ""
+        for word in str(error_message).split():
+            if d.textlength(line + word) <= 780:
+                line += word + " "
+            else:
+                lines.append(line)
+                line = word + " "
+        lines.append(line)
+
+        y_text = 35
+        for line in lines:
+            d.text((10, y_text), line, fill=(0,0,0), font=font)
+            y_text += 20
+
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    except Exception as placeholder_error:
+        print(f"Critical error creating placeholder image: {placeholder_error}")
+
+    return img_base64
+
 def process_attachments_for_pdf(attachments):
     """
     Processes various attachment types for inclusion in a PDF.
@@ -115,6 +151,9 @@ def process_attachments_for_pdf(attachments):
     processed_attachments = []
     
     for anexo in attachments:
+        img_base64 = None
+        nome_arquivo = "Unknown"
+        descricao_anexo = ""
         try:
             file_field = getattr(anexo, 'arquivo', getattr(anexo, 'anexo', getattr(anexo, 'imagem', None)))
             if not file_field:
@@ -128,7 +167,6 @@ def process_attachments_for_pdf(attachments):
             file_field.seek(0)
             
             file_extension = nome_arquivo.lower().split('.')[-1] if nome_arquivo else ''
-            img_base64 = None
             
             pdf_bytes_for_conversion = None
 
@@ -141,38 +179,30 @@ def process_attachments_for_pdf(attachments):
                 html_content = xlsx_to_html(file_content)
                 pdf_bytes_for_conversion = HTML(string=html_content).write_pdf()
             elif file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']:
-                try:
-                    img = Image.open(BytesIO(file_content))
-                    if img.mode in ('RGBA', 'P'):
-                        img = img.convert('RGB')
-                    buffer = BytesIO()
-                    img.save(buffer, format='JPEG')
-                    img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                except Exception as img_error:
-                    print(f"Error processing image {nome_arquivo}: {img_error}")
-                    continue
+                img = Image.open(BytesIO(file_content))
+                if img.mode in ('RGBA', 'P'):
+                    img = img.convert('RGB')
+                buffer = BytesIO()
+                img.save(buffer, format='JPEG')
+                img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
             if pdf_bytes_for_conversion:
-                try:
-                    pdf_doc = fitz.open(stream=pdf_bytes_for_conversion, filetype="pdf")
-                    page = pdf_doc.load_page(0)
-                    pix = page.get_pixmap(dpi=150)
-                    img_bytes = pix.tobytes("png")
-                    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
-                except Exception as pdf_conv_error:
-                    print(f"Error converting PDF-based file {nome_arquivo} with PyMuPDF: {pdf_conv_error}")
-                    continue
+                pdf_doc = fitz.open(stream=pdf_bytes_for_conversion, filetype="pdf")
+                page = pdf_doc.load_page(0)
+                pix = page.get_pixmap(dpi=150)
+                img_bytes = pix.tobytes("png")
+                img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 
-            if img_base64:
-                processed_attachments.append({
-                    'nome': nome_arquivo,
-                    'descricao': descricao_anexo,
-                    'is_image': True,
-                    'base64_data': img_base64
-                })
-                    
         except Exception as e:
-            print(f"Error processing attachment ID {getattr(anexo, 'id', 'N/A')}: {e}")
-            continue
+            print(f"Error processing attachment ID {getattr(anexo, 'id', 'N/A')} ({nome_arquivo}): {e}")
+            img_base64 = _create_placeholder_image(nome_arquivo, e)
+
+        if img_base64:
+            processed_attachments.append({
+                'nome': nome_arquivo,
+                'descricao': descricao_anexo,
+                'is_image': True,
+                'base64_data': img_base64
+            })
     
     return processed_attachments
