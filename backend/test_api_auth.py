@@ -56,7 +56,7 @@ print(json.dumps(data, indent=2, ensure_ascii=False))
 try:
     response = requests.post(url, headers=headers, json=data)
     print(f"\n📈 Status Code: {response.status_code}")
-    
+
     if response.status_code == 201:
         print("✅ Compra criada com sucesso!")
         result = response.json()
@@ -82,7 +82,7 @@ data_big["nota_fiscal"] = "NF-API-002"
 try:
     response = requests.post(url, headers=headers, json=data_big)
     print(f"📈 Status Code: {response.status_code}")
-    
+
     if response.status_code == 201:
         print("✅ Compra com números grandes criada com sucesso!")
         result = response.json()
@@ -108,7 +108,7 @@ data_inf["nota_fiscal"] = "NF-API-003"
 try:
     response = requests.post(url, headers=headers, json=data_inf)
     print(f"📈 Status Code: {response.status_code}")
-    
+
     if response.status_code == 201:
         print("✅ Compra com valores infinitos criada!")
         result = response.json()

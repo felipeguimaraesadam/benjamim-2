@@ -60,7 +60,7 @@ try:
         test_content,
         content_type="text/plain"
     )
-    
+
     # Fazer upload
     upload_data = {
         'obra': obra.id,
@@ -68,9 +68,9 @@ try:
         'categoria': 'documento',
         'descricao': 'Arquivo de teste'
     }
-    
+
     response = client.post('/api/arquivos-obra/', upload_data, format='multipart')
-    
+
     if response.status_code == 201:
         arquivo_id = response.data['id']
         print(f"✓ Upload realizado com sucesso. ID: {arquivo_id}")
@@ -90,7 +90,7 @@ except Exception as e:
 print("\n=== TESTE 2: LISTAR ARQUIVOS ===")
 try:
     response = client.get(f'/api/arquivos-obra/?obra={obra.id}')
-    
+
     if response.status_code == 200:
         arquivos = response.data.get('results', response.data)
         print(f"✓ Listagem realizada com sucesso. {len(arquivos)} arquivo(s) encontrado(s)")
@@ -123,7 +123,7 @@ if arquivo_id:
         else:
             print(f"✗ Erro na visualização: {response.status_code}")
             print(f"  Detalhes: {response.data}")
-            
+
     except Exception as e:
         print(f"✗ Erro durante visualização: {str(e)}")
 
@@ -136,15 +136,15 @@ try:
         b"fake executable content",
         content_type="application/x-executable"
     )
-    
+
     upload_data = {
         'obra': obra.id,
         'arquivo': invalid_file,
         'categoria': 'documento'
     }
-    
+
     response = client.post('/api/arquivos-obra/', upload_data, format='multipart')
-    
+
     if response.status_code == 400:
         print("✓ Validação de tipo de arquivo funcionando corretamente")
         print(f"  Erro esperado: {response.data}")
@@ -159,10 +159,10 @@ if arquivo_id:
     print("\n=== TESTE 5: EXCLUSÃO DE ARQUIVO ===")
     try:
         response = client.delete(f'/api/arquivos-obra/{arquivo_id}/')
-        
+
         if response.status_code == 204:
             print("✓ Exclusão realizada com sucesso")
-            
+
             # Verificar se arquivo foi realmente excluído
             response_check = client.get(f'/api/arquivos-obra/{arquivo_id}/')
             if response_check.status_code == 404:
@@ -172,7 +172,7 @@ if arquivo_id:
         else:
             print(f"✗ Erro na exclusão: {response.status_code}")
             print(f"  Detalhes: {response.data}")
-            
+
     except Exception as e:
         print(f"✗ Erro durante exclusão: {str(e)}")
 
@@ -181,12 +181,12 @@ print("\n=== TESTE 6: ACESSO SEM AUTENTICAÇÃO ===")
 try:
     client_unauth = APIClient()
     response = client_unauth.get('/api/arquivos-obra/')
-    
+
     if response.status_code == 401:
         print("✓ Proteção de autenticação funcionando corretamente")
     else:
         print(f"✗ Acesso não autenticado permitido: {response.status_code}")
-        
+
 except Exception as e:
     print(f"✗ Erro durante teste de autenticação: {str(e)}")
 

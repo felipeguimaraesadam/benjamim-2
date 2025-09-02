@@ -22,7 +22,7 @@ from django.http import HttpResponse, Http404 # Http404 added, HttpResponse was 
 from django.template.loader import render_to_string # Was present
 from django.conf import settings
 import os
-from .utils import generate_pdf_response, process_anexos_for_pdf
+from .utils import generate_pdf_response, process_attachments_for_pdf
 from weasyprint import HTML
 # from weasyprint.fonts import FontConfiguration # Optional
 
@@ -1995,22 +1995,16 @@ class GerarRelatorioPDFObraView(APIView):
         ).prefetch_related(
             'equipe__membros'
         ).order_by('data_locacao_inicio')
-        fotos_qs = FotoObra.objects.filter(obra=obra_instance).order_by('uploaded_at')
 
-        fotos_for_context = []
-        if fotos_qs:
-            for foto_obj in fotos_qs:
-                try:
-                    abs_path = foto_obj.imagem.path
-                    path_with_fwd_slashes = abs_path.replace('\\', '/')
-                    file_uri = f"file:///{path_with_fwd_slashes}"
-                    fotos_for_context.append({
-                        'uri': file_uri,
-                        'description': foto_obj.descricao,
-                        'original_path': abs_path
-                    })
-                except Exception:
-                    pass
+        # Fetch all attachments
+        fotos_qs = FotoObra.objects.filter(obra=obra_instance).order_by('uploaded_at')
+        arquivos_qs = ArquivoObra.objects.filter(obra=obra_instance).order_by('uploaded_at')
+
+        # Combine all attachments into a single list
+        all_attachments = list(fotos_qs) + list(arquivos_qs)
+
+        # Process attachments for embedding in the PDF
+        anexos_processados = process_attachments_for_pdf(all_attachments)
 
         custo_total_materiais = sum(c.valor_total_liquido for c in compras if c.valor_total_liquido) or Decimal('0.00')
         custo_total_despesas_extras = sum(de.valor for de in despesas_extras if de.valor) or Decimal('0.00')
@@ -2023,18 +2017,31 @@ class GerarRelatorioPDFObraView(APIView):
         if obra_instance.area_metragem and obra_instance.area_metragem > Decimal('0.01'):  # Mínimo de 0.01 m²
             try:
                 custo_por_m2 = custo_total_realizado / obra_instance.area_metragem
-                # Verificar se o resultado é finito e não muito grande
                 if not custo_por_m2.is_finite() or custo_por_m2 > Decimal('999999.99'):
                     custo_por_m2 = Decimal('0.00')
             except (ZeroDivisionError, InvalidOperation, OverflowError):
                 custo_por_m2 = Decimal('0.00')
 
+        # Categorize locacoes
+        locacoes_equipe = []
+        locacoes_funcionario = []
+        locacoes_servico = []
+        for loc in locacoes:
+            if loc.equipe:
+                locacoes_equipe.append(loc)
+            elif loc.funcionario_locado:
+                locacoes_funcionario.append(loc)
+            elif loc.servico_externo:
+                locacoes_servico.append(loc)
+
         context = {
             'obra': obra_instance,
             'compras': compras,
             'despesas_extras': despesas_extras,
-            'locacoes': locacoes,
-            'fotos': fotos_for_context,
+            'locacoes_equipe': locacoes_equipe,
+            'locacoes_funcionario': locacoes_funcionario,
+            'locacoes_servico': locacoes_servico,
+            'anexos_processados': anexos_processados,
             'data_emissao': timezone.now(),
             'custo_total_materiais': custo_total_materiais,
             'custo_total_despesas_extras': custo_total_despesas_extras,
@@ -2043,7 +2050,7 @@ class GerarRelatorioPDFObraView(APIView):
             'balanco_financeiro': balanco_financeiro,
             'custo_por_m2': custo_por_m2,
             'MEDIA_ROOT': settings.MEDIA_ROOT,
-            'is_simple_report': is_simple_report, # Passa a flag para o template
+            'is_simple_report': is_simple_report,
         }
 
         # O template pode usar a flag 'is_simple_report' para mostrar/ocultar seções

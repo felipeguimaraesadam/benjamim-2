@@ -4,7 +4,7 @@ djangorestframework-simplejwt==5.3.1
 django-cors-headers==3.14.0
 Pillow
 WeasyPrint
-pdf2image
+PyMuPDF
 python-decouple
 whitenoise
 waitress
@@ -12,3 +12,5 @@ pyinstaller
 django-extensions
 python-dateutil
 requests
+python-docx
+openpyxl
