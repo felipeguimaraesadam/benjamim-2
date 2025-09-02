@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from decimal import Decimal, InvalidOperation
+from django.core.exceptions import ValidationError
 import os
 from uuid import uuid4
 
@@ -38,7 +39,8 @@ def obra_arquivo_path(instance, filename):
 
 CATEGORIA_USO_CHOICES = [
     ('Geral', 'Geral'), ('Eletrica', 'Elétrica'), ('Hidraulica', 'Hidráulica'),
-    ('Alvenaria', 'Alvenaria'), ('Acabamento', 'Acabamento'), ('Fundacao', 'Fundação')
+    ('Alvenaria', 'Alvenaria'), ('Acabamento', 'Acabamento'), ('Fundacao', 'Fundação'),
+    ('FRETE', 'Frete')
 ]
 
 class UsuarioManager(BaseUserManager):
@@ -400,7 +402,15 @@ class ItemCompra(models.Model):
         return f"{self.quantidade}x {self.material.nome} na Compra {self.compra.id}"
 
     def save(self, *args, **kwargs):
-        # Calcular o valor total do item antes de salvar
+        # Enforce FRETE category constraint
+        if self.material.nome == 'FRETE' and self.categoria_uso != 'FRETE':
+            raise ValidationError("O material 'FRETE' só pode ser usado com a categoria 'FRETE'.")
+
+        # Auto-assign category if not set and material has a default
+        if not self.categoria_uso and self.material.categoria_uso_padrao:
+            self.categoria_uso = self.material.categoria_uso_padrao
+
+        # Calculate total item value before saving
         self.valor_total_item = self.quantidade * self.valor_unitario
         super().save(*args, **kwargs)
 

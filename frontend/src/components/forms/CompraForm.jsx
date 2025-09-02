@@ -30,6 +30,7 @@ const CATEGORIA_USO_CHOICES = [
   { value: 'Alvenaria', label: 'Alvenaria' },
   { value: 'Acabamento', label: 'Acabamento' },
   { value: 'Fundacao', label: 'Fundação' },
+  { value: 'FRETE', label: 'Frete' },
 ];
 
 const WarningIcon = (
@@ -171,6 +172,8 @@ const ItemRowInternal = ({
     !item.quantidade &&
     !item.valorUnitario;
 
+  const isFrete = item.material?.nome === 'FRETE';
+
   // Memoize the callback for MaterialAutocomplete's parentOnKeyDown
   const handleMaterialAutocompleteKeyDown = useCallback(
     e => {
@@ -261,7 +264,8 @@ const ItemRowInternal = ({
           }}
           ref={el => setCategoriaUsoRef(el, index)}
           onKeyDown={e => onItemKeyDown(e, index, 'categoria_uso')}
-          className={`w-full p-2 border ${getError('categoria_uso') ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
+          disabled={isFrete}
+          className={`w-full p-2 border ${getError('categoria_uso') ? 'border-red-500 text-red-700' : 'border-slate-300 text-slate-700'} rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm ${isFrete ? 'bg-slate-200 cursor-not-allowed' : ''}`}
         >
           <option value="" disabled>
             Selecione
