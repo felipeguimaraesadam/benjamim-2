@@ -15,7 +15,7 @@ except Exception as e:
 
 # Handle image processing imports
 try:
-    from PIL import Image
+    from PIL import Image, ImageDraw, ImageFont
     from pdf2image import convert_from_bytes
     IMAGE_PROCESSING_AVAILABLE = True
 except ImportError as e:
@@ -149,7 +149,19 @@ def process_attachments_for_pdf(attachments):
                         img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
                 except Exception as pdf_error:
                     print(f"Error converting PDF {nome_arquivo}: {pdf_error}")
-                    continue
+                    # Create a placeholder image indicating the error
+                    try:
+                        font = ImageFont.truetype("arial.ttf", 15)
+                    except IOError:
+                        font = ImageFont.load_default()
+
+                    img = Image.new('RGB', (800, 200), color = (230, 230, 230))
+                    d = ImageDraw.Draw(img)
+                    d.text((10,10), f"Could not render PDF: {nome_arquivo}", fill=(0,0,0), font=font)
+                    d.text((10,35), "Reason: Missing system dependency 'poppler'.", fill=(0,0,0), font=font)
+                    buffer = BytesIO()
+                    img.save(buffer, format='PNG')
+                    img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
                     
             elif file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']:
                 try:
@@ -165,25 +177,13 @@ def process_attachments_for_pdf(attachments):
 
             elif file_extension == 'docx':
                 html_content = docx_to_html(file_content)
-                html = HTML(string=html_content)
-                pdf_bytes = html.write_pdf()
-                images = convert_from_bytes(pdf_bytes, first_page=1, last_page=1, dpi=150)
-                if images:
-                    img = images[0]
-                    buffer = BytesIO()
-                    img.save(buffer, format='PNG')
-                    img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                png_bytes = HTML(string=html_content).write_png()
+                img_base64 = base64.b64encode(png_bytes).decode('utf-8')
 
             elif file_extension == 'xlsx':
                 html_content = xlsx_to_html(file_content)
-                html = HTML(string=html_content)
-                pdf_bytes = html.write_pdf()
-                images = convert_from_bytes(pdf_bytes, first_page=1, last_page=1, dpi=150)
-                if images:
-                    img = images[0]
-                    buffer = BytesIO()
-                    img.save(buffer, format='PNG')
-                    img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                png_bytes = HTML(string=html_content).write_png()
+                img_base64 = base64.b64encode(png_bytes).decode('utf-8')
 
             if img_base64:
                 processed_attachments.append({
