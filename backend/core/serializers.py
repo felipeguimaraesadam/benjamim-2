@@ -429,11 +429,17 @@ class MaterialNestedSerializer(serializers.ModelSerializer):
 
 
 class ItemCompraSerializer(serializers.ModelSerializer):
+    material_nome = serializers.CharField(source='material.nome', read_only=True)
+    unidade = serializers.CharField(source='material.unidade_medida', read_only=True)
     material = MaterialNestedSerializer(read_only=True)
+
 
     class Meta:
         model = ItemCompra
-        fields = ['id', 'material', 'quantidade', 'valor_unitario', 'valor_total_item', 'categoria_uso']
+        fields = [
+            'id', 'material', 'material_nome', 'unidade', 'quantidade',
+            'valor_unitario', 'valor_total_item', 'categoria_uso'
+        ]
 
 
 # Serializers for new models
