@@ -175,96 +175,90 @@
 
             <!-- Seção de Equipes -->
             <h3 class="subsection-title">3.1 Equipes Alocadas</h3>
-            {% with locacoes_equipe=locacoes|dictsort:"equipe"|selectattr:"equipe" %}
-                {% if locacoes_equipe %}
-                    <table>
-                        <thead>
+            {% if locacoes_equipe %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Equipe</th>
+                            <th>Tipo Pag.</th>
+                            <th>Início</th>
+                            <th>Fim</th>
+                            <th class="text-right">Valor Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loc in locacoes_equipe %}
                             <tr>
-                                <th>Equipe</th>
-                                <th>Tipo Pag.</th>
-                                <th>Início</th>
-                                <th>Fim</th>
-                                <th class="text-right">Valor Pago</th>
+                                <td>{{ loc.equipe.nome_equipe }}</td>
+                                <td>{{ loc.get_tipo_pagamento_display }}</td>
+                                <td>{{ loc.data_locacao_inicio|date:"d/m/y" }}</td>
+                                <td>{{ loc.data_locacao_fim|date:"d/m/y"|default:"N/A" }}</td>
+                                <td class="text-right">R$ {{ loc.valor_pagamento|floatformat:"2"|default:"0.00" }}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {% for loc in locacoes_equipe %}
-                                <tr>
-                                    <td>{{ loc.equipe.nome_equipe }}</td>
-                                    <td>{{ loc.get_tipo_pagamento_display }}</td>
-                                    <td>{{ loc.data_locacao_inicio|date:"d/m/y" }}</td>
-                                    <td>{{ loc.data_locacao_fim|date:"d/m/y"|default:"N/A" }}</td>
-                                    <td class="text-right">R$ {{ loc.valor_pagamento|floatformat:"2"|default:"0.00" }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>Nenhuma equipe alocada para esta obra.</p>
-                {% endif %}
-            {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Nenhuma equipe alocada para esta obra.</p>
+            {% endif %}
 
             <!-- Seção de Funcionários -->
             <h3 class="subsection-title">3.2 Funcionários Individuais</h3>
-             {% with locacoes_funcionario=locacoes|dictsort:"funcionario_locado"|selectattr:"funcionario_locado" %}
-                {% if locacoes_funcionario %}
-                    <table>
-                        <thead>
+            {% if locacoes_funcionario %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Funcionário</th>
+                            <th>Tipo Pag.</th>
+                            <th>Início</th>
+                            <th>Fim</th>
+                            <th class="text-right">Valor Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loc in locacoes_funcionario %}
                             <tr>
-                                <th>Funcionário</th>
-                                <th>Tipo Pag.</th>
-                                <th>Início</th>
-                                <th>Fim</th>
-                                <th class="text-right">Valor Pago</th>
+                                <td>{{ loc.funcionario_locado.nome_completo }}</td>
+                                <td>{{ loc.get_tipo_pagamento_display }}</td>
+                                <td>{{ loc.data_locacao_inicio|date:"d/m/y" }}</td>
+                                <td>{{ loc.data_locacao_fim|date:"d/m/y"|default:"N/A" }}</td>
+                                <td class="text-right">R$ {{ loc.valor_pagamento|floatformat:"2"|default:"0.00" }}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {% for loc in locacoes_funcionario %}
-                                <tr>
-                                    <td>{{ loc.funcionario_locado.nome_completo }}</td>
-                                    <td>{{ loc.get_tipo_pagamento_display }}</td>
-                                    <td>{{ loc.data_locacao_inicio|date:"d/m/y" }}</td>
-                                    <td>{{ loc.data_locacao_fim|date:"d/m/y"|default:"N/A" }}</td>
-                                    <td class="text-right">R$ {{ loc.valor_pagamento|floatformat:"2"|default:"0.00" }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>Nenhum funcionário individual alocado para esta obra.</p>
-                {% endif %}
-            {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Nenhum funcionário individual alocado para esta obra.</p>
+            {% endif %}
 
             <!-- Seção de Serviços Externos -->
             <h3 class="subsection-title">3.3 Serviços Externos</h3>
-            {% with locacoes_servico=locacoes|dictsort:"servico_externo"|selectattr:"servico_externo" %}
-                {% if locacoes_servico %}
-                    <table>
-                        <thead>
+            {% if locacoes_servico %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Serviço</th>
+                            <th>Tipo Pag.</th>
+                            <th>Início</th>
+                            <th>Fim</th>
+                            <th class="text-right">Valor Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loc in locacoes_servico %}
                             <tr>
-                                <th>Serviço</th>
-                                <th>Tipo Pag.</th>
-                                <th>Início</th>
-                                <th>Fim</th>
-                                <th class="text-right">Valor Pago</th>
+                                <td>{{ loc.servico_externo }}</td>
+                                <td>{{ loc.get_tipo_pagamento_display }}</td>
+                                <td>{{ loc.data_locacao_inicio|date:"d/m/y" }}</td>
+                                <td>{{ loc.data_locacao_fim|date:"d/m/y"|default:"N/A" }}</td>
+                                <td class="text-right">R$ {{ loc.valor_pagamento|floatformat:"2"|default:"0.00" }}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {% for loc in locacoes_servico %}
-                                <tr>
-                                    <td>{{ loc.servico_externo }}</td>
-                                    <td>{{ loc.get_tipo_pagamento_display }}</td>
-                                    <td>{{ loc.data_locacao_inicio|date:"d/m/y" }}</td>
-                                    <td>{{ loc.data_locacao_fim|date:"d/m/y"|default:"N/A" }}</td>
-                                    <td class="text-right">R$ {{ loc.valor_pagamento|floatformat:"2"|default:"0.00" }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>Nenhum serviço externo contratado para esta obra.</p>
-                {% endif %}
-            {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Nenhum serviço externo contratado para esta obra.</p>
+            {% endif %}
 
             <table class="avoid-break total-row" style="margin-top: 20px;">
                 <tr>

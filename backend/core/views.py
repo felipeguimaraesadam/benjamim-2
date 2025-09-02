@@ -2022,12 +2022,26 @@ class GerarRelatorioPDFObraView(APIView):
             except (ZeroDivisionError, InvalidOperation, OverflowError):
                 custo_por_m2 = Decimal('0.00')
 
+        # Categorize locacoes
+        locacoes_equipe = []
+        locacoes_funcionario = []
+        locacoes_servico = []
+        for loc in locacoes:
+            if loc.equipe:
+                locacoes_equipe.append(loc)
+            elif loc.funcionario_locado:
+                locacoes_funcionario.append(loc)
+            elif loc.servico_externo:
+                locacoes_servico.append(loc)
+
         context = {
             'obra': obra_instance,
             'compras': compras,
             'despesas_extras': despesas_extras,
-            'locacoes': locacoes,
-            'anexos_processados': anexos_processados, # New context variable
+            'locacoes_equipe': locacoes_equipe,
+            'locacoes_funcionario': locacoes_funcionario,
+            'locacoes_servico': locacoes_servico,
+            'anexos_processados': anexos_processados,
             'data_emissao': timezone.now(),
             'custo_total_materiais': custo_total_materiais,
             'custo_total_despesas_extras': custo_total_despesas_extras,
