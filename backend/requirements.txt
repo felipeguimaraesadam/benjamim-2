@@ -12,3 +12,5 @@ pyinstaller
 django-extensions
 python-dateutil
 requests
+python-docx
+openpyxl

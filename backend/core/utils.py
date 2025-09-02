@@ -20,17 +20,64 @@ try:
     IMAGE_PROCESSING_AVAILABLE = True
 except ImportError as e:
     IMAGE_PROCESSING_AVAILABLE = False
-    class HTML:
-        def __init__(self, *args, **kwargs):
-            pass
-        def write_pdf(self, *args, **kwargs):
-            raise ImportError("WeasyPrint is not available")
-    
-    class CSS:
-        def __init__(self, *args, **kwargs):
-            pass
-    
-    WEASYPRINT_AVAILABLE = False
+
+# Handle office file processing imports
+try:
+    import docx
+    import openpyxl
+    OFFICE_PROCESSING_AVAILABLE = True
+except ImportError:
+    OFFICE_PROCESSING_AVAILABLE = False
+
+
+def docx_to_html(file_content):
+    """
+    Converts the content of a .docx file to a simple HTML string.
+    """
+    if not OFFICE_PROCESSING_AVAILABLE:
+        return "<html><body><p>DOCX processing library not available.</p></body></html>"
+    try:
+        document = docx.Document(BytesIO(file_content))
+        html = "<html><body>"
+        html += "<h1>Documento Word</h1>"
+        for para in document.paragraphs:
+            html += f"<p>{para.text}</p>"
+        for table in document.tables:
+            html += "<table border='1' style='border-collapse: collapse; width: 100%;'>"
+            for row in table.rows:
+                html += "<tr>"
+                for cell in row.cells:
+                    html += f"<td style='padding: 4px;'>{cell.text}</td>"
+                html += "</tr>"
+            html += "</table><br>"
+        html += "</body></html>"
+        return html
+    except Exception as e:
+        return f"<html><body><p>Error converting DOCX: {e}</p></body></html>"
+
+def xlsx_to_html(file_content):
+    """
+    Converts the content of a .xlsx file to an HTML table string.
+    """
+    if not OFFICE_PROCESSING_AVAILABLE:
+        return "<html><body><p>XLSX processing library not available.</p></body></html>"
+    try:
+        workbook = openpyxl.load_workbook(BytesIO(file_content))
+        sheet = workbook.active
+        html = "<html><body>"
+        html += "<h1>Planilha Excel</h1>"
+        html += "<table border='1' style='border-collapse: collapse; width: 100%;'>"
+        for row in sheet.iter_rows():
+            html += "<tr>"
+            for cell in row:
+                cell_value = cell.value if cell.value is not None else ""
+                html += f"<td style='padding: 4px;'>{cell_value}</td>"
+            html += "</tr>"
+        html += "</table>"
+        html += "</body></html>"
+        return html
+    except Exception as e:
+        return f"<html><body><p>Error converting XLSX: {e}</p></body></html>"
 
 def generate_pdf_response(template_name, context, css_path, filename):
     """
@@ -60,107 +107,94 @@ def generate_pdf_response(template_name, context, css_path, filename):
         return HttpResponse(f"Error generating PDF: {str(e)}", status=500)
 
 
-def process_anexos_for_pdf(anexos):
+def process_attachments_for_pdf(attachments):
     """
-    Processa anexos para inclusão no PDF.
-    Converte PDFs em imagens e prepara imagens para base64.
-    Compatível com AnexoCompra (arquivo, nome_original) e AnexoDespesa (anexo, nome_arquivo).
+    Processes various attachment types for inclusion in a PDF.
+    - Converts PDFs to images.
+    - Converts DOCX/XLSX to HTML, then to an image.
+    - Prepares images for base64 embedding.
+    Accepts a list of attachment model instances (e.g., ArquivoObra, AnexoCompra).
     """
-    if not IMAGE_PROCESSING_AVAILABLE:
+    if not IMAGE_PROCESSING_AVAILABLE or not WEASYPRINT_AVAILABLE:
         return []
     
-    processed_anexos = []
+    processed_attachments = []
     
-    for anexo in anexos:
+    for anexo in attachments:
         try:
-            # Determinar qual campo usar baseado no modelo
-            if hasattr(anexo, 'arquivo'):  # AnexoCompra
-                file_field = anexo.arquivo
-                nome_arquivo = anexo.nome_original
-            elif hasattr(anexo, 'anexo'):  # AnexoDespesa
-                file_field = anexo.anexo
-                nome_arquivo = anexo.nome_arquivo
-            else:
+            # Generic attribute access
+            file_field = getattr(anexo, 'arquivo', getattr(anexo, 'anexo', None))
+            if not file_field:
+                file_field = getattr(anexo, 'imagem', None) # Fallback for FotoObra
+            if not file_field:
                 continue
+
+            nome_arquivo = getattr(anexo, 'nome_original', os.path.basename(file_field.name))
+            descricao_anexo = getattr(anexo, 'descricao', '')
             
-            # Ler o arquivo
             file_field.seek(0)
             file_content = file_field.read()
-            file_field.seek(0)  # Reset para uso posterior
+            file_field.seek(0)
             
             file_extension = nome_arquivo.lower().split('.')[-1] if nome_arquivo else ''
+            img_base64 = None
             
             if file_extension == 'pdf':
-                # Converter PDF para imagem
                 try:
                     images = convert_from_bytes(file_content, first_page=1, last_page=1, dpi=150)
                     if images:
-                        # Usar apenas a primeira página
                         img = images[0]
-                        
-                        # Redimensionar se necessário
-                        max_width = 800
-                        if img.width > max_width:
-                            ratio = max_width / img.width
-                            new_height = int(img.height * ratio)
-                            img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
-                        
-                        # Converter para base64
                         buffer = BytesIO()
                         img.save(buffer, format='PNG')
                         img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                        
-                        processed_anexos.append({
-                            'nome': nome_arquivo or f'Anexo PDF {anexo.id}',
-                            'descricao': anexo.descricao or '',
-                            'is_image': True,
-                            'format': 'png',
-                            'base64_data': img_base64
-                        })
                 except Exception as pdf_error:
-                    print(f"Erro ao converter PDF {nome_arquivo}: {pdf_error}")
+                    print(f"Error converting PDF {nome_arquivo}: {pdf_error}")
                     continue
                     
             elif file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']:
-                # Processar imagem diretamente
                 try:
                     img = Image.open(BytesIO(file_content))
-                    
-                    # Converter para RGB se necessário
-                    if img.mode in ('RGBA', 'LA', 'P'):
-                        background = Image.new('RGB', img.size, (255, 255, 255))
-                        if img.mode == 'P':
-                            img = img.convert('RGBA')
-                        background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-                        img = background
-                    
-                    # Redimensionar se necessário
-                    max_width = 800
-                    if img.width > max_width:
-                        ratio = max_width / img.width
-                        new_height = int(img.height * ratio)
-                        img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
-                    
-                    # Converter para base64
+                    if img.mode in ('RGBA', 'P'):
+                        img = img.convert('RGB')
                     buffer = BytesIO()
-                    format_map = {'jpg': 'jpeg', 'jpeg': 'jpeg', 'png': 'png', 'gif': 'png', 'bmp': 'png', 'webp': 'png'}
-                    save_format = format_map.get(file_extension, 'png')
-                    img.save(buffer, format=save_format.upper())
+                    img.save(buffer, format='JPEG')
                     img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                    
-                    processed_anexos.append({
-                        'nome': nome_arquivo or f'Anexo {anexo.id}',
-                        'descricao': anexo.descricao or '',
-                        'is_image': True,
-                        'format': save_format,
-                        'base64_data': img_base64
-                    })
                 except Exception as img_error:
-                    print(f"Erro ao processar imagem {nome_arquivo}: {img_error}")
+                    print(f"Error processing image {nome_arquivo}: {img_error}")
                     continue
+
+            elif file_extension == 'docx':
+                html_content = docx_to_html(file_content)
+                html = HTML(string=html_content)
+                pdf_bytes = html.write_pdf()
+                images = convert_from_bytes(pdf_bytes, first_page=1, last_page=1, dpi=150)
+                if images:
+                    img = images[0]
+                    buffer = BytesIO()
+                    img.save(buffer, format='PNG')
+                    img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+            elif file_extension == 'xlsx':
+                html_content = xlsx_to_html(file_content)
+                html = HTML(string=html_content)
+                pdf_bytes = html.write_pdf()
+                images = convert_from_bytes(pdf_bytes, first_page=1, last_page=1, dpi=150)
+                if images:
+                    img = images[0]
+                    buffer = BytesIO()
+                    img.save(buffer, format='PNG')
+                    img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+            if img_base64:
+                processed_attachments.append({
+                    'nome': nome_arquivo,
+                    'descricao': descricao_anexo,
+                    'is_image': True,
+                    'base64_data': img_base64
+                })
                     
         except Exception as e:
-            print(f"Erro ao processar anexo {anexo.id}: {e}")
+            print(f"Error processing attachment ID {anexo.id}: {e}")
             continue
     
-    return processed_anexos
+    return processed_attachments

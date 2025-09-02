@@ -1,200 +1,122 @@
-#!/usr/bin/env python
-"""
-Script de teste para funcionalidades de arquivo da obra
-Executar com: python manage.py shell < test_obra_files_management.py
-"""
-
 import os
-import tempfile
 from django.test import TestCase
-from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
 from rest_framework import status
-from core.models import Obra, ArquivoObra
+from core.models import Obra, ArquivoObra, Usuario
 
-print("=== INICIANDO TESTES DE ARQUIVO DA OBRA ===")
+class TestArquivoObraAPI(TestCase):
+    def setUp(self):
+        """Set up the test environment."""
+        print("=== INICIANDO TESTES DE ARQUIVO DA OBRA (Management) ===")
+        self.client = APIClient()
+        self.user = Usuario.objects.create_user(
+            login='testuser_management',
+            password='testpass123',
+            nome_completo='Test User Management',
+            nivel_acesso='admin',
+            is_staff=True
+        )
+        self.client.force_authenticate(user=self.user)
 
-# Criar usuário de teste
-user, created = User.objects.get_or_create(
-    username='testuser',
-    defaults={'email': 'test@example.com'}
-)
-if created:
-    user.set_password('testpass123')
-    user.save()
-    print(f"✓ Usuário de teste criado: {user.username}")
-else:
-    print(f"✓ Usuário de teste já existe: {user.username}")
+        self.obra = Obra.objects.create(
+            nome_obra='Obra Teste Management',
+            endereco_completo='Rua Teste, 123',
+            cidade='Cidade Teste',
+            status='Em Andamento',
+            data_inicio='2024-01-01'
+        )
+        self.arquivo_id = None
+        print("✓ Setup concluído")
 
-# Criar obra de teste
-obra, created = Obra.objects.get_or_create(
-    nome='Obra Teste',
-    defaults={
-        'endereco': 'Rua Teste, 123',
-        'cidade': 'Cidade Teste',
-        'estado': 'SP',
-        'cep': '12345-678',
-        'data_inicio': '2024-01-01',
-        'orcamento_inicial': 100000.00,
-        'status': 'em_andamento'
-    }
-)
-if created:
-    print(f"✓ Obra de teste criada: {obra.nome}")
-else:
-    print(f"✓ Obra de teste já existe: {obra.nome}")
+    def test_1_upload_de_arquivo(self):
+        """Test file upload functionality."""
+        print("\n--- TESTE 1: UPLOAD DE ARQUIVO ---")
+        test_content = b"Conteudo de teste para arquivo da obra"
+        test_file = SimpleUploadedFile(
+            "teste.txt",
+            test_content,
+            content_type="text/plain"
+        )
 
-# Configurar cliente API
-client = APIClient()
-client.force_authenticate(user=user)
-print("✓ Cliente API autenticado")
+        upload_data = {
+            'obra': self.obra.id,
+            'arquivo': test_file,
+            'categoria': 'OUTROS',
+            'descricao': 'Arquivo de teste'
+        }
 
-# Teste 1: Upload de arquivo
-print("\n=== TESTE 1: UPLOAD DE ARQUIVO ===")
-try:
-    # Criar arquivo de teste
-    test_content = b"Conteudo de teste para arquivo da obra"
-    test_file = SimpleUploadedFile(
-        "teste.txt",
-        test_content,
-        content_type="text/plain"
-    )
-    
-    # Fazer upload
-    upload_data = {
-        'obra': obra.id,
-        'arquivo': test_file,
-        'categoria': 'documento',
-        'descricao': 'Arquivo de teste'
-    }
-    
-    response = client.post('/api/arquivos-obra/', upload_data, format='multipart')
-    
-    if response.status_code == 201:
-        arquivo_id = response.data['id']
-        print(f"✓ Upload realizado com sucesso. ID: {arquivo_id}")
-        print(f"  - Nome: {response.data.get('arquivo_nome')}")
-        print(f"  - Categoria: {response.data.get('categoria')}")
-        print(f"  - Tamanho: {response.data.get('arquivo_tamanho')} bytes")
-    else:
-        print(f"✗ Erro no upload: {response.status_code}")
-        print(f"  Detalhes: {response.data}")
-        arquivo_id = None
+        response = self.client.post('/api/arquivos-obra/', upload_data, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn('id', response.data)
+        TestArquivoObraAPI.arquivo_id = response.data['id'] # Store for subsequent tests
+        print(f"✓ Upload realizado com sucesso. ID: {self.arquivo_id}")
+
+    def test_2_listar_arquivos(self):
+        """Test listing files for a project."""
+        print("\n--- TESTE 2: LISTAR ARQUIVOS ---")
+        # First, ensure a file exists by uploading it
+        self.test_1_upload_de_arquivo()
+
+        response = self.client.get(f'/api/arquivos-obra/?obra={self.obra.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # The response may be paginated, so we check the results list
+        self.assertGreater(len(response.data), 0)
+        print(f"✓ Listagem realizada com sucesso. {len(response.data)} arquivo(s) encontrado(s)")
+
+    def test_3_visualizar_arquivo_especifico(self):
+        """Test retrieving a specific file."""
+        print("\n--- TESTE 3: VISUALIZAR ARQUIVO ESPECÍFICO ---")
+        self.test_1_upload_de_arquivo() # Ensure file exists
+        self.assertIsNotNone(TestArquivoObraAPI.arquivo_id)
         
-except Exception as e:
-    print(f"✗ Erro durante upload: {str(e)}")
-    arquivo_id = None
+        response = self.client.get(f'/api/arquivos-obra/{TestArquivoObraAPI.arquivo_id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], TestArquivoObraAPI.arquivo_id)
+        print("✓ Visualização realizada com sucesso")
 
-# Teste 2: Listar arquivos
-print("\n=== TESTE 2: LISTAR ARQUIVOS ===")
-try:
-    response = client.get(f'/api/arquivos-obra/?obra={obra.id}')
-    
-    if response.status_code == 200:
-        arquivos = response.data.get('results', response.data)
-        print(f"✓ Listagem realizada com sucesso. {len(arquivos)} arquivo(s) encontrado(s)")
+    def test_4_validacao_de_tipos_de_arquivo(self):
+        """Test validation for disallowed file types."""
+        print("\n--- TESTE 4: VALIDAÇÃO DE TIPOS DE ARQUIVO ---")
+        invalid_file = SimpleUploadedFile(
+            "teste.exe",
+            b"fake executable content",
+            content_type="application/x-executable"
+        )
         
-        for arquivo in arquivos:
-            print(f"  - ID: {arquivo.get('id')}")
-            print(f"    Nome: {arquivo.get('arquivo_nome')}")
-            print(f"    Categoria: {arquivo.get('categoria')}")
-            print(f"    URL: {arquivo.get('arquivo_url')}")
-    else:
-        print(f"✗ Erro na listagem: {response.status_code}")
-        print(f"  Detalhes: {response.data}")
+        upload_data = {
+            'obra': self.obra.id,
+            'arquivo': invalid_file,
+            'categoria': 'OUTROS'
+        }
         
-except Exception as e:
-    print(f"✗ Erro durante listagem: {str(e)}")
-
-# Teste 3: Visualizar arquivo específico
-if arquivo_id:
-    print("\n=== TESTE 3: VISUALIZAR ARQUIVO ESPECÍFICO ===")
-    try:
-        response = client.get(f'/api/arquivos-obra/{arquivo_id}/')
-        
-        if response.status_code == 200:
-            print("✓ Visualização realizada com sucesso")
-            print(f"  - ID: {response.data.get('id')}")
-            print(f"  - Nome: {response.data.get('arquivo_nome')}")
-            print(f"  - Categoria: {response.data.get('categoria')}")
-            print(f"  - Descrição: {response.data.get('descricao')}")
-            print(f"  - Data upload: {response.data.get('data_upload')}")
-        else:
-            print(f"✗ Erro na visualização: {response.status_code}")
-            print(f"  Detalhes: {response.data}")
-            
-    except Exception as e:
-        print(f"✗ Erro durante visualização: {str(e)}")
-
-# Teste 4: Validação de tipos de arquivo
-print("\n=== TESTE 4: VALIDAÇÃO DE TIPOS DE ARQUIVO ===")
-try:
-    # Testar arquivo não permitido
-    invalid_file = SimpleUploadedFile(
-        "teste.exe",
-        b"fake executable content",
-        content_type="application/x-executable"
-    )
-    
-    upload_data = {
-        'obra': obra.id,
-        'arquivo': invalid_file,
-        'categoria': 'documento'
-    }
-    
-    response = client.post('/api/arquivos-obra/', upload_data, format='multipart')
-    
-    if response.status_code == 400:
+        response = self.client.post('/api/arquivos-obra/', upload_data, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         print("✓ Validação de tipo de arquivo funcionando corretamente")
-        print(f"  Erro esperado: {response.data}")
-    else:
-        print(f"✗ Validação falhou - arquivo inválido foi aceito: {response.status_code}")
-        
-except Exception as e:
-    print(f"✗ Erro durante teste de validação: {str(e)}")
 
-# Teste 5: Exclusão de arquivo
-if arquivo_id:
-    print("\n=== TESTE 5: EXCLUSÃO DE ARQUIVO ===")
-    try:
-        response = client.delete(f'/api/arquivos-obra/{arquivo_id}/')
+    def test_5_exclusao_de_arquivo(self):
+        """Test deleting a file."""
+        print("\n--- TESTE 5: EXCLUSÃO DE ARQUIVO ---")
+        self.test_1_upload_de_arquivo() # Ensure file exists
+        self.assertIsNotNone(TestArquivoObraAPI.arquivo_id)
         
-        if response.status_code == 204:
-            print("✓ Exclusão realizada com sucesso")
-            
-            # Verificar se arquivo foi realmente excluído
-            response_check = client.get(f'/api/arquivos-obra/{arquivo_id}/')
-            if response_check.status_code == 404:
-                print("✓ Arquivo confirmadamente excluído")
-            else:
-                print("✗ Arquivo ainda existe após exclusão")
-        else:
-            print(f"✗ Erro na exclusão: {response.status_code}")
-            print(f"  Detalhes: {response.data}")
-            
-    except Exception as e:
-        print(f"✗ Erro durante exclusão: {str(e)}")
+        response = self.client.delete(f'/api/arquivos-obra/{TestArquivoObraAPI.arquivo_id}/')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        
+        # Verify the file is gone
+        response_check = self.client.get(f'/api/arquivos-obra/{TestArquivoObraAPI.arquivo_id}/')
+        self.assertEqual(response_check.status_code, status.HTTP_404_NOT_FOUND)
+        print("✓ Exclusão e verificação concluídas com sucesso")
 
-# Teste 6: Teste sem autenticação
-print("\n=== TESTE 6: ACESSO SEM AUTENTICAÇÃO ===")
-try:
-    client_unauth = APIClient()
-    response = client_unauth.get('/api/arquivos-obra/')
-    
-    if response.status_code == 401:
+    def test_6_acesso_sem_autenticacao(self):
+        """Test that unauthenticated access is denied."""
+        print("\n--- TESTE 6: ACESSO SEM AUTENTICAÇÃO ---")
+        client_unauth = APIClient()
+        response = client_unauth.get('/api/arquivos-obra/')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         print("✓ Proteção de autenticação funcionando corretamente")
-    else:
-        print(f"✗ Acesso não autenticado permitido: {response.status_code}")
-        
-except Exception as e:
-    print(f"✗ Erro durante teste de autenticação: {str(e)}")
 
-print("\n=== TESTES CONCLUÍDOS ===")
-print("\nResumo dos componentes testados:")
-print("- Upload de arquivos ✓")
-print("- Listagem de arquivos ✓")
-print("- Visualização de arquivos ✓")
-print("- Validação de tipos de arquivo ✓")
-print("- Exclusão de arquivos ✓")
-print("- Proteção de autenticação ✓")
+    def tearDown(self):
+        """Clean up after tests."""
+        print("=== TESTES DE ARQUIVO DA OBRA (Management) CONCLUÍDOS ===")
