@@ -340,7 +340,6 @@
                 <p>Nenhuma despesa extra registrada para esta obra.</p>
             {% endif %}
         </section>
-        {% endif %}
 
         {% if anexos_processados and not is_simple_report %}
         <section class="section avoid-break">
@@ -358,6 +357,7 @@
             </div>
         </section>
         {% endif %}
+    {% endif %}
 
         <div style="margin-top: 30px; text-align:center; font-size:9pt; color: #777;">
             Relatório gerado em {{ data_emissao|date:"d/m/Y H:i" }} pelo Sistema de Gestão de Obras (SGO).
