@@ -19,7 +19,7 @@ services:
         fromService:
           type: pserv
           name: meu-banco-sgo
-          property: connectionString
+          property: DATABASE_URL
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
 
