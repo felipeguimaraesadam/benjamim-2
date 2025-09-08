@@ -1,47 +1,42 @@
-# Arquivo de configuração para a plataforma Render
-# Documentação: https://render.com/docs/blueprint-spec
-
 services:
-  # 1. Serviço Web do Backend (Django)
+  - type: pserv
+    name: meu-banco-sgo
+    plan: free
+    postgresMajorVersion: 14
+
   - type: web
     name: backend
-    plan: free # Plano gratuito para serviços web
+    plan: free
     runtime: python
-    rootDir: backend # Aponta para a pasta do backend
-    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate"
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt; python manage.py collectstatic --no-input; python manage.py migrate"
     startCommand: "gunicorn sgo_core.wsgi"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
       - key: SECRET_KEY
-        generateValue: true # O Render irá gerar uma chave segura automaticamente
+        generateValue: true
       - key: DATABASE_URL
-        fromDatabase: # Pega a URL do banco de dados PostgreSQL
+        fromService:
+          type: pserv
           name: meu-banco-sgo
-          property: connectionString
+          property: internalUrl
       - key: ALLOWED_HOSTS
-        value: ".onrender.com" # Permite acesso a partir do domínio do Render
+        value: ".onrender.com"
 
-  # 3. Site Estático do Frontend (React)
-  - type: web
+  - type: static
     name: frontend
-    plan: free # Plano gratuito para serviços web
-    runtime: static
-    rootDir: frontend # Aponta para a pasta do frontend
+    plan: free
+    rootDir: frontend
     buildCommand: "npm install && npm run build"
-    staticPublishPath: "dist" # Pasta onde o build do React é gerado
+    publishPath: "dist"
     routes:
-      - type: rewrite
-        source: "/*"
+      - kind: rewrite
+        source: /*
         destination: /index.html
     envVars:
       - key: VITE_API_URL
         fromService:
           type: web
           name: backend
-          property: host
-
-# Banco de Dados PostgreSQL
-databases:
-  - name: meu-banco-sgo
-    plan: free
+          property: url
