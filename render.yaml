@@ -5,6 +5,7 @@ services:
   # 1. Banco de Dados PostgreSQL
   - type: pserv # pserv (PostgreSQL Service)
     name: meu-banco-sgo
+    databaseName: meu-banco-sgo
     plan: free # Plano gratuito
 
   # 2. Serviço Web do Backend (Django)
@@ -13,7 +14,7 @@ services:
     plan: free # Plano gratuito
     runtime: python
     rootDir: backend # Aponta para a pasta do backend
-    buildCommand: "pip install -r requirements.txt; python manage.py collectstatic --no-input; python manage.py migrate"
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate"
     startCommand: "gunicorn sgo_core.wsgi"
     envVars:
       - key: PYTHON_VERSION
@@ -30,7 +31,6 @@ services:
 
   # 3. Site Estático do Frontend (React)
   - type: web
-    runtime: static
     name: frontend
     plan: free # Plano gratuito
     rootDir: frontend # Aponta para a pasta do frontend
@@ -38,11 +38,11 @@ services:
     staticPublishPath: "dist" # Pasta onde o build do React é gerado
     routes:
       - type: rewrite
-        source: /*
+        source: "/*"
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService: # Pega a URL do serviço de backend
+        fromService:
           type: web
           name: backend
           property: url
