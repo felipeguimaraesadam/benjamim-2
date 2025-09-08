@@ -2,12 +2,7 @@
 # Documentação: https://render.com/docs/blueprint-spec
 
 services:
-  # 1. Banco de Dados PostgreSQL
-  - type: pserv # pserv (PostgreSQL Service)
-    name: meu-banco-sgo
-    plan: free # Plano gratuito
-
-  # 2. Serviço Web do Backend (Django)
+  # 1. Serviço Web do Backend (Django)
   - type: web
     name: backend
     plan: free # Plano gratuito
@@ -21,8 +16,7 @@ services:
       - key: SECRET_KEY
         generateValue: true # O Render irá gerar uma chave segura automaticamente
       - key: DATABASE_URL
-        fromService: # Pega a URL do serviço de banco de dados
-          type: pserv
+        fromDatabase: # Pega a URL do banco de dados PostgreSQL
           name: meu-banco-sgo
           property: connectionString
       - key: ALLOWED_HOSTS
@@ -46,3 +40,8 @@ services:
           type: web
           name: backend
           property: url
+
+# Banco de Dados PostgreSQL
+databases:
+  - name: meu-banco-sgo
+    plan: free
