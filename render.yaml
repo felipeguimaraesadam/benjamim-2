@@ -2,11 +2,11 @@ services:
   - type: pserv
     name: meu-banco-sgo
     plan: free
+    startCommand: "echo 'PostgreSQL service started'"
 
   - type: web
     name: backend
     plan: free
-    runtime: python
     rootDir: backend
     buildCommand: "pip install -r requirements.txt; python manage.py collectstatic --no-input; python manage.py migrate"
     startCommand: "gunicorn sgo_core.wsgi"
@@ -19,7 +19,7 @@ services:
         fromService:
           type: pserv
           name: meu-banco-sgo
-          property: internalConnectionString
+          property: connectionString
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
 
