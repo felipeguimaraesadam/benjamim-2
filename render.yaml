@@ -39,7 +39,7 @@ services:
         fromService:
           type: web
           name: backend
-          property: url
+          property: host
 
 # Banco de Dados PostgreSQL
 databases:
