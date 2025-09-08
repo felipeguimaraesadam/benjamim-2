@@ -5,7 +5,7 @@ services:
   # 1. Serviço Web do Backend (Django)
   - type: web
     name: backend
-    plan: free # Plano gratuito
+    plan: starter # Plano inicial (mais barato disponível)
     runtime: python
     rootDir: backend # Aponta para a pasta do backend
     buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate"
@@ -25,7 +25,7 @@ services:
   # 3. Site Estático do Frontend (React)
   - type: web
     name: frontend
-    plan: free # Plano gratuito
+    plan: starter # Plano inicial (mais barato disponível)
     runtime: static
     rootDir: frontend # Aponta para a pasta do frontend
     buildCommand: "npm install && npm run build"
