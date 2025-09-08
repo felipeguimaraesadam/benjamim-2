@@ -7,7 +7,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '*']
+# Use a função config que você já tem do python-decouple
+ALLOWED_HOSTS_CONFIG = config('ALLOWED_HOSTS', default='127.0.0.1,localhost')
+
+# Separa a string por vírgulas e remove espaços extras
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_CONFIG.split(',') if host.strip()]
 
 INSTALLED_APPS = [
     'corsheaders',
