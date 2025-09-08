@@ -29,9 +29,10 @@ services:
         value: ".onrender.com" # Permite acesso a partir do domínio do Render
 
   # 3. Site Estático do Frontend (React)
-  - type: static
+  - type: web
     name: frontend
     plan: free # Plano gratuito
+    runtime: static
     rootDir: frontend # Aponta para a pasta do frontend
     buildCommand: "npm install && npm run build"
     staticPublishPath: "dist" # Pasta onde o build do React é gerado
