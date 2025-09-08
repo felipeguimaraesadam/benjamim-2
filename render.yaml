@@ -24,12 +24,13 @@ services:
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
 
-  - type: static
+  - type: web
     name: frontend
     plan: free
+    runtime: static
     rootDir: frontend
     buildCommand: "npm install && npm run build"
-    publishPath: "dist"
+    staticPublishPath: "dist"
     routes:
       - kind: rewrite
         source: /*
