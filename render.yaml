@@ -1,11 +1,7 @@
 services:
-  - type: pserv
-    name: meu-banco-sgo
-    plan: free
-    startCommand: "echo 'PostgreSQL service started'"
-
   - type: web
     name: backend
+    runtime: python
     plan: free
     rootDir: backend
     buildCommand: "pip install -r requirements.txt; python manage.py collectstatic --no-input; python manage.py migrate"
@@ -16,15 +12,15 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        fromService:
-          type: pserv
+        fromDatabase:
           name: meu-banco-sgo
-          property: DATABASE_URL
+          property: connectionString
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
 
   - type: web
     name: frontend
+    runtime: node
     plan: free
     rootDir: frontend
     buildCommand: "npm install && npm run build"
@@ -35,3 +31,7 @@ services:
           type: web
           name: backend
           property: host
+
+databases:
+  - name: meu-banco-sgo
+    plan: free
