@@ -24,12 +24,12 @@ services:
         fromService: # Pega a URL do serviço de banco de dados
           type: pserv
           name: meu-banco-sgo
-          property: internalUrl
+          property: connectionString
       - key: ALLOWED_HOSTS
         value: ".onrender.com" # Permite acesso a partir do domínio do Render
 
   # 3. Site Estático do Frontend (React)
-  - type: web
+  - type: static
     name: frontend
     plan: free # Plano gratuito
     rootDir: frontend # Aponta para a pasta do frontend
