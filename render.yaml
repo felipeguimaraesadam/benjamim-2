@@ -5,7 +5,6 @@ services:
   # 1. Banco de Dados PostgreSQL
   - type: pserv # pserv (PostgreSQL Service)
     name: meu-banco-sgo
-    databaseName: meu-banco-sgo
     plan: free # Plano gratuito
 
   # 2. Serviço Web do Backend (Django)
