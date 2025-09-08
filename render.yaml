@@ -1,0 +1,48 @@
+# Arquivo de configuração para a plataforma Render
+# Documentação: https://render.com/docs/blueprint-spec
+
+services:
+  # 1. Banco de Dados PostgreSQL
+  - type: pserv # pserv (PostgreSQL Service)
+    name: meu-banco-sgo
+    plan: free # Plano gratuito
+    postgresMajorVersion: 14
+
+  # 2. Serviço Web do Backend (Django)
+  - type: web
+    name: backend
+    plan: free # Plano gratuito
+    runtime: python
+    rootDir: backend # Aponta para a pasta do backend
+    buildCommand: "pip install -r requirements.txt; python manage.py collectstatic --no-input; python manage.py migrate"
+    startCommand: "gunicorn sgo_core.wsgi"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: SECRET_KEY
+        generateValue: true # O Render irá gerar uma chave segura automaticamente
+      - key: DATABASE_URL
+        fromService: # Pega a URL do serviço de banco de dados
+          type: pserv
+          name: meu-banco-sgo
+          property: internalUrl
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com" # Permite acesso a partir do domínio do Render
+
+  # 3. Site Estático do Frontend (React)
+  - type: static
+    name: frontend
+    plan: free # Plano gratuito
+    rootDir: frontend # Aponta para a pasta do frontend
+    buildCommand: "npm install && npm run build"
+    publishPath: "dist" # Pasta onde o build do React é gerado
+    routes:
+      - kind: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService: # Pega a URL do serviço de backend
+          type: web
+          name: backend
+          property: url
