@@ -30,7 +30,8 @@ services:
         value: ".onrender.com" # Permite acesso a partir do domínio do Render
 
   # 3. Site Estático do Frontend (React)
-  - type: static
+  - type: web
+    runtime: static
     name: frontend
     plan: free # Plano gratuito
     rootDir: frontend # Aponta para a pasta do frontend
