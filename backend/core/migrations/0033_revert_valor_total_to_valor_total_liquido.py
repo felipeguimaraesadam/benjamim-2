@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0032_auto_20250827_1318'),
+        ('core', '0032_create_frete_material'),
     ]
 
     operations = [
