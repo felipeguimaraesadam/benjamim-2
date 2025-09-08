@@ -19,16 +19,16 @@ services:
         fromService:
           type: pserv
           name: meu-banco-sgo
-          property: internalUrl
+          property: connectionString
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
 
   - type: web
     name: frontend
     plan: free
-    runtime: static
     rootDir: frontend
     buildCommand: "npm install && npm run build"
+    startCommand: "npm run preview"
     staticPublishPath: "dist"
     routes:
       - type: rewrite
@@ -39,4 +39,4 @@ services:
         fromService:
           type: web
           name: backend
-          property: url
+          property: host
