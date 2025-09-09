@@ -19,5 +19,3 @@ dj-database-url
 psycopg2-binary
 django-storages
 boto3
-django-storages
-boto3

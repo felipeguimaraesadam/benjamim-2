@@ -3,7 +3,7 @@ services:
     name: django-backend
     env: python
     healthCheckPath: /api/health-check/
-    buildCommand: "cd backend && pip install -r requirements.txt"
+    buildCommand: "cd backend && pip install -r requirements.txt && python manage.py migrate && python manage.py load_data"
     startCommand: "cd backend && gunicorn sgo_core.wsgi:application"
     envVars:
       - key: PYTHON_VERSION
@@ -28,6 +28,12 @@ services:
       - key: AWS_ACCESS_KEY_ID
         sync: false
       - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: USE_S3
+        value: TRUE
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_S3_REGION_NAME
         sync: false
     buildFilter:
       paths:
