@@ -1,67 +1,60 @@
 services:
-  # --- Configuração do Backend Django --- 
   - type: web
-    name: sgo-backend
+    name: django-backend
     env: python
-    rootDir: backend
-    buildCommand: "./build.sh"
-    startCommand: "python manage.py create_superuser_if_not_exists && gunicorn sgo_core.wsgi"
+    plan: free
+    healthCheckPath: /api/health-check/
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "gunicorn sgo_core.wsgi:application"
     envVars:
-      # Conexão com o banco de dados (automática pela Render)
+      - key: PYTHON_VERSION
+        value: 3.11.4
       - key: DATABASE_URL
         fromDatabase:
-          name: meu-banco-sgo
+          name: sgo-postgres
           property: connectionString
-
-      # Chave secreta do Django
+      - key: DJANGO_SETTINGS_MODULE
+        value: sgo_core.settings
+      - key: FRONTEND_URL
+        value: https://benjamim-2.onrender.com
+      - key: WEB_CONCURRENCY
+        value: 4
+      # Chaves secretas serão gerenciadas via 'sync: false'
       - key: SECRET_KEY
-        value: drWdmdqflm2fZBm26LodHJ1GtTddazG322oDjV84jeg=
-
-      # Permissões de acesso para o Frontend
-      - key: CORS_ALLOWED_ORIGINS
-        value: `https://frontend-s7jt.onrender.com`
-      - key: CSRF_TRUSTED_ORIGINS
-        value: `https://frontend-s7jt.onrender.com`
-
-      # Credenciais para criação automática do Superusuário
-      - key: DJANGO_SUPERUSER_USERNAME
-        value: admin
+        sync: false
       - key: DJANGO_SUPERUSER_PASSWORD
-        value: asystem.Sinc # <--- CONFIRMAR SE A SENHA É ESSA
-      - key: DJANGO_SUPERUSER_EMAIL
-        value: idng3@hotmail.com
-
-      # Configurações para armazenamento de arquivos na AWS S3
-      - key: USE_S3
-        value: "TRUE"
+        sync: false
       - key: AWS_ACCESS_KEY_ID
-        value: YOUR_AWS_ACCESS_KEY_ID # <--- SUBSTITUA PELO SEU VALOR
+        sync: false
       - key: AWS_SECRET_ACCESS_KEY
-        value: YOUR_AWS_SECRET_ACCESS_KEY # <--- SUBSTITUA PELO SEU VALOR
-      - key: AWS_STORAGE_BUCKET_NAME
-        value: sgo-cliente-anexos-36
-      - key: AWS_S3_REGION_NAME
-        value: sa-east-1
-
-      # Versão do Python
-      - key: PYTHON_VERSION
-        value: "3.11.5"
-
-  # --- Configuração do Frontend React --- 
+        sync: false
+    buildFilter:
+      paths:
+        - backend/**
+  - type: psql # Corrigido de 'pserv' para 'psql'
+    name: sgo-postgres
+    plan: free
+    databaseName: sgo_db
+    user: sgo_user
+    version: "13"
   - type: web
-    name: frontend
-    env: node
-    rootDir: frontend
-    buildCommand: "npm install && npm run build"
-    startCommand: "npx serve -s dist"
+    name: react-frontend
+    env: static
+    plan: free
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: ./frontend/dist
+    routes:
+      - type: rewrite
+        source: /api/*
+        # O destino deve ser a URL do serviço backend, sem crases
+        destination: https://django-backend-g5qa.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
-      # URL da API do backend para o frontend se comunicar
-      - key: VITE_API_URL
-        value: `https://sgo-backend-90wx.onrender.com`
-
-  # --- Configuração do Banco de Dados PostgreSQL --- 
-  - type: pserv
-    name: meu-banco-sgo
-    env: postgres
-    postgres:
-      version: "16"
+      - key: VITE_API_BASE_URL
+        # O valor deve ser a URL base do backend, sem crases
+        value: https://django-backend-g5qa.onrender.com
+    buildFilter:
+      paths:
+        - frontend/**
