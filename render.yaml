@@ -2,7 +2,6 @@ services:
   - type: web
     name: django-backend
     env: python
-    plan: free
     healthCheckPath: /api/health-check/
     buildCommand: "pip install -r backend/requirements.txt"
     startCommand: "gunicorn sgo_core.wsgi:application"
@@ -34,7 +33,6 @@ services:
   - type: web
     name: react-frontend
     env: static
-    plan: free
     buildCommand: "cd frontend && npm install && npm run build"
     staticPublishPath: ./frontend/dist
     routes:
