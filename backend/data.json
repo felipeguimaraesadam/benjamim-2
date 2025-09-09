@@ -1,1104 +1,6 @@
+DEBUG: Material model has been extended with categoria_uso_padrao.
+DEBUG: ItemCompra model has been extended with categoria_uso.
 [
-{
-  "model": "auth.permission",
-  "pk": 1,
-  "fields": {
-    "name": "Can add log entry",
-    "content_type": 1,
-    "codename": "add_logentry"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 2,
-  "fields": {
-    "name": "Can change log entry",
-    "content_type": 1,
-    "codename": "change_logentry"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 3,
-  "fields": {
-    "name": "Can delete log entry",
-    "content_type": 1,
-    "codename": "delete_logentry"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 4,
-  "fields": {
-    "name": "Can view log entry",
-    "content_type": 1,
-    "codename": "view_logentry"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 5,
-  "fields": {
-    "name": "Can add permission",
-    "content_type": 2,
-    "codename": "add_permission"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 6,
-  "fields": {
-    "name": "Can change permission",
-    "content_type": 2,
-    "codename": "change_permission"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 7,
-  "fields": {
-    "name": "Can delete permission",
-    "content_type": 2,
-    "codename": "delete_permission"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 8,
-  "fields": {
-    "name": "Can view permission",
-    "content_type": 2,
-    "codename": "view_permission"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 9,
-  "fields": {
-    "name": "Can add group",
-    "content_type": 3,
-    "codename": "add_group"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 10,
-  "fields": {
-    "name": "Can change group",
-    "content_type": 3,
-    "codename": "change_group"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 11,
-  "fields": {
-    "name": "Can delete group",
-    "content_type": 3,
-    "codename": "delete_group"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 12,
-  "fields": {
-    "name": "Can view group",
-    "content_type": 3,
-    "codename": "view_group"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 13,
-  "fields": {
-    "name": "Can add content type",
-    "content_type": 4,
-    "codename": "add_contenttype"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 14,
-  "fields": {
-    "name": "Can change content type",
-    "content_type": 4,
-    "codename": "change_contenttype"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 15,
-  "fields": {
-    "name": "Can delete content type",
-    "content_type": 4,
-    "codename": "delete_contenttype"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 16,
-  "fields": {
-    "name": "Can view content type",
-    "content_type": 4,
-    "codename": "view_contenttype"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 17,
-  "fields": {
-    "name": "Can add session",
-    "content_type": 5,
-    "codename": "add_session"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 18,
-  "fields": {
-    "name": "Can change session",
-    "content_type": 5,
-    "codename": "change_session"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 19,
-  "fields": {
-    "name": "Can delete session",
-    "content_type": 5,
-    "codename": "delete_session"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 20,
-  "fields": {
-    "name": "Can view session",
-    "content_type": 5,
-    "codename": "view_session"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 21,
-  "fields": {
-    "name": "Can add funcionario",
-    "content_type": 6,
-    "codename": "add_funcionario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 22,
-  "fields": {
-    "name": "Can change funcionario",
-    "content_type": 6,
-    "codename": "change_funcionario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 23,
-  "fields": {
-    "name": "Can delete funcionario",
-    "content_type": 6,
-    "codename": "delete_funcionario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 24,
-  "fields": {
-    "name": "Can view funcionario",
-    "content_type": 6,
-    "codename": "view_funcionario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 25,
-  "fields": {
-    "name": "Can add material",
-    "content_type": 7,
-    "codename": "add_material"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 26,
-  "fields": {
-    "name": "Can change material",
-    "content_type": 7,
-    "codename": "change_material"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 27,
-  "fields": {
-    "name": "Can delete material",
-    "content_type": 7,
-    "codename": "delete_material"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 28,
-  "fields": {
-    "name": "Can view material",
-    "content_type": 7,
-    "codename": "view_material"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 29,
-  "fields": {
-    "name": "Can add obra",
-    "content_type": 8,
-    "codename": "add_obra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 30,
-  "fields": {
-    "name": "Can change obra",
-    "content_type": 8,
-    "codename": "change_obra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 31,
-  "fields": {
-    "name": "Can delete obra",
-    "content_type": 8,
-    "codename": "delete_obra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 32,
-  "fields": {
-    "name": "Can view obra",
-    "content_type": 8,
-    "codename": "view_obra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 33,
-  "fields": {
-    "name": "Can add usuario",
-    "content_type": 9,
-    "codename": "add_usuario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 34,
-  "fields": {
-    "name": "Can change usuario",
-    "content_type": 9,
-    "codename": "change_usuario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 35,
-  "fields": {
-    "name": "Can delete usuario",
-    "content_type": 9,
-    "codename": "delete_usuario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 36,
-  "fields": {
-    "name": "Can view usuario",
-    "content_type": 9,
-    "codename": "view_usuario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 37,
-  "fields": {
-    "name": "Can add equipe",
-    "content_type": 10,
-    "codename": "add_equipe"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 38,
-  "fields": {
-    "name": "Can change equipe",
-    "content_type": 10,
-    "codename": "change_equipe"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 39,
-  "fields": {
-    "name": "Can delete equipe",
-    "content_type": 10,
-    "codename": "delete_equipe"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 40,
-  "fields": {
-    "name": "Can view equipe",
-    "content_type": 10,
-    "codename": "view_equipe"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 41,
-  "fields": {
-    "name": "Can add despesa_ extra",
-    "content_type": 11,
-    "codename": "add_despesa_extra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 42,
-  "fields": {
-    "name": "Can change despesa_ extra",
-    "content_type": 11,
-    "codename": "change_despesa_extra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 43,
-  "fields": {
-    "name": "Can delete despesa_ extra",
-    "content_type": 11,
-    "codename": "delete_despesa_extra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 44,
-  "fields": {
-    "name": "Can view despesa_ extra",
-    "content_type": 11,
-    "codename": "view_despesa_extra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 45,
-  "fields": {
-    "name": "Can add compra",
-    "content_type": 12,
-    "codename": "add_compra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 46,
-  "fields": {
-    "name": "Can change compra",
-    "content_type": 12,
-    "codename": "change_compra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 47,
-  "fields": {
-    "name": "Can delete compra",
-    "content_type": 12,
-    "codename": "delete_compra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 48,
-  "fields": {
-    "name": "Can view compra",
-    "content_type": 12,
-    "codename": "view_compra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 49,
-  "fields": {
-    "name": "Can add ocorrencia_ funcionario",
-    "content_type": 13,
-    "codename": "add_ocorrencia_funcionario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 50,
-  "fields": {
-    "name": "Can change ocorrencia_ funcionario",
-    "content_type": 13,
-    "codename": "change_ocorrencia_funcionario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 51,
-  "fields": {
-    "name": "Can delete ocorrencia_ funcionario",
-    "content_type": 13,
-    "codename": "delete_ocorrencia_funcionario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 52,
-  "fields": {
-    "name": "Can view ocorrencia_ funcionario",
-    "content_type": 13,
-    "codename": "view_ocorrencia_funcionario"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 53,
-  "fields": {
-    "name": "Can add item compra",
-    "content_type": 14,
-    "codename": "add_itemcompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 54,
-  "fields": {
-    "name": "Can change item compra",
-    "content_type": 14,
-    "codename": "change_itemcompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 55,
-  "fields": {
-    "name": "Can delete item compra",
-    "content_type": 14,
-    "codename": "delete_itemcompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 56,
-  "fields": {
-    "name": "Can view item compra",
-    "content_type": 14,
-    "codename": "view_itemcompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 57,
-  "fields": {
-    "name": "Can add locacao_ obras_ equipes",
-    "content_type": 15,
-    "codename": "add_locacao_obras_equipes"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 58,
-  "fields": {
-    "name": "Can change locacao_ obras_ equipes",
-    "content_type": 15,
-    "codename": "change_locacao_obras_equipes"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 59,
-  "fields": {
-    "name": "Can delete locacao_ obras_ equipes",
-    "content_type": 15,
-    "codename": "delete_locacao_obras_equipes"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 60,
-  "fields": {
-    "name": "Can view locacao_ obras_ equipes",
-    "content_type": 15,
-    "codename": "view_locacao_obras_equipes"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 61,
-  "fields": {
-    "name": "Can add foto obra",
-    "content_type": 16,
-    "codename": "add_fotoobra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 62,
-  "fields": {
-    "name": "Can change foto obra",
-    "content_type": 16,
-    "codename": "change_fotoobra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 63,
-  "fields": {
-    "name": "Can delete foto obra",
-    "content_type": 16,
-    "codename": "delete_fotoobra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 64,
-  "fields": {
-    "name": "Can view foto obra",
-    "content_type": 16,
-    "codename": "view_fotoobra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 65,
-  "fields": {
-    "name": "Can add Token",
-    "content_type": 17,
-    "codename": "add_token"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 66,
-  "fields": {
-    "name": "Can change Token",
-    "content_type": 17,
-    "codename": "change_token"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 67,
-  "fields": {
-    "name": "Can delete Token",
-    "content_type": 17,
-    "codename": "delete_token"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 68,
-  "fields": {
-    "name": "Can view Token",
-    "content_type": 17,
-    "codename": "view_token"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 69,
-  "fields": {
-    "name": "Can add Token",
-    "content_type": 18,
-    "codename": "add_tokenproxy"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 70,
-  "fields": {
-    "name": "Can change Token",
-    "content_type": 18,
-    "codename": "change_tokenproxy"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 71,
-  "fields": {
-    "name": "Can delete Token",
-    "content_type": 18,
-    "codename": "delete_tokenproxy"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 72,
-  "fields": {
-    "name": "Can view Token",
-    "content_type": 18,
-    "codename": "view_tokenproxy"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 73,
-  "fields": {
-    "name": "Can add backup",
-    "content_type": 19,
-    "codename": "add_backup"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 74,
-  "fields": {
-    "name": "Can change backup",
-    "content_type": 19,
-    "codename": "change_backup"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 75,
-  "fields": {
-    "name": "Can delete backup",
-    "content_type": 19,
-    "codename": "delete_backup"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 76,
-  "fields": {
-    "name": "Can view backup",
-    "content_type": 19,
-    "codename": "view_backup"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 77,
-  "fields": {
-    "name": "Can add Configuraï¿½ï¿½o de Backup",
-    "content_type": 20,
-    "codename": "add_backupsettings"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 78,
-  "fields": {
-    "name": "Can change Configuraï¿½ï¿½o de Backup",
-    "content_type": 20,
-    "codename": "change_backupsettings"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 79,
-  "fields": {
-    "name": "Can delete Configuraï¿½ï¿½o de Backup",
-    "content_type": 20,
-    "codename": "delete_backupsettings"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 80,
-  "fields": {
-    "name": "Can view Configuraï¿½ï¿½o de Backup",
-    "content_type": 20,
-    "codename": "view_backupsettings"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 81,
-  "fields": {
-    "name": "Can add anexo despesa",
-    "content_type": 21,
-    "codename": "add_anexodespesa"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 82,
-  "fields": {
-    "name": "Can change anexo despesa",
-    "content_type": 21,
-    "codename": "change_anexodespesa"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 83,
-  "fields": {
-    "name": "Can delete anexo despesa",
-    "content_type": 21,
-    "codename": "delete_anexodespesa"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 84,
-  "fields": {
-    "name": "Can view anexo despesa",
-    "content_type": 21,
-    "codename": "view_anexodespesa"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 85,
-  "fields": {
-    "name": "Can add anexo locacao",
-    "content_type": 22,
-    "codename": "add_anexolocacao"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 86,
-  "fields": {
-    "name": "Can change anexo locacao",
-    "content_type": 22,
-    "codename": "change_anexolocacao"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 87,
-  "fields": {
-    "name": "Can delete anexo locacao",
-    "content_type": 22,
-    "codename": "delete_anexolocacao"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 88,
-  "fields": {
-    "name": "Can view anexo locacao",
-    "content_type": 22,
-    "codename": "view_anexolocacao"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 89,
-  "fields": {
-    "name": "Can add Anexo de Compra",
-    "content_type": 23,
-    "codename": "add_anexocompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 90,
-  "fields": {
-    "name": "Can change Anexo de Compra",
-    "content_type": 23,
-    "codename": "change_anexocompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 91,
-  "fields": {
-    "name": "Can delete Anexo de Compra",
-    "content_type": 23,
-    "codename": "delete_anexocompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 92,
-  "fields": {
-    "name": "Can view Anexo de Compra",
-    "content_type": 23,
-    "codename": "view_anexocompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 93,
-  "fields": {
-    "name": "Can add Arquivo de Obra",
-    "content_type": 24,
-    "codename": "add_arquivoobra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 94,
-  "fields": {
-    "name": "Can change Arquivo de Obra",
-    "content_type": 24,
-    "codename": "change_arquivoobra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 95,
-  "fields": {
-    "name": "Can delete Arquivo de Obra",
-    "content_type": 24,
-    "codename": "delete_arquivoobra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 96,
-  "fields": {
-    "name": "Can view Arquivo de Obra",
-    "content_type": 24,
-    "codename": "view_arquivoobra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 97,
-  "fields": {
-    "name": "Can add Parcela de Compra",
-    "content_type": 25,
-    "codename": "add_parcelacompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 98,
-  "fields": {
-    "name": "Can change Parcela de Compra",
-    "content_type": 25,
-    "codename": "change_parcelacompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 99,
-  "fields": {
-    "name": "Can delete Parcela de Compra",
-    "content_type": 25,
-    "codename": "delete_parcelacompra"
-  }
-},
-{
-  "model": "auth.permission",
-  "pk": 100,
-  "fields": {
-    "name": "Can view Parcela de Compra",
-    "content_type": 25,
-    "codename": "view_parcelacompra"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 1,
-  "fields": {
-    "app_label": "admin",
-    "model": "logentry"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 2,
-  "fields": {
-    "app_label": "auth",
-    "model": "permission"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 3,
-  "fields": {
-    "app_label": "auth",
-    "model": "group"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 4,
-  "fields": {
-    "app_label": "contenttypes",
-    "model": "contenttype"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 5,
-  "fields": {
-    "app_label": "sessions",
-    "model": "session"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 6,
-  "fields": {
-    "app_label": "core",
-    "model": "funcionario"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 7,
-  "fields": {
-    "app_label": "core",
-    "model": "material"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 8,
-  "fields": {
-    "app_label": "core",
-    "model": "obra"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 9,
-  "fields": {
-    "app_label": "core",
-    "model": "usuario"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 10,
-  "fields": {
-    "app_label": "core",
-    "model": "equipe"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 11,
-  "fields": {
-    "app_label": "core",
-    "model": "despesa_extra"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 12,
-  "fields": {
-    "app_label": "core",
-    "model": "compra"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 13,
-  "fields": {
-    "app_label": "core",
-    "model": "ocorrencia_funcionario"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 14,
-  "fields": {
-    "app_label": "core",
-    "model": "itemcompra"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 15,
-  "fields": {
-    "app_label": "core",
-    "model": "locacao_obras_equipes"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 16,
-  "fields": {
-    "app_label": "core",
-    "model": "fotoobra"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 17,
-  "fields": {
-    "app_label": "authtoken",
-    "model": "token"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 18,
-  "fields": {
-    "app_label": "authtoken",
-    "model": "tokenproxy"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 19,
-  "fields": {
-    "app_label": "core",
-    "model": "backup"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 20,
-  "fields": {
-    "app_label": "core",
-    "model": "backupsettings"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 21,
-  "fields": {
-    "app_label": "core",
-    "model": "anexodespesa"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 22,
-  "fields": {
-    "app_label": "core",
-    "model": "anexolocacao"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 23,
-  "fields": {
-    "app_label": "core",
-    "model": "anexocompra"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 24,
-  "fields": {
-    "app_label": "core",
-    "model": "arquivoobra"
-  }
-},
-{
-  "model": "contenttypes.contenttype",
-  "pk": 25,
-  "fields": {
-    "app_label": "core",
-    "model": "parcelacompra"
-  }
-},
 {
   "model": "core.usuario",
   "pk": 1,
@@ -1167,9 +69,9 @@
   "model": "core.obra",
   "pk": 8,
   "fields": {
-    "nome_obra": "PONTA PORï¿½, 448",
-    "endereco_completo": "PONTA PORï¿½, 448 VILA IPOJUCA\nCEP 05058 000",
-    "cidade": "Sï¿½O PAULO",
+    "nome_obra": "PONTA PORÃ, 448",
+    "endereco_completo": "PONTA PORÃ, 448 VILA IPOJUCA\nCEP 05058 000",
+    "cidade": "SÃO PAULO",
     "status": "Em Andamento",
     "data_inicio": "2025-07-11",
     "data_prevista_fim": "2025-09-15",
@@ -1186,7 +88,7 @@
   "fields": {
     "nome_obra": "VESPASIANO, 890",
     "endereco_completo": "VESPASIANO, 890  VILA ROMANA\nCEP 05044 050",
-    "cidade": "Sï¿½O PAULO",
+    "cidade": "SÃO PAULO",
     "status": "Em Andamento",
     "data_inicio": "2025-02-06",
     "data_prevista_fim": "2025-08-31",
@@ -1203,7 +105,7 @@
   "fields": {
     "nome_obra": "CUNHA GAGO, 815",
     "endereco_completo": "RUA CUNHA GAGO, 815 PINHEIROS\nCEP 05421 001",
-    "cidade": "Sï¿½O PAULO",
+    "cidade": "SÃO PAULO",
     "status": "Planejada",
     "data_inicio": null,
     "data_prevista_fim": null,
@@ -1218,9 +120,9 @@
   "model": "core.obra",
   "pk": 12,
   "fields": {
-    "nome_obra": "PONTA PORï¿½ 422",
-    "endereco_completo": "RUA PONTA PORï¿½ 422 VILA ROMANA Sï¿½O PAULO CEP 05058000",
-    "cidade": "Sï¿½O PAULO",
+    "nome_obra": "PONTA PORÃ 422",
+    "endereco_completo": "RUA PONTA PORÃ 422 VILA ROMANA SÃO PAULO CEP 05058000",
+    "cidade": "SÃO PAULO",
     "status": "Em Andamento",
     "data_inicio": null,
     "data_prevista_fim": null,
@@ -1235,9 +137,9 @@
   "model": "core.obra",
   "pk": 13,
   "fields": {
-    "nome_obra": "PONTA PORï¿½ 442",
-    "endereco_completo": "RUA PONTA PORï¿½ 442 -  VILA IPOJUCA - Sï¿½O PAULO SP\nCEP 05058 000",
-    "cidade": "Sï¿½O PAULO",
+    "nome_obra": "PONTA PORÃ 442",
+    "endereco_completo": "RUA PONTA PORÃ 442 -  VILA IPOJUCA - SÃO PAULO SP\nCEP 05058 000",
+    "cidade": "SÃO PAULO",
     "status": "Planejada",
     "data_inicio": "2025-09-01",
     "data_prevista_fim": null,
@@ -1253,7 +155,7 @@
   "pk": 14,
   "fields": {
     "nome_completo": "BENJAMIM DELMONDES",
-    "cargo": "RESPONSï¿½VEL",
+    "cargo": "RESPONSÁVEL",
     "data_contratacao": "2025-01-02",
     "valor_diaria_padrao": null,
     "valor_metro_padrao": null,
@@ -1276,7 +178,7 @@
   "model": "core.funcionario",
   "pk": 16,
   "fields": {
-    "nome_completo": "JUAN FERREIRA DA PAIXï¿½O",
+    "nome_completo": "JUAN FERREIRA DA PAIXÃO",
     "cargo": "AJUDANTE",
     "data_contratacao": "2025-07-11",
     "valor_diaria_padrao": "150.00",
@@ -1300,7 +202,7 @@
   "model": "core.funcionario",
   "pk": 18,
   "fields": {
-    "nome_completo": "JOSï¿½ CARLOS BINA DA  HORA",
+    "nome_completo": "JOSÉ CARLOS BINA DA  HORA",
     "cargo": "EMPREITEIRO",
     "data_contratacao": "2025-04-02",
     "valor_diaria_padrao": null,
@@ -1360,7 +262,7 @@
   "model": "core.funcionario",
   "pk": 23,
   "fields": {
-    "nome_completo": "RONNEY GUERRA  DA PAIXï¿½O",
+    "nome_completo": "RONNEY GUERRA  DA PAIXÃO",
     "cargo": "AJUDANTE",
     "data_contratacao": "2025-05-12",
     "valor_diaria_padrao": "150.00",
@@ -1372,7 +274,7 @@
   "model": "core.funcionario",
   "pk": 24,
   "fields": {
-    "nome_completo": "JOï¿½O BINA DA HORA",
+    "nome_completo": "JOÃO BINA DA HORA",
     "cargo": "CARPINTEIRO",
     "data_contratacao": "2025-05-06",
     "valor_diaria_padrao": "300.00",
@@ -1384,7 +286,7 @@
   "model": "core.funcionario",
   "pk": 25,
   "fields": {
-    "nome_completo": "JOï¿½O PAULO FIUZA LIMA",
+    "nome_completo": "JOÃO PAULO FIUZA LIMA",
     "cargo": "PEDREIRO",
     "data_contratacao": "2025-06-30",
     "valor_diaria_padrao": "300.00",
@@ -1396,7 +298,7 @@
   "model": "core.funcionario",
   "pk": 26,
   "fields": {
-    "nome_completo": "JOSIMAR SOUZA REIS Zï¿½ BAIXINHO",
+    "nome_completo": "JOSIMAR SOUZA REIS ZÉ BAIXINHO",
     "cargo": "AJUDANTE",
     "data_contratacao": "2025-05-06",
     "valor_diaria_padrao": "150.00",
@@ -1444,7 +346,7 @@
   "model": "core.funcionario",
   "pk": 30,
   "fields": {
-    "nome_completo": "SEU RIBEIRO / DAMIï¿½O SOARES RIBEIRO",
+    "nome_completo": "SEU RIBEIRO / DAMIÃO SOARES RIBEIRO",
     "cargo": "ELETRECISTA",
     "data_contratacao": "2025-05-14",
     "valor_diaria_padrao": "300.00",
@@ -1516,7 +418,7 @@
   "model": "core.funcionario",
   "pk": 36,
   "fields": {
-    "nome_completo": "CARLOS ANDRï¿½",
+    "nome_completo": "CARLOS ANDRÉ",
     "cargo": "AJUDANTE",
     "data_contratacao": "2025-07-28",
     "valor_diaria_padrao": "150.00",
@@ -1528,7 +430,7 @@
   "model": "core.funcionario",
   "pk": 38,
   "fields": {
-    "nome_completo": "MIRO TIO DO JOï¿½O",
+    "nome_completo": "MIRO TIO DO JOÃO",
     "cargo": "AJUDANTE",
     "data_contratacao": "2025-08-07",
     "valor_diaria_padrao": "150.00",
@@ -1540,7 +442,7 @@
   "model": "core.funcionario",
   "pk": 39,
   "fields": {
-    "nome_completo": "ADï¿½O VALDO FRANï¿½A ALVES",
+    "nome_completo": "ADÃO VALDO FRANÇA ALVES",
     "cargo": "AJULEIJISTA",
     "data_contratacao": "2025-08-19",
     "valor_diaria_padrao": null,
@@ -1564,7 +466,7 @@
   "model": "core.funcionario",
   "pk": 41,
   "fields": {
-    "nome_completo": "JOSï¿½ FABIO DA SILVA - FABIO",
+    "nome_completo": "JOSÉ FABIO DA SILVA - FABIO",
     "cargo": "PEDREIRO",
     "data_contratacao": "2025-08-26",
     "valor_diaria_padrao": "300.00",
@@ -2390,7 +1292,7 @@
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "ALVENARIA Tï¿½RREO PRIMEIRO, SEGUNDO ANDAR E COBERTURA",
+    "servico_externo": "ALVENARIA TÉRREO PRIMEIRO, SEGUNDO ANDAR E COBERTURA",
     "data_locacao_inicio": "2025-05-05",
     "data_locacao_fim": "2025-05-05",
     "tipo_pagamento": "empreitada",
@@ -2407,7 +1309,7 @@
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "COLOCAï¿½ï¿½O DE PORTAS E JANELAS",
+    "servico_externo": "COLOCAÇÃO DE PORTAS E JANELAS",
     "data_locacao_inicio": "2025-07-07",
     "data_locacao_fim": "2025-07-07",
     "tipo_pagamento": "empreitada",
@@ -3298,7 +2200,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "TRABALHOU ATï¿½ MEIO DIA"
+    "observacoes": "TRABALHOU ATÉ MEIO DIA"
   }
 },
 {
@@ -5739,14 +4641,14 @@
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "LOCAï¿½ï¿½O DE EQUIPAMENTO",
+    "servico_externo": "LOCAÇÃO DE EQUIPAMENTO",
     "data_locacao_inicio": "2025-07-18",
     "data_locacao_fim": "2025-07-18",
     "tipo_pagamento": "empreitada",
     "valor_pagamento": "1245.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "LOCAï¿½ï¿½O DE 1 MARTELETE 15KG C/ TALHADEIRA E PONTEIRO\r\n51 ESCORAS PARA LAJE ATï¿½ 3,30 METROS\r\n39 FORCADOS PARA ESCORA DE LAJE\r\n20 METROS LINEAR DE PERFIL V8 PARA LAJE"
+    "observacoes": "LOCAÇÃO DE 1 MARTELETE 15KG C/ TALHADEIRA E PONTEIRO\r\n51 ESCORAS PARA LAJE ATÉ 3,30 METROS\r\n39 FORCADOS PARA ESCORA DE LAJE\r\n20 METROS LINEAR DE PERFIL V8 PARA LAJE"
   }
 },
 {
@@ -5763,7 +4665,7 @@
     "valor_pagamento": "4000.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "PROJETO APTO 30Mï¿½  R$ 2500,00\r\nFACHADA R$ 1500,00"
+    "observacoes": "PROJETO APTO 30M²  R$ 2500,00\r\nFACHADA R$ 1500,00"
   }
 },
 {
@@ -5790,14 +4692,14 @@
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "LOCAï¿½ï¿½O DE EQUIPAMENTO",
+    "servico_externo": "LOCAÇÃO DE EQUIPAMENTO",
     "data_locacao_inicio": "2025-05-29",
     "data_locacao_fim": "2025-05-29",
     "tipo_pagamento": "empreitada",
     "valor_pagamento": "2264.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "ASAP LOCAï¿½ï¿½O DE ANDAIMES LTDA\r\nLOCAï¿½ï¿½O 52 ESCORAS PARA LAJE DE ATï¿½ 3,30\r\n52 FORCADOS PARA ESCORA DE LAJE\r\n50M LINEAR DE PERFIL V8\r\n52 TRIPï¿½S PARA ESCORA DE LAJE\r\n12 ESCORAS PARA LAJE ATï¿½ 3,30"
+    "observacoes": "ASAP LOCAÇÃO DE ANDAIMES LTDA\r\nLOCAÇÃO 52 ESCORAS PARA LAJE DE ATÉ 3,30\r\n52 FORCADOS PARA ESCORA DE LAJE\r\n50M LINEAR DE PERFIL V8\r\n52 TRIPÉS PARA ESCORA DE LAJE\r\n12 ESCORAS PARA LAJE ATÉ 3,30"
   }
 },
 {
@@ -5807,14 +4709,14 @@
     "obra": 10,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "LOCAï¿½ï¿½O DE ESCAVADEIRA E CAMINHï¿½O BASCULANTE",
+    "servico_externo": "LOCAÇÃO DE ESCAVADEIRA E CAMINHÃO BASCULANTE",
     "data_locacao_inicio": "2025-08-11",
     "data_locacao_fim": "2025-08-11",
     "tipo_pagamento": "empreitada",
     "valor_pagamento": "15661.06",
     "data_pagamento": "2025-08-15",
     "status_locacao": "ativa",
-    "observacoes": "TRANSZERBINATTI\r\nLOCAï¿½ï¿½O DE ESCAVADEIRA DE 8 TONELADAS E CAMINHï¿½O BASCULANTE COM BOTA FORA."
+    "observacoes": "TRANSZERBINATTI\r\nLOCAÇÃO DE ESCAVADEIRA DE 8 TONELADAS E CAMINHÃO BASCULANTE COM BOTA FORA."
   }
 },
 {
@@ -5824,14 +4726,14 @@
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "COLOCAï¿½ï¿½O DE PISO/AZULEJO  ADï¿½O",
+    "servico_externo": "COLOCAÇÃO DE PISO/AZULEJO  ADÃO",
     "data_locacao_inicio": "2025-08-19",
     "data_locacao_fim": "2025-08-19",
     "tipo_pagamento": "empreitada",
     "valor_pagamento": "30800.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "COLOCAï¿½ï¿½O DE 560 Mï¿½ DE PISO E AZULEJO\r\nVALOR R$ 55,00 Mï¿½"
+    "observacoes": "COLOCAÇÃO DE 560 M² DE PISO E AZULEJO\r\nVALOR R$ 55,00 M²"
   }
 },
 {
@@ -6011,7 +4913,7 @@
     "obra": 10,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "EXECUï¿½ï¿½O DA CONTENï¿½ï¿½O -TIï¿½O",
+    "servico_externo": "EXECUÇÃO DA CONTENÇÃO -TIÃO",
     "data_locacao_inicio": "2025-08-11",
     "data_locacao_fim": "2025-08-11",
     "tipo_pagamento": "diaria",
@@ -6035,7 +4937,7 @@
     "valor_pagamento": "16999.99",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "EXECUï¿½ï¿½O  DE ESTACAS DO TIPO Hï¿½LECE CONTINUA"
+    "observacoes": "EXECUÇÃO  DE ESTACAS DO TIPO HÉLECE CONTINUA"
   }
 },
 {
@@ -6351,14 +5253,14 @@
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "MASSA FACHADA - TIï¿½O",
+    "servico_externo": "MASSA FACHADA - TIÃO",
     "data_locacao_inicio": "2025-07-01",
     "data_locacao_fim": "2025-07-01",
     "tipo_pagamento": "diaria",
     "valor_pagamento": "25200.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "VALOR COBRADO POR Mï¿½ - R$ 45,00"
+    "observacoes": "VALOR COBRADO POR M² - R$ 45,00"
   }
 },
 {
@@ -6674,14 +5576,14 @@
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "Mï¿½O DE OBRA",
+    "servico_externo": "MÃO DE OBRA",
     "data_locacao_inicio": "2025-01-03",
     "data_locacao_fim": "2025-01-03",
     "tipo_pagamento": "diaria",
     "valor_pagamento": "51600.00",
     "data_pagamento": "2025-01-03",
     "status_locacao": "ativa",
-    "observacoes": "VALOR DA Mï¿½O DE OBRA DIA 03/01/2025 ATï¿½ 25/04/2025\r\nR$ 51.600,00"
+    "observacoes": "VALOR DA MÃO DE OBRA DIA 03/01/2025 ATÉ 25/04/2025\r\nR$ 51.600,00"
   }
 },
 {
@@ -6691,14 +5593,14 @@
     "obra": 10,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "EXECUï¿½ï¿½O DA FUNDAï¿½ï¿½O E LAJES",
+    "servico_externo": "EXECUÇÃO DA FUNDAÇÃO E LAJES",
     "data_locacao_inicio": "2025-09-02",
     "data_locacao_fim": "2025-09-02",
     "tipo_pagamento": "diaria",
     "valor_pagamento": "250000.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "EXECUï¿½ï¿½O FUNDAï¿½ï¿½O E PRIMEIRA LAJE R$ 130.000,00\r\nSEGUNDA E TERCEIRA LAJE  R$120.000,00\r\nPAGAMENTO CONFORME CONTRATO"
+    "observacoes": "EXECUÇÃO FUNDAÇÃO E PRIMEIRA LAJE R$ 130.000,00\r\nSEGUNDA E TERCEIRA LAJE  R$120.000,00\r\nPAGAMENTO CONFORME CONTRATO"
   }
 },
 {
@@ -6708,14 +5610,14 @@
     "obra": 13,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "DEMOLIï¿½ï¿½O",
+    "servico_externo": "DEMOLIÇÃO",
     "data_locacao_inicio": "2025-09-02",
     "data_locacao_fim": "2025-09-02",
     "tipo_pagamento": "diaria",
     "valor_pagamento": "10000.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "02/09/2025 COMEï¿½OU A DEMOLIï¿½ï¿½O DA OBRA PONTA PORï¿½ 442\r\nVALOR DA EMPREITA R$ 10.000,00\r\nJOSï¿½ CARLOS BINA DA HORA - EMPREITEIRO"
+    "observacoes": "02/09/2025 COMEÇOU A DEMOLIÇÃO DA OBRA PONTA PORÃ 442\r\nVALOR DA EMPREITA R$ 10.000,00\r\nJOSÉ CARLOS BINA DA HORA - EMPREITEIRO"
   }
 },
 {
@@ -6766,7 +5668,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 373. None"
+    "observacoes": "Duplicado de locação ID 373. None"
   }
 },
 {
@@ -6783,7 +5685,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 375. None"
+    "observacoes": "Duplicado de locação ID 375. None"
   }
 },
 {
@@ -6800,7 +5702,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 376. None"
+    "observacoes": "Duplicado de locação ID 376. None"
   }
 },
 {
@@ -6817,7 +5719,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 495. None"
+    "observacoes": "Duplicado de locação ID 495. None"
   }
 },
 {
@@ -6834,7 +5736,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 497. Duplicado de locaï¿½ï¿½o ID 373. None"
+    "observacoes": "Duplicado de locação ID 497. Duplicado de locação ID 373. None"
   }
 },
 {
@@ -6851,7 +5753,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 498. Duplicado de locaï¿½ï¿½o ID 375. None"
+    "observacoes": "Duplicado de locação ID 498. Duplicado de locação ID 375. None"
   }
 },
 {
@@ -6868,7 +5770,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 499. Duplicado de locaï¿½ï¿½o ID 376. None"
+    "observacoes": "Duplicado de locação ID 499. Duplicado de locação ID 376. None"
   }
 },
 {
@@ -6885,7 +5787,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 496. None"
+    "observacoes": "Duplicado de locação ID 496. None"
   }
 },
 {
@@ -6919,7 +5821,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 502. Duplicado de locaï¿½ï¿½o ID 497. Duplicado de locaï¿½ï¿½o ID 373. None"
+    "observacoes": "Duplicado de locação ID 502. Duplicado de locação ID 497. Duplicado de locação ID 373. None"
   }
 },
 {
@@ -6936,7 +5838,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 503. Duplicado de locaï¿½ï¿½o ID 498. Duplicado de locaï¿½ï¿½o ID 375. None"
+    "observacoes": "Duplicado de locação ID 503. Duplicado de locação ID 498. Duplicado de locação ID 375. None"
   }
 },
 {
@@ -6953,7 +5855,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 504. Duplicado de locaï¿½ï¿½o ID 499. Duplicado de locaï¿½ï¿½o ID 376. None"
+    "observacoes": "Duplicado de locação ID 504. Duplicado de locação ID 499. Duplicado de locação ID 376. None"
   }
 },
 {
@@ -6970,7 +5872,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 507. None"
+    "observacoes": "Duplicado de locação ID 507. None"
   }
 },
 {
@@ -6987,7 +5889,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 506. Duplicado de locaï¿½ï¿½o ID 496. None"
+    "observacoes": "Duplicado de locação ID 506. Duplicado de locação ID 496. None"
   }
 },
 {
@@ -7004,7 +5906,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 508. Duplicado de locaï¿½ï¿½o ID 502. Duplicado de locaï¿½ï¿½o ID 497. Duplicado de locaï¿½ï¿½o ID 373. None"
+    "observacoes": "Duplicado de locação ID 508. Duplicado de locação ID 502. Duplicado de locação ID 497. Duplicado de locação ID 373. None"
   }
 },
 {
@@ -7021,7 +5923,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 509. Duplicado de locaï¿½ï¿½o ID 503. Duplicado de locaï¿½ï¿½o ID 498. Duplicado de locaï¿½ï¿½o ID 375. None"
+    "observacoes": "Duplicado de locação ID 509. Duplicado de locação ID 503. Duplicado de locação ID 498. Duplicado de locação ID 375. None"
   }
 },
 {
@@ -7038,7 +5940,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 511. Duplicado de locaï¿½ï¿½o ID 507. None"
+    "observacoes": "Duplicado de locação ID 511. Duplicado de locação ID 507. None"
   }
 },
 {
@@ -7055,7 +5957,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 512. Duplicado de locaï¿½ï¿½o ID 506. Duplicado de locaï¿½ï¿½o ID 496. None"
+    "observacoes": "Duplicado de locação ID 512. Duplicado de locação ID 506. Duplicado de locação ID 496. None"
   }
 },
 {
@@ -7072,7 +5974,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 510. Duplicado de locaï¿½ï¿½o ID 504. Duplicado de locaï¿½ï¿½o ID 499. Duplicado de locaï¿½ï¿½o ID 376. None"
+    "observacoes": "Duplicado de locação ID 510. Duplicado de locação ID 504. Duplicado de locação ID 499. Duplicado de locação ID 376. None"
   }
 },
 {
@@ -7089,7 +5991,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 501. Duplicado de locaï¿½ï¿½o ID 495. None"
+    "observacoes": "Duplicado de locação ID 501. Duplicado de locação ID 495. None"
   }
 },
 {
@@ -7191,7 +6093,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 513. Duplicado de locaï¿½ï¿½o ID 508. Duplicado de locaï¿½ï¿½o ID 502. Duplicado de locaï¿½ï¿½o ID 497. Duplicado de locaï¿½ï¿½o ID 373. None"
+    "observacoes": "Duplicado de locação ID 513. Duplicado de locação ID 508. Duplicado de locação ID 502. Duplicado de locação ID 497. Duplicado de locação ID 373. None"
   }
 },
 {
@@ -7208,7 +6110,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 510. Duplicado de locaï¿½ï¿½o ID 504. Duplicado de locaï¿½ï¿½o ID 499. Duplicado de locaï¿½ï¿½o ID 376. None"
+    "observacoes": "Duplicado de locação ID 510. Duplicado de locação ID 504. Duplicado de locação ID 499. Duplicado de locação ID 376. None"
   }
 },
 {
@@ -7242,7 +6144,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 507. None"
+    "observacoes": "Duplicado de locação ID 507. None"
   }
 },
 {
@@ -7259,7 +6161,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 514. Duplicado de locaï¿½ï¿½o ID 509. Duplicado de locaï¿½ï¿½o ID 503. Duplicado de locaï¿½ï¿½o ID 498. Duplicado de locaï¿½ï¿½o ID 375. None"
+    "observacoes": "Duplicado de locação ID 514. Duplicado de locação ID 509. Duplicado de locação ID 503. Duplicado de locação ID 498. Duplicado de locação ID 375. None"
   }
 },
 {
@@ -7276,7 +6178,7 @@
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 518. Duplicado de locaï¿½ï¿½o ID 501. Duplicado de locaï¿½ï¿½o ID 495. None"
+    "observacoes": "Duplicado de locação ID 518. Duplicado de locação ID 501. Duplicado de locação ID 495. None"
   }
 },
 {
@@ -7293,7 +6195,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 500. Duplicado de locaï¿½ï¿½o ID 377. None"
+    "observacoes": "Duplicado de locação ID 500. Duplicado de locação ID 377. None"
   }
 },
 {
@@ -7310,7 +6212,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 530. Duplicado de locaï¿½ï¿½o ID 500. Duplicado de locaï¿½ï¿½o ID 377. None"
+    "observacoes": "Duplicado de locação ID 530. Duplicado de locação ID 500. Duplicado de locação ID 377. None"
   }
 },
 {
@@ -7327,7 +6229,7 @@
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaï¿½ï¿½o ID 531. Duplicado de locaï¿½ï¿½o ID 530. Duplicado de locaï¿½ï¿½o ID 500. Duplicado de locaï¿½ï¿½o ID 377. None"
+    "observacoes": "Duplicado de locação ID 531. Duplicado de locação ID 530. Duplicado de locação ID 500. Duplicado de locação ID 377. None"
   }
 },
 {
@@ -7389,8 +6291,8 @@
   "model": "core.material",
   "pk": 7,
   "fields": {
-    "nome": "ASTROFOIL 50Mï¿½ MANTA ISOLANTE",
-    "unidade_medida": "mï¿½",
+    "nome": "ASTROFOIL 50M² MANTA ISOLANTE",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Alvenaria"
@@ -7411,7 +6313,7 @@
   "model": "core.material",
   "pk": 9,
   "fields": {
-    "nome": "CABO FLEXï¿½VEL1,5MM2 BR COM 100M",
+    "nome": "CABO FLEXÍVEL1,5MM2 BR COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7422,7 +6324,7 @@
   "model": "core.material",
   "pk": 10,
   "fields": {
-    "nome": "CABO FLEXï¿½VEL 2,5MM2 PT COM 100M",
+    "nome": "CABO FLEXÍVEL 2,5MM2 PT COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7433,7 +6335,7 @@
   "model": "core.material",
   "pk": 11,
   "fields": {
-    "nome": "CABO FLEXï¿½VEL 2,5 MM2 AZ COM 100M",
+    "nome": "CABO FLEXÍVEL 2,5 MM2 AZ COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7444,7 +6346,7 @@
   "model": "core.material",
   "pk": 12,
   "fields": {
-    "nome": "CABO FLEXï¿½VEL 2,5MM VD COM 100M",
+    "nome": "CABO FLEXÍVEL 2,5MM VD COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7455,7 +6357,7 @@
   "model": "core.material",
   "pk": 13,
   "fields": {
-    "nome": "CABO FLEXï¿½VEL 4,0MM2 VM COM 100M",
+    "nome": "CABO FLEXÍVEL 4,0MM2 VM COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7466,7 +6368,7 @@
   "model": "core.material",
   "pk": 14,
   "fields": {
-    "nome": "CABO FLEXï¿½VEL 6,0MM2 VM COM 100M",
+    "nome": "CABO FLEXÍVEL 6,0MM2 VM COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7477,7 +6379,7 @@
   "model": "core.material",
   "pk": 15,
   "fields": {
-    "nome": "CABO FLEXï¿½VEL 1,5MM2 AM COM 100M",
+    "nome": "CABO FLEXÍVEL 1,5MM2 AM COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7488,7 +6390,7 @@
   "model": "core.material",
   "pk": 16,
   "fields": {
-    "nome": "CABO FLEXï¿½VEL 2,5MM2 VM COM 100M",
+    "nome": "CABO FLEXÍVEL 2,5MM2 VM COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7499,7 +6401,7 @@
   "model": "core.material",
   "pk": 17,
   "fields": {
-    "nome": "CIMDUTO CORRUGADO PEAD 1 1/4ï¿½ COM 50MTS",
+    "nome": "CIMDUTO CORRUGADO PEAD 1 1/4¨ COM 50MTS",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7588,7 +6490,7 @@
   "pk": 25,
   "fields": {
     "nome": "TELHA CHAPA SIMPLES GALVALUME TR40 0,98",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Alvenaria"
@@ -7631,7 +6533,7 @@
   "model": "core.material",
   "pk": 29,
   "fields": {
-    "nome": "CUNHA PARA NIVELAMENTO REVEST 50 Pï¿½AS",
+    "nome": "CUNHA PARA NIVELAMENTO REVEST 50 PÇAS",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7642,7 +6544,7 @@
   "model": "core.material",
   "pk": 30,
   "fields": {
-    "nome": "ESPAï¿½ADOR CORTAG NIVELADOR REVEST 1,5MM COM 500",
+    "nome": "ESPAÇADOR CORTAG NIVELADOR REVEST 1,5MM COM 500",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7664,7 +6566,7 @@
   "model": "core.material",
   "pk": 32,
   "fields": {
-    "nome": "VERGALHï¿½O 10.0MM CA50 12MM",
+    "nome": "VERGALHÃO 10.0MM CA50 12MM",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7708,7 +6610,7 @@
   "model": "core.material",
   "pk": 36,
   "fields": {
-    "nome": "PREGO Aï¿½O 17X21",
+    "nome": "PREGO AÇO 17X21",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7719,7 +6621,7 @@
   "model": "core.material",
   "pk": 37,
   "fields": {
-    "nome": "PREGO Aï¿½O 18X27",
+    "nome": "PREGO AÇO 18X27",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7741,7 +6643,7 @@
   "model": "core.material",
   "pk": 39,
   "fields": {
-    "nome": "DISTANCIADOR PLASTICO DR 25 4.20 ï¿½ 8.0 MM",
+    "nome": "DISTANCIADOR PLASTICO DR 25 4.20 À 8.0 MM",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7830,7 +6732,7 @@
   "pk": 47,
   "fields": {
     "nome": "LAJE H8 EPS S AD",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Fundacao"
@@ -7841,7 +6743,7 @@
   "pk": 48,
   "fields": {
     "nome": "LAJE H12 EPS S AD",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Fundacao"
@@ -7852,7 +6754,7 @@
   "pk": 49,
   "fields": {
     "nome": "LAJE H12 EPS + 1 O 8,0MM",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Fundacao"
@@ -7863,7 +6765,7 @@
   "pk": 50,
   "fields": {
     "nome": "LAJE H12 + 2 O 8,0 MM",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -7874,7 +6776,7 @@
   "pk": 51,
   "fields": {
     "nome": "LAJE H12 EPS + 2 O 8,0MM",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Fundacao"
@@ -8049,7 +6951,7 @@
   "model": "core.material",
   "pk": 67,
   "fields": {
-    "nome": "MALHA POP REFORï¿½ADA 15X15 4,2 MM",
+    "nome": "MALHA POP REFORÇADA 15X15 4,2 MM",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8104,7 +7006,7 @@
   "model": "core.material",
   "pk": 73,
   "fields": {
-    "nome": "BLOCO Nï¿½VEL 2,80  4,20",
+    "nome": "BLOCO NÍVEL 2,80  4,20",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8115,7 +7017,7 @@
   "model": "core.material",
   "pk": 74,
   "fields": {
-    "nome": "BLOCOS  Nï¿½VEL0,00 SUBSOLO 0",
+    "nome": "BLOCOS  NÍVEL0,00 SUBSOLO 0",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8126,7 +7028,7 @@
   "model": "core.material",
   "pk": 75,
   "fields": {
-    "nome": "VIGAS SUBSOLO Nï¿½VEL 0",
+    "nome": "VIGAS SUBSOLO NÍVEL 0",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8137,7 +7039,7 @@
   "model": "core.material",
   "pk": 76,
   "fields": {
-    "nome": "VIGAS BALDRAME Nï¿½VEL 2,80",
+    "nome": "VIGAS BALDRAME NÍVEL 2,80",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8159,7 +7061,7 @@
   "model": "core.material",
   "pk": 78,
   "fields": {
-    "nome": "LAJE SUBSOLO Nï¿½VEL 0",
+    "nome": "LAJE SUBSOLO NÍVEL 0",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8192,7 +7094,7 @@
   "model": "core.material",
   "pk": 81,
   "fields": {
-    "nome": "BLOCE DE 15 (14X19X39 ) VEDAï¿½ï¿½O/ VAZADO",
+    "nome": "BLOCE DE 15 (14X19X39 ) VEDAÇÃO/ VAZADO",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8258,7 +7160,7 @@
   "model": "core.material",
   "pk": 87,
   "fields": {
-    "nome": "CAIXA PARA INSTALAï¿½ï¿½O ELETR. 4X2 LOCKBOX COM TAMPA",
+    "nome": "CAIXA PARA INSTALAÇÃO ELETR. 4X2 LOCKBOX COM TAMPA",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8401,7 +7303,7 @@
   "model": "core.material",
   "pk": 100,
   "fields": {
-    "nome": "CABO FLEXï¿½VEL 4,0MM2 VD C| 100M",
+    "nome": "CABO FLEXÍVEL 4,0MM2 VD C| 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8467,7 +7369,7 @@
   "model": "core.material",
   "pk": 106,
   "fields": {
-    "nome": "SERRA Aï¿½O Rï¿½PIDO SAFE FLEX 24D 12 KBS0122410 1PC  STARRET",
+    "nome": "SERRA AÇO RÁPIDO SAFE FLEX 24D 12 KBS0122410 1PC  STARRET",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8655,7 +7557,7 @@
   "pk": 123,
   "fields": {
     "nome": "NATURE URBAINE 90X90 ACT RETIFICADO (INTERNO)",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -8665,8 +7567,8 @@
   "model": "core.material",
   "pk": 124,
   "fields": {
-    "nome": "GRAY STONE 90x90 ACT RETIFICADO RUSTICO ( ï¿½REA EXTERNA )",
-    "unidade_medida": "mï¿½",
+    "nome": "GRAY STONE 90x90 ACT RETIFICADO RUSTICO ( ÁREA EXTERNA )",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -8676,7 +7578,7 @@
   "model": "core.material",
   "pk": 125,
   "fields": {
-    "nome": "PORTA LAMBRIL DE ALUMï¿½NIO BCO COM 3 VIDROS NA LATERAL E MAï¿½ANETA LINHA 25 210X80 ESQUERDO",
+    "nome": "PORTA LAMBRIL DE ALUMÍNIO BCO COM 3 VIDROS NA LATERAL E MAÇANETA LINHA 25 210X80 ESQUERDO",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8687,7 +7589,7 @@
   "model": "core.material",
   "pk": 126,
   "fields": {
-    "nome": "PORTA LAMBRIL DE ALUMï¿½NIO BCO C/ 3 VIDROS NA LATERAL E MAï¿½ANETA LINHA 25 210X80  DIREITA",
+    "nome": "PORTA LAMBRIL DE ALUMÍNIO BCO C/ 3 VIDROS NA LATERAL E MAÇANETA LINHA 25 210X80  DIREITA",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8698,7 +7600,7 @@
   "model": "core.material",
   "pk": 127,
   "fields": {
-    "nome": "ROLO CONDUï¿½TE 50M",
+    "nome": "ROLO CONDUÍTE 50M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8709,7 +7611,7 @@
   "model": "core.material",
   "pk": 128,
   "fields": {
-    "nome": "TURQUESA Mï¿½DIA",
+    "nome": "TURQUESA MÉDIA",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8720,8 +7622,8 @@
   "model": "core.material",
   "pk": 129,
   "fields": {
-    "nome": "AREIA Mï¿½DIA",
-    "unidade_medida": "mï¿½",
+    "nome": "AREIA MÉDIA",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -8731,7 +7633,7 @@
   "model": "core.material",
   "pk": 130,
   "fields": {
-    "nome": "PORTA SACADA 2 FOLHAS Mï¿½VEIS ALUMï¿½NIO BCO LINHA PREMIUM 210X110",
+    "nome": "PORTA SACADA 2 FOLHAS MÓVEIS ALUMÍNIO BCO LINHA PREMIUM 210X110",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8764,7 +7666,7 @@
   "model": "core.material",
   "pk": 133,
   "fields": {
-    "nome": "VITRO MAXIM AR ALUMï¿½NIO BCO LINHA MODULAR  60X60",
+    "nome": "VITRO MAXIM AR ALUMÍNIO BCO LINHA MODULAR  60X60",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8775,7 +7677,7 @@
   "model": "core.material",
   "pk": 134,
   "fields": {
-    "nome": "JANELA VITRO 2 FOLHAS Mï¿½VEIS ALUMï¿½NIO BCO LINHA MODULAR 1,00X1,00",
+    "nome": "JANELA VITRO 2 FOLHAS MÓVEIS ALUMÍNIO BCO LINHA MODULAR 1,00X1,00",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8819,7 +7721,7 @@
   "model": "core.material",
   "pk": 138,
   "fields": {
-    "nome": "REJUNTE FLAXï¿½VEL 5KG BRANCO WEBER QUARTZOLIT",
+    "nome": "REJUNTE FLAXÍVEL 5KG BRANCO WEBER QUARTZOLIT",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8831,7 +7733,7 @@
   "pk": 139,
   "fields": {
     "nome": "REVESTIMENTO FORMA ACETINADO 30X40  BRANCO",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -8841,7 +7743,7 @@
   "model": "core.material",
   "pk": 140,
   "fields": {
-    "nome": "ORï¿½ FERRAGEM FUNDAï¿½ï¿½O 1 FASE",
+    "nome": "ORÇ FERRAGEM FUNDAÇÃO 1 FASE",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8863,7 +7765,7 @@
   "model": "core.material",
   "pk": 142,
   "fields": {
-    "nome": "ABRAï¿½ADEIRA T18L 200MM X 2,5MM PRETO (C/100)",
+    "nome": "ABRAÇADEIRA T18L 200MM X 2,5MM PRETO (C/100)",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8885,7 +7787,7 @@
   "model": "core.material",
   "pk": 144,
   "fields": {
-    "nome": "ABRAï¿½ADEIRA T30R 150MM X 3,6MM PRETO (C/ 100)",
+    "nome": "ABRAÇADEIRA T30R 150MM X 3,6MM PRETO (C/ 100)",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8929,7 +7831,7 @@
   "model": "core.material",
   "pk": 148,
   "fields": {
-    "nome": "ARGAMASSA INTERNA/EXTERNA ACIII FLEXï¿½VEL CINZA 20KG FORTALEZA",
+    "nome": "ARGAMASSA INTERNA/EXTERNA ACIII FLEXÍVEL CINZA 20KG FORTALEZA",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8941,7 +7843,7 @@
   "pk": 149,
   "fields": {
     "nome": "CONCRETO USINADO",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -8962,7 +7864,7 @@
   "model": "core.material",
   "pk": 151,
   "fields": {
-    "nome": "Mï¿½RMORES",
+    "nome": "MÁRMORES",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8984,7 +7886,7 @@
   "model": "core.material",
   "pk": 153,
   "fields": {
-    "nome": "FORTLEV BUCHA REDUï¿½ï¿½O CURTA SOLD 25X20MM",
+    "nome": "FORTLEV BUCHA REDUÇÃO CURTA SOLD 25X20MM",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -9017,7 +7919,7 @@
   "model": "core.material",
   "pk": 156,
   "fields": {
-    "nome": "MONTAGEM DO CENTRO DE MEDIï¿½ï¿½O PARA 10 MEDIDORES",
+    "nome": "MONTAGEM DO CENTRO DE MEDIÇÃO PARA 10 MEDIDORES",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -9029,7 +7931,7 @@
   "pk": 157,
   "fields": {
     "nome": "CONDUITE CORRUGADO 1 1|4 40MM PT TIPO PEAD",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -9040,7 +7942,7 @@
   "pk": 158,
   "fields": {
     "nome": "CONDUITE CORRUGADO LR 25MM 3|4 KRONA",
-    "unidade_medida": "mï¿½",
+    "unidade_medida": "m²",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -9094,7 +7996,7 @@
   "model": "core.material",
   "pk": 163,
   "fields": {
-    "nome": "FORTLEV BUCHA REDUï¿½ï¿½O LONG SOLD 50X25MM",
+    "nome": "FORTLEV BUCHA REDUÇÃO LONG SOLD 50X25MM",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -9392,7 +8294,7 @@
   "pk": 9,
   "fields": {
     "obra": 9,
-    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRUï¿½ï¿½ES",
+    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRUÇÕES",
     "data_compra": "2025-04-15",
     "nota_fiscal": null,
     "valor_total_bruto": "8206.38",
@@ -9414,7 +8316,7 @@
   "pk": 10,
   "fields": {
     "obra": 9,
-    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRUï¿½ï¿½ES",
+    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRUÇÕES",
     "data_compra": "2025-05-22",
     "nota_fiscal": null,
     "valor_total_bruto": "8864.28",
@@ -9436,7 +8338,7 @@
   "pk": 11,
   "fields": {
     "obra": 9,
-    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRUï¿½ï¿½ES",
+    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRUÇÕES",
     "data_compra": "2025-05-05",
     "nota_fiscal": null,
     "valor_total_bruto": "8214.55",
@@ -9458,7 +8360,7 @@
   "pk": 12,
   "fields": {
     "obra": 9,
-    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRUï¿½ï¿½ES",
+    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRUÇÕES",
     "data_compra": "2025-01-25",
     "nota_fiscal": null,
     "valor_total_bruto": "750.06",
@@ -9480,7 +8382,7 @@
   "pk": 13,
   "fields": {
     "obra": 9,
-    "fornecedor": "Aï¿½OS CORTEZ",
+    "fornecedor": "AÇOS CORTEZ",
     "data_compra": "2025-02-24",
     "nota_fiscal": null,
     "valor_total_bruto": "8765.52",
@@ -9502,7 +8404,7 @@
   "pk": 14,
   "fields": {
     "obra": 9,
-    "fornecedor": "Aï¿½OS CORTEZ",
+    "fornecedor": "AÇOS CORTEZ",
     "data_compra": "2025-02-24",
     "nota_fiscal": null,
     "valor_total_bruto": "5852.30",
@@ -9524,7 +8426,7 @@
   "pk": 15,
   "fields": {
     "obra": 9,
-    "fornecedor": "Aï¿½OS CORTEZ",
+    "fornecedor": "AÇOS CORTEZ",
     "data_compra": "2025-03-17",
     "nota_fiscal": null,
     "valor_total_bruto": "270.00",
@@ -9546,7 +8448,7 @@
   "pk": 16,
   "fields": {
     "obra": 9,
-    "fornecedor": "Aï¿½OS CORTEZ",
+    "fornecedor": "AÇOS CORTEZ",
     "data_compra": "2025-04-02",
     "nota_fiscal": null,
     "valor_total_bruto": "5012.40",
@@ -9568,7 +8470,7 @@
   "pk": 17,
   "fields": {
     "obra": 9,
-    "fornecedor": "Aï¿½OS CORTEZ",
+    "fornecedor": "AÇOS CORTEZ",
     "data_compra": "2025-04-07",
     "nota_fiscal": null,
     "valor_total_bruto": "6409.36",
@@ -9590,7 +8492,7 @@
   "pk": 18,
   "fields": {
     "obra": 9,
-    "fornecedor": "Aï¿½OS CORTEZ",
+    "fornecedor": "AÇOS CORTEZ",
     "data_compra": "2025-04-10",
     "nota_fiscal": null,
     "valor_total_bruto": "5138.20",
@@ -9612,7 +8514,7 @@
   "pk": 19,
   "fields": {
     "obra": 9,
-    "fornecedor": "Aï¿½OS CORTEZ",
+    "fornecedor": "AÇOS CORTEZ",
     "data_compra": "2025-04-24",
     "nota_fiscal": null,
     "valor_total_bruto": "6020.92",
@@ -9634,7 +8536,7 @@
   "pk": 20,
   "fields": {
     "obra": 9,
-    "fornecedor": "ESPAï¿½O DO ALUMï¿½NIO",
+    "fornecedor": "ESPAÇO DO ALUMÍNIO",
     "data_compra": "2025-06-18",
     "nota_fiscal": null,
     "valor_total_bruto": "7694.19",
@@ -9656,7 +8558,7 @@
   "pk": 21,
   "fields": {
     "obra": 9,
-    "fornecedor": "ESPAï¿½O DO ALUMï¿½NIO",
+    "fornecedor": "ESPAÇO DO ALUMÍNIO",
     "data_compra": "2025-06-03",
     "nota_fiscal": null,
     "valor_total_bruto": "2778.73",
@@ -9832,7 +8734,7 @@
   "pk": 29,
   "fields": {
     "obra": 9,
-    "fornecedor": "RUPESTRE SINALIZAï¿½ï¿½O",
+    "fornecedor": "RUPESTRE SINALIZAÇÃO",
     "data_compra": "2025-05-07",
     "nota_fiscal": null,
     "valor_total_bruto": "290.00",
@@ -9854,7 +8756,7 @@
   "pk": 30,
   "fields": {
     "obra": 9,
-    "fornecedor": "Aï¿½OS CORTEZ",
+    "fornecedor": "AÇOS CORTEZ",
     "data_compra": "2025-05-05",
     "nota_fiscal": null,
     "valor_total_bruto": "2943.56",
@@ -9876,7 +8778,7 @@
   "pk": 31,
   "fields": {
     "obra": 9,
-    "fornecedor": "Aï¿½OS CORTEZ",
+    "fornecedor": "AÇOS CORTEZ",
     "data_compra": "2025-05-15",
     "nota_fiscal": null,
     "valor_total_bruto": "8617.54",
@@ -9920,7 +8822,7 @@
   "pk": 33,
   "fields": {
     "obra": 10,
-    "fornecedor": "Aï¿½OS CORTEZ",
+    "fornecedor": "AÇOS CORTEZ",
     "data_compra": "2025-08-21",
     "nota_fiscal": null,
     "valor_total_bruto": "32389.00",
@@ -10184,13 +9086,13 @@
   "pk": 46,
   "fields": {
     "obra": 9,
-    "fornecedor": "PEDRAS SACOMï¿½",
+    "fornecedor": "PEDRAS SACOMÃ",
     "data_compra": "2025-08-22",
     "nota_fiscal": null,
     "valor_total_bruto": "40000.00",
     "desconto": "0.00",
     "valor_total_liquido": "40000.00",
-    "observacoes": "FORNECIMENTO E INSTALAï¿½ï¿½O DOS Mï¿½RMORES DA ESCADARIA, PIAS E NICHOS DOS BANHEIROS, PIAS DAS COZINHAS, SOLEIRAS DAS PORTAS E BAGUETES",
+    "observacoes": "FORNECIMENTO E INSTALAÇÃO DOS MÁRMORES DA ESCADARIA, PIAS E NICHOS DOS BANHEIROS, PIAS DAS COZINHAS, SOLEIRAS DAS PORTAS E BAGUETES",
     "data_pagamento": "2025-08-22",
     "created_at": "2025-08-29T17:56:31.143Z",
     "updated_at": "2025-08-29T17:56:31.160Z",
@@ -10206,13 +9108,13 @@
   "pk": 47,
   "fields": {
     "obra": 9,
-    "fornecedor": "JR FACILITES AUTOMAï¿½ï¿½O PREDIAL LTDA",
+    "fornecedor": "JR FACILITES AUTOMAÇÃO PREDIAL LTDA",
     "data_compra": "2025-08-12",
     "nota_fiscal": null,
     "valor_total_bruto": "8500.00",
     "desconto": "0.00",
     "valor_total_liquido": "8500.00",
-    "observacoes": "MONTAGEM DO CENTRO DE MEDIï¿½ï¿½O PARA 10 ( DEZ ) MEDIDORES",
+    "observacoes": "MONTAGEM DO CENTRO DE MEDIÇÃO PARA 10 ( DEZ ) MEDIDORES",
     "data_pagamento": "2025-08-12",
     "created_at": "2025-09-01T14:44:51.602Z",
     "updated_at": "2025-09-01T14:44:51.620Z",
@@ -12366,7 +11268,7 @@
     "created_at": "2025-08-19T11:58:23.390Z",
     "tipo": "manual",
     "size_bytes": 303104,
-    "description": "{'description': 'caderno tiï¿½o'}"
+    "description": "{'description': 'caderno tião'}"
   }
 },
 {
@@ -12385,7 +11287,7 @@
   "fields": {
     "locacao": 324,
     "anexo": "anexos_locacoes/324/91b58acb1f664b80abbf1091d524a2ba.pdf",
-    "descricao": "ORï¿½AMENTO ADï¿½O.pdf",
+    "descricao": "ORÇAMENTO ADÃO.pdf",
     "uploaded_at": "2025-08-26T14:55:29.157Z"
   }
 },
@@ -12394,9 +11296,9 @@
   "pk": 3,
   "fields": {
     "compra": 33,
-    "arquivo": "anexos/compras/33/ORï¿½_FUNDAï¿½ï¿½O_Aï¿½O_CORTEZ.jpg",
-    "nome_original": "ORï¿½ FUNDAï¿½ï¿½O Aï¿½O CORTEZ.jpg",
-    "descricao": "ORï¿½ FUNDAï¿½ï¿½O Aï¿½O CORTEZ.jpg",
+    "arquivo": "anexos/compras/33/ORÇ_FUNDAÇÃO_AÇO_CORTEZ.jpg",
+    "nome_original": "ORÇ FUNDAÇÃO AÇO CORTEZ.jpg",
+    "descricao": "ORÇ FUNDAÇÃO AÇO CORTEZ.jpg",
     "tipo_arquivo": "JPG",
     "tamanho_arquivo": 527358,
     "uploaded_at": "2025-08-27T17:23:18.150Z",
@@ -12408,9 +11310,9 @@
   "pk": 4,
   "fields": {
     "compra": 46,
-    "arquivo": "anexos/compras/46/contrato_adï¿½o.docx",
-    "nome_original": "contrato adï¿½o.docx",
-    "descricao": "contrato adï¿½o.docx",
+    "arquivo": "anexos/compras/46/contrato_adão.docx",
+    "nome_original": "contrato adão.docx",
+    "descricao": "contrato adão.docx",
     "tipo_arquivo": "DOCX",
     "tamanho_arquivo": 18292,
     "uploaded_at": "2025-08-29T17:56:31.186Z",
