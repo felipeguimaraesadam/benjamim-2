@@ -28,11 +28,8 @@ services:
     buildCommand: "npm install && npm run build" 
     startCommand: "npm run preview -- --host 0.0.0.0" 
     envVars: 
-      - key: VITE_API_URL 
-        fromService: 
-          type: web 
-          name: backend 
-          property: url 
+      - key: VITE_API_URL
+        value: https://sgo-backend-h2d9.onrender.com 
 
 # 3. Banco de Dados - Não mexer, está correto 
 databases: 
