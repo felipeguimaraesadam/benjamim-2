@@ -105,8 +105,28 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static_react_build' / 'assets',
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ============================================================================== 
+ # CONFIGURAÇÃO DE ARMAZENAMENTO DE MÍDIA (AWS S3) 
+ # ============================================================================== 
+ # Estas configurações só serão ativadas se a variável de ambiente 
+ # 'USE_S3' estiver definida como 'TRUE'. 
+ if os.environ.get('USE_S3') == 'TRUE': 
+     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID') 
+     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY') 
+     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME') 
+     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME') 
+     AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com' 
+     AWS_S3_OBJECT_PARAMETERS = { 
+         'CacheControl': 'max-age=86400', 
+     } 
+     AWS_LOCATION = 'media' 
+     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/' 
+     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage' 
+ else: 
+     # Configuração padrão para desenvolvimento local 
+     MEDIA_URL = '/media/' 
+     MEDIA_ROOT = os.path.join(BASE_DIR, 'media') 
+ # ============================================================================== 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'core.Usuario'
 REST_FRAMEWORK = {
