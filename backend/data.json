@@ -1,5 +1,3 @@
-DEBUG: Material model has been extended with categoria_uso_padrao.
-DEBUG: ItemCompra model has been extended with categoria_uso.
 [
 {
   "model": "core.usuario",
@@ -69,9 +67,9 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.obra",
   "pk": 8,
   "fields": {
-    "nome_obra": "PONTA POR√, 448",
-    "endereco_completo": "PONTA POR√, 448 VILA IPOJUCA\nCEP 05058 000",
-    "cidade": "S√O PAULO",
+    "nome_obra": "PONTA POR√É, 448",
+    "endereco_completo": "PONTA POR√É, 448 VILA IPOJUCA\nCEP 05058 000",
+    "cidade": "S√ÉO PAULO",
     "status": "Em Andamento",
     "data_inicio": "2025-07-11",
     "data_prevista_fim": "2025-09-15",
@@ -88,7 +86,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "fields": {
     "nome_obra": "VESPASIANO, 890",
     "endereco_completo": "VESPASIANO, 890  VILA ROMANA\nCEP 05044 050",
-    "cidade": "S√O PAULO",
+    "cidade": "S√ÉO PAULO",
     "status": "Em Andamento",
     "data_inicio": "2025-02-06",
     "data_prevista_fim": "2025-08-31",
@@ -105,7 +103,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "fields": {
     "nome_obra": "CUNHA GAGO, 815",
     "endereco_completo": "RUA CUNHA GAGO, 815 PINHEIROS\nCEP 05421 001",
-    "cidade": "S√O PAULO",
+    "cidade": "S√ÉO PAULO",
     "status": "Planejada",
     "data_inicio": null,
     "data_prevista_fim": null,
@@ -120,9 +118,9 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.obra",
   "pk": 12,
   "fields": {
-    "nome_obra": "PONTA POR√ 422",
-    "endereco_completo": "RUA PONTA POR√ 422 VILA ROMANA S√O PAULO CEP 05058000",
-    "cidade": "S√O PAULO",
+    "nome_obra": "PONTA POR√É 422",
+    "endereco_completo": "RUA PONTA POR√É 422 VILA ROMANA S√ÉO PAULO CEP 05058000",
+    "cidade": "S√ÉO PAULO",
     "status": "Em Andamento",
     "data_inicio": null,
     "data_prevista_fim": null,
@@ -137,9 +135,9 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.obra",
   "pk": 13,
   "fields": {
-    "nome_obra": "PONTA POR√ 442",
-    "endereco_completo": "RUA PONTA POR√ 442 -  VILA IPOJUCA - S√O PAULO SP\nCEP 05058 000",
-    "cidade": "S√O PAULO",
+    "nome_obra": "PONTA POR√É 442",
+    "endereco_completo": "RUA PONTA POR√É 442 -  VILA IPOJUCA - S√ÉO PAULO SP\nCEP 05058 000",
+    "cidade": "S√ÉO PAULO",
     "status": "Planejada",
     "data_inicio": "2025-09-01",
     "data_prevista_fim": null,
@@ -155,7 +153,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 14,
   "fields": {
     "nome_completo": "BENJAMIM DELMONDES",
-    "cargo": "RESPONS¡VEL",
+    "cargo": "RESPONS√ÅVEL",
     "data_contratacao": "2025-01-02",
     "valor_diaria_padrao": null,
     "valor_metro_padrao": null,
@@ -178,7 +176,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 16,
   "fields": {
-    "nome_completo": "JUAN FERREIRA DA PAIX√O",
+    "nome_completo": "JUAN FERREIRA DA PAIX√ÉO",
     "cargo": "AJUDANTE",
     "data_contratacao": "2025-07-11",
     "valor_diaria_padrao": "150.00",
@@ -202,7 +200,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 18,
   "fields": {
-    "nome_completo": "JOS… CARLOS BINA DA  HORA",
+    "nome_completo": "JOS√â CARLOS BINA DA  HORA",
     "cargo": "EMPREITEIRO",
     "data_contratacao": "2025-04-02",
     "valor_diaria_padrao": null,
@@ -262,7 +260,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 23,
   "fields": {
-    "nome_completo": "RONNEY GUERRA  DA PAIX√O",
+    "nome_completo": "RONNEY GUERRA  DA PAIX√ÉO",
     "cargo": "AJUDANTE",
     "data_contratacao": "2025-05-12",
     "valor_diaria_padrao": "150.00",
@@ -274,7 +272,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 24,
   "fields": {
-    "nome_completo": "JO√O BINA DA HORA",
+    "nome_completo": "JO√ÉO BINA DA HORA",
     "cargo": "CARPINTEIRO",
     "data_contratacao": "2025-05-06",
     "valor_diaria_padrao": "300.00",
@@ -286,7 +284,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 25,
   "fields": {
-    "nome_completo": "JO√O PAULO FIUZA LIMA",
+    "nome_completo": "JO√ÉO PAULO FIUZA LIMA",
     "cargo": "PEDREIRO",
     "data_contratacao": "2025-06-30",
     "valor_diaria_padrao": "300.00",
@@ -298,7 +296,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 26,
   "fields": {
-    "nome_completo": "JOSIMAR SOUZA REIS Z… BAIXINHO",
+    "nome_completo": "JOSIMAR SOUZA REIS Z√â BAIXINHO",
     "cargo": "AJUDANTE",
     "data_contratacao": "2025-05-06",
     "valor_diaria_padrao": "150.00",
@@ -346,7 +344,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 30,
   "fields": {
-    "nome_completo": "SEU RIBEIRO / DAMI√O SOARES RIBEIRO",
+    "nome_completo": "SEU RIBEIRO / DAMI√ÉO SOARES RIBEIRO",
     "cargo": "ELETRECISTA",
     "data_contratacao": "2025-05-14",
     "valor_diaria_padrao": "300.00",
@@ -418,7 +416,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 36,
   "fields": {
-    "nome_completo": "CARLOS ANDR…",
+    "nome_completo": "CARLOS ANDR√â",
     "cargo": "AJUDANTE",
     "data_contratacao": "2025-07-28",
     "valor_diaria_padrao": "150.00",
@@ -430,7 +428,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 38,
   "fields": {
-    "nome_completo": "MIRO TIO DO JO√O",
+    "nome_completo": "MIRO TIO DO JO√ÉO",
     "cargo": "AJUDANTE",
     "data_contratacao": "2025-08-07",
     "valor_diaria_padrao": "150.00",
@@ -442,7 +440,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 39,
   "fields": {
-    "nome_completo": "AD√O VALDO FRAN«A ALVES",
+    "nome_completo": "AD√ÉO VALDO FRAN√ÉA ALVES",
     "cargo": "AJULEIJISTA",
     "data_contratacao": "2025-08-19",
     "valor_diaria_padrao": null,
@@ -466,7 +464,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.funcionario",
   "pk": 41,
   "fields": {
-    "nome_completo": "JOS… FABIO DA SILVA - FABIO",
+    "nome_completo": "JOS√â FABIO DA SILVA - FABIO",
     "cargo": "PEDREIRO",
     "data_contratacao": "2025-08-26",
     "valor_diaria_padrao": "300.00",
@@ -1292,7 +1290,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "ALVENARIA T…RREO PRIMEIRO, SEGUNDO ANDAR E COBERTURA",
+    "servico_externo": "ALVENARIA T√âRREO PRIMEIRO, SEGUNDO ANDAR E COBERTURA",
     "data_locacao_inicio": "2025-05-05",
     "data_locacao_fim": "2025-05-05",
     "tipo_pagamento": "empreitada",
@@ -1309,7 +1307,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "COLOCA«√O DE PORTAS E JANELAS",
+    "servico_externo": "COLOCA√É√ÉO DE PORTAS E JANELAS",
     "data_locacao_inicio": "2025-07-07",
     "data_locacao_fim": "2025-07-07",
     "tipo_pagamento": "empreitada",
@@ -2200,7 +2198,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "TRABALHOU AT… MEIO DIA"
+    "observacoes": "TRABALHOU AT√â MEIO DIA"
   }
 },
 {
@@ -4641,14 +4639,14 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "LOCA«√O DE EQUIPAMENTO",
+    "servico_externo": "LOCA√É√ÉO DE EQUIPAMENTO",
     "data_locacao_inicio": "2025-07-18",
     "data_locacao_fim": "2025-07-18",
     "tipo_pagamento": "empreitada",
     "valor_pagamento": "1245.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "LOCA«√O DE 1 MARTELETE 15KG C/ TALHADEIRA E PONTEIRO\r\n51 ESCORAS PARA LAJE AT… 3,30 METROS\r\n39 FORCADOS PARA ESCORA DE LAJE\r\n20 METROS LINEAR DE PERFIL V8 PARA LAJE"
+    "observacoes": "LOCA√É√ÉO DE 1 MARTELETE 15KG C/ TALHADEIRA E PONTEIRO\r\n51 ESCORAS PARA LAJE AT√â 3,30 METROS\r\n39 FORCADOS PARA ESCORA DE LAJE\r\n20 METROS LINEAR DE PERFIL V8 PARA LAJE"
   }
 },
 {
@@ -4665,7 +4663,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "4000.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "PROJETO APTO 30M≤  R$ 2500,00\r\nFACHADA R$ 1500,00"
+    "observacoes": "PROJETO APTO 30M‚ñì  R$ 2500,00\r\nFACHADA R$ 1500,00"
   }
 },
 {
@@ -4692,14 +4690,14 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "LOCA«√O DE EQUIPAMENTO",
+    "servico_externo": "LOCA√É√ÉO DE EQUIPAMENTO",
     "data_locacao_inicio": "2025-05-29",
     "data_locacao_fim": "2025-05-29",
     "tipo_pagamento": "empreitada",
     "valor_pagamento": "2264.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "ASAP LOCA«√O DE ANDAIMES LTDA\r\nLOCA«√O 52 ESCORAS PARA LAJE DE AT… 3,30\r\n52 FORCADOS PARA ESCORA DE LAJE\r\n50M LINEAR DE PERFIL V8\r\n52 TRIP…S PARA ESCORA DE LAJE\r\n12 ESCORAS PARA LAJE AT… 3,30"
+    "observacoes": "ASAP LOCA√É√ÉO DE ANDAIMES LTDA\r\nLOCA√É√ÉO 52 ESCORAS PARA LAJE DE AT√â 3,30\r\n52 FORCADOS PARA ESCORA DE LAJE\r\n50M LINEAR DE PERFIL V8\r\n52 TRIP√âS PARA ESCORA DE LAJE\r\n12 ESCORAS PARA LAJE AT√â 3,30"
   }
 },
 {
@@ -4709,14 +4707,14 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 10,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "LOCA«√O DE ESCAVADEIRA E CAMINH√O BASCULANTE",
+    "servico_externo": "LOCA√É√ÉO DE ESCAVADEIRA E CAMINH√ÉO BASCULANTE",
     "data_locacao_inicio": "2025-08-11",
     "data_locacao_fim": "2025-08-11",
     "tipo_pagamento": "empreitada",
     "valor_pagamento": "15661.06",
     "data_pagamento": "2025-08-15",
     "status_locacao": "ativa",
-    "observacoes": "TRANSZERBINATTI\r\nLOCA«√O DE ESCAVADEIRA DE 8 TONELADAS E CAMINH√O BASCULANTE COM BOTA FORA."
+    "observacoes": "TRANSZERBINATTI\r\nLOCA√É√ÉO DE ESCAVADEIRA DE 8 TONELADAS E CAMINH√ÉO BASCULANTE COM BOTA FORA."
   }
 },
 {
@@ -4726,14 +4724,14 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "COLOCA«√O DE PISO/AZULEJO  AD√O",
+    "servico_externo": "COLOCA√É√ÉO DE PISO/AZULEJO  AD√ÉO",
     "data_locacao_inicio": "2025-08-19",
     "data_locacao_fim": "2025-08-19",
     "tipo_pagamento": "empreitada",
     "valor_pagamento": "30800.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "COLOCA«√O DE 560 M≤ DE PISO E AZULEJO\r\nVALOR R$ 55,00 M≤"
+    "observacoes": "COLOCA√É√ÉO DE 560 M‚ñì DE PISO E AZULEJO\r\nVALOR R$ 55,00 M‚ñì"
   }
 },
 {
@@ -4913,7 +4911,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 10,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "EXECU«√O DA CONTEN«√O -TI√O",
+    "servico_externo": "EXECU√É√ÉO DA CONTEN√É√ÉO -TI√ÉO",
     "data_locacao_inicio": "2025-08-11",
     "data_locacao_fim": "2025-08-11",
     "tipo_pagamento": "diaria",
@@ -4937,7 +4935,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "16999.99",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "EXECU«√O  DE ESTACAS DO TIPO H…LECE CONTINUA"
+    "observacoes": "EXECU√É√ÉO  DE ESTACAS DO TIPO H√âLECE CONTINUA"
   }
 },
 {
@@ -5253,14 +5251,14 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "MASSA FACHADA - TI√O",
+    "servico_externo": "MASSA FACHADA - TI√ÉO",
     "data_locacao_inicio": "2025-07-01",
     "data_locacao_fim": "2025-07-01",
     "tipo_pagamento": "diaria",
     "valor_pagamento": "25200.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "VALOR COBRADO POR M≤ - R$ 45,00"
+    "observacoes": "VALOR COBRADO POR M‚ñì - R$ 45,00"
   }
 },
 {
@@ -5576,14 +5574,14 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 9,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "M√O DE OBRA",
+    "servico_externo": "M√ÉO DE OBRA",
     "data_locacao_inicio": "2025-01-03",
     "data_locacao_fim": "2025-01-03",
     "tipo_pagamento": "diaria",
     "valor_pagamento": "51600.00",
     "data_pagamento": "2025-01-03",
     "status_locacao": "ativa",
-    "observacoes": "VALOR DA M√O DE OBRA DIA 03/01/2025 AT… 25/04/2025\r\nR$ 51.600,00"
+    "observacoes": "VALOR DA M√ÉO DE OBRA DIA 03/01/2025 AT√â 25/04/2025\r\nR$ 51.600,00"
   }
 },
 {
@@ -5593,14 +5591,14 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 10,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "EXECU«√O DA FUNDA«√O E LAJES",
+    "servico_externo": "EXECU√É√ÉO DA FUNDA√É√ÉO E LAJES",
     "data_locacao_inicio": "2025-09-02",
     "data_locacao_fim": "2025-09-02",
     "tipo_pagamento": "diaria",
     "valor_pagamento": "250000.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "EXECU«√O FUNDA«√O E PRIMEIRA LAJE R$ 130.000,00\r\nSEGUNDA E TERCEIRA LAJE  R$120.000,00\r\nPAGAMENTO CONFORME CONTRATO"
+    "observacoes": "EXECU√É√ÉO FUNDA√É√ÉO E PRIMEIRA LAJE R$ 130.000,00\r\nSEGUNDA E TERCEIRA LAJE  R$120.000,00\r\nPAGAMENTO CONFORME CONTRATO"
   }
 },
 {
@@ -5610,14 +5608,14 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "obra": 13,
     "equipe": null,
     "funcionario_locado": null,
-    "servico_externo": "DEMOLI«√O",
+    "servico_externo": "DEMOLI√É√ÉO",
     "data_locacao_inicio": "2025-09-02",
     "data_locacao_fim": "2025-09-02",
     "tipo_pagamento": "diaria",
     "valor_pagamento": "10000.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "02/09/2025 COME«OU A DEMOLI«√O DA OBRA PONTA POR√ 442\r\nVALOR DA EMPREITA R$ 10.000,00\r\nJOS… CARLOS BINA DA HORA - EMPREITEIRO"
+    "observacoes": "02/09/2025 COME√ÉOU A DEMOLI√É√ÉO DA OBRA PONTA POR√É 442\r\nVALOR DA EMPREITA R$ 10.000,00\r\nJOS√â CARLOS BINA DA HORA - EMPREITEIRO"
   }
 },
 {
@@ -5668,7 +5666,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 373. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 373. None"
   }
 },
 {
@@ -5685,7 +5683,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 375. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 375. None"
   }
 },
 {
@@ -5702,7 +5700,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 376. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 376. None"
   }
 },
 {
@@ -5719,7 +5717,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 495. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 495. None"
   }
 },
 {
@@ -5736,7 +5734,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 497. Duplicado de locaÁ„o ID 373. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 497. Duplicado de loca√æ√ío ID 373. None"
   }
 },
 {
@@ -5753,7 +5751,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 498. Duplicado de locaÁ„o ID 375. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 498. Duplicado de loca√æ√ío ID 375. None"
   }
 },
 {
@@ -5770,7 +5768,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 499. Duplicado de locaÁ„o ID 376. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 499. Duplicado de loca√æ√ío ID 376. None"
   }
 },
 {
@@ -5787,7 +5785,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 496. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 496. None"
   }
 },
 {
@@ -5821,7 +5819,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 502. Duplicado de locaÁ„o ID 497. Duplicado de locaÁ„o ID 373. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 502. Duplicado de loca√æ√ío ID 497. Duplicado de loca√æ√ío ID 373. None"
   }
 },
 {
@@ -5838,7 +5836,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 503. Duplicado de locaÁ„o ID 498. Duplicado de locaÁ„o ID 375. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 503. Duplicado de loca√æ√ío ID 498. Duplicado de loca√æ√ío ID 375. None"
   }
 },
 {
@@ -5855,7 +5853,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 504. Duplicado de locaÁ„o ID 499. Duplicado de locaÁ„o ID 376. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 504. Duplicado de loca√æ√ío ID 499. Duplicado de loca√æ√ío ID 376. None"
   }
 },
 {
@@ -5872,7 +5870,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 507. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 507. None"
   }
 },
 {
@@ -5889,7 +5887,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 506. Duplicado de locaÁ„o ID 496. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 506. Duplicado de loca√æ√ío ID 496. None"
   }
 },
 {
@@ -5906,7 +5904,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 508. Duplicado de locaÁ„o ID 502. Duplicado de locaÁ„o ID 497. Duplicado de locaÁ„o ID 373. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 508. Duplicado de loca√æ√ío ID 502. Duplicado de loca√æ√ío ID 497. Duplicado de loca√æ√ío ID 373. None"
   }
 },
 {
@@ -5923,7 +5921,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 509. Duplicado de locaÁ„o ID 503. Duplicado de locaÁ„o ID 498. Duplicado de locaÁ„o ID 375. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 509. Duplicado de loca√æ√ío ID 503. Duplicado de loca√æ√ío ID 498. Duplicado de loca√æ√ío ID 375. None"
   }
 },
 {
@@ -5940,7 +5938,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 511. Duplicado de locaÁ„o ID 507. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 511. Duplicado de loca√æ√ío ID 507. None"
   }
 },
 {
@@ -5957,7 +5955,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 512. Duplicado de locaÁ„o ID 506. Duplicado de locaÁ„o ID 496. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 512. Duplicado de loca√æ√ío ID 506. Duplicado de loca√æ√ío ID 496. None"
   }
 },
 {
@@ -5974,7 +5972,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 510. Duplicado de locaÁ„o ID 504. Duplicado de locaÁ„o ID 499. Duplicado de locaÁ„o ID 376. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 510. Duplicado de loca√æ√ío ID 504. Duplicado de loca√æ√ío ID 499. Duplicado de loca√æ√ío ID 376. None"
   }
 },
 {
@@ -5991,7 +5989,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 501. Duplicado de locaÁ„o ID 495. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 501. Duplicado de loca√æ√ío ID 495. None"
   }
 },
 {
@@ -6093,7 +6091,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 513. Duplicado de locaÁ„o ID 508. Duplicado de locaÁ„o ID 502. Duplicado de locaÁ„o ID 497. Duplicado de locaÁ„o ID 373. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 513. Duplicado de loca√æ√ío ID 508. Duplicado de loca√æ√ío ID 502. Duplicado de loca√æ√ío ID 497. Duplicado de loca√æ√ío ID 373. None"
   }
 },
 {
@@ -6110,7 +6108,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 510. Duplicado de locaÁ„o ID 504. Duplicado de locaÁ„o ID 499. Duplicado de locaÁ„o ID 376. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 510. Duplicado de loca√æ√ío ID 504. Duplicado de loca√æ√ío ID 499. Duplicado de loca√æ√ío ID 376. None"
   }
 },
 {
@@ -6144,7 +6142,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 507. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 507. None"
   }
 },
 {
@@ -6161,7 +6159,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 514. Duplicado de locaÁ„o ID 509. Duplicado de locaÁ„o ID 503. Duplicado de locaÁ„o ID 498. Duplicado de locaÁ„o ID 375. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 514. Duplicado de loca√æ√ío ID 509. Duplicado de loca√æ√ío ID 503. Duplicado de loca√æ√ío ID 498. Duplicado de loca√æ√ío ID 375. None"
   }
 },
 {
@@ -6178,7 +6176,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "150.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 518. Duplicado de locaÁ„o ID 501. Duplicado de locaÁ„o ID 495. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 518. Duplicado de loca√æ√ío ID 501. Duplicado de loca√æ√ío ID 495. None"
   }
 },
 {
@@ -6195,7 +6193,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 500. Duplicado de locaÁ„o ID 377. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 500. Duplicado de loca√æ√ío ID 377. None"
   }
 },
 {
@@ -6212,7 +6210,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 530. Duplicado de locaÁ„o ID 500. Duplicado de locaÁ„o ID 377. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 530. Duplicado de loca√æ√ío ID 500. Duplicado de loca√æ√ío ID 377. None"
   }
 },
 {
@@ -6229,7 +6227,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "valor_pagamento": "300.00",
     "data_pagamento": null,
     "status_locacao": "ativa",
-    "observacoes": "Duplicado de locaÁ„o ID 531. Duplicado de locaÁ„o ID 530. Duplicado de locaÁ„o ID 500. Duplicado de locaÁ„o ID 377. None"
+    "observacoes": "Duplicado de loca√æ√ío ID 531. Duplicado de loca√æ√ío ID 530. Duplicado de loca√æ√ío ID 500. Duplicado de loca√æ√ío ID 377. None"
   }
 },
 {
@@ -6291,8 +6289,8 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 7,
   "fields": {
-    "nome": "ASTROFOIL 50M≤ MANTA ISOLANTE",
-    "unidade_medida": "m≤",
+    "nome": "ASTROFOIL 50M‚ñì MANTA ISOLANTE",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Alvenaria"
@@ -6313,7 +6311,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 9,
   "fields": {
-    "nome": "CABO FLEXÕVEL1,5MM2 BR COM 100M",
+    "nome": "CABO FLEX‚ïêVEL1,5MM2 BR COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6324,7 +6322,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 10,
   "fields": {
-    "nome": "CABO FLEXÕVEL 2,5MM2 PT COM 100M",
+    "nome": "CABO FLEX‚ïêVEL 2,5MM2 PT COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6335,7 +6333,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 11,
   "fields": {
-    "nome": "CABO FLEXÕVEL 2,5 MM2 AZ COM 100M",
+    "nome": "CABO FLEX‚ïêVEL 2,5 MM2 AZ COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6346,7 +6344,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 12,
   "fields": {
-    "nome": "CABO FLEXÕVEL 2,5MM VD COM 100M",
+    "nome": "CABO FLEX‚ïêVEL 2,5MM VD COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6357,7 +6355,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 13,
   "fields": {
-    "nome": "CABO FLEXÕVEL 4,0MM2 VM COM 100M",
+    "nome": "CABO FLEX‚ïêVEL 4,0MM2 VM COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6368,7 +6366,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 14,
   "fields": {
-    "nome": "CABO FLEXÕVEL 6,0MM2 VM COM 100M",
+    "nome": "CABO FLEX‚ïêVEL 6,0MM2 VM COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6379,7 +6377,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 15,
   "fields": {
-    "nome": "CABO FLEXÕVEL 1,5MM2 AM COM 100M",
+    "nome": "CABO FLEX‚ïêVEL 1,5MM2 AM COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6390,7 +6388,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 16,
   "fields": {
-    "nome": "CABO FLEXÕVEL 2,5MM2 VM COM 100M",
+    "nome": "CABO FLEX‚ïêVEL 2,5MM2 VM COM 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6401,7 +6399,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 17,
   "fields": {
-    "nome": "CIMDUTO CORRUGADO PEAD 1 1/4® COM 50MTS",
+    "nome": "CIMDUTO CORRUGADO PEAD 1 1/4¬ø COM 50MTS",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6490,7 +6488,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 25,
   "fields": {
     "nome": "TELHA CHAPA SIMPLES GALVALUME TR40 0,98",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Alvenaria"
@@ -6533,7 +6531,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 29,
   "fields": {
-    "nome": "CUNHA PARA NIVELAMENTO REVEST 50 P«AS",
+    "nome": "CUNHA PARA NIVELAMENTO REVEST 50 P√ÉAS",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6544,7 +6542,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 30,
   "fields": {
-    "nome": "ESPA«ADOR CORTAG NIVELADOR REVEST 1,5MM COM 500",
+    "nome": "ESPA√ÉADOR CORTAG NIVELADOR REVEST 1,5MM COM 500",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6566,7 +6564,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 32,
   "fields": {
-    "nome": "VERGALH√O 10.0MM CA50 12MM",
+    "nome": "VERGALH√ÉO 10.0MM CA50 12MM",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6610,7 +6608,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 36,
   "fields": {
-    "nome": "PREGO A«O 17X21",
+    "nome": "PREGO A√ÉO 17X21",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6621,7 +6619,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 37,
   "fields": {
-    "nome": "PREGO A«O 18X27",
+    "nome": "PREGO A√ÉO 18X27",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6643,7 +6641,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 39,
   "fields": {
-    "nome": "DISTANCIADOR PLASTICO DR 25 4.20 ¿ 8.0 MM",
+    "nome": "DISTANCIADOR PLASTICO DR 25 4.20 ‚îî 8.0 MM",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -6732,7 +6730,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 47,
   "fields": {
     "nome": "LAJE H8 EPS S AD",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Fundacao"
@@ -6743,7 +6741,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 48,
   "fields": {
     "nome": "LAJE H12 EPS S AD",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Fundacao"
@@ -6754,7 +6752,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 49,
   "fields": {
     "nome": "LAJE H12 EPS + 1 O 8,0MM",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Fundacao"
@@ -6765,7 +6763,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 50,
   "fields": {
     "nome": "LAJE H12 + 2 O 8,0 MM",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -6776,7 +6774,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 51,
   "fields": {
     "nome": "LAJE H12 EPS + 2 O 8,0MM",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": "Fundacao"
@@ -6951,7 +6949,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 67,
   "fields": {
-    "nome": "MALHA POP REFOR«ADA 15X15 4,2 MM",
+    "nome": "MALHA POP REFOR√ÉADA 15X15 4,2 MM",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7006,7 +7004,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 73,
   "fields": {
-    "nome": "BLOCO NÕVEL 2,80  4,20",
+    "nome": "BLOCO N‚ïêVEL 2,80  4,20",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7017,7 +7015,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 74,
   "fields": {
-    "nome": "BLOCOS  NÕVEL0,00 SUBSOLO 0",
+    "nome": "BLOCOS  N‚ïêVEL0,00 SUBSOLO 0",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7028,7 +7026,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 75,
   "fields": {
-    "nome": "VIGAS SUBSOLO NÕVEL 0",
+    "nome": "VIGAS SUBSOLO N‚ïêVEL 0",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7039,7 +7037,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 76,
   "fields": {
-    "nome": "VIGAS BALDRAME NÕVEL 2,80",
+    "nome": "VIGAS BALDRAME N‚ïêVEL 2,80",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7061,7 +7059,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 78,
   "fields": {
-    "nome": "LAJE SUBSOLO NÕVEL 0",
+    "nome": "LAJE SUBSOLO N‚ïêVEL 0",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7094,7 +7092,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 81,
   "fields": {
-    "nome": "BLOCE DE 15 (14X19X39 ) VEDA«√O/ VAZADO",
+    "nome": "BLOCE DE 15 (14X19X39 ) VEDA√É√ÉO/ VAZADO",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7160,7 +7158,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 87,
   "fields": {
-    "nome": "CAIXA PARA INSTALA«√O ELETR. 4X2 LOCKBOX COM TAMPA",
+    "nome": "CAIXA PARA INSTALA√É√ÉO ELETR. 4X2 LOCKBOX COM TAMPA",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7303,7 +7301,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 100,
   "fields": {
-    "nome": "CABO FLEXÕVEL 4,0MM2 VD C| 100M",
+    "nome": "CABO FLEX‚ïêVEL 4,0MM2 VD C| 100M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7369,7 +7367,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 106,
   "fields": {
-    "nome": "SERRA A«O R¡PIDO SAFE FLEX 24D 12 KBS0122410 1PC  STARRET",
+    "nome": "SERRA A√ÉO R√ÅPIDO SAFE FLEX 24D 12 KBS0122410 1PC  STARRET",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7557,7 +7555,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 123,
   "fields": {
     "nome": "NATURE URBAINE 90X90 ACT RETIFICADO (INTERNO)",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -7567,8 +7565,8 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 124,
   "fields": {
-    "nome": "GRAY STONE 90x90 ACT RETIFICADO RUSTICO ( ¡REA EXTERNA )",
-    "unidade_medida": "m≤",
+    "nome": "GRAY STONE 90x90 ACT RETIFICADO RUSTICO ( √ÅREA EXTERNA )",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -7578,7 +7576,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 125,
   "fields": {
-    "nome": "PORTA LAMBRIL DE ALUMÕNIO BCO COM 3 VIDROS NA LATERAL E MA«ANETA LINHA 25 210X80 ESQUERDO",
+    "nome": "PORTA LAMBRIL DE ALUM‚ïêNIO BCO COM 3 VIDROS NA LATERAL E MA√ÉANETA LINHA 25 210X80 ESQUERDO",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7589,7 +7587,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 126,
   "fields": {
-    "nome": "PORTA LAMBRIL DE ALUMÕNIO BCO C/ 3 VIDROS NA LATERAL E MA«ANETA LINHA 25 210X80  DIREITA",
+    "nome": "PORTA LAMBRIL DE ALUM‚ïêNIO BCO C/ 3 VIDROS NA LATERAL E MA√ÉANETA LINHA 25 210X80  DIREITA",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7600,7 +7598,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 127,
   "fields": {
-    "nome": "ROLO CONDUÕTE 50M",
+    "nome": "ROLO CONDU‚ïêTE 50M",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7611,7 +7609,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 128,
   "fields": {
-    "nome": "TURQUESA M…DIA",
+    "nome": "TURQUESA M√âDIA",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7622,8 +7620,8 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 129,
   "fields": {
-    "nome": "AREIA M…DIA",
-    "unidade_medida": "m≤",
+    "nome": "AREIA M√âDIA",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -7633,7 +7631,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 130,
   "fields": {
-    "nome": "PORTA SACADA 2 FOLHAS M”VEIS ALUMÕNIO BCO LINHA PREMIUM 210X110",
+    "nome": "PORTA SACADA 2 FOLHAS M√ãVEIS ALUM‚ïêNIO BCO LINHA PREMIUM 210X110",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7666,7 +7664,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 133,
   "fields": {
-    "nome": "VITRO MAXIM AR ALUMÕNIO BCO LINHA MODULAR  60X60",
+    "nome": "VITRO MAXIM AR ALUM‚ïêNIO BCO LINHA MODULAR  60X60",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7677,7 +7675,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 134,
   "fields": {
-    "nome": "JANELA VITRO 2 FOLHAS M”VEIS ALUMÕNIO BCO LINHA MODULAR 1,00X1,00",
+    "nome": "JANELA VITRO 2 FOLHAS M√ãVEIS ALUM‚ïêNIO BCO LINHA MODULAR 1,00X1,00",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7721,7 +7719,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 138,
   "fields": {
-    "nome": "REJUNTE FLAXÕVEL 5KG BRANCO WEBER QUARTZOLIT",
+    "nome": "REJUNTE FLAX‚ïêVEL 5KG BRANCO WEBER QUARTZOLIT",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7733,7 +7731,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 139,
   "fields": {
     "nome": "REVESTIMENTO FORMA ACETINADO 30X40  BRANCO",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -7743,7 +7741,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 140,
   "fields": {
-    "nome": "OR« FERRAGEM FUNDA«√O 1 FASE",
+    "nome": "OR√É FERRAGEM FUNDA√É√ÉO 1 FASE",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7765,7 +7763,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 142,
   "fields": {
-    "nome": "ABRA«ADEIRA T18L 200MM X 2,5MM PRETO (C/100)",
+    "nome": "ABRA√ÉADEIRA T18L 200MM X 2,5MM PRETO (C/100)",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7787,7 +7785,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 144,
   "fields": {
-    "nome": "ABRA«ADEIRA T30R 150MM X 3,6MM PRETO (C/ 100)",
+    "nome": "ABRA√ÉADEIRA T30R 150MM X 3,6MM PRETO (C/ 100)",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7831,7 +7829,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 148,
   "fields": {
-    "nome": "ARGAMASSA INTERNA/EXTERNA ACIII FLEXÕVEL CINZA 20KG FORTALEZA",
+    "nome": "ARGAMASSA INTERNA/EXTERNA ACIII FLEX‚ïêVEL CINZA 20KG FORTALEZA",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7843,7 +7841,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 149,
   "fields": {
     "nome": "CONCRETO USINADO",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -7864,7 +7862,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 151,
   "fields": {
-    "nome": "M¡RMORES",
+    "nome": "M√ÅRMORES",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7886,7 +7884,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 153,
   "fields": {
-    "nome": "FORTLEV BUCHA REDU«√O CURTA SOLD 25X20MM",
+    "nome": "FORTLEV BUCHA REDU√É√ÉO CURTA SOLD 25X20MM",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7919,7 +7917,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 156,
   "fields": {
-    "nome": "MONTAGEM DO CENTRO DE MEDI«√O PARA 10 MEDIDORES",
+    "nome": "MONTAGEM DO CENTRO DE MEDI√É√ÉO PARA 10 MEDIDORES",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -7931,7 +7929,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 157,
   "fields": {
     "nome": "CONDUITE CORRUGADO 1 1|4 40MM PT TIPO PEAD",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -7942,7 +7940,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 158,
   "fields": {
     "nome": "CONDUITE CORRUGADO LR 25MM 3|4 KRONA",
-    "unidade_medida": "m≤",
+    "unidade_medida": "m‚ñì",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
     "categoria_uso_padrao": null
@@ -7996,7 +7994,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "model": "core.material",
   "pk": 163,
   "fields": {
-    "nome": "FORTLEV BUCHA REDU«√O LONG SOLD 50X25MM",
+    "nome": "FORTLEV BUCHA REDU√É√ÉO LONG SOLD 50X25MM",
     "unidade_medida": "un",
     "quantidade_em_estoque": "0.00",
     "nivel_minimo_estoque": 0,
@@ -8294,7 +8292,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 9,
   "fields": {
     "obra": 9,
-    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRU«’ES",
+    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRU√Éƒ±ES",
     "data_compra": "2025-04-15",
     "nota_fiscal": null,
     "valor_total_bruto": "8206.38",
@@ -8316,7 +8314,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 10,
   "fields": {
     "obra": 9,
-    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRU«’ES",
+    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRU√Éƒ±ES",
     "data_compra": "2025-05-22",
     "nota_fiscal": null,
     "valor_total_bruto": "8864.28",
@@ -8338,7 +8336,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 11,
   "fields": {
     "obra": 9,
-    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRU«’ES",
+    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRU√Éƒ±ES",
     "data_compra": "2025-05-05",
     "nota_fiscal": null,
     "valor_total_bruto": "8214.55",
@@ -8360,7 +8358,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 12,
   "fields": {
     "obra": 9,
-    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRU«’ES",
+    "fornecedor": "LOPES E MARIN COM. MATERIAIS CONSTRU√Éƒ±ES",
     "data_compra": "2025-01-25",
     "nota_fiscal": null,
     "valor_total_bruto": "750.06",
@@ -8382,7 +8380,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 13,
   "fields": {
     "obra": 9,
-    "fornecedor": "A«OS CORTEZ",
+    "fornecedor": "A√ÉOS CORTEZ",
     "data_compra": "2025-02-24",
     "nota_fiscal": null,
     "valor_total_bruto": "8765.52",
@@ -8404,7 +8402,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 14,
   "fields": {
     "obra": 9,
-    "fornecedor": "A«OS CORTEZ",
+    "fornecedor": "A√ÉOS CORTEZ",
     "data_compra": "2025-02-24",
     "nota_fiscal": null,
     "valor_total_bruto": "5852.30",
@@ -8426,7 +8424,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 15,
   "fields": {
     "obra": 9,
-    "fornecedor": "A«OS CORTEZ",
+    "fornecedor": "A√ÉOS CORTEZ",
     "data_compra": "2025-03-17",
     "nota_fiscal": null,
     "valor_total_bruto": "270.00",
@@ -8448,7 +8446,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 16,
   "fields": {
     "obra": 9,
-    "fornecedor": "A«OS CORTEZ",
+    "fornecedor": "A√ÉOS CORTEZ",
     "data_compra": "2025-04-02",
     "nota_fiscal": null,
     "valor_total_bruto": "5012.40",
@@ -8470,7 +8468,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 17,
   "fields": {
     "obra": 9,
-    "fornecedor": "A«OS CORTEZ",
+    "fornecedor": "A√ÉOS CORTEZ",
     "data_compra": "2025-04-07",
     "nota_fiscal": null,
     "valor_total_bruto": "6409.36",
@@ -8492,7 +8490,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 18,
   "fields": {
     "obra": 9,
-    "fornecedor": "A«OS CORTEZ",
+    "fornecedor": "A√ÉOS CORTEZ",
     "data_compra": "2025-04-10",
     "nota_fiscal": null,
     "valor_total_bruto": "5138.20",
@@ -8514,7 +8512,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 19,
   "fields": {
     "obra": 9,
-    "fornecedor": "A«OS CORTEZ",
+    "fornecedor": "A√ÉOS CORTEZ",
     "data_compra": "2025-04-24",
     "nota_fiscal": null,
     "valor_total_bruto": "6020.92",
@@ -8536,7 +8534,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 20,
   "fields": {
     "obra": 9,
-    "fornecedor": "ESPA«O DO ALUMÕNIO",
+    "fornecedor": "ESPA√ÉO DO ALUM‚ïêNIO",
     "data_compra": "2025-06-18",
     "nota_fiscal": null,
     "valor_total_bruto": "7694.19",
@@ -8558,7 +8556,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 21,
   "fields": {
     "obra": 9,
-    "fornecedor": "ESPA«O DO ALUMÕNIO",
+    "fornecedor": "ESPA√ÉO DO ALUM‚ïêNIO",
     "data_compra": "2025-06-03",
     "nota_fiscal": null,
     "valor_total_bruto": "2778.73",
@@ -8734,7 +8732,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 29,
   "fields": {
     "obra": 9,
-    "fornecedor": "RUPESTRE SINALIZA«√O",
+    "fornecedor": "RUPESTRE SINALIZA√É√ÉO",
     "data_compra": "2025-05-07",
     "nota_fiscal": null,
     "valor_total_bruto": "290.00",
@@ -8756,7 +8754,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 30,
   "fields": {
     "obra": 9,
-    "fornecedor": "A«OS CORTEZ",
+    "fornecedor": "A√ÉOS CORTEZ",
     "data_compra": "2025-05-05",
     "nota_fiscal": null,
     "valor_total_bruto": "2943.56",
@@ -8778,7 +8776,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 31,
   "fields": {
     "obra": 9,
-    "fornecedor": "A«OS CORTEZ",
+    "fornecedor": "A√ÉOS CORTEZ",
     "data_compra": "2025-05-15",
     "nota_fiscal": null,
     "valor_total_bruto": "8617.54",
@@ -8822,7 +8820,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 33,
   "fields": {
     "obra": 10,
-    "fornecedor": "A«OS CORTEZ",
+    "fornecedor": "A√ÉOS CORTEZ",
     "data_compra": "2025-08-21",
     "nota_fiscal": null,
     "valor_total_bruto": "32389.00",
@@ -9086,13 +9084,13 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 46,
   "fields": {
     "obra": 9,
-    "fornecedor": "PEDRAS SACOM√",
+    "fornecedor": "PEDRAS SACOM√É",
     "data_compra": "2025-08-22",
     "nota_fiscal": null,
     "valor_total_bruto": "40000.00",
     "desconto": "0.00",
     "valor_total_liquido": "40000.00",
-    "observacoes": "FORNECIMENTO E INSTALA«√O DOS M¡RMORES DA ESCADARIA, PIAS E NICHOS DOS BANHEIROS, PIAS DAS COZINHAS, SOLEIRAS DAS PORTAS E BAGUETES",
+    "observacoes": "FORNECIMENTO E INSTALA√É√ÉO DOS M√ÅRMORES DA ESCADARIA, PIAS E NICHOS DOS BANHEIROS, PIAS DAS COZINHAS, SOLEIRAS DAS PORTAS E BAGUETES",
     "data_pagamento": "2025-08-22",
     "created_at": "2025-08-29T17:56:31.143Z",
     "updated_at": "2025-08-29T17:56:31.160Z",
@@ -9108,13 +9106,13 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 47,
   "fields": {
     "obra": 9,
-    "fornecedor": "JR FACILITES AUTOMA«√O PREDIAL LTDA",
+    "fornecedor": "JR FACILITES AUTOMA√É√ÉO PREDIAL LTDA",
     "data_compra": "2025-08-12",
     "nota_fiscal": null,
     "valor_total_bruto": "8500.00",
     "desconto": "0.00",
     "valor_total_liquido": "8500.00",
-    "observacoes": "MONTAGEM DO CENTRO DE MEDI«√O PARA 10 ( DEZ ) MEDIDORES",
+    "observacoes": "MONTAGEM DO CENTRO DE MEDI√É√ÉO PARA 10 ( DEZ ) MEDIDORES",
     "data_pagamento": "2025-08-12",
     "created_at": "2025-09-01T14:44:51.602Z",
     "updated_at": "2025-09-01T14:44:51.620Z",
@@ -11268,7 +11266,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
     "created_at": "2025-08-19T11:58:23.390Z",
     "tipo": "manual",
     "size_bytes": 303104,
-    "description": "{'description': 'caderno ti„o'}"
+    "description": "{'description': 'caderno ti√ío'}"
   }
 },
 {
@@ -11287,7 +11285,7 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "fields": {
     "locacao": 324,
     "anexo": "anexos_locacoes/324/91b58acb1f664b80abbf1091d524a2ba.pdf",
-    "descricao": "OR«AMENTO AD√O.pdf",
+    "descricao": "OR√ÉAMENTO AD√ÉO.pdf",
     "uploaded_at": "2025-08-26T14:55:29.157Z"
   }
 },
@@ -11296,9 +11294,9 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 3,
   "fields": {
     "compra": 33,
-    "arquivo": "anexos/compras/33/OR«_FUNDA«√O_A«O_CORTEZ.jpg",
-    "nome_original": "OR« FUNDA«√O A«O CORTEZ.jpg",
-    "descricao": "OR« FUNDA«√O A«O CORTEZ.jpg",
+    "arquivo": "anexos/compras/33/OR√É_FUNDA√É√ÉO_A√ÉO_CORTEZ.jpg",
+    "nome_original": "OR√É FUNDA√É√ÉO A√ÉO CORTEZ.jpg",
+    "descricao": "OR√É FUNDA√É√ÉO A√ÉO CORTEZ.jpg",
     "tipo_arquivo": "JPG",
     "tamanho_arquivo": 527358,
     "uploaded_at": "2025-08-27T17:23:18.150Z",
@@ -11310,9 +11308,9 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   "pk": 4,
   "fields": {
     "compra": 46,
-    "arquivo": "anexos/compras/46/contrato_ad„o.docx",
-    "nome_original": "contrato ad„o.docx",
-    "descricao": "contrato ad„o.docx",
+    "arquivo": "anexos/compras/46/contrato_ad√ío.docx",
+    "nome_original": "contrato ad√ío.docx",
+    "descricao": "contrato ad√ío.docx",
     "tipo_arquivo": "DOCX",
     "tamanho_arquivo": 18292,
     "uploaded_at": "2025-08-29T17:56:31.186Z",
@@ -11320,3 +11318,4 @@ DEBUG: ItemCompra model has been extended with categoria_uso.
   }
 }
 ]
+
