@@ -466,17 +466,26 @@ class Backup(models.Model):
 
 
 class BackupSettings(models.Model):
-    auto_backup_enabled = models.BooleanField(default=True)
+    backup_enabled = models.BooleanField(default=True)
     backup_time = models.TimeField(default='02:00:00')  # 2:00 AM
-    retention_days = models.PositiveIntegerField(default=30)
-    max_backups = models.PositiveIntegerField(default=10)
+    backup_frequency = models.CharField(
+        max_length=20,
+        choices=[('daily', 'Diário'), ('weekly', 'Semanal'), ('monthly', 'Mensal')],
+        default='weekly'
+    )
+    max_backups_to_keep = models.IntegerField(default=10)
+    backup_location = models.CharField(max_length=500, default='/backups/')
+    email_notifications = models.BooleanField(default=True)
+    notification_email = models.EmailField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = 'Configuração de Backup'
         verbose_name_plural = 'Configurações de Backup'
     
     def __str__(self):
-        return f"Configurações de Backup - Auto: {self.auto_backup_enabled}"
+        return f"Configurações de Backup - Auto: {self.backup_enabled}"
 
 
 class AnexoLocacao(models.Model):

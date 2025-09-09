@@ -8653,7 +8653,7 @@
       "observacoes": null,
       "data_pagamento": "2025-06-10",
       "created_at": "2025-08-25T18:26:36.018Z",
-      "updated_at": "2025-09-01T20:24:47Z",
+      "updated_at": "2025-09-01T20:24:47.000Z",
       "forma_pagamento": "AVISTA",
       "numero_parcelas": 1,
       "valor_entrada": "0.00",
@@ -11205,43 +11205,10 @@
   },
   {
     "model": "core.backup",
-    "pk": 6,
+    "pk": 1,
     "fields": {
-      "filename": "backup_manual_20250819_115823.sql",
-      "created_at": "2025-08-19T11:58:23.390Z",
-      "tipo": "manual",
-      "size_bytes": 303104,
-      "description": "{'description': 'caderno tiÒo'}"
-    }
-  },
-  {
-    "model": "core.backup",
-    "pk": 5,
-    "fields": {
-      "filename": "backup_manual_20250818_211537.sql",
-      "created_at": "2025-08-18T21:15:37.923Z",
-      "tipo": "manual",
-      "size_bytes": 303104,
-      "description": "{'description': ''}"
-    }
-  },
-  {
-    "model": "core.backup",
-    "pk": 4,
-    "fields": {
-      "filename": "backup_manual_20250719_233742.sql",
-      "created_at": "2025-07-19T23:37:42.638Z",
-      "tipo": "manual",
-      "size_bytes": 282624,
-      "description": "{'description': ''}"
-    }
-  },
-  {
-    "model": "core.backup",
-    "pk": 3,
-    "fields": {
-      "filename": "backup_manual_20250718_185225.sql",
-      "created_at": "2025-07-18T18:52:25.240Z",
+      "filename": "backup_manual_20250718_184744.sql",
+      "created_at": "2025-07-18T18:47:44.951Z",
       "tipo": "manual",
       "size_bytes": 282624,
       "description": ""
@@ -11260,13 +11227,56 @@
   },
   {
     "model": "core.backup",
-    "pk": 1,
+    "pk": 3,
     "fields": {
-      "filename": "backup_manual_20250718_184744.sql",
-      "created_at": "2025-07-18T18:47:44.951Z",
+      "filename": "backup_manual_20250718_185225.sql",
+      "created_at": "2025-07-18T18:52:25.240Z",
       "tipo": "manual",
       "size_bytes": 282624,
       "description": ""
+    }
+  },
+  {
+    "model": "core.backup",
+    "pk": 4,
+    "fields": {
+      "filename": "backup_manual_20250719_233742.sql",
+      "created_at": "2025-07-19T23:37:42.638Z",
+      "tipo": "manual",
+      "size_bytes": 282624,
+      "description": "{'description': ''}"
+    }
+  },
+  {
+    "model": "core.backup",
+    "pk": 5,
+    "fields": {
+      "filename": "backup_manual_20250818_211537.sql",
+      "created_at": "2025-08-18T21:15:37.923Z",
+      "tipo": "manual",
+      "size_bytes": 303104,
+      "description": "{'description': ''}"
+    }
+  },
+  {
+    "model": "core.backup",
+    "pk": 6,
+    "fields": {
+      "filename": "backup_manual_20250819_115823.sql",
+      "created_at": "2025-08-19T11:58:23.390Z",
+      "tipo": "manual",
+      "size_bytes": 303104,
+      "description": "{'description': 'caderno tiÒo'}"
+    }
+  },
+  {
+    "model": "core.backupsettings",
+    "pk": 1,
+    "fields": {
+      "auto_backup_enabled": true,
+      "backup_time": "02:00:00",
+      "retention_days": 30,
+      "max_backups": 10
     }
   },
   {
@@ -11281,20 +11291,6 @@
   },
   {
     "model": "core.anexocompra",
-    "pk": 4,
-    "fields": {
-      "compra": 46,
-      "arquivo": "anexos/compras/46/contrato_adÒo.docx",
-      "nome_original": "contrato adÒo.docx",
-      "descricao": "contrato adÒo.docx",
-      "tipo_arquivo": "DOCX",
-      "tamanho_arquivo": 18292,
-      "uploaded_at": "2025-08-29T17:56:31.186Z",
-      "uploaded_by": null
-    }
-  },
-  {
-    "model": "core.anexocompra",
     "pk": 3,
     "fields": {
       "compra": 33,
@@ -11304,6 +11300,20 @@
       "tipo_arquivo": "JPG",
       "tamanho_arquivo": 527358,
       "uploaded_at": "2025-08-27T17:23:18.150Z",
+      "uploaded_by": null
+    }
+  },
+  {
+    "model": "core.anexocompra",
+    "pk": 4,
+    "fields": {
+      "compra": 46,
+      "arquivo": "anexos/compras/46/contrato_adÒo.docx",
+      "nome_original": "contrato adÒo.docx",
+      "descricao": "contrato adÒo.docx",
+      "tipo_arquivo": "DOCX",
+      "tamanho_arquivo": 18292,
+      "uploaded_at": "2025-08-29T17:56:31.186Z",
       "uploaded_by": null
     }
   }
