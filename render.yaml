@@ -31,12 +31,6 @@ services:
     buildFilter:
       paths:
         - backend/**
-  - type: private # Corrigido de 'psql' para 'private'
-    name: sgo-postgres
-    plan: free
-    databaseName: sgo_db
-    user: sgo_user
-    version: "13"
   - type: web
     name: react-frontend
     env: static
@@ -58,3 +52,9 @@ services:
     buildFilter:
       paths:
         - frontend/**
+databases:
+  - name: sgo-postgres
+    plan: free
+    databaseName: sgo_db
+    user: sgo_user
+    version: "13"
