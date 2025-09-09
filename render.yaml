@@ -15,9 +15,11 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: sgo_core.settings
       - key: FRONTEND_URL
-        value: https://benjamim-2.onrender.com
+        value: https://react-frontend-g55g.onrender.com
       - key: WEB_CONCURRENCY
         value: 4
+      - key: ALLOWED_HOSTS
+        value: "localhost,127.0.0.1,django-backend-e7od.onrender.com"
       # Chaves secretas serão gerenciadas via 'sync: false'
       - key: SECRET_KEY
         sync: false
@@ -39,14 +41,14 @@ services:
       - type: rewrite
         source: /api/*
         # O destino deve ser a URL do serviço backend, sem crases
-        destination: https://django-backend-g5qa.onrender.com/api/*
+        destination: https://django-backend-e7od.onrender.com/api/*
       - type: rewrite
         source: /*
         destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
         # O valor deve ser a URL base do backend, sem crases
-        value: https://django-backend-g5qa.onrender.com
+        value: https://django-backend-e7od.onrender.com
     buildFilter:
       paths:
         - frontend/**
