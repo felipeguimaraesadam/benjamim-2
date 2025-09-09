@@ -1,6 +1,6 @@
 services: 
   # 1. Serviço Web do Backend (Django) - Não mexer, está correto 
-  - type: web 
+  - type: web # Trigger new deploy
     name: sgo-backend 
     env: python 
     rootDir: backend 
