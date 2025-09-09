@@ -1,5 +1,5 @@
 services: 
-  # Serviço Web do Backend (Django) - Não mexer, está correto 
+  # 1. Serviço Web do Backend (Django) - Não mexer, está correto 
   - type: web 
     name: backend 
     runtime: python 
@@ -18,26 +18,23 @@ services:
           property: connectionString 
       - key: ALLOWED_HOSTS 
         value: ".onrender.com" 
- 
-  # Site Estático do Frontend (React) - CORRIGIDO 
-  - type: static 
+
+  # 2. Serviço Web do Frontend (React) - CORRIGIDO para o plano gratuito 
+  - type: web # Alterado de 'static' para 'web' para cumprir os requisitos do plano gratuito 
     name: frontend 
+    runtime: node 
     plan: free 
     rootDir: frontend 
     buildCommand: "npm install && npm run build" 
-    publishPath: "dist" # A pasta onde os ficheiros finais são gerados 
-    routes: 
-      - kind: rewrite 
-        source: /* 
-        destination: /index.html 
+    startCommand: "npm run preview -- --host 0.0.0.0" 
     envVars: 
       - key: VITE_API_URL 
         fromService: 
           type: web 
           name: backend 
           property: url 
- 
-# Banco de Dados - Não mexer, está correto 
+
+# 3. Banco de Dados - Não mexer, está correto 
 databases: 
   - name: meu-banco-sgo 
     plan: free
