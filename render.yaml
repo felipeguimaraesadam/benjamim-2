@@ -57,4 +57,4 @@ databases:
     plan: free
     databaseName: sgo_db
     user: sgo_user
-    version: "13"
+    postgresMajorVersion: 13
