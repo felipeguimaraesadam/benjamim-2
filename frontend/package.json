@@ -28,6 +28,7 @@
     "react-select": "^5.10.2",
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.3",
+    "serve": "^14.2.5",
     "sonner": "^2.0.7"
   },
   "devDependencies": {
