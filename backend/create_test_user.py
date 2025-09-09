@@ -1,74 +1,56 @@
 #!/usr/bin/env python
 import os
+import sys
 import django
 
-# Setup Django
+# Configurar Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sgo_core.settings')
 django.setup()
 
 from core.models import Usuario
+from django.contrib.auth import authenticate
 
-print("=== VERIFICANDO E CRIANDO USUÁRIOS DE TESTE ===")
+print("=== Criando usuário de teste ===")
 
-# Verificar usuários existentes
-print("\n📋 Usuários existentes:")
-users = Usuario.objects.all()
-if users.exists():
-    for user in users:
-        print(f"- {user.login} (admin: {user.is_superuser}, ativo: {user.is_active})")
+# Deletar usuário de teste se já existir
+try:
+    existing_user = Usuario.objects.get(login='test_user')
+    existing_user.delete()
+    print("Usuário de teste anterior removido")
+except Usuario.DoesNotExist:
+    pass
+
+# Criar novo usuário de teste
+test_user = Usuario.objects.create_user(
+    login='test_user',
+    password='test123',
+    nome_completo='Usuário de Teste',
+    nivel_acesso='admin'
+)
+test_user.is_active = True
+test_user.save()
+
+print(f"Usuário criado: {test_user.login}")
+print(f"Nome: {test_user.nome_completo}")
+print(f"Ativo: {test_user.is_active}")
+print(f"Hash da senha: {test_user.password[:50]}...")
+
+# Testar autenticação
+print("\n=== Testando autenticação ===")
+auth_user = authenticate(username='test_user', password='test123')
+if auth_user:
+    print("✓ Autenticação bem-sucedida!")
 else:
-    print("❌ Nenhum usuário encontrado")
+    print("✗ Falha na autenticação")
+    
+# Testar verificação direta de senha
+print(f"\nVerificação direta de senha: {test_user.check_password('test123')}")
 
-# Criar usuário de teste se não existir
-test_login = 'admin'
-test_user = Usuario.objects.filter(login=test_login).first()
-
-if not test_user:
-    print(f"\n🔧 Criando usuário de teste: {test_login}")
-    try:
-        test_user = Usuario.objects.create_superuser(
-            login=test_login,
-            password='admin123',
-            nome_completo='Administrador Teste',
-            nivel_acesso='admin'
-        )
-        print(f"✅ Usuário {test_login} criado com sucesso!")
-    except Exception as e:
-        print(f"❌ Erro ao criar usuário: {e}")
-else:
-    print(f"\n✅ Usuário {test_login} já existe")
-    # Verificar se a senha está correta
-    if test_user.check_password('admin123'):
-        print("✅ Senha 'admin123' está correta")
-    else:
-        print("❌ Senha 'admin123' não confere, atualizando...")
-        test_user.set_password('admin123')
-        test_user.save()
-        print("✅ Senha atualizada para 'admin123'")
-
-# Criar usuário alternativo
-alt_login = 'testuser'
-alt_user = Usuario.objects.filter(login=alt_login).first()
-
-if not alt_user:
-    print(f"\n🔧 Criando usuário alternativo: {alt_login}")
-    try:
-        alt_user = Usuario.objects.create_user(
-            login=alt_login,
-            password='test123',
-            nome_completo='Usuário de Teste',
-            nivel_acesso='gerente'
-        )
-        print(f"✅ Usuário {alt_login} criado com sucesso!")
-    except Exception as e:
-        print(f"❌ Erro ao criar usuário alternativo: {e}")
-else:
-    print(f"\n✅ Usuário {alt_login} já existe")
-
-print("\n📋 Usuários finais:")
+# Verificar usuários existentes e suas senhas
+print("\n=== Verificando usuários existentes ===")
 for user in Usuario.objects.all():
-    print(f"- {user.login} (admin: {user.is_superuser}, ativo: {user.is_active})")
-
-print("\n🎯 CREDENCIAIS PARA TESTE:")
-print("Login: admin | Senha: admin123")
-print("Login: testuser | Senha: test123")
+    print(f"\nUsuário: {user.login}")
+    print(f"  Hash: {user.password[:50]}...")
+    print(f"  Verifica 'admin123': {user.check_password('admin123')}")
+    print(f"  Verifica 'test123': {user.check_password('test123')}")
+    print(f"  Verifica '123456': {user.check_password('123456')}")

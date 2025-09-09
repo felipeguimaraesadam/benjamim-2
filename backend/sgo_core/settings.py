@@ -165,6 +165,7 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 AUTHENTICATION_BACKENDS = [
+    'core.auth_backends.CustomAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 CORS_ALLOWED_ORIGINS = [
