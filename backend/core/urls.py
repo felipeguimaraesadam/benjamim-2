@@ -17,6 +17,7 @@ from .views import (
     media_test_view, CreateUsuarioView, ParcelaCompraViewSet,
     AnexoCompraViewSet, ArquivoObraViewSet, GerarPDFComprasLoteView
 )
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 router = DefaultRouter()
 router.register(r'usuarios', UsuarioViewSet)
@@ -60,4 +61,6 @@ urlpatterns = [
     path('obras/<int:pk>/custos-por-material/', ObraCustosPorMaterialView.as_view(), name='obra-custos-por-material'),
     path('obras/<int:pk>/custos-por-categoria-material/', ObraCustosPorCategoriaMaterialView.as_view(), name='obra-custos-por-categoria-material'),
     path('media-test/', media_test_view, name='media-test'),
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
