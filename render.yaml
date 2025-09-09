@@ -31,7 +31,7 @@ services:
     buildFilter:
       paths:
         - backend/**
-  - type: psql # Corrigido de 'pserv' para 'psql'
+  - type: private # Corrigido de 'psql' para 'private'
     name: sgo-postgres
     plan: free
     databaseName: sgo_db
