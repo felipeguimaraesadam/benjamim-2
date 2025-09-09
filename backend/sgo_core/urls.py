@@ -20,12 +20,15 @@ from django.urls import path, include # Added include
 from rest_framework_simplejwt.views import TokenRefreshView
 from core.serializers import MyTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
+from core.views import HealthCheckView
 
 class MyTokenObtainPairView(BaseTokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Health check endpoint for Render
+    path('api/health-check/', HealthCheckView.as_view(), name='health-check'),
     # JWT Token Endpoints
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
