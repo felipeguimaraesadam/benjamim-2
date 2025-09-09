@@ -1,36 +1,67 @@
-services: 
-  # 1. Serviço Web do Backend (Django) - Não mexer, está correto 
-  - type: web # Trigger new deploy
-    name: sgo-backend 
-    env: python 
-    rootDir: backend 
-    buildCommand: "./build.sh" 
-    startCommand: "gunicorn sgo_core.wsgi:application" 
-    envVars: 
-      - key: PYTHON_VERSION 
-        value: 3.11.5 
-      - key: SECRET_KEY 
-        generateValue: true 
-      - key: DATABASE_URL 
-        fromDatabase: 
-          name: meu-banco-sgo 
-          property: connectionString 
-      - key: ALLOWED_HOSTS 
-        value: ".onrender.com" 
+services:
+  # --- Configuração do Backend Django --- 
+  - type: web
+    name: sgo-backend
+    env: python
+    rootDir: backend
+    buildCommand: "./build.sh"
+    startCommand: "python manage.py create_superuser_if_not_exists && gunicorn sgo_core.wsgi"
+    envVars:
+      # Conexão com o banco de dados (automática pela Render)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: meu-banco-sgo
+          property: connectionString
 
-  # 2. Serviço Web do Frontend (React) - CORRIGIDO para o plano gratuito 
-  - type: web # Alterado de 'static' para 'web' para cumprir os requisitos do plano gratuito 
-    name: frontend 
-    runtime: node 
-    plan: free 
-    rootDir: frontend 
-    buildCommand: "npm install && npm run build" 
-    startCommand: "npm run preview -- --host 0.0.0.0" 
-    envVars: 
+      # Chave secreta do Django
+      - key: SECRET_KEY
+        value: drWdmdqflm2fZBm26LodHJ1GtTddazG322oDjV84jeg=
+
+      # Permissões de acesso para o Frontend
+      - key: CORS_ALLOWED_ORIGINS
+        value: `https://frontend-s7jt.onrender.com`
+      - key: CSRF_TRUSTED_ORIGINS
+        value: `https://frontend-s7jt.onrender.com`
+
+      # Credenciais para criação automática do Superusuário
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: admin
+      - key: DJANGO_SUPERUSER_PASSWORD
+        value: asystem.Sinc # <--- CONFIRMAR SE A SENHA É ESSA
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: idng3@hotmail.com
+
+      # Configurações para armazenamento de arquivos na AWS S3
+      - key: USE_S3
+        value: "TRUE"
+      - key: AWS_ACCESS_KEY_ID
+        value: YOUR_AWS_ACCESS_KEY_ID # <--- SUBSTITUA PELO SEU VALOR
+      - key: AWS_SECRET_ACCESS_KEY
+        value: YOUR_AWS_SECRET_ACCESS_KEY # <--- SUBSTITUA PELO SEU VALOR
+      - key: AWS_STORAGE_BUCKET_NAME
+        value: sgo-cliente-anexos-36
+      - key: AWS_S3_REGION_NAME
+        value: sa-east-1
+
+      # Versão do Python
+      - key: PYTHON_VERSION
+        value: "3.11.5"
+
+  # --- Configuração do Frontend React --- 
+  - type: web
+    name: frontend
+    env: node
+    rootDir: frontend
+    buildCommand: "npm install && npm run build"
+    startCommand: "npx serve -s dist"
+    envVars:
+      # URL da API do backend para o frontend se comunicar
       - key: VITE_API_URL
-        value: https://sgo-backend-h2d9.onrender.com 
+        value: `https://sgo-backend-90wx.onrender.com`
 
-# 3. Banco de Dados - Não mexer, está correto 
-databases: 
-  - name: meu-banco-sgo 
-    plan: free
+  # --- Configuração do Banco de Dados PostgreSQL --- 
+  - type: pserv
+    name: meu-banco-sgo
+    env: postgres
+    postgres:
+      version: "16"
