@@ -631,4 +631,9 @@ export const gerarRelatorioPagamentoLocacoesPDF = (
   });
 };
 
+// --- System Tests Service Functions ---
+export const testDatabaseConnection = () => apiClient.get('/health/');
+export const testBackendHealth = () => apiClient.get('/health/');
+export const getCurrentUserAPI = () => apiClient.get('/usuarios/me/');
+
 export { apiClient };

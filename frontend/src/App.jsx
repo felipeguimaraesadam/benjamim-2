@@ -26,6 +26,7 @@ import RelatorioPagamentoPage from './pages/RelatorioPagamentoPage';
 import UsuariosPage from './pages/UsuariosPage';
 import BackupPage from './pages/BackupPage';
 import DiagnosticPage from './pages/DiagnosticPage';
+import SystemTestsPage from './pages/SystemTestsPage';
 
 function App() {
 
@@ -79,6 +80,7 @@ function App() {
             <Route path="usuarios" element={<UsuariosPage />} />
             <Route path="backup" element={<BackupPage />} />
             <Route path="diagnostico" element={<DiagnosticPage />} />
+            <Route path="system-tests" element={<SystemTestsPage />} />
           </Route>
         </Route>
       </Routes>

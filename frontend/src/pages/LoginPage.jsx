@@ -228,44 +228,6 @@ const LoginPage = () => {
             Registre-se aqui
           </Link>
         </p>
-        
-        {/* Botão de Debug/Bypass - Remover em produção */}
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={async () => {
-              console.log('🔧 [DEBUG] Tentando bypass de login...');
-              try {
-                const response = await fetch('/api/debug/bypass-login/', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({})
-                });
-                
-                if (response.ok) {
-                  const data = await response.json();
-                  console.log('✅ [DEBUG] Bypass bem-sucedido:', data);
-                  
-                  // Salvar tokens
-                  localStorage.setItem('accessToken', data.access);
-                  localStorage.setItem('refreshToken', data.refresh);
-                  
-                  // Redirecionar
-                  navigate('/');
-                } else {
-                  console.error('❌ [DEBUG] Erro no bypass:', response.status);
-                }
-              } catch (error) {
-                console.error('❌ [DEBUG] Erro na requisição de bypass:', error);
-              }
-            }}
-            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
-          >
-            🔧 Debug: Bypass Login
-          </button>
-        </div>
       </div>
     </div>
   );

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpar LocalStorage - SGO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .danger {
+            background-color: #dc3545;
+        }
+        .danger:hover {
+            background-color: #c82333;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Diagnóstico e Correção - SGO</h1>
+        
+        <div id="status"></div>
+        
+        <h2>Ações Disponíveis:</h2>
+        <button onclick="checkStatus()">🔍 Verificar Status</button>
+        <button onclick="clearStorage()" class="danger">🗑️ Limpar LocalStorage</button>
+        <button onclick="testBackend()">🌐 Testar Backend</button>
+        <button onclick="testLogin()">🔐 Testar Login</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function addResult(title, content, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultHtml = `
+                <div class="status ${type}">
+                    <h3>${title}</h3>
+                    <pre>${content}</pre>
+                </div>
+            `;
+            resultsDiv.innerHTML += resultHtml;
+        }
+
+        function checkStatus() {
+            document.getElementById('results').innerHTML = '';
+            
+            // Verificar localStorage
+            const accessToken = localStorage.getItem('accessToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            let statusInfo = `LocalStorage Status:
+`;
+            statusInfo += `- Access Token: ${accessToken ? 'PRESENTE' : 'AUSENTE'}\n`;
+            statusInfo += `- Refresh Token: ${refreshToken ? 'PRESENTE' : 'AUSENTE'}\n`;
+            
+            if (accessToken) {
+                try {
+                    const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                    const exp = new Date(payload.exp * 1000);
+                    const now = new Date();
+                    statusInfo += `- Token expira em: ${exp.toLocaleString()}\n`;
+                    statusInfo += `- Token ${exp > now ? 'VÁLIDO' : 'EXPIRADO'}\n`;
+                } catch (e) {
+                    statusInfo += `- Erro ao decodificar token: ${e.message}\n`;
+                }
+            }
+            
+            const type = (accessToken || refreshToken) ? 'warning' : 'error';
+            addResult('📊 Status Atual', statusInfo, type);
+            
+            updateStatus('Status verificado! Veja os resultados abaixo.', 'success');
+        }
+
+        function clearStorage() {
+            if (confirm('Tem certeza que deseja limpar o localStorage? Isso fará logout do usuário.')) {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                
+                updateStatus('✅ LocalStorage limpo com sucesso! Recarregue a página do SGO.', 'success');
+                addResult('🗑️ Limpeza Realizada', 'Tokens removidos do localStorage.\nRecarregue a página principal do SGO para fazer login novamente.', 'success');
+            }
+        }
+
+        async function testBackend() {
+            updateStatus('🔄 Testando conexão com o backend...', 'warning');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/health-check/');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult('✅ Backend Funcionando', JSON.stringify(data, null, 2), 'success');
+                    updateStatus('✅ Backend está funcionando corretamente!', 'success');
+                } else {
+                    addResult('❌ Erro no Backend', `Status: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                    updateStatus('❌ Backend retornou erro!', 'error');
+                }
+            } catch (error) {
+                addResult('❌ Erro de Conexão', `Não foi possível conectar ao backend:\n${error.message}`, 'error');
+                updateStatus('❌ Erro de conexão com o backend!', 'error');
+            }
+        }
+
+        async function testLogin() {
+            updateStatus('🔄 Testando login...', 'warning');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/token/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        login: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult('✅ Login Funcionando', `Tokens recebidos:\n- Access Token: ${data.access ? 'OK' : 'AUSENTE'}\n- Refresh Token: ${data.refresh ? 'OK' : 'AUSENTE'}`, 'success');
+                    updateStatus('✅ Login está funcionando! Use admin/admin123 no SGO.', 'success');
+                } else {
+                    addResult('❌ Erro no Login', `Status: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                    updateStatus('❌ Erro no login!', 'error');
+                }
+            } catch (error) {
+                addResult('❌ Erro de Conexão no Login', `Não foi possível fazer login:\n${error.message}`, 'error');
+                updateStatus('❌ Erro de conexão no login!', 'error');
+            }
+        }
+
+        // Verificar status automaticamente ao carregar
+        window.onload = function() {
+            updateStatus('🔧 Ferramenta de diagnóstico carregada. Clique em "Verificar Status" para começar.', 'info');
+        };
+    </script>
+</body>
+</html>
