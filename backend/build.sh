@@ -32,7 +32,7 @@ python manage.py collectstatic --no-input --clear --verbosity=0
 python manage.py migrate --verbosity=0
 
 # Cria o superusuário se não existir
-python manage.py create_superuser_if_not_exists
+python manage.py create_superuser_if_not_exists || echo "Erro ao criar superusuário, continuando..."
 
 # Limpar arquivos temporários após build
 rm -rf /tmp/*
