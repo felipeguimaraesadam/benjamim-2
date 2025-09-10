@@ -634,7 +634,7 @@ export const gerarRelatorioPagamentoLocacoesPDF = (
 // Funções para testes do sistema
 export const testBackendHealth = async () => {
   try {
-    const response = await apiClient.get('/health/');
+    const response = await apiClient.get('/health-check/');
     return { success: true, data: response.data };
   } catch (error) {
     return { success: false, error: error.message };
@@ -643,7 +643,7 @@ export const testBackendHealth = async () => {
 
 export const testDatabaseConnection = async () => {
   try {
-    const response = await apiClient.get('/test-db/');
+    const response = await apiClient.get('/health/database/');
     return { success: true, data: response.data };
   } catch (error) {
     return { success: false, error: error.message };
@@ -652,7 +652,12 @@ export const testDatabaseConnection = async () => {
 
 export const getCurrentUserAPI = async () => {
   try {
-    const response = await apiClient.get('/auth/user/');
+    // Usar endpoint de usuários para obter informações do usuário atual
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      throw new Error('Usuário não autenticado');
+    }
+    const response = await apiClient.get(`/usuarios/${currentUser.userId}/`);
     return { success: true, data: response.data };
   } catch (error) {
     return { success: false, error: error.message };

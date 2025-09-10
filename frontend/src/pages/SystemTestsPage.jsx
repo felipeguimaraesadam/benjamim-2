@@ -57,23 +57,27 @@ const SystemTestsPage = () => {
 
   const testBackendConnection = async () => {
     try {
-      const response = await testBackendHealth();
-      setTestResults(prev => ({
-        ...prev,
-        backend: {
-          status: 'success',
-          message: 'Backend conectado com sucesso',
-          details: response.data,
-          timestamp: new Date().toLocaleString()
-        }
-      }));
+      const result = await testBackendHealth();
+      if (result.success) {
+        setTestResults(prev => ({
+          ...prev,
+          backend: {
+            status: 'success',
+            message: 'Backend conectado com sucesso',
+            details: result.data,
+            timestamp: new Date().toLocaleString()
+          }
+        }));
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       setTestResults(prev => ({
         ...prev,
         backend: {
           status: 'error',
           message: 'Falha na conexão com o backend',
-          details: error.response?.data || error.message,
+          details: error.message || error,
           timestamp: new Date().toLocaleString()
         }
       }));
@@ -82,23 +86,27 @@ const SystemTestsPage = () => {
 
   const testDatabaseConnectionFunc = async () => {
     try {
-      const response = await testDatabaseConnection();
-      setTestResults(prev => ({
-        ...prev,
-        database: {
-          status: 'success',
-          message: 'Banco de dados conectado',
-          details: response.data,
-          timestamp: new Date().toLocaleString()
-        }
-      }));
+      const result = await testDatabaseConnection();
+      if (result.success) {
+        setTestResults(prev => ({
+          ...prev,
+          database: {
+            status: 'success',
+            message: 'Banco de dados conectado',
+            details: result.data,
+            timestamp: new Date().toLocaleString()
+          }
+        }));
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       setTestResults(prev => ({
         ...prev,
         database: {
           status: 'error',
           message: 'Falha na conexão com banco de dados',
-          details: error.response?.data?.error || error.message,
+          details: error.message || error,
           timestamp: new Date().toLocaleString()
         }
       }));
@@ -111,27 +119,31 @@ const SystemTestsPage = () => {
         throw new Error('Token de acesso não encontrado');
       }
       
-      const response = await getCurrentUserAPI();
-      setTestResults(prev => ({
-        ...prev,
-        auth: {
-          status: 'success',
-          message: 'Autenticação funcionando',
-          details: {
-            user: response.data.login,
-            nivel: response.data.nivel_acesso,
-            tokens: systemInfo.hasTokens
-          },
-          timestamp: new Date().toLocaleString()
-        }
-      }));
+      const result = await getCurrentUserAPI();
+      if (result.success) {
+        setTestResults(prev => ({
+          ...prev,
+          auth: {
+            status: 'success',
+            message: 'Autenticação funcionando',
+            details: {
+              user: result.data.login,
+              nivel: result.data.nivel_acesso,
+              tokens: systemInfo.hasTokens
+            },
+            timestamp: new Date().toLocaleString()
+          }
+        }));
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       setTestResults(prev => ({
         ...prev,
         auth: {
           status: 'error',
           message: 'Falha na autenticação',
-          details: error.response?.data?.error || error.message,
+          details: error.message || error,
           timestamp: new Date().toLocaleString()
         }
       }));
