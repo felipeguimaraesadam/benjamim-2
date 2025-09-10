@@ -7,8 +7,8 @@ WeasyPrint
 PyMuPDF
 python-decouple
 whitenoise
-waitress
-pyinstaller
+# waitress  # Removido - não necessário no Render
+# pyinstaller  # Removido - consome muita memória e não é necessário
 django-extensions
 python-dateutil
 requests
