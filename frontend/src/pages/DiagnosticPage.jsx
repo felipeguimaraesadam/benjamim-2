@@ -29,7 +29,7 @@ const DiagnosticPage = () => {
     // Test API connection
     let apiConnection = null;
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://django-backend-e7od.onrender.com/api'}/health-check/`);
+      const response = await fetch(`${(import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api'}/health-check/`);
       apiConnection = {
         status: response.status,
         ok: response.ok,
@@ -77,7 +77,7 @@ const DiagnosticPage = () => {
 
   const testLogin = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://django-backend-e7od.onrender.com/api'}/token/`, {
+      const response = await fetch(`${(import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api'}/token/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -227,7 +227,7 @@ const DiagnosticPage = () => {
           <h2 className="text-xl font-semibold mb-4">Informações Técnicas</h2>
           <div className="text-sm text-gray-600 space-y-1">
             <div>Frontend URL: {window.location.origin}</div>
-            <div>Backend URL: {import.meta.env.VITE_API_BASE_URL || 'https://django-backend-e7od.onrender.com/api'}</div>
+            <div>Backend URL: {(import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api'}</div>
             <div>API Base URL: {apiClient.defaults.baseURL}</div>
             <div>User Agent: {navigator.userAgent.substring(0, 100)}...</div>
           </div>

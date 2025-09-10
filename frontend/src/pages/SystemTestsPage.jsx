@@ -13,7 +13,7 @@ const SystemTestsPage = () => {
   });
   const [systemInfo, setSystemInfo] = useState({
     frontendUrl: window.location.origin,
-    backendUrl: import.meta.env.VITE_API_BASE_URL || 'Não configurado',
+    backendUrl: (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api',
     environment: import.meta.env.MODE,
     hasTokens: {
       access: !!localStorage.getItem('accessToken'),
