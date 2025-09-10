@@ -44,6 +44,9 @@ from .serializers import (
 )
 from .permissions import IsNivelAdmin, IsNivelGerente
 
+# Import health check functions
+from .health import health_check, database_status
+
 class CreateUsuarioView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -62,6 +65,21 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all().order_by('id')
     serializer_class = UsuarioSerializer
     permission_classes = [IsNivelAdmin] # Using custom permission
+    
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        """
+        Retorna informações do usuário atual autenticado.
+        """
+        if not request.user.is_authenticated:
+            return Response({'error': 'Usuário não autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        try:
+            usuario = Usuario.objects.get(user=request.user)
+            serializer = self.get_serializer(usuario)
+            return Response(serializer.data)
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuário não encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ObraViewSet(viewsets.ModelViewSet):
