@@ -171,7 +171,7 @@ AUTHENTICATION_BACKENDS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://frontend-s7jt.onrender.com",
+    "https://react-frontend-g55g.onrender.com",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_URLS_REGEX = r'^/api/.*$'
