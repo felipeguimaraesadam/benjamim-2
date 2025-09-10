@@ -7,6 +7,7 @@ import AdminLayout from './components/AdminLayout';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import DebugLoginPage from './pages/DebugLoginPage';
 import ObrasPage from './pages/ObrasPage';
 import ObraDetailPage from './pages/ObraDetailPage';
 import FuncionariosPage from './pages/FuncionariosPage';
@@ -33,6 +34,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/debug-login" element={<DebugLoginPage />} />
 
         {/* Protected Routes */}
         <Route
