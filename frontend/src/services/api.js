@@ -632,8 +632,31 @@ export const gerarRelatorioPagamentoLocacoesPDF = (
 };
 
 // Funções para testes do sistema
-export const testBackendHealth = () => api.get('/health-check/');
-export const testDatabaseConnection = () => api.get('/health/database/');
-export const getCurrentUserAPI = () => api.get('/usuarios/me/');
+export const testBackendHealth = async () => {
+  try {
+    const response = await apiClient.get('/health/');
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+export const testDatabaseConnection = async () => {
+  try {
+    const response = await apiClient.get('/test-db/');
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+export const getCurrentUserAPI = async () => {
+  try {
+    const response = await apiClient.get('/auth/user/');
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
 
 export { apiClient };
