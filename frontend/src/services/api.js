@@ -643,8 +643,14 @@ export const testBackendHealth = async () => {
 
 export const testDatabaseConnection = async () => {
   try {
-    const response = await apiClient.get('/health/database/');
-    return { success: true, data: response.data };
+    const response = await apiClient.get('/health-check/');
+    // Extrair informações do banco de dados da resposta do health-check
+    const databaseInfo = response.data.database || response.data.checks?.database;
+    if (databaseInfo) {
+      return { success: true, data: databaseInfo };
+    } else {
+      throw new Error('Informações do banco de dados não encontradas na resposta');
+    }
   } catch (error) {
     return { success: false, error: error.message };
   }
