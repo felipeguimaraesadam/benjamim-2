@@ -48,9 +48,9 @@ services:
       - key: VITE_API_URL
         value: "https://django-backend-e7od.onrender.com"
 
-  # --- Configuração do Banco de Dados PostgreSQL ---
-  - type: psql
-    name: meu-banco-sgo
-    env: postgres
-    postgres:
-      version: "16"
+# --- Configuração do Banco de Dados PostgreSQL ---
+databases:
+  - name: meu-banco-sgo
+    plan: free
+    databaseName: sgo_db
+    user: sgo_user
