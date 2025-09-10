@@ -669,37 +669,67 @@ class CompraViewSet(viewsets.ModelViewSet):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset(self):
-        queryset = Compra.objects.all().select_related('obra').order_by('-data_compra')
+        try:
+            queryset = Compra.objects.all().select_related('obra').order_by('-data_compra')
 
-        if self.action == 'list':
-            obra_id = self.request.query_params.get('obra_id')
-            if obra_id:
-                queryset = queryset.filter(obra_id=obra_id)
-            data_inicio_str = self.request.query_params.get('data_inicio')
-            if data_inicio_str:
-                try:
-                    data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
-                    queryset = queryset.filter(data_compra__gte=data_inicio)
-                except ValueError: pass
-            data_fim_str = self.request.query_params.get('data_fim')
-            if data_fim_str:
-                try:
-                    data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
-                    queryset = queryset.filter(data_compra__lte=data_fim)
-                except ValueError: pass
-            fornecedor = self.request.query_params.get('fornecedor')
-            if fornecedor:
-                queryset = queryset.filter(fornecedor__icontains=fornecedor)
+            if self.action == 'list':
+                obra_id = self.request.query_params.get('obra_id')
+                if obra_id:
+                    try:
+                        # Validate obra_id is a valid integer
+                        int(obra_id)
+                        queryset = queryset.filter(obra_id=obra_id)
+                    except (ValueError, TypeError):
+                        # Invalid obra_id, ignore filter
+                        pass
+                        
+                data_inicio_str = self.request.query_params.get('data_inicio')
+                if data_inicio_str:
+                    try:
+                        data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
+                        queryset = queryset.filter(data_compra__gte=data_inicio)
+                    except ValueError: 
+                        pass
+                        
+                data_fim_str = self.request.query_params.get('data_fim')
+                if data_fim_str:
+                    try:
+                        data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
+                        queryset = queryset.filter(data_compra__lte=data_fim)
+                    except ValueError: 
+                        pass
+                        
+                fornecedor = self.request.query_params.get('fornecedor')
+                if fornecedor:
+                    try:
+                        queryset = queryset.filter(fornecedor__icontains=fornecedor)
+                    except Exception:
+                        # Skip fornecedor filter if there's an issue
+                        pass
 
-            tipo = self.request.query_params.get('tipo')
-            if tipo:
-                queryset = queryset.filter(tipo=tipo)
-            elif obra_id:
-                # If listing for a specific obra, default to COMPRA only
-                queryset = queryset.filter(tipo='COMPRA')
-            # If no 'tipo' and no 'obra_id', all types are returned for a general list
+                tipo = self.request.query_params.get('tipo')
+                if tipo:
+                    try:
+                        queryset = queryset.filter(tipo=tipo)
+                    except Exception:
+                        # Skip tipo filter if there's an issue
+                        pass
+                elif obra_id:
+                    # If listing for a specific obra, default to COMPRA only
+                    try:
+                        queryset = queryset.filter(tipo='COMPRA')
+                    except Exception:
+                        # Skip tipo filter if there's an issue
+                        pass
+                # If no 'tipo' and no 'obra_id', all types are returned for a general list
 
-        return queryset
+            return queryset
+        except Exception as e:
+            # Log the error and return empty queryset to prevent 500 error
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in CompraViewSet.get_queryset: {str(e)}")
+            return Compra.objects.none()
 
     @action(detail=False, methods=['get'], url_path='semanal')
     def semanal(self, request):

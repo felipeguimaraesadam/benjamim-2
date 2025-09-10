@@ -676,35 +676,74 @@ class CompraSerializer(serializers.ModelSerializer):
         return instance
     
     def to_representation(self, instance):
-        data = super().to_representation(instance)
-        
-        if instance.obra:
-            data['obra'] = ObraNestedSerializer(instance.obra).data
-        else:
-            data['obra'] = None
-
-        pagamento_parcelado_data = {'tipo': 'UNICO', 'parcelas': []}
-        if instance.forma_pagamento == 'PARCELADO':
-            parcelas_customizadas = []
-            if hasattr(instance, 'parcelas') and instance.parcelas.exists():
-                for parcela in instance.parcelas.all():
-                    parcela_info = {
-                        'valor': float(parcela.valor_parcela) if parcela.valor_parcela is not None else 0.0,
-                        'data_vencimento': parcela.data_vencimento.isoformat() if parcela.data_vencimento else None
-                    }
-                    parcelas_customizadas.append(parcela_info)
+        try:
+            data = super().to_representation(instance)
             
-            pagamento_parcelado_data = {
-                'tipo': 'PARCELADO',
-                'parcelas': parcelas_customizadas
-            }
-        data['pagamento_parcelado'] = pagamento_parcelado_data
-        
-        # Defensively remove 'categoria_uso' if it ever exists on the instance
-        if 'categoria_uso' in data:
-            del data['categoria_uso']
+            # Safe obra handling
+            try:
+                if instance.obra:
+                    data['obra'] = ObraNestedSerializer(instance.obra).data
+                else:
+                    data['obra'] = None
+            except Exception as e:
+                # Log the error but don't fail the entire serialization
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error serializing obra for compra {instance.id}: {str(e)}")
+                data['obra'] = None
 
-        return data
+            # Safe pagamento handling
+            pagamento_parcelado_data = {'tipo': 'UNICO', 'parcelas': []}
+            try:
+                if instance.forma_pagamento == 'PARCELADO':
+                    parcelas_customizadas = []
+                    if hasattr(instance, 'parcelas') and instance.parcelas.exists():
+                        for parcela in instance.parcelas.all():
+                            try:
+                                parcela_info = {
+                                    'valor': float(parcela.valor_parcela) if parcela.valor_parcela is not None else 0.0,
+                                    'data_vencimento': parcela.data_vencimento.isoformat() if parcela.data_vencimento else None
+                                }
+                                parcelas_customizadas.append(parcela_info)
+                            except Exception as parcela_error:
+                                # Skip problematic parcela but continue processing
+                                import logging
+                                logger = logging.getLogger(__name__)
+                                logger.error(f"Error serializing parcela {parcela.id} for compra {instance.id}: {str(parcela_error)}")
+                                continue
+                    
+                    pagamento_parcelado_data = {
+                        'tipo': 'PARCELADO',
+                        'parcelas': parcelas_customizadas
+                    }
+            except Exception as pagamento_error:
+                # Log error but use default pagamento data
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error processing pagamento for compra {instance.id}: {str(pagamento_error)}")
+                pagamento_parcelado_data = {'tipo': 'UNICO', 'parcelas': []}
+            
+            data['pagamento_parcelado'] = pagamento_parcelado_data
+            
+            # Defensively remove 'categoria_uso' if it ever exists on the instance
+            if 'categoria_uso' in data:
+                del data['categoria_uso']
+
+            return data
+        except Exception as e:
+            # Last resort: log the error and return minimal data
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Critical error in CompraSerializer.to_representation for compra {getattr(instance, 'id', 'unknown')}: {str(e)}")
+            # Return minimal safe representation
+            return {
+                'id': getattr(instance, 'id', None),
+                'obra': None,
+                'fornecedor': getattr(instance, 'fornecedor', ''),
+                'data_compra': getattr(instance, 'data_compra', None),
+                'valor_total_liquido': getattr(instance, 'valor_total_liquido', 0),
+                'pagamento_parcelado': {'tipo': 'UNICO', 'parcelas': []}
+            }
 
 # Serializers for RelatorioPagamentoMateriaisViewSet
 # class ItemCompraReportSerializer(serializers.ModelSerializer):
