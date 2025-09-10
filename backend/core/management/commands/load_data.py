@@ -39,6 +39,15 @@ class Command(BaseCommand):
             )
         )
         
+        # Verificar se há fixtures especificadas
+        if not options['fixture']:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    'Nenhuma fixture especificada. Comando concluído sem ação.'
+                )
+            )
+            return
+        
         # Redirecionar para o comando loaddata do Django
         call_command('loaddata', *options['fixture'], **{
             k: v for k, v in options.items() 
