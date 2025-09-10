@@ -924,12 +924,51 @@ class CompraViewSet(viewsets.ModelViewSet):
 
 class HealthCheckView(APIView):
     """
-    Simple health check endpoint for Render deployment monitoring.
+    Enhanced health check endpoint for Render deployment monitoring.
+    Tests database connectivity and system status.
     """
     permission_classes = [permissions.AllowAny]
     
     def get(self, request):
-        return Response({'status': 'ok'}, status=status.HTTP_200_OK)
+        from django.db import connection
+        from django.conf import settings
+        import os
+        
+        health_data = {
+            'status': 'ok',
+            'timestamp': timezone.now().isoformat(),
+            'environment': {
+                'debug': settings.DEBUG,
+                'database_engine': settings.DATABASES['default']['ENGINE'],
+                'allowed_hosts': settings.ALLOWED_HOSTS,
+                'cors_origins': getattr(settings, 'CORS_ALLOWED_ORIGINS', []),
+            }
+        }
+        
+        # Test database connection
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                health_data['database'] = {
+                    'status': 'connected',
+                    'connection_name': connection.settings_dict.get('NAME', 'unknown')
+                }
+        except Exception as e:
+            health_data['database'] = {
+                'status': 'error',
+                'error': str(e)
+            }
+            health_data['status'] = 'degraded'
+        
+        # Check environment variables
+        env_vars = {
+            'DATABASE_URL': bool(os.getenv('DATABASE_URL')),
+            'SECRET_KEY': bool(os.getenv('SECRET_KEY')),
+            'RENDER': bool(os.getenv('RENDER')),
+        }
+        health_data['environment']['env_vars'] = env_vars
+        
+        return Response(health_data, status=status.HTTP_200_OK)
 
 class RelatorioPagamentoViewSet(viewsets.ViewSet):
     permission_classes = [IsNivelAdmin | IsNivelGerente]

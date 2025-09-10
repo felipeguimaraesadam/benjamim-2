@@ -25,6 +25,7 @@ import RelatoriosPage from './pages/RelatoriosPage';
 import RelatorioPagamentoPage from './pages/RelatorioPagamentoPage';
 import UsuariosPage from './pages/UsuariosPage';
 import BackupPage from './pages/BackupPage';
+import DiagnosticPage from './pages/DiagnosticPage';
 
 function App() {
 
@@ -77,6 +78,7 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route path="usuarios" element={<UsuariosPage />} />
             <Route path="backup" element={<BackupPage />} />
+            <Route path="diagnostico" element={<DiagnosticPage />} />
           </Route>
         </Route>
       </Routes>
