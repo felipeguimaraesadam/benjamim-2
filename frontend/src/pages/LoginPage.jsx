@@ -25,6 +25,8 @@ const LoginPage = () => {
   const [senha, setSenha] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
   const navigate = useNavigate();
   const { login: authLogin } = useAuth(); // Renamed login to authLogin to avoid conflict
 
@@ -32,12 +34,61 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+    
+    const loginStartTime = Date.now();
+    const sessionId = Math.random().toString(36).substr(2, 9);
+    
+    console.log(`🔐 [LOGIN DEBUG] Iniciando login ${sessionId}:`, {
+      loginField,
+      hasPassword: !!senha,
+      passwordLength: senha.length,
+      userAgent: navigator.userAgent,
+      currentUrl: window.location.href,
+      timestamp: new Date().toISOString()
+    });
+    
+    const debugData = {
+      sessionId,
+      startTime: loginStartTime,
+      loginField,
+      environment: {
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        localStorage: {
+          hasAccessToken: !!localStorage.getItem('accessToken'),
+          hasRefreshToken: !!localStorage.getItem('refreshToken')
+        }
+      }
+    };
 
     try {
-      await authLogin(loginField, senha); // Use loginField
+      console.log(`🚀 [LOGIN DEBUG] Chamando authLogin para ${sessionId}`);
+      await authLogin(loginField, senha);
+      
+      const loginTime = Date.now() - loginStartTime;
+      console.log(`✅ [LOGIN DEBUG] Login bem-sucedido ${sessionId}:`, {
+        loginTime: loginTime + 'ms',
+        redirecting: true
+      });
+      
       navigate('/');
     } catch (err) {
-      // Assuming login function from AuthContext throws an error with a message property
+      const loginTime = Date.now() - loginStartTime;
+      console.error(`❌ [LOGIN DEBUG] Erro no login ${sessionId}:`, {
+        error: err.message,
+        errorType: err.name,
+        loginTime: loginTime + 'ms',
+        stack: err.stack
+      });
+      
+      debugData.error = {
+        message: err.message,
+        type: err.name,
+        stack: err.stack,
+        loginTime: loginTime + 'ms'
+      };
+      
+      setDebugInfo(debugData);
       setError(
         err.message || 'Erro ao fazer login. Verifique suas credenciais.'
       );
@@ -102,6 +153,32 @@ const LoginPage = () => {
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-md text-sm">
               {error}
+              <button
+                type="button"
+                onClick={() => setDebugMode(!debugMode)}
+                className="mt-2 text-xs underline hover:no-underline"
+              >
+                {debugMode ? 'Ocultar Debug' : 'Mostrar Debug'}
+              </button>
+            </div>
+          )}
+          
+          {debugMode && debugInfo && (
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+              <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">Informações de Debug:</h4>
+              <div className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
+                <div><strong>Session ID:</strong> {debugInfo.sessionId}</div>
+                <div><strong>Login Field:</strong> {debugInfo.loginField}</div>
+                <div><strong>URL:</strong> {debugInfo.environment.url}</div>
+                <div><strong>Tokens:</strong> Access: {debugInfo.environment.localStorage.hasAccessToken ? '✓' : '✗'}, Refresh: {debugInfo.environment.localStorage.hasRefreshToken ? '✓' : '✗'}</div>
+                {debugInfo.error && (
+                  <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded">
+                    <div><strong>Erro:</strong> {debugInfo.error.message}</div>
+                    <div><strong>Tipo:</strong> {debugInfo.error.type}</div>
+                    <div><strong>Tempo:</strong> {debugInfo.error.loginTime}</div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -151,6 +228,44 @@ const LoginPage = () => {
             Registre-se aqui
           </Link>
         </p>
+        
+        {/* Botão de Debug/Bypass - Remover em produção */}
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={async () => {
+              console.log('🔧 [DEBUG] Tentando bypass de login...');
+              try {
+                const response = await fetch('/api/debug/bypass-login/', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({})
+                });
+                
+                if (response.ok) {
+                  const data = await response.json();
+                  console.log('✅ [DEBUG] Bypass bem-sucedido:', data);
+                  
+                  // Salvar tokens
+                  localStorage.setItem('accessToken', data.access);
+                  localStorage.setItem('refreshToken', data.refresh);
+                  
+                  // Redirecionar
+                  navigate('/');
+                } else {
+                  console.error('❌ [DEBUG] Erro no bypass:', response.status);
+                }
+              } catch (error) {
+                console.error('❌ [DEBUG] Erro na requisição de bypass:', error);
+              }
+            }}
+            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
+          >
+            🔧 Debug: Bypass Login
+          </button>
+        </div>
       </div>
     </div>
   );

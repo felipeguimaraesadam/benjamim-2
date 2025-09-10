@@ -35,19 +35,72 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   config => {
     const token = localStorage.getItem('accessToken');
+    const requestId = Math.random().toString(36).substr(2, 9);
+    config.metadata = { requestId, startTime: Date.now() };
+    
+    console.log(`🚀 [API DEBUG] Requisição ${requestId}:`, {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      fullUrl: `${config.baseURL}${config.url}`,
+      hasAuth: !!token,
+      headers: {
+        ...config.headers,
+        Authorization: token ? '[PRESENTE]' : '[AUSENTE]'
+      },
+      data: config.data ? (typeof config.data === 'string' ? '[FormData]' : Object.keys(config.data)) : null,
+      timestamp: new Date().toISOString()
+    });
+    
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
   error => {
+    console.error('❌ [API DEBUG] Erro no interceptor de requisição:', error);
     return Promise.reject(error);
   }
 );
 
 apiClient.interceptors.response.use(
-  response => response,
+  response => {
+    const requestId = response.config?.metadata?.requestId;
+    const startTime = response.config?.metadata?.startTime;
+    const responseTime = startTime ? Date.now() - startTime : 0;
+    
+    console.log(`✅ [API DEBUG] Resposta ${requestId}:`, {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.config?.url,
+      method: response.config?.method?.toUpperCase(),
+      responseTime: responseTime + 'ms',
+      dataSize: response.data ? JSON.stringify(response.data).length : 0,
+      headers: {
+        'content-type': response.headers['content-type'],
+        'content-length': response.headers['content-length']
+      },
+      timestamp: new Date().toISOString()
+    });
+    
+    return response;
+  },
   async error => {
+    const requestId = error.config?.metadata?.requestId;
+    const startTime = error.config?.metadata?.startTime;
+    const responseTime = startTime ? Date.now() - startTime : 0;
+    
+    console.error(`❌ [API DEBUG] Erro ${requestId}:`, {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      method: error.config?.method?.toUpperCase(),
+      responseTime: responseTime + 'ms',
+      errorMessage: error.message,
+      responseData: error.response?.data,
+      networkError: !error.response,
+      timestamp: new Date().toISOString()
+    });
     const originalRequest = error.config;
     const requestUrlPath = originalRequest.url.replace(
       apiClient.defaults.baseURL,

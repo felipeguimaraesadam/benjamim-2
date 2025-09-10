@@ -93,19 +93,56 @@ export const AuthProvider = ({ children }) => {
   }, []); // Remove refreshToken dependency to prevent infinite loops
 
   const login = async (loginUsername, password) => {
+    const startTime = Date.now();
+    console.log('🔐 [AUTH DEBUG] Iniciando processo de login:', {
+      timestamp: new Date().toISOString(),
+      login: loginUsername,
+      loginLength: loginUsername?.length,
+      passwordLength: password?.length,
+      apiBaseUrl: apiClient.defaults.baseURL,
+      currentUrl: window.location.href,
+      userAgent: navigator.userAgent.substring(0, 100)
+    });
+
     try {
-      console.log('Attempting login with data:', {
+      console.log('🌐 [AUTH DEBUG] Fazendo requisição para /token/');
+      
+      const requestData = {
         login: loginUsername,
-        type_login: typeof loginUsername,
-        password: password, // Be cautious logging passwords in production
-        type_password: typeof password,
-      });
-      const response = await apiClient.post('/token/', {
-        login: loginUsername, // Ensure this matches backend expectation (login vs username)
         password: password,
+      };
+      
+      console.log('📤 [AUTH DEBUG] Dados da requisição:', {
+        url: `${apiClient.defaults.baseURL}/token/`,
+        method: 'POST',
+        headers: apiClient.defaults.headers,
+        dataKeys: Object.keys(requestData)
       });
+
+      const response = await apiClient.post('/token/', requestData);
+      
+      console.log('✅ [AUTH DEBUG] Resposta recebida:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        dataKeys: Object.keys(response.data || {}),
+        hasAccess: !!response.data?.access,
+        hasRefresh: !!response.data?.refresh,
+        responseTime: Date.now() - startTime + 'ms'
+      });
+
       const { access, refresh } = response.data;
 
+      if (!access || !refresh) {
+        console.error('❌ [AUTH DEBUG] Tokens ausentes na resposta:', {
+          access: !!access,
+          refresh: !!refresh,
+          responseData: response.data
+        });
+        throw new Error('Resposta inválida do servidor - tokens ausentes');
+      }
+
+      console.log('💾 [AUTH DEBUG] Salvando tokens no localStorage');
       localStorage.setItem('accessToken', access);
       localStorage.setItem('refreshToken', refresh);
       setAccessToken(access);
@@ -113,21 +150,56 @@ export const AuthProvider = ({ children }) => {
 
       apiClient.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
+      console.log('🔍 [AUTH DEBUG] Decodificando token JWT');
       const decodedToken = jwtDecode(access);
+      console.log('👤 [AUTH DEBUG] Dados do usuário decodificados:', {
+        userId: decodedToken.user_id,
+        login: decodedToken.login,
+        nomeCompleto: decodedToken.nome_completo,
+        nivelAcesso: decodedToken.nivel_acesso,
+        exp: new Date(decodedToken.exp * 1000).toISOString()
+      });
+
       setUser({
         id: decodedToken.user_id,
         login: decodedToken.login,
         nome_completo: decodedToken.nome_completo,
         nivel_acesso: decodedToken.nivel_acesso,
       });
+      
+      console.log('🎉 [AUTH DEBUG] Login realizado com sucesso!', {
+        totalTime: Date.now() - startTime + 'ms',
+        userId: decodedToken.user_id
+      });
+      
       return true;
     } catch (error) {
-      console.error('Login failed:', error);
+      const errorTime = Date.now() - startTime;
+      console.error('❌ [AUTH DEBUG] Erro no login:', {
+        errorTime: errorTime + 'ms',
+        errorType: error.constructor.name,
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        responseData: error.response?.data,
+        responseHeaders: error.response?.headers,
+        requestUrl: error.config?.url,
+        requestMethod: error.config?.method,
+        requestHeaders: error.config?.headers,
+        networkError: !error.response,
+        stack: error.stack?.split('\n').slice(0, 3)
+      });
+      
       logout(); // Clear any partial state
-      // Consider throwing error or returning more specific error info
+      
       if (error.response && error.response.status === 401) {
         throw new Error('Credenciais inválidas. Verifique seu login e senha.');
       }
+      
+      if (!error.response) {
+        throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+      }
+      
       throw new Error(
         'Erro ao tentar fazer login. Tente novamente mais tarde.'
       );

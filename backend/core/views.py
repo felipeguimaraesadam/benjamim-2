@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status, filters, permissions
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
@@ -2926,3 +2926,146 @@ class GerarPDFComprasLoteView(APIView):
                 {'error': f'Erro ao gerar PDF: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+# ===== VIEWS DE DEBUG =====
+
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.AllowAny])  # ATENÇÃO: SEM AUTENTICAÇÃO!
+def debug_system_info(request):
+    """
+    View de debug que mostra informações do sistema
+    ATENÇÃO: Esta view não requer autenticação - usar apenas para debug!
+    """
+    import logging
+    from django.db import connection
+    
+    debug_logger = logging.getLogger('api_debug')
+    debug_logger.info(f"🔧 DEBUG SYSTEM INFO - {request.method} - IP: {request.META.get('REMOTE_ADDR')}")
+    
+    try:
+        # Informações básicas do sistema
+        system_info = {
+            'timestamp': timezone.now().isoformat(),
+            'method': request.method,
+            'path': request.path,
+            'user_authenticated': request.user.is_authenticated,
+            'user_id': request.user.id if request.user.is_authenticated else None,
+            'user_username': request.user.username if request.user.is_authenticated else None,
+        }
+        
+        # Informações de CORS
+        cors_info = {
+            'CORS_ALLOWED_ORIGINS': getattr(settings, 'CORS_ALLOWED_ORIGINS', []),
+            'CORS_ALLOW_CREDENTIALS': getattr(settings, 'CORS_ALLOW_CREDENTIALS', False),
+            'CORS_ALLOW_ALL_ORIGINS': getattr(settings, 'CORS_ALLOW_ALL_ORIGINS', False),
+        }
+        
+        # Headers da requisição
+        request_headers = {
+            'Origin': request.META.get('HTTP_ORIGIN'),
+            'Referer': request.META.get('HTTP_REFERER'),
+            'User-Agent': request.META.get('HTTP_USER_AGENT', '')[:100],
+            'Authorization': 'Present' if request.META.get('HTTP_AUTHORIZATION') else 'Not present',
+            'Content-Type': request.META.get('CONTENT_TYPE'),
+        }
+        
+        # Teste de conectividade com banco
+        db_status = 'Unknown'
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT 1')
+                db_status = 'Connected'
+        except Exception as e:
+            db_status = f'Error: {str(e)}'
+        
+        # Variáveis de ambiente importantes (mascaradas)
+        env_vars = {
+            'DEBUG': getattr(settings, 'DEBUG', False),
+            'DATABASE_URL': 'Present' if os.getenv('DATABASE_URL') else 'Not set',
+            'CORS_ALLOWED_ORIGINS_ENV': 'Present' if os.getenv('CORS_ALLOWED_ORIGINS') else 'Not set',
+        }
+        
+        response_data = {
+            'status': 'success',
+            'message': 'Debug info retrieved successfully',
+            'system_info': system_info,
+            'cors_info': cors_info,
+            'request_headers': request_headers,
+            'database_status': db_status,
+            'environment_vars': env_vars,
+        }
+        
+        debug_logger.info(f"🔧 DEBUG INFO RESPONSE: {response_data}")
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        debug_logger.error(f"❌ DEBUG SYSTEM INFO ERROR: {str(e)}")
+        return Response(
+            {'error': f'Debug error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])  # ATENÇÃO: SEM AUTENTICAÇÃO!
+def debug_bypass_login(request):
+    """
+    View de debug que bypassa o login e retorna um token fake
+    ATENÇÃO: Esta view não requer autenticação - usar apenas para debug!
+    """
+    import logging
+    from rest_framework_simplejwt.tokens import RefreshToken
+    
+    debug_logger = logging.getLogger('api_debug')
+    debug_logger.warning(f"🚨 DEBUG BYPASS LOGIN ATTEMPT - IP: {request.META.get('REMOTE_ADDR')}")
+    
+    # Verificar se o debug está habilitado
+    if not getattr(settings, 'DEBUG', False):
+        return Response(
+            {'error': 'Debug bypass only available in DEBUG mode'}, 
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    try:
+        # Criar ou pegar o primeiro usuário admin usando o modelo customizado
+        admin_user = Usuario.objects.filter(is_superuser=True).first()
+        
+        if not admin_user:
+            # Criar usuário de debug se não existir
+            admin_user = Usuario.objects.create_superuser(
+                login='debug_admin',
+                password='debug123',
+                nome_completo='Debug Admin',
+                nivel_acesso='admin'
+            )
+            debug_logger.info("🔧 Created debug admin user")
+        
+        # Gerar tokens JWT
+        refresh = RefreshToken.for_user(admin_user)
+        access_token = refresh.access_token
+        
+        response_data = {
+            'status': 'success',
+            'message': 'DEBUG: Login bypassed successfully',
+            'access': str(access_token),
+            'refresh': str(refresh),
+            'user': {
+                'id': admin_user.id,
+                'login': admin_user.login,
+                'nome_completo': admin_user.nome_completo,
+                'nivel_acesso': admin_user.nivel_acesso,
+                'is_superuser': admin_user.is_superuser,
+            },
+            'warning': 'THIS IS A DEBUG BYPASS - NOT FOR PRODUCTION!'
+        }
+        
+        debug_logger.warning(f"🚨 DEBUG BYPASS SUCCESS for user {admin_user.login}")
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        debug_logger.error(f"❌ DEBUG BYPASS ERROR: {str(e)}")
+        return Response(
+            {'error': f'Debug bypass error: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

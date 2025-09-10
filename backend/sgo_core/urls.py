@@ -20,10 +20,35 @@ from django.urls import path, include # Added include
 from rest_framework_simplejwt.views import TokenRefreshView
 from core.serializers import MyTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
-from core.views import HealthCheckView
+from core.views import HealthCheckView, debug_system_info, debug_bypass_login
+from django.http import JsonResponse
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+import logging
+
+# Configure logging for authentication
+logger = logging.getLogger('auth_debug')
 
 class MyTokenObtainPairView(BaseTokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+    
+    def post(self, request, *args, **kwargs):
+        logger.info(f"🔐 LOGIN ATTEMPT - IP: {request.META.get('REMOTE_ADDR')}")
+        logger.info(f"🔐 LOGIN DATA: {request.data}")
+        logger.info(f"🔐 HEADERS: {dict(request.headers)}")
+        
+        try:
+            response = super().post(request, *args, **kwargs)
+            logger.info(f"✅ LOGIN SUCCESS - Status: {response.status_code}")
+            logger.info(f"✅ RESPONSE DATA: {response.data}")
+            return response
+        except Exception as e:
+            logger.error(f"❌ LOGIN ERROR: {str(e)}")
+            logger.error(f"❌ ERROR TYPE: {type(e).__name__}")
+            raise
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,6 +57,9 @@ urlpatterns = [
     # JWT Token Endpoints
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # Rotas de DEBUG - REMOVER EM PRODUÇÃO!
+    path('api/debug/system-info/', debug_system_info, name='debug_system_info'),
+    path('api/debug/bypass-login/', debug_bypass_login, name='debug_bypass_login'),
     path('api/', include('core.urls')), # Added core urls
     # path('api-auth/', include('rest_framework.urls', namespace='rest_framework')), # Optional: DRF login/logout for browsable API
 ]
