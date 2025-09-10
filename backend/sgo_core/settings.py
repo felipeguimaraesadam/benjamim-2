@@ -28,9 +28,8 @@ INSTALLED_APPS = [
     'django_extensions',
 ]
 MIDDLEWARE = [
-    'core.debug_middleware.DebugMiddleware',  # Debug middleware primeiro
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # <-- MOVIDO PARA CÁ (segunda posição)
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -57,7 +56,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'sgo_core.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL')
+        default=config('DATABASE_URL', default='sqlite:///db.sqlite3')
     )
 }
 AUTH_PASSWORD_VALIDATORS = [
