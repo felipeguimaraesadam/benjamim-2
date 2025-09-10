@@ -5,28 +5,28 @@ import os
 import base64
 from io import BytesIO
 
-# Handle weasyprint import gracefully
-try:
-    from weasyprint import HTML, CSS
-    WEASYPRINT_AVAILABLE = True
-except Exception as e:
-    WEASYPRINT_AVAILABLE = False
+# Handle weasyprint import gracefully - Removido para otimizar memória
+# try:
+#     from weasyprint import HTML, CSS
+#     WEASYPRINT_AVAILABLE = True
+# except Exception as e:
+WEASYPRINT_AVAILABLE = False
 
-# Handle image processing imports
+# Handle image processing imports - PyMuPDF removido para otimizar memória
 try:
     from PIL import Image, ImageDraw, ImageFont
-    import fitz  # PyMuPDF
+    # import fitz  # PyMuPDF - Removido para otimizar memória
     IMAGE_PROCESSING_AVAILABLE = True
 except ImportError as e:
     IMAGE_PROCESSING_AVAILABLE = False
 
-# Handle office file processing imports
-try:
-    import docx
-    import openpyxl
-    OFFICE_PROCESSING_AVAILABLE = True
-except ImportError:
-    OFFICE_PROCESSING_AVAILABLE = False
+# Handle office file processing imports - Removido para otimizar memória
+# try:
+#     import docx
+#     import openpyxl
+#     OFFICE_PROCESSING_AVAILABLE = True
+# except ImportError:
+OFFICE_PROCESSING_AVAILABLE = False
 
 
 def docx_to_html(file_content):

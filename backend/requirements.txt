@@ -2,20 +2,19 @@ Django==5.2.3
 djangorestframework==3.16.0
 djangorestframework-simplejwt==5.3.1
 django-cors-headers==3.14.0
-Pillow
-WeasyPrint
-PyMuPDF
-python-decouple
-whitenoise
-# waitress  # Removido - não necessário no Render
-# pyinstaller  # Removido - consome muita memória e não é necessário
-django-extensions
-python-dateutil
-requests
-python-docx
-openpyxl
-gunicorn
-dj-database-url
-psycopg2-binary
-django-storages
-boto3
+Pillow==10.4.0
+python-decouple==3.8
+whitenoise==6.8.2
+python-dateutil==2.9.0
+requests==2.32.3
+gunicorn==23.0.0
+dj-database-url==2.3.0
+psycopg2-binary==2.9.10
+# Dependências pesadas removidas para otimizar memória:
+# WeasyPrint - biblioteca pesada para PDF
+# PyMuPDF - biblioteca pesada para manipulação de PDF
+# django-extensions - não essencial para produção
+# python-docx - biblioteca pesada para Word
+# openpyxl - biblioteca pesada para Excel
+# django-storages - não necessário se não usar S3
+# boto3 - não necessário se não usar AWS

@@ -23,8 +23,8 @@ from django.template.loader import render_to_string # Was present
 from django.conf import settings
 import os
 from .utils import generate_pdf_response, process_attachments_for_pdf
-from weasyprint import HTML
-# from weasyprint.fonts import FontConfiguration # Optional
+# from weasyprint import HTML  # Removido para otimizar memória
+# from weasyprint.fonts import FontConfiguration # Optional - Removido para otimizar memória
 
 from .models import (
     Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material,

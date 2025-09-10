@@ -2,31 +2,40 @@
 # exit on error
 set -o errexit
 
-# Otimizações para reduzir uso de memória
+# Configurações agressivas para reduzir uso de memória
 export PIP_NO_CACHE_DIR=1
 export PYTHONDONTWRITEBYTECODE=1
-export PYTHONOPTIMIZE=1
+export PYTHONOPTIMIZE=2
 export PYTHONUNBUFFERED=1
+export PYTHONHASHSEED=1
+export MALLOC_TRIM_THRESHOLD_=100000
+export MALLOC_MMAP_THRESHOLD_=100000
+
+# Limitar uso de memória do Python
+export PYTHONMALLOC=malloc
 
 # Aplicar otimizações de memória
 python memory_optimization.py
 
-# Instalar dependências com cache desabilitado para economizar memória
-pip install --no-cache-dir -r requirements.txt
+# Limpar cache antes da instalação
+rm -rf ~/.cache/pip
+rm -rf /tmp/*
+
+# Instalar dependências com configurações otimizadas
+pip install --no-cache-dir --no-deps -r requirements.txt
+pip check
 
 # Executar collectstatic com configurações otimizadas
-python manage.py collectstatic --no-input --clear
+python manage.py collectstatic --no-input --clear --verbosity=0
 
-# Executar migrações de forma otimizada (sem --run-syncdb para evitar problemas)
-python manage.py migrate
+# Executar migrações de forma otimizada
+python manage.py migrate --verbosity=0
 
-# Cria o superusuário se não existir (usando variáveis de ambiente)
+# Cria o superusuário se não existir
 python manage.py create_superuser_if_not_exists
 
-echo "Build concluído com otimizações de memória aplicadas!"
+# Limpar arquivos temporários após build
+rm -rf /tmp/*
+rm -rf ~/.cache/*
 
-# --- COMANDO PARA IMPORTAR DADOS (USAR APENAS QUANDO NECESSÁRIO) ---
-# Para carregar dados do backup, execute manualmente após o deploy:
-# python manage.py load_data
-# NOTA: O arquivo data.json foi movido para ../backup/ para reduzir uso de memória no deploy
-# -----------------------------------------------------------
+echo "Build concluído com otimizações agressivas de memória aplicadas!"
