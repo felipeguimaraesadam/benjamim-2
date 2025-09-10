@@ -109,6 +109,9 @@ env/
 # Custom
 /scripts/.venv/
 
+# Backup folder (contains large data files)
+backup/
+
 # PyInstaller build outputs (too large for Git)
 dist_pyinstaller/
 build_pyinstaller/

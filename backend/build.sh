@@ -25,7 +25,8 @@ python manage.py create_superuser_if_not_exists
 
 echo "Build concluído com otimizações de memória aplicadas!"
 
-# --- COMANDO PARA IMPORTAR DADOS (USAR APENAS UMA VEZ) ---
-# O dono do projeto vai descomentar esta linha quando for a hora.
-# curl -o backup_cliente.json "URL_DO_BACKUP_AQUI" && python manage.py loaddata backup_cliente.json
+# --- COMANDO PARA IMPORTAR DADOS (USAR APENAS QUANDO NECESSÁRIO) ---
+# Para carregar dados do backup, execute manualmente após o deploy:
+# python manage.py load_data
+# NOTA: O arquivo data.json foi movido para ../backup/ para reduzir uso de memória no deploy
 # -----------------------------------------------------------

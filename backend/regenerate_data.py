@@ -11,7 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sgo_core.settings')
 django.setup()
 
 def regenerate_data_json():
-    """Regenerate data.json with proper UTF-8 encoding"""
+    """Regenerate backup/data.json with proper UTF-8 encoding"""
     try:
         # Get all data excluding system tables
         data = []
@@ -39,15 +39,19 @@ def regenerate_data_json():
                 print(f"Error serializing {app_label}.{model_name}: {e}")
                 continue
         
-        # Write to file with UTF-8 encoding
-        with open('data.json', 'w', encoding='utf-8') as f:
+        # Write to backup folder with UTF-8 encoding
+        backup_dir = os.path.join('..', 'backup')
+        os.makedirs(backup_dir, exist_ok=True)
+        backup_path = os.path.join(backup_dir, 'data.json')
+        
+        with open(backup_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         
-        print(f"Successfully regenerated data.json with {len(data)} records")
+        print(f"Successfully regenerated backup/data.json with {len(data)} records")
         return True
         
     except Exception as e:
-        print(f"Error regenerating data.json: {e}")
+        print(f"Error regenerating backup/data.json: {e}")
         return False
 
 if __name__ == '__main__':
