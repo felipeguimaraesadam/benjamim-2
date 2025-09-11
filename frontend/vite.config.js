@@ -8,12 +8,12 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'https://django-backend-e7od.onrender.com',
+        target: 'https://django-backend-e7od-4cjk.onrender.com',
         changeOrigin: true,
         secure: true,
       },
       '/media': {
-        target: 'https://django-backend-e7od.onrender.com',
+        target: 'https://django-backend-e7od-4cjk.onrender.com',
         changeOrigin: true,
         secure: true,
       },
