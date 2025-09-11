@@ -294,6 +294,10 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
   };
 
   const getFileIcon = (filename) => {
+    if (!filename || typeof filename !== 'string') {
+      return '📎'; // Ícone padrão se filename for inválido
+    }
+    
     const extension = filename.split('.').pop().toLowerCase();
     switch (extension) {
       case 'pdf':

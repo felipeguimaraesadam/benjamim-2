@@ -114,7 +114,7 @@ const DashboardPage = () => {
       lastWeekStart.setDate(lastWeekStart.getDate() - 7);
 
       const atividadeResponse = await api.apiClient.get(
-        '/analytics/recursos-semana/',
+        '/relatorios/recursos-mais-utilizados/',
         {
           params: {
             inicio: lastWeekStart.toISOString().split('T')[0],

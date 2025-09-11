@@ -379,14 +379,14 @@ export const getLocacoesDaSemana = (startDate, obraId, filtroTipo) => {
   if (obraId) {
     params.obra_id = obraId;
   }
-  return apiClient.get('/locacoes/semana/', { params });
+  return apiClient.get('/locacoes/semanal/', { params });
 };
 export const getRecursosMaisUtilizadosSemana = (startDate, obraId) => {
   const params = { inicio: startDate };
   if (obraId) {
     params.obra_id = obraId;
   }
-  return apiClient.get('/analytics/recursos-semana/', {
+  return apiClient.get('/relatorios/recursos-mais-utilizados/', {
     params,
   });
 };
@@ -427,7 +427,7 @@ export const generateRelatorioFolhaPagamentoPDFData = (
 };
 
 // --- Dashboard Service Functions ---
-export const getDashboardStats = () => apiClient.get('/dashboard/stats/');
+export const getDashboardStats = () => apiClient.get('/relatorios/dashboard-stats/');
 
 // --- Compra Service Functions ---
 export const getCompras = params => apiClient.get('/compras/', { params });

@@ -739,3 +739,38 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
                 'success': False,
                 'error': 'Erro interno do servidor'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """
+        Obtém estatísticas dos anexos S3.
+        """
+        try:
+            from django.db.models import Count
+            from ..models import AnexoS3
+            
+            # Estatísticas básicas dos anexos
+            total_anexos = AnexoS3.objects.count()
+            anexos_por_tipo = AnexoS3.objects.values('anexo_type').annotate(
+                count=Count('id')
+            ).order_by('-count')
+            
+            # Informações de armazenamento
+            storage_result = self.s3_service.get_storage_info()
+            storage_info = storage_result.get('data', {}) if storage_result.get('success') else {}
+            
+            statistics_data = {
+                'total_anexos': total_anexos,
+                'anexos_por_tipo': list(anexos_por_tipo),
+                'storage_info': storage_info,
+                'success': True
+            }
+            
+            return Response(statistics_data, status=status.HTTP_200_OK)
+                
+        except Exception as e:
+            logger.error(f"Error in statistics view: {str(e)}")
+            return Response({
+                'success': False,
+                'error': 'Erro interno do servidor'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
