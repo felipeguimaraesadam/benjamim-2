@@ -2817,16 +2817,46 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
         """
         Cria um novo arquivo para uma obra.
         """
+        import logging
+        logger = logging.getLogger('django')
+        
         try:
+            # DEBUG: Log dos dados recebidos
+            logger.error(f"🔍 [ARQUIVO OBRA DEBUG] Dados recebidos:")
+            logger.error(f"🔍 [ARQUIVO OBRA DEBUG] request.data: {dict(request.data)}")
+            logger.error(f"🔍 [ARQUIVO OBRA DEBUG] request.FILES: {dict(request.FILES)}")
+            logger.error(f"🔍 [ARQUIVO OBRA DEBUG] User: {request.user}")
+            
             # Validar se arquivo foi enviado
             if 'arquivo' not in request.FILES:
+                logger.error(f"❌ [ARQUIVO OBRA DEBUG] Nenhum arquivo enviado")
                 return Response(
                     {'error': 'Nenhum arquivo foi enviado'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            # DEBUG: Verificar se obra existe
+            obra_id = request.data.get('obra')
+            logger.error(f"🔍 [ARQUIVO OBRA DEBUG] obra_id recebido: {obra_id} (tipo: {type(obra_id)})")
+            
+            if obra_id:
+                try:
+                    from .models import Obra
+                    obra = Obra.objects.get(id=obra_id)
+                    logger.error(f"✅ [ARQUIVO OBRA DEBUG] Obra encontrada: {obra.nome_obra} (ID: {obra.id})")
+                except Obra.DoesNotExist:
+                    logger.error(f"❌ [ARQUIVO OBRA DEBUG] Obra com ID {obra_id} não existe")
+                    return Response(
+                        {'error': f'Obra com ID {obra_id} não foi encontrada'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                except Exception as e:
+                    logger.error(f"❌ [ARQUIVO OBRA DEBUG] Erro ao buscar obra: {str(e)}")
+            
             serializer = self.get_serializer(data=request.data)
+            logger.error(f"🔍 [ARQUIVO OBRA DEBUG] Serializer criado, validando...")
             serializer.is_valid(raise_exception=True)
+            logger.error(f"✅ [ARQUIVO OBRA DEBUG] Serializer válido")
             
             # Validações específicas do arquivo
             arquivo = serializer.validated_data.get('arquivo')
