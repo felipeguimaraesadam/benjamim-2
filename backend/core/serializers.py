@@ -502,16 +502,21 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'obra', 'arquivo', 'arquivo_url', 'arquivo_nome',
             'arquivo_tamanho', 'nome_original', 'tipo_arquivo', 'categoria',
-            'descricao', 'uploaded_at', 'uploaded_by_name'
+            'descricao', 'uploaded_at', 'uploaded_by_name', 's3_anexo_id', 's3_url'
         ]
         extra_kwargs = {
             'uploaded_at': {'read_only': True},
             'nome_original': {'read_only': True},
             'tipo_arquivo': {'read_only': True},
+            's3_anexo_id': {'read_only': True},
+            's3_url': {'read_only': True},
         }
 
     def get_arquivo_url(self, obj):
-        if obj.arquivo:
+        # Priorizar S3 URL se disponível
+        if obj.s3_url:
+            return obj.s3_url
+        elif obj.arquivo:
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.arquivo.url)
@@ -519,12 +524,18 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
         return None
     
     def get_arquivo_nome(self, obj):
-        if obj.arquivo:
+        # Usar nome_original se disponível, senão extrair do arquivo
+        if obj.nome_original:
+            return obj.nome_original
+        elif obj.arquivo:
             return obj.arquivo.name.split('/')[-1]
         return None
     
     def get_arquivo_tamanho(self, obj):
-        if obj.arquivo:
+        # Usar tamanho_arquivo se disponível, senão do arquivo
+        if obj.tamanho_arquivo:
+            return obj.tamanho_arquivo
+        elif obj.arquivo:
             return obj.arquivo.size
         return None
 

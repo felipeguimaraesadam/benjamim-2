@@ -590,7 +590,7 @@ class ArquivoObra(models.Model):
     ]
     
     obra = models.ForeignKey(Obra, related_name='arquivos', on_delete=models.CASCADE)
-    arquivo = models.FileField(upload_to=obra_arquivo_path)
+    arquivo = models.FileField(upload_to=obra_arquivo_path, blank=True, null=True)
     nome_original = models.CharField(max_length=255)
     descricao = models.CharField(max_length=255, blank=True, null=True)
     tipo_arquivo = models.CharField(max_length=50, blank=True, null=True)  # File extension
@@ -598,6 +598,10 @@ class ArquivoObra(models.Model):
     tamanho_arquivo = models.PositiveIntegerField(default=0)  # Size in bytes
     uploaded_at = models.DateTimeField(auto_now_add=True)
     uploaded_by = models.ForeignKey('Usuario', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Campos para integração com S3
+    s3_anexo_id = models.CharField(max_length=100, blank=True, null=True)
+    s3_url = models.URLField(max_length=1000, blank=True, null=True)
     
     class Meta:
         ordering = ['-uploaded_at']

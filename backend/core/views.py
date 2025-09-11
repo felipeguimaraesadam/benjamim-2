@@ -2815,7 +2815,7 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
     
     def create(self, request, *args, **kwargs):
         """
-        Cria um novo arquivo para uma obra.
+        Cria um novo arquivo para uma obra usando S3Service.
         """
         import logging
         logger = logging.getLogger('django')
@@ -2835,6 +2835,8 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            arquivo = request.FILES['arquivo']
+            
             # DEBUG: Verificar se obra existe
             obra_id = request.data.get('obra')
             logger.error(f"🔍 [ARQUIVO OBRA DEBUG] obra_id recebido: {obra_id} (tipo: {type(obra_id)})")
@@ -2853,36 +2855,80 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
                 except Exception as e:
                     logger.error(f"❌ [ARQUIVO OBRA DEBUG] Erro ao buscar obra: {str(e)}")
             
-            serializer = self.get_serializer(data=request.data)
-            logger.error(f"🔍 [ARQUIVO OBRA DEBUG] Serializer criado, validando...")
-            serializer.is_valid(raise_exception=True)
-            logger.error(f"✅ [ARQUIVO OBRA DEBUG] Serializer válido")
-            
             # Validações específicas do arquivo
-            arquivo = serializer.validated_data.get('arquivo')
-            if arquivo and arquivo.size > 50 * 1024 * 1024:  # 50MB
+            if arquivo.size > 50 * 1024 * 1024:  # 50MB
                 return Response(
                     {'error': 'Arquivo muito grande. Tamanho máximo: 50MB'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
             allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt']
-            if arquivo:
-                import os
-                _, ext = os.path.splitext(arquivo.name.lower())
-                if ext not in allowed_extensions:
-                    return Response(
-                        {'error': f'Tipo de arquivo não permitido. Tipos permitidos: {", ".join(allowed_extensions)}'}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+            import os
+            _, ext = os.path.splitext(arquivo.name.lower())
+            if ext not in allowed_extensions:
+                return Response(
+                    {'error': f'Tipo de arquivo não permitido. Tipos permitidos: {", ".join(allowed_extensions)}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
-            # A validação da obra é feita pelo serializer, que espera um ID.
-            # O 'uploaded_by' é associado ao usuário da requisição.
-            serializer.save(uploaded_by=request.user)
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            # Usar S3Service para upload
+            from .services.s3_service import S3Service
+            s3_service = S3Service()
+            
+            logger.error(f"🔍 [ARQUIVO OBRA DEBUG] Iniciando upload para S3...")
+            
+            # Metadados adicionais
+            metadata = {
+                'categoria': request.data.get('categoria', 'OUTROS'),
+                'descricao': request.data.get('descricao', ''),
+                'obra_id': obra_id
+            }
+            
+            # Upload para S3
+            upload_result = s3_service.upload_file(
+                file=arquivo,
+                anexo_type='obra',
+                object_id=int(obra_id),
+                user_id=request.user.id,
+                metadata=metadata
+            )
+            
+            logger.error(f"🔍 [ARQUIVO OBRA DEBUG] Resultado do upload S3: {upload_result}")
+            
+            if not upload_result.get('success'):
+                logger.error(f"❌ [ARQUIVO OBRA DEBUG] Falha no upload S3: {upload_result.get('error')}")
+                return Response(
+                    {'error': f'Erro no upload: {upload_result.get("error")}'}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            # Criar registro ArquivoObra apontando para o S3
+            from .models import ArquivoObra
+            arquivo_obra = ArquivoObra.objects.create(
+                obra_id=obra_id,
+                arquivo=None,  # Não salvar arquivo localmente
+                nome_original=arquivo.name,
+                descricao=request.data.get('descricao', ''),
+                categoria=request.data.get('categoria', 'OUTROS'),
+                tamanho_arquivo=arquivo.size,
+                uploaded_by=request.user
+            )
+            
+            # Adicionar referência ao S3
+            arquivo_obra.s3_anexo_id = upload_result.get('anexo_id')
+            arquivo_obra.s3_url = upload_result.get('url')
+            arquivo_obra.save()
+            
+            logger.error(f"✅ [ARQUIVO OBRA DEBUG] Arquivo criado com sucesso: ID {arquivo_obra.id}")
+            
+            # Serializar resposta
+            serializer = self.get_serializer(arquivo_obra)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
             
         except Exception as e:
+            logger.error(f"❌ [ARQUIVO OBRA DEBUG] Erro geral: {str(e)}")
+            import traceback
+            logger.error(f"❌ [ARQUIVO OBRA DEBUG] Traceback: {traceback.format_exc()}")
             return Response(
                 {'error': f'Erro ao fazer upload do arquivo: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
