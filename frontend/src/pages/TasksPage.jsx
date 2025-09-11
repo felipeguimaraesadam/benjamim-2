@@ -18,4 +18,4 @@ const TasksPage = () => {
   );
 };
 
-export default Tasks
+export default TasksPage

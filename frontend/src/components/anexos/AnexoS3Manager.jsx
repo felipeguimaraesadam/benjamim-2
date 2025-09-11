@@ -24,7 +24,8 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
   const fetchAnexos = async () => {
     try {
       setIsLoading(true);
-      const response = await api.getAnexosS3(entityType, entityId);
+      const params = { entity_type: entityType, entity_id: entityId };
+      const response = await api.getAnexosS3(params);
       setAnexos(response.data.anexos || []);
       if (onAnexosChange) {
         onAnexosChange(response.data.anexos || []);
@@ -39,7 +40,7 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
 
   const fetchStorageInfo = async () => {
     try {
-      const response = await api.getS3StorageInfo();
+      const response = await api.getS3Statistics();
       setStorageInfo(response.data);
     } catch (err) {
       console.error('Erro ao carregar informações de armazenamento:', err);
@@ -68,7 +69,7 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
       formData.append('entity_type', entityType);
       formData.append('entity_id', entityId);
 
-      const response = await api.uploadAnexosS3(formData, {
+      const response = await api.uploadAnexoS3(formData, {
         onUploadProgress: (progressEvent) => {
           const progress = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
@@ -138,7 +139,7 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
 
     try {
       setMigrationStatus('running');
-      const response = await api.migrateAnexosToS3(entityType, entityId);
+      const response = await api.migrateAnexosToS3();
       setMigrationStatus('completed');
       toast.success(`Migração concluída! ${response.data.migrated_count} arquivos migrados.`);
       await fetchAnexos();

@@ -1,4 +1,4 @@
-import * as api from './api';
+import { post } from './api';
 
 interface ErrorReport {
   message: string;
@@ -181,7 +181,7 @@ class ErrorReporter {
 
   private async sendErrorReport(errorReport: ErrorReport): Promise<void> {
     try {
-      await api.post('/error-report/', errorReport);
+      await post('/error-report/', errorReport);
     } catch (error) {
       // Se falhar ao enviar, armazenar localmente como fallback
       this.storeErrorLocally(errorReport);
@@ -245,21 +245,8 @@ class ErrorReporter {
 // Instância singleton
 export const errorReporter = ErrorReporter.getInstance();
 
-// Configurar interceptor de requisições para capturar erros de API
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const config = error.config;
-    if (config) {
-      errorReporter.reportApiError(
-        error,
-        config.url || 'unknown',
-        config.method?.toUpperCase() || 'UNKNOWN'
-      );
-    }
-    return Promise.reject(error);
-  }
-);
+// Nota: O interceptor de API já está configurado no arquivo api.js
+// Não precisamos duplicar aqui para evitar conflitos
 
 // Exportar tipos para uso em outros arquivos
 export type { ErrorReport }
