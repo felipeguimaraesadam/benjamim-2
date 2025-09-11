@@ -3,6 +3,20 @@ import { toast } from 'react-toastify';
 import * as api from '../../services/api';
 import { formatDateToDMY } from '../../utils/dateUtils';
 import SpinnerIcon from '../utils/SpinnerIcon';
+import { 
+  FiUpload, 
+  FiDownload, 
+  FiTrash2, 
+  FiFile, 
+  FiImage, 
+  FiFileText, 
+  FiFilm, 
+  FiMusic,
+  FiArchive,
+  FiHardDrive,
+  FiCloud,
+  FiEye
+} from 'react-icons/fi';
 
 const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
   const [anexos, setAnexos] = useState([]);
@@ -13,11 +27,20 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [storageInfo, setStorageInfo] = useState(null);
   const [migrationStatus, setMigrationStatus] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     fetchAnexos();
     fetchStorageInfo();
   }, [entityType, entityId]);
+
+  // Função para verificar se o arquivo é uma imagem
+  const isImageFile = (filename) => {
+    if (!filename) return false;
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
+    return imageExtensions.some(ext => filename.toLowerCase().endsWith(ext));
+  };
 
   const fetchAnexos = async () => {
     try {
@@ -28,13 +51,40 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
         params.entity_id = entityId;
       }
       const response = await api.getAnexosS3(params);
-      setAnexos(response.data.anexos || []);
+      
+      // Verificar se a resposta tem a estrutura esperada
+      let anexosList = [];
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          anexosList = response.data;
+        } else if (response.data.anexos && Array.isArray(response.data.anexos)) {
+          anexosList = response.data.anexos;
+        } else if (response.data.results && Array.isArray(response.data.results)) {
+          anexosList = response.data.results;
+        }
+      }
+      
+      setAnexos(anexosList);
       if (onAnexosChange) {
-        onAnexosChange(response.data.anexos || []);
+        onAnexosChange(anexosList);
       }
     } catch (err) {
       console.error('Erro ao carregar anexos:', err);
-      toast.error('Erro ao carregar anexos');
+      
+      // Tratamento de erro mais específico
+      let errorMsg = 'Erro ao carregar anexos';
+      if (err.response?.status === 401) {
+        errorMsg = 'Não autorizado. Faça login novamente.';
+      } else if (err.response?.status === 403) {
+        errorMsg = 'Sem permissão para acessar anexos.';
+      } else if (err.response?.status === 404) {
+        errorMsg = 'Endpoint de anexos não encontrado.';
+      } else if (err.response?.data?.detail) {
+        errorMsg = err.response.data.detail;
+      }
+      
+      toast.error(errorMsg);
+      setAnexos([]); // Limpar lista em caso de erro
     } finally {
       setIsLoading(false);
     }
@@ -65,8 +115,8 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
       setUploadProgress(0);
 
       const formData = new FormData();
-      selectedFiles.forEach((file, index) => {
-        formData.append(`files`, file);
+      selectedFiles.forEach((file) => {
+        formData.append('files', file);
       });
       if (entityType) {
         formData.append('entity_type', entityType);
@@ -75,23 +125,46 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
         formData.append('entity_id', entityId);
       }
 
-      const response = await api.uploadAnexoS3(formData, {
+      // Configuração correta para axios com progress
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
         onUploadProgress: (progressEvent) => {
           const progress = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
           );
           setUploadProgress(progress);
         },
-      });
+      };
+
+      const response = await api.uploadAnexoS3(formData);
 
       toast.success(`${selectedFiles.length} arquivo(s) enviado(s) com sucesso!`);
       setSelectedFiles([]);
       setShowUploadModal(false);
-      await fetchAnexos();
-      await fetchStorageInfo();
+      
+      // Aguardar um pouco antes de recarregar para garantir que o backend processou
+      setTimeout(async () => {
+        await fetchAnexos();
+        await fetchStorageInfo();
+      }, 500);
     } catch (err) {
       console.error('Erro ao fazer upload:', err);
-      const errorMsg = err.response?.data?.error || 'Erro ao fazer upload dos arquivos';
+      let errorMsg = 'Erro ao fazer upload dos arquivos';
+      
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errorMsg = err.response.data;
+        } else if (err.response.data.error) {
+          errorMsg = err.response.data.error;
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      
       toast.error(errorMsg);
     } finally {
       setIsUploading(false);
@@ -105,16 +178,37 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
     }
 
     try {
+      // Remover imediatamente da lista local para feedback visual rápido
+      const anexoToDelete = anexos.find(anexo => anexo.id === anexoId);
+      setAnexos(prevAnexos => prevAnexos.filter(anexo => anexo.id !== anexoId));
+      
       await api.deleteAnexoS3(anexoId);
       toast.success('Anexo excluído com sucesso!');
-      await fetchAnexos();
-      await fetchStorageInfo();
+      
+      // Recarregar dados do servidor para garantir sincronização
+      setTimeout(async () => {
+        await fetchAnexos();
+        await fetchStorageInfo();
+      }, 300);
     } catch (err) {
       console.error('Erro ao excluir anexo:', err);
-      const errorMsg = err.response?.data?.error || 'Erro ao excluir anexo';
+      let errorMsg = 'Erro ao excluir anexo';
+      
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errorMsg = err.response.data;
+        } else if (err.response.data.error) {
+          errorMsg = err.response.data.error;
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+      }
+      
       toast.error(errorMsg);
-    }
-  };
+      // Recarregar a lista em caso de erro para restaurar o estado correto
+      fetchAnexos();
+     }
+   };
 
   const handleDownload = async (anexoId, filename) => {
     try {
@@ -157,6 +251,38 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
       const errorMsg = err.response?.data?.error || 'Erro durante a migração';
       toast.error(errorMsg);
     }
+  };
+
+  // Função para abrir preview de imagem
+  const handleImagePreview = (anexo) => {
+    if (isImageFile(anexo.filename)) {
+      setPreviewImage({
+        url: anexo.download_url || `/api/anexos-s3/${anexo.id}/download`,
+        name: anexo.filename
+      });
+      setShowPreview(true);
+    }
+  };
+
+  // Função para fechar preview
+  const closePreview = () => {
+    setShowPreview(false);
+    setPreviewImage(null);
+  };
+
+  // Função para obter informações de anexação
+  const getAttachmentInfo = (anexo) => {
+    const typeMap = {
+      'compra': 'Compra',
+      'obra': 'Obra', 
+      'despesa': 'Despesa',
+      'geral': 'Geral'
+    };
+    
+    const typeName = typeMap[anexo.anexo_type] || anexo.anexo_type || 'Não especificado';
+    const objectId = anexo.object_id || 'N/A';
+    
+    return `${typeName} #${objectId}`;
   };
 
   const formatFileSize = (bytes) => {
@@ -325,35 +451,79 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
           {anexos.map((anexo) => (
             <div key={anexo.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">{getFileIcon(anexo.filename)}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    {isImageFile(anexo.filename) && anexo.download_url ? (
+                      <div className="relative">
+                        <img
+                          src={anexo.download_url}
+                          alt={anexo.filename}
+                          className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => handleImagePreview(anexo)}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
+                        />
+                        <div className="w-12 h-12 flex items-center justify-center" style={{display: 'none'}}>
+                          {getFileIcon(anexo.filename)}
+                        </div>
+                      </div>
+                    ) : (
+                      getFileIcon(anexo.filename)
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {anexo.filename}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {formatFileSize(anexo.file_size)}
-                    </p>
+                    <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                      <span>{formatFileSize(anexo.file_size)}</span>
+                      <span>{formatDateToDMY(anexo.uploaded_at)}</span>
+                      <span className="flex items-center space-x-1">
+                        {anexo.s3_key ? (
+                          <>
+                            <FiCloud className="w-3 h-3" />
+                            <span>S3</span>
+                          </>
+                        ) : (
+                          <>
+                            <FiHardDrive className="w-3 h-3" />
+                            <span>Local</span>
+                          </>
+                        )}
+                      </span>
+                      {(anexo.anexo_type || anexo.object_id) && (
+                        <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs">
+                          {getAttachmentInfo(anexo)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-1">
+                  {isImageFile(anexo.filename) && (
+                    <button
+                      onClick={() => handleImagePreview(anexo)}
+                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1"
+                      title="Visualizar"
+                    >
+                      <FiEye className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDownload(anexo.id, anexo.filename)}
                     className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-1"
                     title="Download"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                    <FiDownload className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(anexo.id)}
                     className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1"
                     title="Excluir"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <FiTrash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -368,6 +538,31 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal de Preview de Imagem */}
+      {showPreview && previewImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center" onClick={closePreview}>
+          <div className="relative max-w-4xl max-h-full p-4">
+            <button
+              onClick={closePreview}
+              className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img
+              src={previewImage.url}
+              alt={previewImage.name}
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="absolute bottom-2 left-2 right-2 text-white bg-black bg-opacity-50 p-2 rounded text-center">
+              {previewImage.name}
+            </div>
+          </div>
         </div>
       )}
     </div>

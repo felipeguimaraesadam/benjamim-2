@@ -344,21 +344,34 @@ const CompraItensModal = ({ isOpen, onClose, compra }) => {
                 <div key={anexo.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-700">
                   {/* Preview da imagem ou ícone de arquivo */}
                   <div className="mb-3">
-                    {isImageFile(anexo.arquivo_nome) ? (
+                    {isImageFile(anexo.arquivo_nome) && anexo.arquivo_url ? (
                       <div className="relative">
                         <img
                           src={anexo.arquivo_url}
                           alt={anexo.arquivo_nome}
                           className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => window.open(anexo.arquivo_url, '_blank')}
+                          onClick={() => anexo.arquivo_url && window.open(anexo.arquivo_url, '_blank')}
+                          onError={(e) => {
+                            // Substituir por ícone de arquivo quando a imagem falha ao carregar
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
                         />
                         <div className="absolute top-2 right-2">
                           <Image className="h-4 w-4 text-white bg-black bg-opacity-50 rounded p-0.5" />
                         </div>
+                        {/* Fallback quando imagem falha */}
+                        <div className="w-full h-32 bg-gray-100 dark:bg-gray-600 rounded-md flex-col items-center justify-center" style={{display: 'none'}}>
+                          <FileText className="h-8 w-8 text-gray-400 mb-1" />
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Imagem não disponível</span>
+                        </div>
                       </div>
                     ) : (
-                      <div className="w-full h-32 bg-gray-100 dark:bg-gray-600 rounded-md flex items-center justify-center">
-                        <FileText className="h-12 w-12 text-gray-400" />
+                      <div className="w-full h-32 bg-gray-100 dark:bg-gray-600 rounded-md flex flex-col items-center justify-center">
+                        <FileText className="h-8 w-8 text-gray-400 mb-1" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400 text-center px-2">
+                          {isImageFile(anexo.arquivo_nome) ? 'Imagem não disponível' : 'Arquivo'}
+                        </span>
                       </div>
                     )}
                   </div>

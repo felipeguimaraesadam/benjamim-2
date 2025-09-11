@@ -525,9 +525,11 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
                 result = s3_service.generate_signed_url(anexo_s3.anexo_id, expiration=3600)
                 if result.get('success'):
                     return result.get('signed_url')
-            except (AnexoS3.DoesNotExist, Exception):
-                # Se falhar ao gerar URL assinada, continua para fallbacks
-                pass
+            except (AnexoS3.DoesNotExist, Exception) as e:
+                # Log do erro para debug
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Erro ao gerar URL S3 para anexo {obj.id}: {str(e)}")
         
         # Fallback para s3_url direta
         if obj.s3_url:
@@ -540,12 +542,20 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
                 if request:
                     return request.build_absolute_uri(obj.arquivo.url)
                 return obj.arquivo.url
-            except Exception:
-                # Se arquivo local não estiver disponível
-                pass
+            except Exception as e:
+                # Log do erro para debug
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Erro ao gerar URL local para anexo {obj.id}: {str(e)}")
         
-        # Último fallback - URL placeholder para imagem não encontrada
-        return '/static/images/file-not-found.png'
+        # Último fallback - URL absoluta para placeholder
+        request = self.context.get('request')
+        if request:
+            from django.conf import settings
+            return request.build_absolute_uri(settings.STATIC_URL + 'images/file-not-found.png')
+        
+        # Fallback final se não houver request
+        return None
     
     def get_arquivo_nome(self, obj):
         # Usar nome_original se disponível, senão extrair do arquivo
