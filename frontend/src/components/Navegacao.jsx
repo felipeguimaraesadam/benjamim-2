@@ -478,20 +478,7 @@ const Navegacao = () => {
               >
                 Anexos S3
               </NavLink>
-              <NavLink
-                to="/tasks"
-                icon={<CogIcon />}
-                onClick={closeMobileMenu}
-              >
-                Tarefas
-              </NavLink>
-              <NavLink
-                to="/branches"
-                icon={<CodeBranchIcon />}
-                onClick={closeMobileMenu}
-              >
-                Branches
-              </NavLink>
+              {/* Links administrativos removidos - Tarefas e Branches */}
             </>
           )}
         </nav>

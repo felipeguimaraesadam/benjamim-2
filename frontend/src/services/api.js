@@ -688,30 +688,7 @@ export const downloadAnexoS3 = (anexoId) => {
 export const migrateAnexosToS3 = () => apiClient.post('/anexos-s3/migrate/');
 export const getS3Statistics = () => apiClient.get('/anexos-s3/statistics/');
 
-// --- Task Management Service Functions ---
-export const getTasks = (params = {}) => apiClient.get('/tasks/', { params });
-export const getTaskById = (taskId) => apiClient.get(`/tasks/${taskId}/`);
-export const createTask = (taskData) => apiClient.post('/tasks/', taskData);
-export const cancelTask = (taskId) => apiClient.post(`/tasks/${taskId}/cancel/`);
-export const retryTask = (taskId) => apiClient.post(`/tasks/${taskId}/retry/`);
-export const getTaskHistory = (params = {}) => apiClient.get('/task-history/', { params });
-export const getTaskStatistics = () => apiClient.get('/tasks/statistics/');
-
-// --- Branch Management Service Functions ---
-export const getBranches = () => apiClient.get('/branches/');
-export const createBranch = (branchData) => apiClient.post('/branches/', branchData);
-export const deleteBranch = (branchId) => apiClient.delete(`/branches/${branchId}/`);
-export const mergeBranch = (branchId, targetBranch) => {
-  return apiClient.post(`/branches/${branchId}/merge/`, { target_branch: targetBranch });
-};
-export const switchBranch = (branchName) => {
-  return apiClient.post('/branches/switch/', { branch_name: branchName });
-};
-export const getCurrentBranch = () => apiClient.get('/branches/current/');
-export const getBranchCommits = (branchId) => apiClient.get(`/branches/${branchId}/commits/`);
-export const createCommit = (branchId, commitData) => {
-  return apiClient.post(`/branches/${branchId}/commits/`, commitData);
-};
+// APIs administrativas removidas - Tasks e Branches não são necessárias para o cliente
 
 // --- Generic HTTP Methods ---
 export const post = (url, data, config = {}) => apiClient.post(url, data, config);
