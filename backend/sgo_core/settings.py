@@ -173,8 +173,13 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
+USE_S3 = os.environ.get('USE_S3') == 'TRUE'
+
 STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage" if USE_S3 else "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
