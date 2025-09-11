@@ -14,9 +14,6 @@ export MALLOC_MMAP_THRESHOLD_=100000
 # Limitar uso de memória do Python
 export PYTHONMALLOC=malloc
 
-# Aplicar otimizações de memória
-python memory_optimization.py
-
 # Limpar cache antes da instalação
 rm -rf ~/.cache/pip
 rm -rf /tmp/*
@@ -24,6 +21,9 @@ rm -rf /tmp/*
 # Instalar dependências com configurações otimizadas
 pip install --no-cache-dir --no-deps -r requirements.txt
 pip check
+
+# Aplicar otimizações de memória (após instalar Django)
+python memory_optimization.py
 
 # Executar collectstatic com configurações otimizadas
 python manage.py collectstatic --no-input --clear --verbosity=0
