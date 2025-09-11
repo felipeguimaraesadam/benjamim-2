@@ -21,9 +21,9 @@ services:
       - key: DEBUG
         value: "False"
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://frontend-s7jt-4cjk.onrender.com,https://frontend-s7jt.onrender.com"
+        value: "https://benjamim-2.onrender.com"
       - key: CSRF_TRUSTED_ORIGINS
-        value: "https://frontend-s7jt-4cjk.onrender.com,https://frontend-s7jt.onrender.com"
+        value: "https://benjamim-2.onrender.com"
       - key: DJANGO_SUPERUSER_USERNAME
         value: admin
       - key: DJANGO_SUPERUSER_EMAIL

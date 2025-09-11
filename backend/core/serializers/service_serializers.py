@@ -129,26 +129,19 @@ class TaskHistorySerializer(serializers.ModelSerializer):
 
 
 class AnexoS3Serializer(serializers.ModelSerializer):
-    """
-    Serializer para o modelo AnexoS3.
-    """
-    uploaded_by_name = serializers.CharField(source='uploaded_by.username', read_only=True)
+    uploaded_by_name = serializers.CharField(source='uploaded_by.get_full_name', read_only=True)
     file_size_mb = serializers.SerializerMethodField()
     download_url = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = AnexoS3
         fields = [
-            'id', 'anexo_type', 'object_id', 'original_filename', 'file_extension',
-            'file_size', 'file_size_mb', 'content_type', 's3_key', 's3_bucket',
-            'file_hash', 'metadata', 'is_migrated', 'local_path', 'download_url',
-            'uploaded_by', 'uploaded_by_name', 'created_at', 'updated_at'
+            'id', 'anexo_id', 'nome_original', 'nome_s3', 'bucket_name', 's3_key', 's3_url',
+            'content_type', 'file_size', 'file_size_mb', 'file_hash',
+            'anexo_type', 'object_id', 'uploaded_at', 'uploaded_by',
+            'uploaded_by_name', 'download_url', 'is_migrated', 'migration_date', 'metadata'
         ]
-        read_only_fields = [
-            'id', 'file_extension', 'file_size', 'file_size_mb', 'content_type',
-            's3_key', 's3_bucket', 'file_hash', 'is_migrated', 'download_url',
-            'uploaded_by', 'created_at', 'updated_at'
-        ]
+        read_only_fields = ['anexo_id', 'nome_s3', 'bucket_name', 's3_key', 's3_url', 'file_hash', 'uploaded_at', 'uploaded_by', 'is_migrated', 'migration_date']
     
     def get_file_size_mb(self, obj):
         """Retorna o tamanho do arquivo em MB."""
@@ -158,9 +151,22 @@ class AnexoS3Serializer(serializers.ModelSerializer):
     
     def get_download_url(self, obj):
         """Retorna URL de download temporária (se disponível)."""
-        # Esta URL seria gerada pelo S3Service quando necessário
-        # Por segurança, não incluímos URLs permanentes no serializer
-        return None
+        try:
+            from ..services.s3_service import S3Service
+            s3_service = S3Service()
+            
+            # Gera URL assinada com expiração de 1 hora
+            result = s3_service.generate_signed_url(
+                anexo_id=str(obj.id),
+                expiration=3600
+            )
+            
+            if result['success']:
+                return result['signed_url']
+            else:
+                return None
+        except Exception:
+            return None
     
     def validate_anexo_type(self, value):
         """Valida o tipo de anexo."""

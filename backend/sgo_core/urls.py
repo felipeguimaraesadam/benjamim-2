@@ -18,9 +18,9 @@ from django.contrib import admin
 from django.urls import path, include # Added include
 
 from rest_framework_simplejwt.views import TokenRefreshView
-from core.serializers import MyTokenObtainPairSerializer
+from core.serializers.serializers import MyTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
-from core.views import HealthCheckView, debug_system_info, debug_bypass_login
+# from core.views import HealthCheckView, debug_system_info, debug_bypass_login
 from core.health_views import health_check, system_status, system_metrics
 from core.error_views import test_error, error_report
 from django.http import JsonResponse
@@ -55,7 +55,7 @@ class MyTokenObtainPairView(BaseTokenObtainPairView):
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Health check endpoints
-    path('api/health-check/', HealthCheckView.as_view(), name='health-check'),
+    # path('api/health-check/', HealthCheckView.as_view(), name='health-check'),
     path('api/health/', health_check, name='health'),
     path('api/status/', system_status, name='system_status'),
     path('api/metrics/', system_metrics, name='system_metrics'),
@@ -66,8 +66,8 @@ urlpatterns = [
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # Rotas de DEBUG - REMOVER EM PRODUÇÃO!
-    path('api/debug/system-info/', debug_system_info, name='debug_system_info'),
-    path('api/debug/bypass-login/', debug_bypass_login, name='debug_bypass_login'),
+    # path('api/debug/system-info/', debug_system_info, name='debug_system_info'),
+    # path('api/debug/bypass-login/', debug_bypass_login, name='debug_bypass_login'),
     path('api/', include('core.urls')), # Added core urls
     # path('api-auth/', include('rest_framework.urls', namespace='rest_framework')), # Optional: DRF login/logout for browsable API
 ]

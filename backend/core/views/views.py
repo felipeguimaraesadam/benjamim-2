@@ -24,17 +24,17 @@ from django.http import HttpResponse, Http404 # Http404 added, HttpResponse was 
 from django.template.loader import render_to_string # Was present
 from django.conf import settings
 import os
-from .utils import generate_pdf_response, process_attachments_for_pdf
+from ..utils import generate_pdf_response, process_attachments_for_pdf
 # from weasyprint import HTML  # Removido para otimizar memória
 # from weasyprint.fonts import FontConfiguration # Optional - Removido para otimizar memória
 
-from .models import (
+from ..models import (
     Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material,
     Compra, Despesa_Extra, Ocorrencia_Funcionario, ItemCompra, FotoObra,
     Backup, BackupSettings, AnexoLocacao, AnexoDespesa, ParcelaCompra,
     AnexoCompra, ArquivoObra
 )
-from .serializers import (
+from ..serializers import (
     UsuarioSerializer, ObraSerializer, FuncionarioSerializer, EquipeSerializer,
     LocacaoObrasEquipesSerializer, MaterialSerializer, CompraSerializer,
     DespesaExtraSerializer, OcorrenciaFuncionarioSerializer,
@@ -44,10 +44,10 @@ from .serializers import (
     BackupSerializer, BackupSettingsSerializer, AnexoLocacaoSerializer, AnexoDespesaSerializer,
     ParcelaCompraSerializer, AnexoCompraSerializer, ArquivoObraSerializer
 )
-from .permissions import IsNivelAdmin, IsNivelGerente
+from ..permissions import IsNivelAdmin, IsNivelGerente
 
 # Import health check functions
-from .health import health_check, database_status
+from ..health import health_check, database_status
 
 class CreateUsuarioView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -88,6 +88,7 @@ class ObraViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows obras to be viewed or edited.
     """
+    queryset = Obra.objects.all()
     serializer_class = ObraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 
@@ -1294,6 +1295,7 @@ class RelatorioPagamentoViewSet(viewsets.ViewSet):
 
 
 class DespesaExtraViewSet(viewsets.ModelViewSet):
+    queryset = Despesa_Extra.objects.all()
     serializer_class = DespesaExtraSerializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
 

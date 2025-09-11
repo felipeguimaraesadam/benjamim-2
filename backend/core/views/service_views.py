@@ -8,7 +8,8 @@ from django.core.files.uploadedfile import UploadedFile
 import logging
 
 from ..models import BackupLog, TaskHistory, AnexoS3
-from ..serializers import BackupLogSerializer, TaskHistorySerializer, AnexoS3Serializer
+from ..serializers import BackupLogSerializer, TaskHistorySerializer
+from ..serializers.service_serializers import AnexoS3Serializer
 from ..services.backup_service import BackupService
 from ..services.task_service import TaskService
 from ..services.s3_service import S3Service
@@ -439,7 +440,7 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gerenciar anexos no S3.
     """
-    queryset = AnexoS3.objects.all().order_by('-created_at')
+    queryset = AnexoS3.objects.all().order_by('-uploaded_at')
     serializer_class = AnexoS3Serializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
     parser_classes = [MultiPartParser, FormParser]
@@ -466,6 +467,61 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(uploaded_by_id=user_id)
         
         return queryset
+    
+    def create(self, request, *args, **kwargs):
+        """
+        Cria um novo anexo S3 via upload de arquivo.
+        """
+        files = request.FILES.getlist('files')
+        if not files:
+            return Response({
+                'success': False,
+                'error': 'Nenhum arquivo foi enviado'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        entity_type = request.data.get('entity_type', 'general')
+        entity_id = request.data.get('entity_id')
+        user_id = request.user.id if request.user.is_authenticated else None
+        
+        uploaded_files = []
+        errors = []
+        
+        for file in files:
+            try:
+                # Converte entity_id para int se fornecido
+                object_id = int(entity_id) if entity_id else None
+                
+                result = self.s3_service.upload_file(
+                    file=file,
+                    anexo_type=entity_type,
+                    object_id=object_id,
+                    user_id=user_id,
+                    metadata={}
+                )
+                
+                if result['success']:
+                    uploaded_files.append(result)
+                else:
+                    errors.append(f"{file.name}: {result['error']}")
+                    
+            except ValueError:
+                errors.append(f"{file.name}: entity_id deve ser um número válido")
+            except Exception as e:
+                logger.error(f"Error uploading file {file.name}: {str(e)}")
+                errors.append(f"{file.name}: Erro interno do servidor")
+        
+        if uploaded_files:
+            return Response({
+                'success': True,
+                'uploaded_files': uploaded_files,
+                'errors': errors if errors else None
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'success': False,
+                'error': 'Nenhum arquivo foi enviado com sucesso',
+                'errors': errors
+            }, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['post'])
     def upload_file(self, request):
@@ -526,8 +582,8 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
             anexo = self.get_object()
             expiration = int(request.query_params.get('expiration', 3600))  # 1 hora por padrão
             
-            result = self.s3_service.get_download_url(
-                anexo_id=anexo.id,
+            result = self.s3_service.generate_signed_url(
+                anexo_id=str(anexo.id),
                 expiration=expiration
             )
             

@@ -1,7 +1,7 @@
 import os
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import (
+from ..models import (
     Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material,
     Compra, ItemCompra, Despesa_Extra, Ocorrencia_Funcionario, FotoObra,
     Backup, BackupSettings, AnexoLocacao, AnexoDespesa, ParcelaCompra,
@@ -516,12 +516,16 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
         # Priorizar S3 com URL assinada se disponível
         if obj.s3_anexo_id:
             try:
+                from .models import AnexoS3
                 from .services.s3_service import S3Service
+                
+                # Buscar o anexo S3 pelo ID
+                anexo_s3 = AnexoS3.objects.get(id=obj.s3_anexo_id)
                 s3_service = S3Service()
-                result = s3_service.generate_signed_url(obj.s3_anexo_id, expiration=3600)
+                result = s3_service.generate_signed_url(anexo_s3.anexo_id, expiration=3600)
                 if result.get('success'):
                     return result.get('signed_url')
-            except Exception:
+            except (AnexoS3.DoesNotExist, Exception):
                 # Se falhar ao gerar URL assinada, continua para fallbacks
                 pass
         

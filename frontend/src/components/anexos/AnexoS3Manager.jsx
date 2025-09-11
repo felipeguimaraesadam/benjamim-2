@@ -15,16 +15,18 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
   const [migrationStatus, setMigrationStatus] = useState(null);
 
   useEffect(() => {
-    if (entityType && entityId) {
-      fetchAnexos();
-      fetchStorageInfo();
-    }
+    fetchAnexos();
+    fetchStorageInfo();
   }, [entityType, entityId]);
 
   const fetchAnexos = async () => {
     try {
       setIsLoading(true);
-      const params = { entity_type: entityType, entity_id: entityId };
+      const params = {};
+      if (entityType && entityId) {
+        params.entity_type = entityType;
+        params.entity_id = entityId;
+      }
       const response = await api.getAnexosS3(params);
       setAnexos(response.data.anexos || []);
       if (onAnexosChange) {
@@ -66,8 +68,12 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
       selectedFiles.forEach((file, index) => {
         formData.append(`files`, file);
       });
-      formData.append('entity_type', entityType);
-      formData.append('entity_id', entityId);
+      if (entityType) {
+        formData.append('entity_type', entityType);
+      }
+      if (entityId) {
+        formData.append('entity_id', entityId);
+      }
 
       const response = await api.uploadAnexoS3(formData, {
         onUploadProgress: (progressEvent) => {
@@ -119,6 +125,7 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', filename);
+      link.target = '_blank'; // Abrir em nova aba
       document.body.appendChild(link);
       link.click();
       link.remove();

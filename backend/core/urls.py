@@ -1,24 +1,22 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    UsuarioViewSet, ObraViewSet, FuncionarioViewSet, EquipeViewSet,
-    LocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet,
-    DespesaExtraViewSet, OcorrenciaFuncionarioViewSet, FotoObraViewSet,
-    AnexoLocacaoViewSet, AnexoDespesaViewSet, BackupViewSet,
-    BackupSettingsViewSet, FuncionarioDetailView, EquipeDetailView,
-    MaterialDetailAPIView, RelatorioFinanceiroObraView,
-    RelatorioGeralComprasView, DashboardStatsView,
-    RelatorioDesempenhoEquipeView, RelatorioCustoGeralView,
-    ObraHistoricoCustosView, ObraCustosPorCategoriaView,
-    RelatorioFolhaPagamentoViewSet, RelatorioPagamentoMateriaisViewSet,
-    GerarRelatorioPDFObraView, GerarRelatorioPagamentoLocacoesPDFView,
-    LocacaoSemanalView, RecursosMaisUtilizadosSemanaView,
-    ObraCustosPorMaterialView, ObraCustosPorCategoriaMaterialView,
-    media_test_view, CreateUsuarioView, ParcelaCompraViewSet,
-    AnexoCompraViewSet, ArquivoObraViewSet, GerarPDFComprasLoteView
+    CreateUsuarioView, UsuarioViewSet, ObraViewSet, FuncionarioViewSet, EquipeViewSet,
+    LocacaoObrasEquipesViewSet, MaterialViewSet, CompraViewSet, DespesaExtraViewSet,
+    OcorrenciaFuncionarioViewSet, FotoObraViewSet,
+    BackupViewSet, BackupSettingsViewSet, AnexoLocacaoViewSet, AnexoDespesaViewSet,
+    ParcelaCompraViewSet, AnexoCompraViewSet, ArquivoObraViewSet,
+    FuncionarioDetailView, EquipeDetailView, MaterialDetailAPIView,
+    RelatorioFinanceiroObraView, RelatorioGeralComprasView, DashboardStatsView,
+    RelatorioDesempenhoEquipeView, RelatorioCustoGeralView, ObraHistoricoCustosView,
+    ObraCustosPorCategoriaView, RelatorioFolhaPagamentoViewSet, RelatorioPagamentoMateriaisViewSet,
+    GerarRelatorioPDFObraView, GerarRelatorioPagamentoLocacoesPDFView, LocacaoSemanalView,
+    RecursosMaisUtilizadosSemanaView, ObraCustosPorMaterialView, ObraCustosPorCategoriaMaterialView,
+    media_test_view
 )
 from .views.service_views import BackupViewSet as NewBackupViewSet, TaskViewSet, AnexoS3ViewSet
-from .views.health import health_check, database_status
+from .health_views import health_check
+from .health import database_status
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from api.test_data import populate_test_data, clear_test_data
 

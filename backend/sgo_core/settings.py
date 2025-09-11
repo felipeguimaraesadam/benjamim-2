@@ -13,6 +13,9 @@ ALLOWED_HOSTS_CONFIG = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,djan
 # Separa a string por vírgulas e remove espaços extras
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_CONFIG.split(',') if host.strip()]
 
+# Adiciona variações com porta para desenvolvimento local (sempre)
+ALLOWED_HOSTS.extend(['127.0.0.1:8000', 'localhost:8000'])
+
 INSTALLED_APPS = [
     'corsheaders',
     'django.contrib.admin',
