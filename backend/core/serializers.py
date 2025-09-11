@@ -515,22 +515,33 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
     def get_arquivo_url(self, obj):
         # Priorizar S3 com URL assinada se disponível
         if obj.s3_anexo_id:
-            from .services.s3_service import S3Service
-            s3_service = S3Service()
-            result = s3_service.generate_signed_url(obj.s3_anexo_id, expiration=3600)
-            if result.get('success'):
-                return result.get('signed_url')
-            # Fallback para s3_url se não conseguir gerar URL assinada
-            elif obj.s3_url:
-                return obj.s3_url
-        elif obj.s3_url:
+            try:
+                from .services.s3_service import S3Service
+                s3_service = S3Service()
+                result = s3_service.generate_signed_url(obj.s3_anexo_id, expiration=3600)
+                if result.get('success'):
+                    return result.get('signed_url')
+            except Exception:
+                # Se falhar ao gerar URL assinada, continua para fallbacks
+                pass
+        
+        # Fallback para s3_url direta
+        if obj.s3_url:
             return obj.s3_url
-        elif obj.arquivo:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.arquivo.url)
-            return obj.arquivo.url
-        return None
+        
+        # Fallback para arquivo local
+        if obj.arquivo:
+            try:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(obj.arquivo.url)
+                return obj.arquivo.url
+            except Exception:
+                # Se arquivo local não estiver disponível
+                pass
+        
+        # Último fallback - URL placeholder para imagem não encontrada
+        return '/static/images/file-not-found.png'
     
     def get_arquivo_nome(self, obj):
         # Usar nome_original se disponível, senão extrair do arquivo

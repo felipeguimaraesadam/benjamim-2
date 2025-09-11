@@ -81,6 +81,8 @@ from django.views.static import serve
 # Servir arquivos estáticos em desenvolvimento
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # Servir assets do React build
+    urlpatterns += static('/assets/', document_root=settings.BASE_DIR / 'static_react_build' / 'assets')
 
 # Adicionar rota para servir arquivos de mídia em qualquer ambiente (dev/prod simplificado)
 # Isso garante que os links de mídia funcionem corretamente.
@@ -97,6 +99,6 @@ handler403 = 'core.error_views.handler403'
 handler400 = 'core.error_views.handler400'
 
 # Servir o frontend React
-# A rota catch-all deve ser a última para não interceptar as rotas de API ou mídia.
-# Excluir rotas que começam com 'api/', 'admin/', ou 'media/'
-urlpatterns.append(re_path(r'^(?!api/|admin/|media/).*$', TemplateView.as_view(template_name='index.html')))
+# A rota catch-all deve ser a última para não interceptar as rotas de API, mídia ou arquivos estáticos.
+# Excluir rotas que começam com 'api/', 'admin/', 'media/', 'static/' ou 'assets/'
+urlpatterns.append(re_path(r'^(?!api/|admin/|media/|static/|assets/).*$', TemplateView.as_view(template_name='index.html')))

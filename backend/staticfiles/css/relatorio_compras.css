@@ -1,0 +1,298 @@
+/* Main CSS for PDF Report - relatorio_compras.css */
+/* This file is loaded by the WeasyPrint view for bulk purchase reports */
+
+body {
+    font-family: Arial, sans-serif;
+    font-size: 8pt;
+    color: #333;
+    line-height: 1.3;
+    margin: 0;
+    padding: 15px;
+}
+
+.simple-report-container {
+    border: 1px solid #ccc;
+    padding: 1.5cm;
+    height: calc(29.7cm - 3cm); /* A4 height minus padding */
+    width: calc(21cm - 3cm); /* A4 width minus padding */
+    box-sizing: border-box;
+    position: relative;
+    background-color: #fdfdfd;
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 3px solid #007bff; /* Blue accent color for purchases */
+    padding-bottom: 15px;
+    margin-bottom: 40px;
+}
+
+.report-header .logo {
+    font-size: 26pt;
+    font-weight: bold;
+    color: #007bff; /* Blue accent color */
+}
+
+.report-header .title-block {
+    text-align: right;
+}
+
+.report-header h1 {
+    margin: 0;
+    font-size: 14pt;
+    color: #007bff;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.report-header p {
+    margin: 0;
+    font-size: 12pt;
+    color: #666;
+}
+
+.report-footer {
+    position: absolute;
+    bottom: 1cm;
+    left: 1.5cm;
+    right: 1.5cm;
+    text-align: center;
+    font-size: 9pt;
+    color: #777;
+    border-top: 1px solid #eee;
+    padding-top: 8px;
+}
+
+.header-placeholder {
+    height: 60px;
+}
+
+.header {
+    position: running(header);
+    height: 60px;
+    background-color: #f8f8f8;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 20px;
+    text-align: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 16pt;
+    color: #333;
+}
+
+.header p {
+    margin: 0;
+    font-size: 10pt;
+    color: #666;
+}
+
+.cover-page-content h1 { 
+    font-size: 26pt; 
+    margin-bottom: 20px; 
+    color: #2c3e50; 
+}
+
+.cover-page-content h2 { 
+    font-size: 20pt; 
+    margin-bottom: 40px; 
+    color: #34495e; 
+}
+
+.cover-page-content p { 
+    font-size: 12pt; 
+    margin-bottom: 8px; 
+    color: #555555; 
+}
+
+.cover-page-content .emission-date { 
+    margin-top: 60px; 
+    font-size: 11pt; 
+    color: #555555;
+}
+
+h1.main-title {
+    font-size: 18pt;
+    text-align: center;
+    margin-bottom: 1em;
+    color: #2c3e50;
+}
+
+h2.section-title {
+    font-size: 11pt;
+    color: #007bff;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+    font-weight: bold;
+}
+
+h3.subsection-title {
+    font-size: 10pt;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+h4.table-title {
+    font-size: 11pt;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    color: #333;
+    font-weight: bold;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    font-size: 8pt;
+    page-break-inside: auto;
+}
+
+tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 4px;
+    text-align: left;
+    font-size: 7pt;
+    vertical-align: middle;
+}
+
+table {
+    border-collapse: separate;
+    border-spacing: 0 4px;
+}
+
+th {
+    background-color: #007bff; /* Blue background for headers */
+    color: #ffffff;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 9pt;
+    letter-spacing: 0.5px;
+}
+
+th:first-child {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+th:last-child {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+td {
+    background-color: #f8f9fa;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.font-bold {
+    font-weight: bold;
+}
+
+.total-row th, .total-row td {
+    background-color: #e3f2fd; /* Light blue for totals */
+    font-weight: bold;
+    border-top: 2px solid #007bff;
+}
+
+.section {
+    margin-bottom: 20px;
+}
+
+.avoid-break {
+    page-break-inside: avoid;
+}
+
+.compra-item {
+    margin-bottom: 30px;
+    page-break-inside: avoid;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.compra-header {
+    background-color: #f0f8ff;
+    padding: 15px;
+    margin-bottom: 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.compra-header h3 {
+    margin: 0;
+    color: #007bff;
+    font-size: 14pt;
+}
+
+.compra-item table {
+    margin: 15px;
+    width: calc(100% - 30px);
+}
+
+.compra-item h4 {
+    margin: 15px 15px 10px 15px;
+    color: #495057;
+}
+
+/* Specific styling for purchase items */
+.purchase-summary {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0;
+}
+
+.purchase-summary h4 {
+    color: #856404;
+    margin-top: 0;
+}
+
+/* Status indicators */
+.status-approved {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-pending {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.status-rejected {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Payment status */
+.payment-paid {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.payment-pending {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.payment-overdue {
+    color: #dc3545;
+    font-weight: bold;
+}

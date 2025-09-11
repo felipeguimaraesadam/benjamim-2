@@ -37,6 +37,51 @@ git merge dev_main
 git push origin master
 ```
 
+### 4. **🚨 POLÍTICA DE TESTES - APENAS NO DEPLOY DO RENDER**
+
+⚠️ **REGRA ABSOLUTA: TESTES APENAS NO DEPLOY - NUNCA LOCALMENTE**
+
+- **PROIBIDO**: Executar testes locais (pytest, npm test, etc.)
+- **PROIBIDO**: Rodar servidor local para testes
+- **PROIBIDO**: Configurar ambiente local para desenvolvimento
+- **OBRIGATÓRIO**: Todos os testes devem ser feitos no deploy do Render
+- **OBRIGATÓRIO**: Usar apenas URLs de produção/desenvolvimento do Render
+
+#### Por que apenas no Render?
+1. **Ambiente Real**: O Render é o ambiente de produção real
+2. **Configurações Corretas**: Variáveis de ambiente, banco de dados e integrações reais
+3. **Performance Real**: Testes locais não refletem a performance na nuvem
+4. **Integração Completa**: Frontend e backend integrados no ambiente real
+
+#### Workflow de Testes:
+```bash
+# 1. Fazer mudanças no código
+git add .
+git commit -m "fix: correção implementada"
+git push origin dev_main
+
+# 2. Aguardar deploy automático no Render (2-3 minutos)
+
+# 3. Testar diretamente na URL do Render:
+# - https://frontend-s7jt-4cjk.onrender.com (dev_main)
+# - https://django-backend-e7od-4cjk.onrender.com (dev_main)
+
+# 4. Se aprovado, fazer merge para master
+```
+
+#### ❌ NÃO FAZER:
+- `python manage.py runserver`
+- `npm run dev`
+- `pytest`
+- Configurar .env local
+- Instalar dependências localmente para teste
+
+#### ✅ FAZER:
+- Commit e push direto
+- Testar na URL do Render
+- Verificar logs no dashboard do Render
+- Validar funcionalidades na nuvem
+
 ## 🔄 Migração Entre Branches (dev_main → master)
 
 ### 📋 Visão Geral
