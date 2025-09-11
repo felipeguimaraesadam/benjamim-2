@@ -10,6 +10,20 @@ requests==2.32.3
 gunicorn==23.0.0
 dj-database-url==2.3.0
 psycopg2-binary==2.9.10
+# Dependências transitivas necessárias
+six==1.16.0
+asgiref==3.8.1
+sqlparse==0.5.1
+botocore==1.35.84
+jmespath==1.0.1
+s3transfer==0.10.4
+packaging==24.2
+certifi==2024.8.30
+charset-normalizer==3.4.0
+idna==3.10
+urllib3==2.2.3
+pyjwt==2.10.1
+typing-extensions==4.12.2
 # Dependências pesadas removidas para otimizar memória:
 # WeasyPrint - biblioteca pesada para PDF
 # PyMuPDF - biblioteca pesada para manipulação de PDF
