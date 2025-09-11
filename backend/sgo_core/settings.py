@@ -93,11 +93,9 @@ if os.environ.get('USE_S3') == 'TRUE':
     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
     AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
     
-    # Configurações de ACL para acesso público
-    AWS_DEFAULT_ACL = 'public-read'
+    # Configurações de cache (sem ACL)
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
-        'ACL': 'public-read',
     }
     
     # Configurações de segurança e CORS
