@@ -216,6 +216,27 @@ const SystemTestsPage = () => {
     }
   };
 
+  // Função para limpar dados de teste (APENAS PARA AMBIENTE DE TESTE)
+  const clearTestData = async () => {
+    if (window.confirm('⚠️ ATENÇÃO: Esta ação irá REMOVER TODOS os dados do banco de dados.\n\nEsta funcionalidade deve ser usada APENAS em ambiente de teste.\n\nTodos os dados serão perdidos permanentemente!\n\nDeseja continuar?')) {
+      setIsLoading(true);
+      try {
+        const response = await apiClient.delete('/clear-test-data/');
+        if (response.data.success) {
+          toast.success('Dados de teste removidos com sucesso!');
+          console.log('Dados removidos:', response.data);
+        } else {
+          throw new Error(response.data.error || 'Erro ao limpar dados');
+        }
+      } catch (error) {
+        console.error('Erro ao limpar dados:', error);
+        toast.error(`Erro ao limpar dados: ${error.response?.data?.error || error.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
   const getStatusIcon = (status) => {
     if (status === 'success') {
       return (
@@ -339,6 +360,28 @@ const SystemTestsPage = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 <span>Popular Dados Teste</span>
+              </>
+            )}
+          </button>
+          
+          {/* Botão para limpar dados de teste - APENAS PARA AMBIENTE DE TESTE */}
+          <button
+            onClick={clearTestData}
+            disabled={isLoading}
+            className="bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-red-300 dark:focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            title="⚠️ APENAS PARA AMBIENTE DE TESTE - Limpar todos os dados do banco"
+          >
+            {isLoading ? (
+              <>
+                <SpinnerIcon />
+                <span>Limpando...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Limpar Dados Teste</span>
               </>
             )}
           </button>

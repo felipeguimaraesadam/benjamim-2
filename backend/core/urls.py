@@ -71,7 +71,7 @@ urlpatterns = [
     path('health/database/', database_status, name='database-status'),
     # Endpoints de dados de teste - APENAS para ambiente de desenvolvimento/teste
     path('populate-test-data/', populate_test_data, name='populate-test-data'),
-    path('clear-test-data/', clear_test_data, name='clear-test-data')
+    path('clear-test-data/', clear_test_data, name='clear-test-data'),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
