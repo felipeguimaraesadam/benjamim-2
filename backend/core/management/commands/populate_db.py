@@ -186,6 +186,8 @@ class Command(BaseCommand):
             descricao='Equipe especializada em alvenaria estrutural e acabamentos - 3 pedreiros + 2 serventes + ferramentas',
             lider=funcionario1
         )
+        # Adicionar membros à equipe (líder + outros funcionários)
+        equipe1.membros.add(funcionario1, funcionario5, funcionario6)  # 3 membros
         equipes.append(equipe1)
         
         equipe2 = Equipe.objects.create(
@@ -193,6 +195,8 @@ class Command(BaseCommand):
             descricao='Equipe para instalações elétricas industriais - 2 eletricistas + 1 auxiliar + equipamentos',
             lider=funcionario2
         )
+        # Adicionar membros à equipe
+        equipe2.membros.add(funcionario2, funcionario7, funcionario8)  # 3 membros
         equipes.append(equipe2)
         
         equipe3 = Equipe.objects.create(
@@ -200,6 +204,8 @@ class Command(BaseCommand):
             descricao='Equipe para sistemas hidráulicos complexos - 2 encanadores + 1 auxiliar + ferramentas especiais',
             lider=funcionario3
         )
+        # Adicionar membros à equipe
+        equipe3.membros.add(funcionario3, funcionario1, funcionario4)  # 3 membros
         equipes.append(equipe3)
         
         equipe4 = Equipe.objects.create(
@@ -207,6 +213,8 @@ class Command(BaseCommand):
             descricao='Equipe para acabamentos de alto padrão - 1 pintor + 1 azulejista + 1 gesseiro',
             lider=funcionario4
         )
+        # Adicionar membros à equipe
+        equipe4.membros.add(funcionario4, funcionario6, funcionario8)  # 3 membros
         equipes.append(equipe4)
         
         equipe5 = Equipe.objects.create(
@@ -214,9 +222,11 @@ class Command(BaseCommand):
             descricao='Equipe especializada em estruturas metálicas - 2 soldadores + 1 montador + equipamentos de solda',
             lider=funcionario5
         )
+        # Adicionar membros à equipe
+        equipe5.membros.add(funcionario5, funcionario7)  # 2 membros
         equipes.append(equipe5)
         
-        self.stdout.write(self.style.SUCCESS(f'{len(equipes)} Equipes created with varied compositions.'))
+        self.stdout.write(self.style.SUCCESS(f'{len(equipes)} Equipes created with members assigned.'))
         
         # Create Materials with different categories
         self.stdout.write('Creating Materials with varied categories...')
@@ -468,7 +478,60 @@ class Command(BaseCommand):
             )
             locacoes_created.append(locacao)
         
-        self.stdout.write(self.style.SUCCESS(f'{len(locacoes_created)} Locações created with individual daily payments.'))
+        # Adicionar locações de serviços externos
+        # Serviço externo 1 - Guincho
+        locacao_ext1 = Locacao_Obras_Equipes.objects.create(
+            obra=obras[6],
+            servico_externo='Guincho 20 toneladas - Locação Diária',
+            data_locacao_inicio=start_of_week + timedelta(days=1),
+            data_locacao_fim=start_of_week + timedelta(days=1),
+            tipo_pagamento='diaria',
+            valor_pagamento=Decimal('450.00'),
+            data_pagamento=start_of_week + timedelta(days=8),
+            observacoes='Guincho para içamento de vigas pré-moldadas'
+        )
+        locacoes_created.append(locacao_ext1)
+        
+        # Serviço externo 2 - Betoneira
+        locacao_ext2 = Locacao_Obras_Equipes.objects.create(
+            obra=obras[7],
+            servico_externo='Betoneira 400L - Locação Semanal',
+            data_locacao_inicio=start_of_week + timedelta(days=2),
+            data_locacao_fim=start_of_week + timedelta(days=8),
+            tipo_pagamento='empreitada',
+            valor_pagamento=Decimal('800.00'),
+            data_pagamento=start_of_week + timedelta(days=15),
+            observacoes='Betoneira para concretagem da laje'
+        )
+        locacoes_created.append(locacao_ext2)
+        
+        # Serviço externo 3 - Andaime
+        locacao_ext3 = Locacao_Obras_Equipes.objects.create(
+            obra=obras[8],
+            servico_externo='Andaime Tubular 100m² - Locação Mensal',
+            data_locacao_inicio=start_of_week + timedelta(days=3),
+            data_locacao_fim=start_of_week + timedelta(days=33),
+            tipo_pagamento='empreitada',
+            valor_pagamento=Decimal('1200.00'),
+            data_pagamento=start_of_week + timedelta(days=10),
+            observacoes='Andaime para trabalhos em altura na fachada'
+        )
+        locacoes_created.append(locacao_ext3)
+        
+        # Serviço externo 4 - Escavadeira
+        locacao_ext4 = Locacao_Obras_Equipes.objects.create(
+            obra=obras[9],
+            servico_externo='Escavadeira Hidráulica - Locação por Hora',
+            data_locacao_inicio=start_of_week + timedelta(days=4),
+            data_locacao_fim=start_of_week + timedelta(days=4),
+            tipo_pagamento='diaria',
+            valor_pagamento=Decimal('600.00'),
+            data_pagamento=start_of_week + timedelta(days=11),
+            observacoes='Escavação para fundação - 8 horas de trabalho'
+        )
+        locacoes_created.append(locacao_ext4)
+        
+        self.stdout.write(self.style.SUCCESS(f'{len(locacoes_created)} Locações created with individual daily payments (including external services).'))
         
         # Create Compras with varied payment dates (no installments)
         self.stdout.write('Creating Compras with varied payment dates (no installments)...')
