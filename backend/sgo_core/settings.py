@@ -92,9 +92,29 @@ if os.environ.get('USE_S3') == 'TRUE':
     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
     AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+    
+    # Configurações de ACL para acesso público
+    AWS_DEFAULT_ACL = 'public-read'
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
+        'ACL': 'public-read',
     }
+    
+    # Configurações de segurança e CORS
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_AUTH = False
+    
+    # Configurações de CORS para S3
+    AWS_S3_CORS = [
+        {
+            'AllowedHeaders': ['*'],
+            'AllowedMethods': ['GET', 'HEAD'],
+            'AllowedOrigins': ['*'],
+            'ExposeHeaders': ['ETag'],
+            'MaxAgeSeconds': 3000
+        }
+    ]
+    
     AWS_LOCATION = 'media'
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'

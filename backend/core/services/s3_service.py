@@ -116,13 +116,14 @@ class S3Service:
                 if metadata:
                     s3_metadata.update({f'custom-{k}': str(v) for k, v in metadata.items()})
                 
-                # Upload do arquivo
+                # Upload do arquivo com ACL público
                 self.s3_client.put_object(
                     Bucket=self.bucket_name,
                     Key=s3_key,
                     Body=file_content,
                     ContentType=file.content_type or 'application/octet-stream',
-                    Metadata=s3_metadata
+                    Metadata=s3_metadata,
+                    ACL='public-read'
                 )
                 
                 # Gera URL do arquivo
