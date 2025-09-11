@@ -170,6 +170,50 @@ class S3Service:
                 'error': str(e)
             }
     
+    def generate_signed_url(self, anexo_id: str, expiration: int = 3600) -> Dict[str, Any]:
+        """
+        Gera uma URL assinada para acesso temporário ao arquivo no S3.
+        
+        Args:
+            anexo_id: ID do anexo
+            expiration: Tempo de expiração em segundos (padrão: 1 hora)
+        
+        Returns:
+            Dict com a URL assinada ou erro
+        """
+        try:
+            anexo = AnexoS3.objects.get(anexo_id=anexo_id)
+            
+            if self.s3_available:
+                signed_url = self.s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': anexo.bucket_name, 'Key': anexo.s3_key},
+                    ExpiresIn=expiration
+                )
+                
+                return {
+                    'success': True,
+                    'signed_url': signed_url,
+                    'expires_in': expiration
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'S3 service not available'
+                }
+                
+        except AnexoS3.DoesNotExist:
+            return {
+                'success': False,
+                'error': 'Anexo not found'
+            }
+        except Exception as e:
+            logger.error(f"Error generating signed URL: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
     def download_file(self, anexo_id: str) -> Dict[str, Any]:
         """
         Baixa um arquivo do S3.
