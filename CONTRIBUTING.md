@@ -5,9 +5,10 @@
 ## 🚨 Regras Fundamentais - NUNCA QUEBRAR
 
 ### 1. **JAMAIS trabalhe diretamente na branch master**
-- Sempre crie uma branch de feature: `git checkout -b feature/nome-da-funcionalidade`
-- Teste completamente antes de fazer merge
-- Master deve sempre estar estável para deploy
+- **NOVO WORKFLOW**: Todo desenvolvimento acontece na branch `dev_main`
+- Master é apenas para código 100% testado e aprovado
+- Branch dev_main será testada em deploy separado no Render
+- Apenas após testes completos na nuvem, fazer merge dev_main → master
 
 ### 2. **Mindset Cloud-First**
 - O sistema roda no Render, não na sua máquina
@@ -15,38 +16,39 @@
 - Sempre pense: "Isso vai funcionar na nuvem?"
 - Nunca corrija o banco local achando que é o da nuvem
 
-### 3. **Workflow Obrigatório**
+### 3. **Workflow Obrigatório - NOVO SISTEMA**
 ```bash
-# 1. Criar branch de feature
-git checkout -b feature/minha-funcionalidade
+# 1. Trabalhar sempre na branch dev_main
+git checkout dev_main
 
-# 2. Desenvolver e testar localmente
-npm run dev  # Frontend
-python manage.py runserver  # Backend
-
-# 3. Testar que funciona tanto local quanto nuvem
-# 4. Commit e push da branch
+# 2. Desenvolver e fazer commits diretos na dev_main
 git add .
 git commit -m "feat: descrição da funcionalidade"
-git push origin feature/minha-funcionalidade
+git push origin dev_main
 
-# 5. Merge para master APENAS após testes
+# 3. Testar no deploy de desenvolvimento (Render)
+# - Deploy automático da branch dev_main
+# - Testar todas as funcionalidades na nuvem
+# - Validar integração completa
+
+# 4. Merge para master APENAS após aprovação total
 git checkout master
-git merge feature/minha-funcionalidade
+git merge dev_main
 git push origin master
 ```
 
 ## 🛠️ Configuração de Desenvolvimento
 
-### Scripts de Desenvolvimento Local
-- Use os scripts atualizados que não interferem na nuvem
-- Ambiente local é isolado do ambiente de produção
-- Configurações de desenvolvimento ficam em `.env.local`
+### Ambiente de Desenvolvimento
+- **Branch dev_main**: Deploy automático no Render para testes
+- **Branch master**: Produção final
+- **Testes locais**: Apenas para desenvolvimento inicial
+- **Testes reais**: Sempre no ambiente Render (dev_main)
 
 ### Banco de Dados
-- **Local**: SQLite para desenvolvimento
-- **Produção**: PostgreSQL no Render
-- **NUNCA** modifique dados de produção diretamente
+- **Desenvolvimento (dev_main)**: PostgreSQL no Render (ambiente de teste)
+- **Produção (master)**: PostgreSQL no Render (ambiente final)
+- **Local**: Apenas para desenvolvimento inicial (não é ambiente de teste)
 
 ## 📋 Sistema de Backup e Migração
 
@@ -87,16 +89,18 @@ git push origin master
 6. **Hardcode de configurações locais**
 7. **Ignorar erros de deploy**
 
-## ✅ Checklist Antes do Deploy
+## ✅ Checklist Antes do Merge para Master
 
-- [ ] Código testado localmente
-- [ ] Funciona sem dependências locais
-- [ ] Variáveis de ambiente configuradas
-- [ ] Banco de dados compatível com PostgreSQL
-- [ ] Arquivos estáticos configurados
-- [ ] URLs S3 funcionando
-- [ ] Sem hardcode de paths locais
-- [ ] Logs de erro limpos
+- [ ] Código commitado na branch dev_main
+- [ ] Deploy de desenvolvimento funcionando no Render
+- [ ] Todas as funcionalidades testadas na nuvem
+- [ ] Sistema de backup testado
+- [ ] Sistema de anexos S3 funcionando
+- [ ] APIs respondendo corretamente
+- [ ] Frontend carregando sem erros
+- [ ] Banco de dados funcionando (PostgreSQL)
+- [ ] Logs de erro limpos no ambiente dev_main
+- [ ] Aprovação final para merge dev_main → master
 
 ## 🐛 Reportando Bugs
 
