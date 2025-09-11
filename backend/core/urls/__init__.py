@@ -10,6 +10,8 @@ from ..views import (
     RecursosMaisUtilizadosSemanaView, BackupViewSet, BackupSettingsViewSet,
     ArquivoObraViewSet
 )
+from api.test_data import populate_test_data, clear_test_data
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 router = DefaultRouter()
 router.register(r'usuarios', UsuarioViewSet)
@@ -36,8 +38,12 @@ urlpatterns = [
     path('funcionarios/<int:pk>/details/', FuncionarioDetailView.as_view(), name='funcionario-details'),
     path('equipes/<int:pk>/details/', EquipeDetailView.as_view(), name='equipe-details'),
     path('materiais/<int:pk>/details/', MaterialDetailAPIView.as_view(), name='material-details'),
-    # URLs de dados de teste removidas por segurança
-    # Dados devem ser populados manualmente via interface administrativa
+    # Endpoints de dados de teste - APENAS para ambiente de desenvolvimento/teste
+    path('populate-test-data/', populate_test_data, name='populate-test-data'),
+    path('clear-test-data/', clear_test_data, name='clear-test-data'),
+    # JWT Authentication
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('', include(router.urls)),
     path('obras/', include('core.urls.obra_urls')),
     path('relatorios/', include('core.urls.relatorio_urls')),

@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.management import call_command
 from core.models import (
-    Obra, Funcionario, Equipe, Material, Locacao, Compra, ItemCompra, Despesa_Extra
+    Obra, Funcionario, Equipe, Material, Locacao_Obras_Equipes, Compra, ItemCompra, Despesa_Extra
 )
 import json
 
@@ -28,7 +28,7 @@ def populate_test_data(request):
             'funcionarios': Funcionario.objects.count(),
             'equipes': Equipe.objects.count(),
             'materiais': Material.objects.count(),
-            'locacoes': Locacao.objects.count(),
+            'locacoes': Locacao_Obras_Equipes.objects.count(),
             'compras': Compra.objects.count(),
             'despesas': Despesa_Extra.objects.count()
         }
@@ -59,7 +59,7 @@ def clear_test_data(request):
             'funcionarios': Funcionario.objects.count(),
             'equipes': Equipe.objects.count(),
             'materiais': Material.objects.count(),
-            'locacoes': Locacao.objects.count(),
+            'locacoes': Locacao_Obras_Equipes.objects.count(),
             'compras': Compra.objects.count(),
             'despesas': Despesa_Extra.objects.count()
         }
@@ -68,7 +68,7 @@ def clear_test_data(request):
         Despesa_Extra.objects.all().delete()
         ItemCompra.objects.all().delete()
         Compra.objects.all().delete()
-        Locacao.objects.all().delete()
+        Locacao_Obras_Equipes.objects.all().delete()
         Material.objects.all().delete()
         Equipe.objects.all().delete()
         Funcionario.objects.all().delete()
@@ -84,7 +84,7 @@ def clear_test_data(request):
                     'funcionarios': Funcionario.objects.count(),
                     'equipes': Equipe.objects.count(),
                     'materiais': Material.objects.count(),
-                    'locacoes': Locacao.objects.count(),
+                    'locacoes': Locacao_Obras_Equipes.objects.count(),
                     'compras': Compra.objects.count(),
                     'despesas': Despesa_Extra.objects.count()
                 }
