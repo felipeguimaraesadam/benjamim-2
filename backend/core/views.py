@@ -13,6 +13,8 @@ from django.db import transaction
 from rest_framework.decorators import action
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views import View
 # Note: 'from datetime import date, timedelta' was also imported directly.
 # django.utils.timezone.now().date() provides date, and timedelta can be imported if needed.
 # For this merge, keeping existing imports from backup unless clearly redundant and conflicting.
@@ -3013,6 +3015,141 @@ class GerarPDFComprasLoteView(APIView):
                 {'error': f'Erro ao gerar PDF: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+# ===== VIEWS DE TESTE DE DADOS =====
+
+@method_decorator(csrf_exempt, name='dispatch')
+class PopulateTestDataView(View):
+    """
+    View para popular o banco de dados com dados de teste
+    usando o comando populate_db
+    """
+    
+    def post(self, request):
+        import logging
+        from django.core.management import call_command
+        from io import StringIO
+        from django.http import JsonResponse
+        
+        logger = logging.getLogger('api')
+        user_info = request.user.login if hasattr(request.user, 'login') else 'Anonymous'
+        logger.info(f"🧪 POPULATE TEST DATA - User: {user_info}")
+        
+        try:
+            # Capturar a saída do comando
+            out = StringIO()
+            call_command('populate_db', stdout=out)
+            output = out.getvalue()
+            
+            logger.info(f"✅ Test data populated successfully by user {user_info}")
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Dados de teste populados com sucesso!',
+                'output': output,
+                'timestamp': timezone.now().isoformat()
+            }, status=200)
+            
+        except Exception as e:
+            logger.error(f"❌ Error populating test data: {str(e)}")
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Erro ao popular dados de teste: {str(e)}',
+                'timestamp': timezone.now().isoformat()
+            }, status=500)
+
+# Função wrapper para compatibilidade com URLs
+populate_test_data = PopulateTestDataView.as_view()
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ClearTestDataView(View):
+    """
+    View para limpar dados de teste do banco de dados
+    Remove todos os dados criados pelo comando populate_db
+    """
+    
+    def delete(self, request):
+        import logging
+        from django.db import transaction
+        from django.http import JsonResponse
+        
+        logger = logging.getLogger('api')
+        user_info = request.user.login if hasattr(request.user, 'login') else 'Anonymous'
+        logger.warning(f"🗑️ CLEAR TEST DATA - User: {user_info}")
+        
+        try:
+            with transaction.atomic():
+                # Contar registros antes da limpeza
+                counts_before = {
+                    'obras': Obra.objects.count(),
+                    'funcionarios': Funcionario.objects.count(),
+                    'equipes': Equipe.objects.count(),
+                    'materiais': Material.objects.count(),
+                    'compras': Compra.objects.count(),
+                    'locacoes': Locacao_Obras_Equipes.objects.count(),
+                    'itens_compra': ItemCompra.objects.count(),
+                    'parcelas_compra': ParcelaCompra.objects.count(),
+                }
+                
+                # Limpar dados em ordem para evitar problemas de FK
+                # Primeiro, limpar relacionamentos
+                ParcelaCompra.objects.all().delete()
+                ItemCompra.objects.all().delete()
+                Locacao_Obras_Equipes.objects.all().delete()
+                
+                # Depois, limpar entidades principais
+                Compra.objects.all().delete()
+                Material.objects.all().delete()
+                
+                # Limpar relacionamentos de equipes
+                for equipe in Equipe.objects.all():
+                    equipe.membros.clear()
+                Equipe.objects.all().delete()
+                
+                Funcionario.objects.all().delete()
+                Obra.objects.all().delete()
+                
+                # Contar registros após a limpeza
+                counts_after = {
+                    'obras': Obra.objects.count(),
+                    'funcionarios': Funcionario.objects.count(),
+                    'equipes': Equipe.objects.count(),
+                    'materiais': Material.objects.count(),
+                    'compras': Compra.objects.count(),
+                    'locacoes': Locacao_Obras_Equipes.objects.count(),
+                    'itens_compra': ItemCompra.objects.count(),
+                    'parcelas_compra': ParcelaCompra.objects.count(),
+                }
+                
+                # Calcular registros removidos
+                removed_counts = {
+                    key: counts_before[key] - counts_after[key] 
+                    for key in counts_before.keys()
+                }
+                
+                logger.warning(f"🗑️ Test data cleared by user {user_info}: {removed_counts}")
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Dados de teste removidos com sucesso!',
+                    'removed_counts': removed_counts,
+                    'counts_before': counts_before,
+                    'counts_after': counts_after,
+                    'timestamp': timezone.now().isoformat()
+                }, status=200)
+                
+        except Exception as e:
+            logger.error(f"❌ Error clearing test data: {str(e)}")
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Erro ao limpar dados de teste: {str(e)}',
+                'timestamp': timezone.now().isoformat()
+            }, status=500)
+
+# Função wrapper para compatibilidade com URLs
+clear_test_data = ClearTestDataView.as_view()
 
 
 # ===== VIEWS DE DEBUG =====

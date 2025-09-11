@@ -1,13 +1,19 @@
-import logging
-import json
-import traceback
-from datetime import datetime
+from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse
 from django.conf import settings
-from django.utils.deprecation import MiddlewareMixin
+from datetime import datetime
+import logging
+import time
+import json
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError
+from .logging_config import sgo_logger
 from django.core.exceptions import ValidationError
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import AnonymousUser
 from rest_framework import status
 from rest_framework.response import Response
+import traceback
 
 # Configurar logger
 logger = logging.getLogger('sgo_errors')
@@ -250,3 +256,143 @@ class SystemHealthChecker:
             'status': 'healthy' if all_ok else 'unhealthy',
             'checks': checks
         }
+
+
+class CSRFExemptMiddleware(MiddlewareMixin):
+    """
+    Middleware que desabilita CSRF para endpoints específicos de teste
+    """
+    
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        # Lista de paths que devem ser isentos de CSRF
+        csrf_exempt_paths = [
+            '/test-data/populate/',
+            '/test-data/clear/',
+        ]
+        
+        # Verifica se o path atual está na lista de isenção
+        if request.path_info in csrf_exempt_paths:
+            # Marca a view como isenta de CSRF
+            setattr(view_func, 'csrf_exempt', True)
+        
+        return None
+
+
+
+class APILoggingMiddleware(MiddlewareMixin):
+    """
+    Middleware específico para logging de APIs com mais detalhes
+    """
+    
+    def process_request(self, request):
+        """Log detalhado para requisições de API"""
+        if not request.path.startswith('/api/'):
+            return None
+        
+        request._api_start_time = time.time()
+        
+        # Capturar dados da requisição para APIs
+        request_data = {}
+        
+        # Capturar query parameters
+        if request.GET:
+            request_data['query_params'] = dict(request.GET)
+        
+        # Capturar dados do body (apenas para métodos que suportam)
+        if request.method in ['POST', 'PUT', 'PATCH'] and request.content_type:
+            try:
+                if 'application/json' in request.content_type:
+                    if hasattr(request, 'body') and request.body:
+                        body_data = json.loads(request.body.decode('utf-8'))
+                        # Filtrar dados sensíveis
+                        filtered_data = self.filter_sensitive_data(body_data)
+                        request_data['body'] = filtered_data
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                request_data['body'] = '[Binary or invalid JSON data]'
+        
+        logger.info(f"API Request: {request.method} {request.path}", extra={
+            'api_request': {
+                'method': request.method,
+                'path': request.path,
+                'user_id': getattr(request.user, 'id', None) if hasattr(request, 'user') and not isinstance(request.user, AnonymousUser) else None,
+                'data': request_data,
+                'headers': self.get_relevant_headers(request),
+            },
+            'type': 'api_request'
+        })
+        
+        return None
+    
+    def process_response(self, request, response):
+        """Log detalhado para respostas de API"""
+        if not request.path.startswith('/api/') or not hasattr(request, '_api_start_time'):
+            return response
+        
+        duration = time.time() - request._api_start_time
+        
+        # Capturar dados da resposta
+        response_data = {}
+        if isinstance(response, JsonResponse) and hasattr(response, 'content'):
+            try:
+                content = json.loads(response.content.decode('utf-8'))
+                # Filtrar dados sensíveis da resposta
+                response_data = self.filter_sensitive_data(content)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                response_data = '[Binary or invalid JSON data]'
+        
+        # Determinar nível de log
+        if response.status_code >= 500:
+            log_level = logging.ERROR
+        elif response.status_code >= 400:
+            log_level = logging.WARNING
+        else:
+            log_level = logging.INFO
+        
+        logger.log(log_level, f"API Response: {request.method} {request.path} - {response.status_code}", extra={
+            'api_response': {
+                'method': request.method,
+                'path': request.path,
+                'status_code': response.status_code,
+                'duration_ms': round(duration * 1000, 2),
+                'user_id': getattr(request.user, 'id', None) if hasattr(request, 'user') and not isinstance(request.user, AnonymousUser) else None,
+                'data': response_data,
+            },
+            'type': 'api_response'
+        })
+        
+        return response
+    
+    def filter_sensitive_data(self, data):
+        """Remove dados sensíveis dos logs"""
+        if not isinstance(data, dict):
+            return data
+        
+        sensitive_fields = ['password', 'token', 'secret', 'key', 'authorization']
+        filtered = {}
+        
+        for key, value in data.items():
+            if any(field in key.lower() for field in sensitive_fields):
+                filtered[key] = '[FILTERED]'
+            elif isinstance(value, dict):
+                filtered[key] = self.filter_sensitive_data(value)
+            else:
+                filtered[key] = value
+        
+        return filtered
+    
+    def get_relevant_headers(self, request):
+        """Obter headers relevantes para log"""
+        relevant_headers = [
+            'HTTP_USER_AGENT',
+            'HTTP_ACCEPT',
+            'HTTP_ACCEPT_LANGUAGE',
+            'CONTENT_TYPE',
+            'CONTENT_LENGTH'
+        ]
+        
+        headers = {}
+        for header in relevant_headers:
+            if header in request.META:
+                headers[header] = request.META[header]
+        
+        return headers

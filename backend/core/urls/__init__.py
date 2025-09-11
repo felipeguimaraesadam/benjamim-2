@@ -8,7 +8,7 @@ from ..views import (
     DashboardStatsView, FuncionarioDetailView, EquipeDetailView,
     MaterialDetailAPIView, LocacaoSemanalView,
     RecursosMaisUtilizadosSemanaView, BackupViewSet, BackupSettingsViewSet,
-    ArquivoObraViewSet
+    ArquivoObraViewSet, populate_test_data, clear_test_data
 )
 
 router = DefaultRouter()
@@ -36,6 +36,9 @@ urlpatterns = [
     path('funcionarios/<int:pk>/details/', FuncionarioDetailView.as_view(), name='funcionario-details'),
     path('equipes/<int:pk>/details/', EquipeDetailView.as_view(), name='equipe-details'),
     path('materiais/<int:pk>/details/', MaterialDetailAPIView.as_view(), name='material-details'),
+    # URLs de dados de teste
+    path('test-data/populate/', populate_test_data, name='populate-test-data'),
+    path('test-data/clear/', clear_test_data, name='clear-test-data'),
     path('', include(router.urls)),
     path('obras/', include('core.urls.obra_urls')),
     path('relatorios/', include('core.urls.relatorio_urls')),

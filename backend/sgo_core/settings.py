@@ -34,6 +34,7 @@ MIDDLEWARE = [
     'core.middleware.RequestLoggingMiddleware',  # Log de requisições
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'core.middleware.CSRFExemptMiddleware',  # CSRF exempt para endpoints de teste
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

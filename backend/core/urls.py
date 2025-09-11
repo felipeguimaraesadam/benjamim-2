@@ -15,7 +15,8 @@ from .views import (
     LocacaoSemanalView, RecursosMaisUtilizadosSemanaView,
     ObraCustosPorMaterialView, ObraCustosPorCategoriaMaterialView,
     media_test_view, CreateUsuarioView, ParcelaCompraViewSet,
-    AnexoCompraViewSet, ArquivoObraViewSet, GerarPDFComprasLoteView
+    AnexoCompraViewSet, ArquivoObraViewSet, GerarPDFComprasLoteView,
+    populate_test_data, clear_test_data
 )
 from .views.service_views import BackupViewSet as NewBackupViewSet, TaskViewSet, AnexoS3ViewSet
 from .views.health import health_check, database_status
@@ -68,6 +69,8 @@ urlpatterns = [
     path('media-test/', media_test_view, name='media-test'),
     path('health/', health_check, name='health-check'),
     path('health/database/', database_status, name='database-status'),
+    path('test-data/populate/', populate_test_data, name='populate-test-data'),
+    path('test-data/clear/', clear_test_data, name='clear-test-data'),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
