@@ -21,6 +21,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from core.serializers import MyTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
 from core.views import HealthCheckView, debug_system_info, debug_bypass_login
+from core.health_views import health_check, system_status, system_metrics
+from core.error_views import test_error, error_report
 from django.http import JsonResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -52,8 +54,14 @@ class MyTokenObtainPairView(BaseTokenObtainPairView):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Health check endpoint for Render
+    # Health check endpoints
     path('api/health-check/', HealthCheckView.as_view(), name='health-check'),
+    path('api/health/', health_check, name='health'),
+    path('api/status/', system_status, name='system_status'),
+    path('api/metrics/', system_metrics, name='system_metrics'),
+    # Error handling endpoints
+    path('api/error-report/', error_report, name='error_report'),
+    path('api/test-error/', test_error, name='test_error'),
     # JWT Token Endpoints
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
@@ -81,6 +89,12 @@ urlpatterns += [
         'document_root': settings.MEDIA_ROOT,
     }),
 ]
+
+# Configurar handlers de erro personalizados
+handler404 = 'core.error_views.handler404'
+handler500 = 'core.error_views.handler500'
+handler403 = 'core.error_views.handler403'
+handler400 = 'core.error_views.handler400'
 
 # Servir o frontend React
 # A rota catch-all deve ser a última para não interceptar as rotas de API ou mídia.

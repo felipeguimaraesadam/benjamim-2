@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requisição inválida - SGO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        
+        .error-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .error-code {
+            font-size: 6rem;
+            font-weight: bold;
+            color: #42a5f5;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .error-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .error-message {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .error-details {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .error-details h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .error-details p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .btn-home {
+            background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+            color: white;
+        }
+        
+        .btn-back {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #dee2e6;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-home:hover {
+            box-shadow: 0 10px 20px rgba(66, 165, 245, 0.3);
+        }
+        
+        .btn-back:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            background: #e9ecef;
+        }
+        
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .validation-info {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .validation-info h4 {
+            color: #1565c0;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .validation-info p {
+            color: #1565c0;
+            font-size: 0.8rem;
+            margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .error-container {
+                padding: 2rem;
+            }
+            
+            .error-code {
+                font-size: 4rem;
+            }
+            
+            .error-title {
+                font-size: 1.5rem;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="icon">❌</div>
+        <div class="error-code">400</div>
+        <h1 class="error-title">Requisição inválida</h1>
+        <p class="error-message">
+            A requisição enviada contém dados inválidos ou está mal formatada.
+        </p>
+        
+        <div class="validation-info">
+            <h4>ℹ️ Informação técnica</h4>
+            <p>O servidor não conseguiu processar a requisição devido a dados inválidos ou formato incorreto.</p>
+        </div>
+        
+        <div class="error-details">
+            <h3>Possíveis causas:</h3>
+            <p>• Dados obrigatórios não foram fornecidos<br>
+               • Formato de dados incorreto (ex: data, email, número)<br>
+               • Parâmetros inválidos na URL<br>
+               • Tamanho dos dados excede o limite permitido</p>
+            
+            <h3 style="margin-top: 1rem;">Como resolver?</h3>
+            <p>• Verifique se todos os campos obrigatórios foram preenchidos<br>
+               • Confirme se os dados estão no formato correto<br>
+               • Tente novamente com dados válidos<br>
+               • Entre em contato com o suporte se o problema persistir</p>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn btn-back" onclick="window.history.back()">
+                ← Voltar
+            </button>
+            <a href="/" class="btn btn-home">
+                🏠 Página inicial
+            </a>
+        </div>
+    </div>
+</body>
+</html>

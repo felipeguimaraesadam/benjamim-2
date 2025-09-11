@@ -627,3 +627,160 @@ class ArquivoObra(models.Model):
     def is_pdf(self):
         """Check if the file is a PDF"""
         return self.tipo_arquivo == 'PDF'
+
+
+# Novos modelos para sistema de organização Render
+class TaskHistory(models.Model):
+    TASK_STATUS_CHOICES = [
+        ('pending', 'Pendente'),
+        ('in_progress', 'Em Progresso'),
+        ('completed', 'Concluída'),
+        ('failed', 'Falhou'),
+        ('cancelled', 'Cancelada'),
+    ]
+    
+    TASK_TYPE_CHOICES = [
+        ('backup', 'Backup'),
+        ('migration', 'Migração'),
+        ('deployment', 'Deploy'),
+        ('maintenance', 'Manutenção'),
+        ('other', 'Outro'),
+    ]
+    
+    task_id = models.CharField(max_length=100, unique=True)
+    task_type = models.CharField(max_length=20, choices=TASK_TYPE_CHOICES)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=TASK_STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='created_tasks')
+    assigned_to = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tasks')
+    progress_percentage = models.PositiveIntegerField(default=0)
+    error_message = models.TextField(blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['task_type', 'status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} ({self.get_status_display()})"
+
+
+class BackupLog(models.Model):
+    BACKUP_TYPE_CHOICES = [
+        ('full', 'Backup Completo'),
+        ('incremental', 'Backup Incremental'),
+        ('manual', 'Backup Manual'),
+    ]
+    
+    BACKUP_STATUS_CHOICES = [
+        ('pending', 'Pendente'),
+        ('in_progress', 'Em Progresso'),
+        ('completed', 'Concluído'),
+        ('failed', 'Falhou'),
+    ]
+    
+    backup_id = models.CharField(max_length=100, unique=True)
+    backup_type = models.CharField(max_length=20, choices=BACKUP_TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=BACKUP_STATUS_CHOICES, default='pending')
+    file_path = models.CharField(max_length=500, blank=True)
+    file_size = models.PositiveBigIntegerField(null=True, blank=True)
+    file_hash = models.CharField(max_length=64, blank=True)  # SHA256 hash
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='backups')
+    error_message = models.TextField(blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    is_duplicate = models.BooleanField(default=False)
+    original_backup = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='duplicates')
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['file_hash']),
+            models.Index(fields=['backup_type', 'status']),
+        ]
+    
+    def __str__(self):
+        return f"Backup {self.backup_id} ({self.get_status_display()})"
+
+
+class AnexoS3(models.Model):
+    ANEXO_TYPE_CHOICES = [
+        ('obra', 'Obra'),
+        ('funcionario', 'Funcionário'),
+        ('compra', 'Compra'),
+        ('despesa', 'Despesa'),
+        ('locacao', 'Locação'),
+        ('backup', 'Backup'),
+        ('other', 'Outro'),
+    ]
+    
+    anexo_id = models.CharField(max_length=100, unique=True)
+    nome_original = models.CharField(max_length=255)
+    nome_s3 = models.CharField(max_length=255)
+    bucket_name = models.CharField(max_length=100)
+    s3_key = models.CharField(max_length=500)
+    s3_url = models.URLField(max_length=1000)
+    content_type = models.CharField(max_length=100)
+    file_size = models.PositiveBigIntegerField()
+    file_hash = models.CharField(max_length=64)  # SHA256 hash
+    anexo_type = models.CharField(max_length=20, choices=ANEXO_TYPE_CHOICES)
+    object_id = models.PositiveIntegerField(null=True, blank=True)  # ID do objeto relacionado
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='anexos_s3')
+    is_migrated = models.BooleanField(default=False)
+    migration_date = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    
+    class Meta:
+        ordering = ['-uploaded_at']
+        indexes = [
+            models.Index(fields=['anexo_type', 'object_id']),
+            models.Index(fields=['s3_key']),
+            models.Index(fields=['file_hash']),
+            models.Index(fields=['is_migrated']),
+        ]
+    
+    def __str__(self):
+        return f"{self.nome_original} (S3)"
+
+
+class BranchManagement(models.Model):
+    BRANCH_STATUS_CHOICES = [
+        ('active', 'Ativa'),
+        ('merged', 'Merged'),
+        ('deleted', 'Deletada'),
+        ('protected', 'Protegida'),
+    ]
+    
+    branch_name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=BRANCH_STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='created_branches')
+    last_commit_hash = models.CharField(max_length=40, blank=True)
+    last_commit_message = models.TextField(blank=True)
+    last_commit_date = models.DateTimeField(null=True, blank=True)
+    merged_at = models.DateTimeField(null=True, blank=True)
+    merged_by = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='merged_branches')
+    is_protected = models.BooleanField(default=False)
+    metadata = models.JSONField(default=dict, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['branch_name']),
+        ]
+    
+    def __str__(self):
+        return f"Branch: {self.branch_name} ({self.get_status_display()})"

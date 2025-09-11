@@ -16,5 +16,5 @@ psycopg2-binary==2.9.10
 # django-extensions - não essencial para produção
 # python-docx - biblioteca pesada para Word
 # openpyxl - biblioteca pesada para Excel
-# django-storages - não necessário se não usar S3
-# boto3 - não necessário se não usar AWS
+django-storages==1.14.4
+boto3==1.35.84

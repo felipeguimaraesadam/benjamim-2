@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient } from '../services/api'; // Use the created apiClient
 import { jwtDecode } from 'jwt-decode'; // Correct named import
+import { errorReporter } from '../services/errorReporter.ts'; // Import error reporter
 
 const AuthContext = createContext(null);
 
@@ -39,12 +40,21 @@ export const AuthProvider = ({ children }) => {
       apiClient.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
       const decodedToken = jwtDecode(access);
-      setUser({
+      const userData = {
         id: decodedToken.user_id,
         login: decodedToken.login,
         nome_completo: decodedToken.nome_completo,
         nivel_acesso: decodedToken.nivel_acesso,
-      });
+      };
+      
+      setUser(userData);
+      
+      // Configurar error reporter com ID do usuário
+      try {
+        errorReporter.setUserId(decodedToken.user_id.toString());
+      } catch (err) {
+        console.warn('Falha ao configurar error reporter:', err);
+      }
       // setIsLoading(false); // Set loading false after successful refresh
       return access; // Return new access token
     } catch (error) {
@@ -63,13 +73,22 @@ export const AuthProvider = ({ children }) => {
           const currentTime = Date.now() / 1000;
 
           if (decodedToken.exp > currentTime) {
-            setUser({
-              id: decodedToken.user_id,
-              login: decodedToken.login,
-              nome_completo: decodedToken.nome_completo,
-              nivel_acesso: decodedToken.nivel_acesso,
-              // Add any other relevant user fields from your token
-            });
+            const userData = {
+            id: decodedToken.user_id,
+            login: decodedToken.login,
+            nome_completo: decodedToken.nome_completo,
+            nivel_acesso: decodedToken.nivel_acesso,
+            // Add any other relevant user fields from your token
+          };
+          
+          setUser(userData);
+          
+          // Configurar error reporter com ID do usuário
+          try {
+            errorReporter.setUserId(decodedToken.user_id.toString());
+          } catch (err) {
+            console.warn('Falha ao configurar error reporter:', err);
+          }
             apiClient.defaults.headers.common['Authorization'] =
               `Bearer ${accessToken}`;
           } else {
@@ -160,12 +179,21 @@ export const AuthProvider = ({ children }) => {
         exp: new Date(decodedToken.exp * 1000).toISOString()
       });
 
-      setUser({
+      const userData = {
         id: decodedToken.user_id,
         login: decodedToken.login,
         nome_completo: decodedToken.nome_completo,
         nivel_acesso: decodedToken.nivel_acesso,
-      });
+      };
+      
+      setUser(userData);
+      
+      // Configurar error reporter com ID do usuário
+      try {
+        errorReporter.setUserId(decodedToken.user_id.toString());
+      } catch (err) {
+        console.warn('Falha ao configurar error reporter:', err);
+      }
       
       console.log('🎉 [AUTH DEBUG] Login realizado com sucesso!', {
         totalTime: Date.now() - startTime + 'ms',
@@ -213,6 +241,14 @@ export const AuthProvider = ({ children }) => {
     setAccessToken(null);
     setRefreshToken(null);
     delete apiClient.defaults.headers.common['Authorization'];
+    
+    // Limpar ID do usuário no error reporter
+    try {
+      errorReporter.setUserId(null);
+    } catch (err) {
+      console.warn('Falha ao limpar error reporter:', err);
+    }
+    
     // Navigate to login or home page can be handled by the component calling logout
     // or by ProtectedRoute redirecting.
   };

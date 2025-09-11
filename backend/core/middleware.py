@@ -1,172 +1,252 @@
 import logging
+import json
 import traceback
-import re
+from datetime import datetime
 from django.http import JsonResponse
-from django.utils.deprecation import MiddlewareMixin
 from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
+from django.utils.deprecation import MiddlewareMixin
+from django.core.exceptions import ValidationError
+from rest_framework import status
+from rest_framework.response import Response
 
-logger = logging.getLogger('core')
-security_logger = logging.getLogger('django.security')
+# Configurar logger
+logger = logging.getLogger('sgo_errors')
 
-
-class ErrorLoggingMiddleware(MiddlewareMixin):
+class ErrorHandlingMiddleware(MiddlewareMixin):
     """
-    Middleware para capturar e registrar erros não tratados.
+    Middleware para capturar e tratar erros de forma consistente
     """
     
     def process_exception(self, request, exception):
         """
-        Registra exceções não tratadas.
+        Processa exceções não tratadas
         """
-        error_message = f"Unhandled exception: {str(exception)}"
-        error_details = {
-            'user': getattr(request.user, 'username', 'Anonymous') if hasattr(request, 'user') else 'Unknown',
+        # Obter informações do erro
+        error_info = {
+            'timestamp': datetime.now().isoformat(),
             'path': request.path,
             'method': request.method,
-            'GET': dict(request.GET),
-            'POST': dict(request.POST) if request.method == 'POST' else {},
-            'META': {
-                'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
-                'HTTP_USER_AGENT': request.META.get('HTTP_USER_AGENT'),
-                'HTTP_REFERER': request.META.get('HTTP_REFERER'),
-            },
-            'traceback': traceback.format_exc()
+            'user': str(request.user) if hasattr(request, 'user') and request.user.is_authenticated else 'Anonymous',
+            'error_type': type(exception).__name__,
+            'error_message': str(exception),
+            'traceback': traceback.format_exc() if settings.DEBUG else None
         }
         
-        logger.error(error_message, extra=error_details)
+        # Log do erro
+        logger.error(f"Erro não tratado: {error_info['error_type']} - {error_info['error_message']}", 
+                    extra=error_info)
         
-        # Em produção, retorna uma resposta JSON genérica
+        # Resposta baseada no tipo de erro
+        if isinstance(exception, ValidationError):
+            return JsonResponse({
+                'error': 'Erro de validação',
+                'message': str(exception),
+                'timestamp': error_info['timestamp']
+            }, status=400)
+        
+        elif isinstance(exception, PermissionError):
+            return JsonResponse({
+                'error': 'Acesso negado',
+                'message': 'Você não tem permissão para realizar esta ação',
+                'timestamp': error_info['timestamp']
+            }, status=403)
+        
+        elif isinstance(exception, FileNotFoundError):
+            return JsonResponse({
+                'error': 'Arquivo não encontrado',
+                'message': 'O arquivo solicitado não foi encontrado',
+                'timestamp': error_info['timestamp']
+            }, status=404)
+        
+        # Para outros erros, retornar erro genérico em produção
         if not settings.DEBUG:
             return JsonResponse({
-                'error': 'Internal server error',
-                'message': 'An unexpected error occurred. Please try again later.'
+                'error': 'Erro interno do servidor',
+                'message': 'Ocorreu um erro inesperado. Tente novamente mais tarde.',
+                'timestamp': error_info['timestamp']
             }, status=500)
         
-        # Em desenvolvimento, deixa o Django lidar com a exceção
+        # Em desenvolvimento, deixar o Django tratar o erro normalmente
         return None
 
-
-class SecurityLoggingMiddleware(MiddlewareMixin):
+class RequestLoggingMiddleware(MiddlewareMixin):
     """
-    Middleware para registrar eventos de segurança.
+    Middleware para log de requisições importantes
     """
     
     def process_request(self, request):
         """
-        Registra tentativas de acesso suspeitas.
+        Log de requisições importantes
         """
-        # Log de tentativas de acesso a endpoints administrativos
-        if request.path.startswith('/admin/') and not request.user.is_authenticated:
-            security_logger.warning(
-                f"Unauthenticated access attempt to admin: {request.path}",
-                extra={
-                    'ip': request.META.get('REMOTE_ADDR'),
-                    'user_agent': request.META.get('HTTP_USER_AGENT'),
-                    'path': request.path
-                }
-            )
+        # Paths que devem ser logados
+        important_paths = [
+            '/api/backup/',
+            '/api/anexos/',
+            '/api/tasks/',
+            '/api/branches/',
+            '/api/usuarios/',
+            '/api/obras/'
+        ]
         
-        # Log de tentativas de SQL injection básicas
-        suspicious_patterns = ['union', 'select', 'drop', 'insert', 'update', 'delete', '--', ';']
-        query_string = request.META.get('QUERY_STRING', '').lower()
-        
-        if any(pattern in query_string for pattern in suspicious_patterns):
-            security_logger.warning(
-                f"Suspicious query string detected: {request.META.get('QUERY_STRING')}",
-                extra={
-                    'ip': request.META.get('REMOTE_ADDR'),
-                    'user_agent': request.META.get('HTTP_USER_AGENT'),
-                    'path': request.path,
-                    'query_string': request.META.get('QUERY_STRING')
-                }
-            )
-        
-        return None
+        # Verificar se é uma requisição importante
+        if any(request.path.startswith(path) for path in important_paths):
+            request_info = {
+                'timestamp': datetime.now().isoformat(),
+                'path': request.path,
+                'method': request.method,
+                'user': str(request.user) if hasattr(request, 'user') and request.user.is_authenticated else 'Anonymous',
+                'ip': self.get_client_ip(request)
+            }
+            
+            logger.info(f"Requisição: {request.method} {request.path}", extra=request_info)
+    
+    def get_client_ip(self, request):
+        """
+        Obter IP do cliente
+        """
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+class SecurityHeadersMiddleware(MiddlewareMixin):
+    """
+    Middleware para adicionar headers de segurança
+    """
     
     def process_response(self, request, response):
         """
-        Registra respostas de erro importantes.
+        Adicionar headers de segurança
         """
-        # Log de erros 4xx e 5xx
-        if response.status_code >= 400:
-            level = logging.ERROR if response.status_code >= 500 else logging.WARNING
-            security_logger.log(
-                level,
-                f"HTTP {response.status_code} response for {request.path}",
-                extra={
-                    'status_code': response.status_code,
-                    'ip': request.META.get('REMOTE_ADDR'),
-                    'user_agent': request.META.get('HTTP_USER_AGENT'),
-                    'path': request.path,
-                    'user': getattr(request.user, 'username', 'Anonymous') if hasattr(request, 'user') else 'Unknown'
-                }
+        # Headers de segurança
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        response['X-XSS-Protection'] = '1; mode=block'
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        
+        # CSP apenas em produção
+        if not settings.DEBUG:
+            response['Content-Security-Policy'] = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data: https:; "
+                "font-src 'self'; "
+                "connect-src 'self' https:;"
             )
         
         return response
 
-
-class CSRFExemptMiddleware(MiddlewareMixin):
+class APIErrorHandler:
     """
-    Middleware para isentar URLs específicas do CSRF.
-    """
-    
-    def process_request(self, request):
-        """
-        Verifica se a URL atual deve ser isenta de CSRF.
-        """
-        if hasattr(settings, 'CSRF_EXEMPT_URLS'):
-            for pattern in settings.CSRF_EXEMPT_URLS:
-                if re.match(pattern, request.path):
-                    setattr(request, '_dont_enforce_csrf_checks', True)
-                    break
-        return None
-
-
-class PerformanceLoggingMiddleware(MiddlewareMixin):
-    """
-    Middleware para registrar métricas de performance.
+    Classe utilitária para tratamento de erros em views da API
     """
     
-    def process_request(self, request):
+    @staticmethod
+    def handle_error(exception, context=None):
         """
-        Marca o início da requisição.
+        Trata erros de forma consistente nas views da API
         """
-        import time
-        request._start_time = time.time()
-        return None
-    
-    def process_response(self, request, response):
-        """
-        Registra o tempo de resposta.
-        """
-        if hasattr(request, '_start_time'):
-            import time
-            duration = time.time() - request._start_time
-            
-            # Log de requisições lentas (> 2 segundos)
-            if duration > 2.0:
-                logger.warning(
-                    f"Slow request detected: {request.path} took {duration:.2f}s",
-                    extra={
-                        'duration': duration,
-                        'path': request.path,
-                        'method': request.method,
-                        'status_code': response.status_code,
-                        'user': getattr(request.user, 'username', 'Anonymous') if hasattr(request, 'user') else 'Unknown'
-                    }
-                )
-            
-            # Log geral de performance (apenas em DEBUG)
-            if settings.DEBUG:
-                logger.debug(
-                    f"Request {request.method} {request.path} completed in {duration:.3f}s",
-                    extra={
-                        'duration': duration,
-                        'path': request.path,
-                        'method': request.method,
-                        'status_code': response.status_code
-                    }
-                )
+        error_info = {
+            'timestamp': datetime.now().isoformat(),
+            'error_type': type(exception).__name__,
+            'error_message': str(exception),
+            'context': context or {}
+        }
         
-        return response
+        # Log do erro
+        logger.error(f"Erro na API: {error_info['error_type']} - {error_info['error_message']}", 
+                    extra=error_info)
+        
+        # Mapear tipos de erro para códigos HTTP
+        error_mapping = {
+            'ValidationError': (400, 'Dados inválidos'),
+            'PermissionDenied': (403, 'Acesso negado'),
+            'NotFound': (404, 'Recurso não encontrado'),
+            'FileNotFoundError': (404, 'Arquivo não encontrado'),
+            'ConnectionError': (503, 'Serviço temporariamente indisponível'),
+            'TimeoutError': (504, 'Tempo limite excedido')
+        }
+        
+        error_type = type(exception).__name__
+        status_code, message = error_mapping.get(error_type, (500, 'Erro interno do servidor'))
+        
+        return Response({
+            'error': True,
+            'message': message,
+            'details': str(exception) if settings.DEBUG else None,
+            'timestamp': error_info['timestamp']
+        }, status=status_code)
+    
+    @staticmethod
+    def success_response(data=None, message="Operação realizada com sucesso"):
+        """
+        Resposta de sucesso padronizada
+        """
+        return Response({
+            'error': False,
+            'message': message,
+            'data': data,
+            'timestamp': datetime.now().isoformat()
+        }, status=status.HTTP_200_OK)
+
+class SystemHealthChecker:
+    """
+    Classe para verificar a saúde do sistema
+    """
+    
+    @staticmethod
+    def check_database():
+        """
+        Verificar conexão com banco de dados
+        """
+        try:
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+            return True, "Banco de dados OK"
+        except Exception as e:
+            return False, f"Erro no banco de dados: {str(e)}"
+    
+    @staticmethod
+    def check_s3_connection():
+        """
+        Verificar conexão com S3
+        """
+        try:
+            import boto3
+            from django.conf import settings
+            
+            if hasattr(settings, 'AWS_ACCESS_KEY_ID'):
+                s3 = boto3.client(
+                    's3',
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                    region_name=getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
+                )
+                s3.head_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
+                return True, "S3 OK"
+            else:
+                return False, "Configuração S3 não encontrada"
+        except Exception as e:
+            return False, f"Erro no S3: {str(e)}"
+    
+    @staticmethod
+    def get_system_status():
+        """
+        Obter status geral do sistema
+        """
+        checks = {
+            'database': SystemHealthChecker.check_database(),
+            's3': SystemHealthChecker.check_s3_connection(),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        all_ok = all(check[0] for check in checks.values() if isinstance(check, tuple))
+        
+        return {
+            'status': 'healthy' if all_ok else 'unhealthy',
+            'checks': checks
+        }

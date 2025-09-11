@@ -27,6 +27,10 @@ import UsuariosPage from './pages/UsuariosPage';
 import BackupPage from './pages/BackupPage';
 import DiagnosticPage from './pages/DiagnosticPage';
 import SystemTestsPage from './pages/SystemTestsPage';
+import AnexosS3Page from './pages/AnexosS3Page';
+import TasksPage from './pages/TasksPage';
+import BranchesPage from './pages/BranchesPage';
+import SystemMonitorPage from './pages/SystemMonitorPage';
 
 function App() {
 
@@ -79,8 +83,12 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route path="usuarios" element={<UsuariosPage />} />
             <Route path="backup" element={<BackupPage />} />
+            <Route path="anexos-s3" element={<AnexosS3Page />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="branches" element={<BranchesPage />} />
             <Route path="diagnostico" element={<DiagnosticPage />} />
             <Route path="system-tests" element={<SystemTestsPage />} />
+            <Route path="system-monitor" element={<SystemMonitorPage />} />
           </Route>
         </Route>
       </Routes>

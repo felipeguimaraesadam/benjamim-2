@@ -670,4 +670,54 @@ export const getCurrentUserAPI = async () => {
   }
 };
 
+// --- AnexoS3 Service Functions ---
+export const getAnexosS3 = (params = {}) => apiClient.get('/anexos-s3/', { params });
+export const uploadAnexoS3 = (formData) => {
+  return apiClient.post('/anexos-s3/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+export const deleteAnexoS3 = (anexoId) => apiClient.delete(`/anexos-s3/${anexoId}/`);
+export const downloadAnexoS3 = (anexoId) => {
+  return apiClient.get(`/anexos-s3/${anexoId}/download/`, {
+    responseType: 'blob',
+  });
+};
+export const migrateAnexosToS3 = () => apiClient.post('/anexos-s3/migrate/');
+export const getS3Statistics = () => apiClient.get('/anexos-s3/statistics/');
+
+// --- Task Management Service Functions ---
+export const getTasks = (params = {}) => apiClient.get('/tasks/', { params });
+export const getTaskById = (taskId) => apiClient.get(`/tasks/${taskId}/`);
+export const createTask = (taskData) => apiClient.post('/tasks/', taskData);
+export const cancelTask = (taskId) => apiClient.post(`/tasks/${taskId}/cancel/`);
+export const retryTask = (taskId) => apiClient.post(`/tasks/${taskId}/retry/`);
+export const getTaskHistory = (params = {}) => apiClient.get('/task-history/', { params });
+export const getTaskStatistics = () => apiClient.get('/tasks/statistics/');
+
+// --- Branch Management Service Functions ---
+export const getBranches = () => apiClient.get('/branches/');
+export const createBranch = (branchData) => apiClient.post('/branches/', branchData);
+export const deleteBranch = (branchId) => apiClient.delete(`/branches/${branchId}/`);
+export const mergeBranch = (branchId, targetBranch) => {
+  return apiClient.post(`/branches/${branchId}/merge/`, { target_branch: targetBranch });
+};
+export const switchBranch = (branchName) => {
+  return apiClient.post('/branches/switch/', { branch_name: branchName });
+};
+export const getCurrentBranch = () => apiClient.get('/branches/current/');
+export const getBranchCommits = (branchId) => apiClient.get(`/branches/${branchId}/commits/`);
+export const createCommit = (branchId, commitData) => {
+  return apiClient.post(`/branches/${branchId}/commits/`, commitData);
+};
+
+// --- Generic HTTP Methods ---
+export const post = (url, data, config = {}) => apiClient.post(url, data, config);
+export const get = (url, config = {}) => apiClient.get(url, config);
+export const put = (url, data, config = {}) => apiClient.put(url, data, config);
+export const patch = (url, data, config = {}) => apiClient.patch(url, data, config);
+export const del = (url, config = {}) => apiClient.delete(url, config);
+
 export { apiClient };

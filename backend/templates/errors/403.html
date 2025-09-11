@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso negado - SGO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ffa726 0%, #ff7043 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        
+        .error-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .error-code {
+            font-size: 6rem;
+            font-weight: bold;
+            color: #ffa726;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .error-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .error-message {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .error-details {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .error-details h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .error-details p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn-home {
+            background: linear-gradient(135deg, #ffa726 0%, #ff7043 100%);
+            color: white;
+        }
+        
+        .btn-login {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #dee2e6;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-home:hover {
+            box-shadow: 0 10px 20px rgba(255, 167, 38, 0.3);
+        }
+        
+        .btn-login:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            background: #e9ecef;
+        }
+        
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .security-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .security-info h4 {
+            color: #856404;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .security-info p {
+            color: #856404;
+            font-size: 0.8rem;
+            margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .error-container {
+                padding: 2rem;
+            }
+            
+            .error-code {
+                font-size: 4rem;
+            }
+            
+            .error-title {
+                font-size: 1.5rem;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="icon">🔒</div>
+        <div class="error-code">403</div>
+        <h1 class="error-title">Acesso negado</h1>
+        <p class="error-message">
+            Você não tem permissão para acessar este recurso ou página.
+        </p>
+        
+        <div class="security-info">
+            <h4>🛡️ Informação de segurança</h4>
+            <p>Esta tentativa de acesso foi registrada em nossos logs de segurança.</p>
+        </div>
+        
+        <div class="error-details">
+            <h3>Possíveis motivos:</h3>
+            <p>• Você não está logado no sistema<br>
+               • Sua sessão expirou<br>
+               • Você não tem o nível de acesso necessário<br>
+               • O recurso requer permissões especiais</p>
+            
+            <h3 style="margin-top: 1rem;">O que você pode fazer?</h3>
+            <p>• Faça login com uma conta autorizada<br>
+               • Verifique se você tem as permissões necessárias<br>
+               • Entre em contato com o administrador do sistema</p>
+        </div>
+        
+        <div class="btn-group">
+            <a href="/login" class="btn btn-login">
+                🔑 Fazer login
+            </a>
+            <a href="/" class="btn btn-home">
+                🏠 Voltar ao início
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -5,8 +5,10 @@ from .models import (
     Usuario, Obra, Funcionario, Equipe, Locacao_Obras_Equipes, Material,
     Compra, ItemCompra, Despesa_Extra, Ocorrencia_Funcionario, FotoObra,
     Backup, BackupSettings, AnexoLocacao, AnexoDespesa, ParcelaCompra,
-    AnexoCompra, ArquivoObra
+    AnexoCompra, ArquivoObra, TaskHistory, BackupLog, AnexoS3, BranchManagement
 )
+
+# Service serializers will be defined below
 from django.db.models import Sum, Q
 from decimal import Decimal
 
@@ -898,3 +900,63 @@ class BackupSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = BackupSettings
         fields = ['id', 'auto_backup_enabled', 'backup_time', 'retention_days', 'max_backups']
+
+
+# Service Serializers
+class BackupLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BackupLog
+        fields = ['id', 'backup_type', 'status', 'file_path', 'file_size', 'error_message', 'created_at', 'completed_at']
+        read_only_fields = ['id', 'created_at', 'completed_at']
+
+
+class TaskHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskHistory
+        fields = ['id', 'task_type', 'status', 'parameters', 'result', 'error_message', 'created_at', 'started_at', 'completed_at']
+        read_only_fields = ['id', 'created_at', 'started_at', 'completed_at']
+
+
+class AnexoS3Serializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = AnexoS3
+        fields = ['id', 'original_filename', 's3_key', 'file_size', 'content_type', 'uploaded_at', 'file_url']
+        read_only_fields = ['id', 'uploaded_at', 'file_url']
+    
+    def get_file_url(self, obj):
+        # Return a presigned URL or public URL for the S3 object
+        return f"https://s3.amazonaws.com/{obj.s3_key}"  # Simplified, should use proper S3 URL generation
+
+
+class BranchManagementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BranchManagement
+        fields = ['id', 'branch_name', 'description', 'is_active', 'created_by', 'created_at', 'merged_at']
+        read_only_fields = ['id', 'created_at', 'merged_at']
+
+
+class TaskStatisticsSerializer(serializers.Serializer):
+    total_tasks = serializers.IntegerField()
+    pending_tasks = serializers.IntegerField()
+    running_tasks = serializers.IntegerField()
+    completed_tasks = serializers.IntegerField()
+    failed_tasks = serializers.IntegerField()
+    success_rate = serializers.FloatField()
+
+
+class BackupStatisticsSerializer(serializers.Serializer):
+    total_backups = serializers.IntegerField()
+    successful_backups = serializers.IntegerField()
+    failed_backups = serializers.IntegerField()
+    total_size_mb = serializers.FloatField()
+    last_backup_date = serializers.DateTimeField(allow_null=True)
+    success_rate = serializers.FloatField()
+
+
+class S3StorageInfoSerializer(serializers.Serializer):
+    total_files = serializers.IntegerField()
+    total_size_mb = serializers.FloatField()
+    available_space_mb = serializers.FloatField()
+    usage_percentage = serializers.FloatField()

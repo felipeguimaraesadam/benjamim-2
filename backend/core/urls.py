@@ -17,6 +17,7 @@ from .views import (
     media_test_view, CreateUsuarioView, ParcelaCompraViewSet,
     AnexoCompraViewSet, ArquivoObraViewSet, GerarPDFComprasLoteView
 )
+from .views.service_views import BackupViewSet as NewBackupViewSet, TaskViewSet, AnexoS3ViewSet
 from .views.health import health_check, database_status
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -35,6 +36,9 @@ router.register(r'anexos-locacao', AnexoLocacaoViewSet)
 router.register(r'anexos-despesa', AnexoDespesaViewSet)
 router.register(r'backups', BackupViewSet)
 router.register(r'backup-settings', BackupSettingsViewSet, basename='backupsettings')
+router.register(r'service-backups', NewBackupViewSet, basename='service-backup')
+router.register(r'tasks', TaskViewSet, basename='task')
+router.register(r'anexos-s3', AnexoS3ViewSet, basename='anexo-s3')
 router.register(r'parcelas-compra', ParcelaCompraViewSet)
 router.register(r'anexos-compra', AnexoCompraViewSet)
 router.register(r'arquivos-obra', ArquivoObraViewSet)
