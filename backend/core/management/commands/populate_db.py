@@ -1,3 +1,7 @@
+# COMANDO DE POPULAÇÃO DE DADOS DE TESTE
+# ⚠️ IMPORTANTE: Este comando deve ser usado APENAS em ambiente de desenvolvimento/teste
+# Nunca execute em ambiente de produção pois irá limpar todos os dados existentes
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -7,7 +11,7 @@ from core.models import (
 )
 
 class Command(BaseCommand):
-    help = 'Populate database with comprehensive test data'
+    help = 'Populate database with comprehensive test data - ONLY FOR TEST ENVIRONMENT'
 
     def handle(self, *args, **options):
         self.stdout.write('Starting database population with comprehensive test data...')

@@ -195,8 +195,26 @@ const SystemTestsPage = () => {
     }
   };
 
-  // Funções de população de dados removidas por segurança
-  // Dados devem ser populados manualmente via interface administrativa
+  // Função para popular dados de teste (APENAS PARA AMBIENTE DE TESTE)
+  const populateTestData = async () => {
+    if (window.confirm('⚠️ ATENÇÃO: Esta ação irá popular o banco de dados com dados de teste.\n\nEsta funcionalidade deve ser usada APENAS em ambiente de teste.\n\nDeseja continuar?')) {
+      setIsLoading(true);
+      try {
+        const response = await apiClient.post('/populate-test-data/');
+        if (response.data.success) {
+          toast.success('Dados de teste populados com sucesso!');
+          console.log('Dados populados:', response.data);
+        } else {
+          throw new Error(response.data.error || 'Erro ao popular dados');
+        }
+      } catch (error) {
+        console.error('Erro ao popular dados:', error);
+        toast.error(`Erro ao popular dados: ${error.response?.data?.error || error.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const getStatusIcon = (status) => {
     if (status === 'success') {
@@ -282,25 +300,49 @@ const SystemTestsPage = () => {
           </p>
         </div>
         
-        <button
-          onClick={runAllTests}
-          disabled={isLoading}
-          className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-        >
-          {isLoading ? (
-            <>
-              <SpinnerIcon />
-              <span>Testando...</span>
-            </>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span>Executar Testes</span>
-            </>
-          )}
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={runAllTests}
+            disabled={isLoading}
+            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+          >
+            {isLoading ? (
+              <>
+                <SpinnerIcon />
+                <span>Testando...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Executar Testes</span>
+              </>
+            )}
+          </button>
+          
+          {/* Botão para popular dados de teste - APENAS PARA AMBIENTE DE TESTE */}
+          <button
+            onClick={populateTestData}
+            disabled={isLoading}
+            className="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-4 focus:ring-orange-300 dark:focus:ring-orange-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            title="⚠️ APENAS PARA AMBIENTE DE TESTE - Popular banco com dados de teste"
+          >
+            {isLoading ? (
+              <>
+                <SpinnerIcon />
+                <span>Populando...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Popular Dados Teste</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Informações do Sistema */}
@@ -331,8 +373,16 @@ const SystemTestsPage = () => {
         </div>
       </div>
 
-      {/* Seção de gerenciamento de dados removida por segurança */}
-      {/* Dados devem ser populados manualmente via interface administrativa */}
+      {/* Aviso sobre População de Dados de Teste */}
+      <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-6">
+        <h2 className="text-lg font-semibold text-orange-800 dark:text-orange-200 mb-2">
+          ⚠️ População de Dados de Teste
+        </h2>
+        <p className="text-sm text-orange-700 dark:text-orange-300">
+          O botão "Popular Dados Teste" está disponível para facilitar testes em ambiente de desenvolvimento.
+          <strong className="block mt-1">IMPORTANTE: Use apenas em ambiente de teste, nunca em produção!</strong>
+        </p>
+      </div>
 
       {/* Grid de Testes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

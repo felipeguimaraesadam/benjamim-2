@@ -1,3 +1,7 @@
+# ENDPOINTS DE DADOS DE TESTE
+# ⚠️ IMPORTANTE: Estes endpoints devem ser usados APENAS em ambiente de desenvolvimento/teste
+# Nunca disponibilize em ambiente de produção pois podem limpar todos os dados
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -12,6 +16,7 @@ import json
 def populate_test_data(request):
     """
     Endpoint para popular o banco de dados com dados de teste
+    ⚠️ APENAS PARA AMBIENTE DE TESTE - NÃO USAR EM PRODUÇÃO
     """
     try:
         # Executa o comando de popular dados
@@ -45,6 +50,7 @@ def populate_test_data(request):
 def clear_test_data(request):
     """
     Endpoint para limpar todos os dados de teste do banco
+    ⚠️ APENAS PARA AMBIENTE DE TESTE - NÃO USAR EM PRODUÇÃO
     """
     try:
         # Conta os registros antes de deletar

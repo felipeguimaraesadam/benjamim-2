@@ -20,6 +20,7 @@ from .views import (
 from .views.service_views import BackupViewSet as NewBackupViewSet, TaskViewSet, AnexoS3ViewSet
 from .views.health import health_check, database_status
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from api.test_data import populate_test_data, clear_test_data
 
 router = DefaultRouter()
 router.register(r'usuarios', UsuarioViewSet)
@@ -68,8 +69,9 @@ urlpatterns = [
     path('media-test/', media_test_view, name='media-test'),
     path('health/', health_check, name='health-check'),
     path('health/database/', database_status, name='database-status'),
-    # URLs de dados de teste removidas por segurança
-    # Dados devem ser populados manualmente via interface administrativa
+    # Endpoints de dados de teste - APENAS para ambiente de desenvolvimento/teste
+    path('populate-test-data/', populate_test_data, name='populate-test-data'),
+    path('clear-test-data/', clear_test_data, name='clear-test-data')
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
