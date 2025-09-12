@@ -20,7 +20,7 @@ Bem-vindo ao nosso projeto! Este guia contém todas as informações necessária
 1.  **Mindset Cloud-First**: O ambiente do Render é a nossa fonte da verdade. As configurações locais são para desenvolvimento, mas a validação final ocorre sempre na nuvem. Pense sempre: "Minha alteração funcionará no ambiente do Render?"
 
 2.  **Branching Model**:
-    *   `master`: Contém oódigo de produção. **Nunca trabalhe diretamente nesta branch**.
+    *   `master`: Contém código de produção. **Nunca trabalhe diretamente nesta branch**.
     *   `dev_main`: Nossa branch principal de desenvolvimento e integração. Todo o trabalho novo começa a partir daqui.
     *   **Branches de Feature**: Crie branches a partir de `dev_main` para novas funcionalidades ou correções (ex: `feat/nova-tela-login` ou `fix/bug-no-relatorio`).
 
@@ -119,7 +119,7 @@ Este arquivo define para qual API o frontend de produção aponta.
 
 ```env
 # Garanta que a URL aponta para o backend de PRODUÇÃO
-VITE_API_BASE_URL=https://django-backend-e7od.onrender.com
+VITE_API_URL=https://django-backend-e7od.onrender.com
 VITE_ENVIRONMENT=production
 ```
 **Importante**: A URL da API **não** deve terminar com `/api`. O sufixo é adicionado pelo código.
@@ -230,3 +230,15 @@ git reset --hard HEAD~1
 git push --force-with-lease origin master
 ```
 </details>
+
+---
+
+## 📞 Suporte e Contato
+
+Em caso de dúvidas sobre o workflow ou problemas de deploy, consulte este documento primeiro. Ele contém todas as práticas essenciais para manter o projeto estável e funcionando 100% na nuvem.
+
+**Lembre-se**: Este guia é um documento vivo e será atualizado conforme o projeto evolui. Sempre consulte a versão mais recente no repositório.
+
+---
+
+*Última atualização: Janeiro 2025*
