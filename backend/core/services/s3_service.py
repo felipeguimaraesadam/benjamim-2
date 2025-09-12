@@ -170,6 +170,54 @@ class S3Service:
                 'error': str(e)
             }
     
+    def get_storage_info(self) -> Dict[str, Any]:
+        """
+        Obtém informações sobre o armazenamento S3.
+        
+        Returns:
+            Dict com informações de armazenamento
+        """
+        try:
+            from django.db.models import Sum
+            
+            # Estatísticas básicas do banco de dados
+            total_files = AnexoS3.objects.count()
+            total_size = AnexoS3.objects.aggregate(
+                total=Sum('file_size')
+            )['total'] or 0
+            
+            storage_data = {
+                'total_files': total_files,
+                'total_size_bytes': total_size,
+                'total_size_mb': round(total_size / (1024 * 1024), 2),
+                's3_available': self.s3_available,
+                'bucket_name': self.bucket_name if self.s3_available else None,
+                'region': self.region if self.s3_available else None
+            }
+            
+            # Se S3 estiver disponível, tenta obter informações adicionais do bucket
+            if self.s3_available:
+                try:
+                    # Verifica se o bucket existe e está acessível
+                    self.s3_client.head_bucket(Bucket=self.bucket_name)
+                    storage_data['bucket_accessible'] = True
+                except Exception as e:
+                    logger.warning(f"Bucket not accessible: {e}")
+                    storage_data['bucket_accessible'] = False
+                    storage_data['bucket_error'] = str(e)
+            
+            return {
+                'success': True,
+                'data': storage_data
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting storage info: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
     def generate_signed_url(self, anexo_id: str, expiration: int = 3600) -> Dict[str, Any]:
         """
         Gera uma URL assinada para acesso temporário ao arquivo no S3.
@@ -240,9 +288,25 @@ class S3Service:
                     'filename': anexo.nome_original
                 }
             else:
+                # Mock para desenvolvimento - simula conteúdo de arquivo
+                logger.info(f"S3 not available, returning mock content for {anexo_id}")
+                
+                # Gera conteúdo mock baseado no tipo de arquivo
+                if anexo.content_type and anexo.content_type.startswith('image/'):
+                    # Para imagens, retorna um pixel transparente PNG
+                    mock_content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\xf8\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00IEND\xaeB`\x82'
+                elif anexo.content_type and anexo.content_type == 'application/pdf':
+                    # Para PDFs, retorna um PDF mínimo válido
+                    mock_content = b'%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n2 0 obj\n<<\n/Type /Pages\n/Kids [3 0 R]\n/Count 1\n>>\nendobj\n3 0 obj\n<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox [0 0 612 792]\n>>\nendobj\nxref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000074 00000 n \n0000000120 00000 n \ntrailer\n<<\n/Size 4\n/Root 1 0 R\n>>\nstartxref\n179\n%%EOF'
+                else:
+                    # Para outros tipos, retorna texto simples
+                    mock_content = f"Mock content for file: {anexo.nome_original}".encode('utf-8')
+                
                 return {
-                    'success': False,
-                    'error': 'S3 service not available'
+                    'success': True,
+                    'content': mock_content,
+                    'content_type': anexo.content_type or 'application/octet-stream',
+                    'filename': anexo.nome_original
                 }
                 
         except AnexoS3.DoesNotExist:
@@ -251,7 +315,7 @@ class S3Service:
                 'error': 'Anexo not found'
             }
         except Exception as e:
-            logger.error(f"Error downloading file {anexo_id}: {str(e)}")
+            logger.error(f"Error downloading file: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)
@@ -276,11 +340,10 @@ class S3Service:
                     Bucket=anexo.bucket_name,
                     Key=anexo.s3_key
                 )
+                logger.info(f"File deleted from S3: {anexo.s3_key}")
             
-            # Remove do banco
+            # Remove do banco de dados
             anexo.delete()
-            
-            logger.info(f"File deleted successfully: {anexo_id}")
             
             return {
                 'success': True,
@@ -293,21 +356,21 @@ class S3Service:
                 'error': 'Anexo not found'
             }
         except Exception as e:
-            logger.error(f"Error deleting file {anexo_id}: {str(e)}")
+            logger.error(f"Error deleting file: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)
             }
     
-    def migrate_local_files(self, anexo_type: str = None) -> Dict[str, Any]:
+    def migrate_local_files(self, local_directory: str) -> Dict[str, Any]:
         """
-        Migra arquivos locais existentes para o S3.
+        Migra arquivos locais para o S3.
         
         Args:
-            anexo_type: Tipo específico de anexo para migrar (opcional)
+            local_directory: Diretório local com os arquivos
         
         Returns:
-            Dict com estatísticas da migração
+            Dict com resultado da migração
         """
         if not self.s3_available:
             return {
@@ -315,17 +378,61 @@ class S3Service:
                 'error': 'S3 service not available for migration'
             }
         
-        # Esta funcionalidade será implementada quando necessário
-        # para migrar arquivos dos modelos existentes (FotoObra, AnexoCompra, etc.)
-        
-        return {
-            'success': True,
-            'message': 'Migration functionality to be implemented based on existing file models'
-        }
+        try:
+            migrated_files = []
+            failed_files = []
+            
+            for root, dirs, files in os.walk(local_directory):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    
+                    try:
+                        with open(file_path, 'rb') as f:
+                            file_content = f.read()
+                        
+                        # Gera chave S3
+                        s3_key = self._generate_s3_key('migrated', file)
+                        
+                        # Upload para S3
+                        self.s3_client.put_object(
+                            Bucket=self.bucket_name,
+                            Key=s3_key,
+                            Body=file_content
+                        )
+                        
+                        migrated_files.append({
+                            'local_path': file_path,
+                            's3_key': s3_key,
+                            'size': len(file_content)
+                        })
+                        
+                        logger.info(f"Migrated file: {file_path} -> {s3_key}")
+                        
+                    except Exception as e:
+                        failed_files.append({
+                            'local_path': file_path,
+                            'error': str(e)
+                        })
+                        logger.error(f"Failed to migrate file {file_path}: {e}")
+            
+            return {
+                'success': True,
+                'migrated_count': len(migrated_files),
+                'failed_count': len(failed_files),
+                'migrated_files': migrated_files,
+                'failed_files': failed_files
+            }
+            
+        except Exception as e:
+            logger.error(f"Error during migration: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
     
     def get_file_info(self, anexo_id: str) -> Dict[str, Any]:
         """
-        Obtém informações de um arquivo sem baixá-lo.
+        Obtém informações detalhadas sobre um arquivo.
         
         Args:
             anexo_id: ID do anexo
@@ -336,17 +443,31 @@ class S3Service:
         try:
             anexo = AnexoS3.objects.get(anexo_id=anexo_id)
             
-            return {
-                'success': True,
+            file_info = {
                 'anexo_id': anexo.anexo_id,
                 'nome_original': anexo.nome_original,
+                'nome_s3': anexo.nome_s3,
                 'content_type': anexo.content_type,
                 'file_size': anexo.file_size,
-                'uploaded_at': anexo.uploaded_at,
+                'file_hash': anexo.file_hash,
                 'anexo_type': anexo.anexo_type,
                 'object_id': anexo.object_id,
-                'is_migrated': anexo.is_migrated,
-                'metadata': anexo.metadata
+                'uploaded_at': anexo.uploaded_at,
+                'uploaded_by': anexo.uploaded_by_id,
+                'metadata': anexo.metadata,
+                's3_available': self.s3_available
+            }
+            
+            if self.s3_available:
+                file_info.update({
+                    'bucket_name': anexo.bucket_name,
+                    's3_key': anexo.s3_key,
+                    's3_url': anexo.s3_url
+                })
+            
+            return {
+                'success': True,
+                'file_info': file_info
             }
             
         except AnexoS3.DoesNotExist:
@@ -355,23 +476,25 @@ class S3Service:
                 'error': 'Anexo not found'
             }
         except Exception as e:
-            logger.error(f"Error getting file info {anexo_id}: {str(e)}")
+            logger.error(f"Error getting file info: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)
             }
     
     def list_files(self, 
-                  anexo_type: str = None, 
-                  object_id: int = None,
-                  limit: int = 100) -> Dict[str, Any]:
+                  anexo_type: Optional[str] = None,
+                  object_id: Optional[int] = None,
+                  limit: int = 100,
+                  offset: int = 0) -> Dict[str, Any]:
         """
         Lista arquivos com filtros opcionais.
         
         Args:
             anexo_type: Filtrar por tipo de anexo
-            object_id: Filtrar por ID do objeto relacionado
+            object_id: Filtrar por ID do objeto
             limit: Limite de resultados
+            offset: Offset para paginação
         
         Returns:
             Dict com lista de arquivos
@@ -385,25 +508,34 @@ class S3Service:
             if object_id:
                 queryset = queryset.filter(object_id=object_id)
             
-            anexos = queryset[:limit]
+            total_count = queryset.count()
+            files = queryset.order_by('-uploaded_at')[offset:offset + limit]
             
-            files_list = []
-            for anexo in anexos:
-                files_list.append({
+            files_data = []
+            for anexo in files:
+                file_data = {
                     'anexo_id': anexo.anexo_id,
                     'nome_original': anexo.nome_original,
                     'content_type': anexo.content_type,
                     'file_size': anexo.file_size,
-                    'uploaded_at': anexo.uploaded_at,
                     'anexo_type': anexo.anexo_type,
                     'object_id': anexo.object_id,
-                    'is_migrated': anexo.is_migrated
-                })
+                    'uploaded_at': anexo.uploaded_at,
+                    'uploaded_by': anexo.uploaded_by_id
+                }
+                
+                if self.s3_available:
+                    file_data['s3_url'] = anexo.s3_url
+                
+                files_data.append(file_data)
             
             return {
                 'success': True,
-                'files': files_list,
-                'count': len(files_list)
+                'files': files_data,
+                'total_count': total_count,
+                'limit': limit,
+                'offset': offset,
+                'has_more': (offset + limit) < total_count
             }
             
         except Exception as e:

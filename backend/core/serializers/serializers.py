@@ -519,8 +519,8 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
                 from .models import AnexoS3
                 from .services.s3_service import S3Service
                 
-                # Buscar o anexo S3 pelo ID
-                anexo_s3 = AnexoS3.objects.get(id=obj.s3_anexo_id)
+                # Buscar o anexo S3 pelo anexo_id (UUID), não pelo ID numérico
+                anexo_s3 = AnexoS3.objects.get(anexo_id=obj.s3_anexo_id)
                 s3_service = S3Service()
                 result = s3_service.generate_signed_url(anexo_s3.anexo_id, expiration=3600)
                 if result.get('success'):

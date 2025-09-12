@@ -574,6 +574,88 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['get'])
+    def download(self, request, pk=None):
+        """
+        Faz download direto de um arquivo do S3.
+        """
+        try:
+            anexo = self.get_object()
+            
+            result = self.s3_service.download_file(anexo_id=str(anexo.anexo_id))
+            
+            if result['success']:
+                from django.http import HttpResponse
+                
+                response = HttpResponse(
+                    result['content'],
+                    content_type=result['content_type']
+                )
+                response['Content-Disposition'] = f'attachment; filename="{result["filename"]}"'
+                return response
+            else:
+                return Response({
+                    'success': False,
+                    'error': result['error']
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Http404:
+            return Response({
+                'success': False,
+                'error': 'Anexo não encontrado'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error in download view: {str(e)}")
+            return Response({
+                'success': False,
+                'error': 'Erro interno do servidor'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['get'], permission_classes=[])
+    def preview(self, request, pk=None):
+        """
+        Endpoint público para preview de imagens (sem autenticação).
+        """
+        try:
+            anexo = self.get_object()
+            
+            # Verificar se é uma imagem
+            if not anexo.content_type or not anexo.content_type.startswith('image/'):
+                return Response({
+                    'success': False,
+                    'error': 'Arquivo não é uma imagem'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            result = self.s3_service.download_file(anexo_id=str(anexo.anexo_id))
+            
+            if result['success']:
+                from django.http import HttpResponse
+                
+                response = HttpResponse(
+                    result['content'],
+                    content_type=result['content_type']
+                )
+                # Para preview, não forçar download
+                response['Content-Disposition'] = f'inline; filename="{result["filename"]}"'
+                return response
+            else:
+                return Response({
+                    'success': False,
+                    'error': result['error']
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Http404:
+            return Response({
+                'success': False,
+                'error': 'Anexo não encontrado'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error in preview view: {str(e)}")
+            return Response({
+                'success': False,
+                'error': 'Erro interno do servidor'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['get'])
     def download_url(self, request, pk=None):
         """
         Obtém URL de download temporária para um anexo.

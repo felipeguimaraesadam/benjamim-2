@@ -157,7 +157,7 @@ class AnexoS3Serializer(serializers.ModelSerializer):
             
             # Gera URL assinada com expiração de 1 hora
             result = s3_service.generate_signed_url(
-                anexo_id=str(obj.id),
+                anexo_id=str(obj.anexo_id),
                 expiration=3600
             )
             
