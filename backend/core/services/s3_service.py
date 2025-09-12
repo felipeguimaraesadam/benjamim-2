@@ -288,7 +288,8 @@ class S3Service:
     
     def generate_signed_url(self, anexo_id: str, expiration: int = 3600) -> Dict[str, Any]:
         """
-        Gera uma URL assinada para acesso temporário ao arquivo no S3.
+        Gera uma URL assinada para acesso temporário ao arquivo no S3, com
+        disposição de conteúdo inteligente (inline para imagens/PDF, attachment para outros).
         
         Args:
             anexo_id: ID do anexo
@@ -301,9 +302,26 @@ class S3Service:
             anexo = AnexoS3.objects.get(anexo_id=anexo_id)
             
             if self.s3_available:
+                # Determina a disposição do conteúdo com base no tipo de arquivo
+                content_type = anexo.content_type.lower() if anexo.content_type else ''
+                is_viewable = content_type.startswith('image/') or content_type == 'application/pdf'
+                disposition = 'inline' if is_viewable else 'attachment'
+
+                # Adiciona o nome do arquivo à disposição para uma experiência de download melhor
+                # A sanitização do nome do arquivo é importante para evitar problemas com caracteres especiais.
+                # Usando aspas duplas para nomes de arquivos que podem conter espaços.
+                import re
+                sanitized_filename = re.sub(r'[^a-zA-Z0-9_.-]', '_', anexo.nome_original)
+
+                params = {
+                    'Bucket': anexo.bucket_name,
+                    'Key': anexo.s3_key,
+                    'ResponseContentDisposition': f'{disposition}; filename="{sanitized_filename}"'
+                }
+
                 signed_url = self.s3_client.generate_presigned_url(
                     'get_object',
-                    Params={'Bucket': anexo.bucket_name, 'Key': anexo.s3_key},
+                    Params=params,
                     ExpiresIn=expiration
                 )
                 
@@ -313,9 +331,12 @@ class S3Service:
                     'expires_in': expiration
                 }
             else:
+                # Fallback para desenvolvimento local
                 return {
-                    'success': False,
-                    'error': 'S3 service not available'
+                    'success': True,
+                    'signed_url': anexo.s3_url, # Retorna a URL local mockada
+                    'expires_in': -1, # Indica que não expira
+                    'local_fallback': True
                 }
                 
         except AnexoS3.DoesNotExist:
@@ -324,7 +345,7 @@ class S3Service:
                 'error': 'Anexo not found'
             }
         except Exception as e:
-            logger.error(f"Error generating signed URL: {str(e)}")
+            logger.error(f"Error generating signed URL for anexo_id {anexo_id}: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)

@@ -45,6 +45,7 @@ from ..serializers import (
     ParcelaCompraSerializer, AnexoCompraSerializer, ArquivoObraSerializer
 )
 from ..permissions import IsNivelAdmin, IsNivelGerente
+from ..services.s3_service import S3Service
 
 # Import health check functions
 from ..health import health_check, database_status
@@ -2790,6 +2791,23 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
     serializer_class = ArquivoObraSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+
+    _s3_service_instance = None
+
+    @property
+    def s3_service(self):
+        if self._s3_service_instance is None:
+            # Lazy instantiation of the S3Service
+            self._s3_service_instance = S3Service()
+        return self._s3_service_instance
+
+    def get_serializer_context(self):
+        """
+        Passa a instância do S3Service para o serializer para evitar reinicializações.
+        """
+        context = super().get_serializer_context()
+        context['s3_service'] = self.s3_service
+        return context
     
     def get_queryset(self):
         try:
@@ -2872,9 +2890,8 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Usar S3Service para upload
-            from ..services.s3_service import S3Service
-            s3_service = S3Service()
+            # Usar S3Service da instância da view
+            s3_service = self.s3_service
             
             logger.error(f"🔍 [ARQUIVO OBRA DEBUG] Iniciando upload para S3...")
             

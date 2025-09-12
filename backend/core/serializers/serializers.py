@@ -515,27 +515,24 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
     def get_arquivo_url(self, obj):
         # Priorizar S3 com URL assinada se disponível
         if obj.s3_anexo_id:
-            try:
-                from .models import AnexoS3
-                from .services.s3_service import S3Service
-                
-                # Buscar o anexo S3 pelo anexo_id (UUID), não pelo ID numérico
-                anexo_s3 = AnexoS3.objects.get(anexo_id=obj.s3_anexo_id)
-                s3_service = S3Service()
-                result = s3_service.generate_signed_url(anexo_s3.anexo_id, expiration=3600)
-                if result.get('success'):
-                    return result.get('signed_url')
-            except (AnexoS3.DoesNotExist, Exception) as e:
-                # Log do erro para debug
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Erro ao gerar URL S3 para anexo {obj.id}: {str(e)}")
+            s3_service = self.context.get('s3_service')
+            if s3_service and s3_service.s3_available:
+                try:
+                    # O método generate_signed_url já busca o anexo pelo ID
+                    result = s3_service.generate_signed_url(obj.s3_anexo_id, expiration=3600)
+                    if result.get('success'):
+                        return result.get('signed_url')
+                except Exception as e:
+                    # Log do erro para debug
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Erro ao gerar URL assinada S3 para anexo {obj.id}: {str(e)}")
         
-        # Fallback para s3_url direta
+        # Fallback para a URL estática do S3 (se houver)
         if obj.s3_url:
             return obj.s3_url
         
-        # Fallback para arquivo local
+        # Fallback para arquivo local (ambiente de desenvolvimento)
         if obj.arquivo:
             try:
                 request = self.context.get('request')
@@ -543,18 +540,11 @@ class ArquivoObraSerializer(serializers.ModelSerializer):
                     return request.build_absolute_uri(obj.arquivo.url)
                 return obj.arquivo.url
             except Exception as e:
-                # Log do erro para debug
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Erro ao gerar URL local para anexo {obj.id}: {str(e)}")
         
-        # Último fallback - URL absoluta para placeholder
-        request = self.context.get('request')
-        if request:
-            from django.conf import settings
-            return request.build_absolute_uri(settings.STATIC_URL + 'images/file-not-found.png')
-        
-        # Fallback final se não houver request
+        # Fallback final se nenhuma URL puder ser gerada
         return None
     
     def get_arquivo_nome(self, obj):
