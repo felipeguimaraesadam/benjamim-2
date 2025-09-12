@@ -604,13 +604,13 @@ export const deleteFotoObra = fotoId =>
 
 // --- PDF Report Service Functions ---
 export const getRelatorioObraGeral = obraId => {
-  return apiClient.get(`/relatorios/obra/${obraId}/pdf/?is_simple=true`, {
+  return apiClient.get(`/obras/${obraId}/gerar-pdf/?is_simple=true`, {
     responseType: 'blob',
   });
 };
 
 export const getRelatorioObraCompleto = obraId => {
-  return apiClient.get(`/relatorios/obra/${obraId}/pdf/`, {
+  return apiClient.get(`/obras/${obraId}/gerar-pdf/`, {
     responseType: 'blob',
   });
 };

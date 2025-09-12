@@ -141,57 +141,69 @@ def _create_placeholder_image(nome_arquivo, error_message):
 
     return img_base64
 
+from .services.s3_service import S3Service
+from .models import ArquivoObra
+
 def process_attachments_for_pdf(attachments):
     """
     Processes various attachment types for inclusion in a PDF.
+    Handles both local and S3-backed files.
     """
-    if not IMAGE_PROCESSING_AVAILABLE or not WEASYPRINT_AVAILABLE:
+    if not IMAGE_PROCESSING_AVAILABLE:
         return []
     
     processed_attachments = []
+    s3_service = S3Service() # Instantiate once
     
     for anexo in attachments:
         img_base64 = None
         nome_arquivo = "Unknown"
         descricao_anexo = ""
-        try:
-            file_field = getattr(anexo, 'arquivo', getattr(anexo, 'anexo', getattr(anexo, 'imagem', None)))
-            if not file_field:
-                continue
+        file_content = None
 
-            nome_arquivo = getattr(anexo, 'nome_original', os.path.basename(file_field.name))
-            descricao_anexo = getattr(anexo, 'descricao', '')
-            
-            file_field.seek(0)
-            file_content = file_field.read()
-            file_field.seek(0)
-            
+        try:
+            # Check if it's an S3-backed ArquivoObra
+            if isinstance(anexo, ArquivoObra) and anexo.s3_anexo_id and s3_service.s3_available:
+                nome_arquivo = anexo.nome_original
+                descricao_anexo = anexo.descricao or ""
+
+                download_result = s3_service.download_file(anexo.s3_anexo_id)
+                if download_result.get('success'):
+                    file_content = download_result.get('content')
+                else:
+                    raise Exception(f"S3 download failed: {download_result.get('error')}")
+
+            # Fallback to local file field for other attachment types
+            else:
+                file_field = getattr(anexo, 'arquivo', getattr(anexo, 'anexo', getattr(anexo, 'imagem', None)))
+                if not file_field:
+                    continue
+                nome_arquivo = getattr(anexo, 'nome_original', os.path.basename(file_field.name))
+                descricao_anexo = getattr(anexo, 'descricao', '') or ""
+                file_field.seek(0)
+                file_content = file_field.read()
+                file_field.seek(0)
+
+            if not file_content:
+                raise Exception("File content is empty or could not be read.")
+
             file_extension = nome_arquivo.lower().split('.')[-1] if nome_arquivo else ''
             
-            pdf_bytes_for_conversion = None
-
-            if file_extension == 'pdf':
-                pdf_bytes_for_conversion = file_content
-            elif file_extension == 'docx':
-                html_content = docx_to_html(file_content)
-                pdf_bytes_for_conversion = HTML(string=html_content).write_pdf()
-            elif file_extension == 'xlsx':
-                html_content = xlsx_to_html(file_content)
-                pdf_bytes_for_conversion = HTML(string=html_content).write_pdf()
-            elif file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']:
+            # Since conversion libraries are disabled for memory optimization,
+            # we will only process images directly and create placeholders for others.
+            if file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']:
                 img = Image.open(BytesIO(file_content))
                 if img.mode in ('RGBA', 'P'):
                     img = img.convert('RGB')
                 buffer = BytesIO()
-                img.save(buffer, format='JPEG')
+                img.save(buffer, format='JPEG') # Convert to JPEG for consistency
                 img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-            if pdf_bytes_for_conversion:
-                pdf_doc = fitz.open(stream=pdf_bytes_for_conversion, filetype="pdf")
-                page = pdf_doc.load_page(0)
-                pix = page.get_pixmap(dpi=150)
-                img_bytes = pix.tobytes("png")
-                img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+            elif file_extension == 'pdf':
+                raise Exception("PDF rendering in reports is disabled to optimize memory.")
+            elif file_extension in ['docx', 'xlsx']:
+                raise Exception(f"{file_extension.upper()} rendering in reports is disabled to optimize memory.")
+            else:
+                 raise Exception(f"File type '{file_extension}' is not supported for rendering in reports.")
 
         except Exception as e:
             print(f"Error processing attachment ID {getattr(anexo, 'id', 'N/A')} ({nome_arquivo}): {e}")

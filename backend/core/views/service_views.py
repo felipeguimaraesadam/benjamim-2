@@ -31,6 +31,14 @@ class BackupViewSet(viewsets.ModelViewSet):
         super().__init__(*args, **kwargs)
         self.backup_service = BackupService()
     
+    def get_serializer_context(self):
+        """
+        Inject S3Service instance into serializer context.
+        """
+        context = super().get_serializer_context()
+        context['s3_service'] = self.s3_service
+        return context
+
     def get_queryset(self):
         queryset = super().get_queryset()
         

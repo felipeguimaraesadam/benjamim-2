@@ -151,22 +151,19 @@ class AnexoS3Serializer(serializers.ModelSerializer):
     
     def get_download_url(self, obj):
         """Retorna URL de download temporária (se disponível)."""
-        try:
-            from ..services.s3_service import S3Service
-            s3_service = S3Service()
-            
-            # Gera URL assinada com expiração de 1 hora
-            result = s3_service.generate_signed_url(
-                anexo_id=str(obj.anexo_id),
-                expiration=3600
-            )
-            
-            if result['success']:
-                return result['signed_url']
-            else:
-                return None
-        except Exception:
-            return None
+        s3_service = self.context.get('s3_service')
+        if s3_service:
+            try:
+                result = s3_service.generate_signed_url(anexo_id=str(obj.anexo_id))
+                if result.get('success'):
+                    return result.get('signed_url')
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to generate signed URL for anexo {obj.anexo_id}: {e}")
+
+        # Fallback para a URL estática se o serviço falhar ou não estiver disponível
+        return obj.s3_url
     
     def validate_anexo_type(self, value):
         """Valida o tipo de anexo."""
