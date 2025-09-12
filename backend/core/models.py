@@ -569,13 +569,22 @@ class AnexoCompra(models.Model):
         return f"Anexo: {self.nome_original} - Compra {self.compra.id}"
     
     def save(self, *args, **kwargs):
-        if self.arquivo:
-            self.nome_original = self.arquivo.name
-            self.tamanho_arquivo = self.arquivo.size
-            # Extract file extension for tipo_arquivo
+        # Garante que nome_original, tamanho e tipo sejam definidos
+        # tanto para arquivos locais quanto para S3 (onde self.arquivo é None)
+        filename = ""
+        if self.arquivo and hasattr(self.arquivo, 'name'):
+            filename = self.arquivo.name
+            if not self.tamanho_arquivo:
+                self.tamanho_arquivo = self.arquivo.size
+
+        if self.nome_original:
+            filename = self.nome_original
+
+        if filename and not self.tipo_arquivo:
             import os
-            _, ext = os.path.splitext(self.arquivo.name)
+            _, ext = os.path.splitext(filename)
             self.tipo_arquivo = ext.upper().lstrip('.')
+
         super().save(*args, **kwargs)
 
 

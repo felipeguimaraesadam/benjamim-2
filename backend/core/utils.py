@@ -5,28 +5,28 @@ import os
 import base64
 from io import BytesIO
 
-# Handle weasyprint import gracefully - Removido para otimizar memória
-# try:
-#     from weasyprint import HTML, CSS
-#     WEASYPRINT_AVAILABLE = True
-# except Exception as e:
-WEASYPRINT_AVAILABLE = False
+# Handle weasyprint import gracefully
+try:
+    from weasyprint import HTML, CSS
+    WEASYPRINT_AVAILABLE = True
+except Exception as e:
+    WEASYPRINT_AVAILABLE = False
 
-# Handle image processing imports - PyMuPDF removido para otimizar memória
+# Handle image processing imports
 try:
     from PIL import Image, ImageDraw, ImageFont
-    # import fitz  # PyMuPDF - Removido para otimizar memória
+    import fitz  # PyMuPDF
     IMAGE_PROCESSING_AVAILABLE = True
 except ImportError as e:
     IMAGE_PROCESSING_AVAILABLE = False
 
-# Handle office file processing imports - Removido para otimizar memória
-# try:
-#     import docx
-#     import openpyxl
-#     OFFICE_PROCESSING_AVAILABLE = True
-# except ImportError:
-OFFICE_PROCESSING_AVAILABLE = False
+# Handle office file processing imports
+try:
+    import docx
+    import openpyxl
+    OFFICE_PROCESSING_AVAILABLE = True
+except ImportError:
+    OFFICE_PROCESSING_AVAILABLE = False
 
 
 def docx_to_html(file_content):
@@ -149,7 +149,8 @@ def process_attachments_for_pdf(attachments):
     Processes various attachment types for inclusion in a PDF.
     Handles both local and S3-backed files.
     """
-    if not IMAGE_PROCESSING_AVAILABLE:
+    if not IMAGE_PROCESSING_AVAILABLE or not WEASYPRINT_AVAILABLE:
+        # If the core libraries aren't available, we can't do anything.
         return []
     
     processed_attachments = []
@@ -189,21 +190,33 @@ def process_attachments_for_pdf(attachments):
 
             file_extension = nome_arquivo.lower().split('.')[-1] if nome_arquivo else ''
             
-            # Since conversion libraries are disabled for memory optimization,
-            # we will only process images directly and create placeholders for others.
-            if file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']:
+            pdf_bytes_for_conversion = None
+
+            if file_extension == 'pdf':
+                pdf_bytes_for_conversion = file_content
+            elif file_extension == 'docx' and OFFICE_PROCESSING_AVAILABLE:
+                html_content = docx_to_html(file_content)
+                pdf_bytes_for_conversion = HTML(string=html_content).write_pdf()
+            elif file_extension == 'xlsx' and OFFICE_PROCESSING_AVAILABLE:
+                html_content = xlsx_to_html(file_content)
+                pdf_bytes_for_conversion = HTML(string=html_content).write_pdf()
+            elif file_extension in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']:
                 img = Image.open(BytesIO(file_content))
                 if img.mode in ('RGBA', 'P'):
                     img = img.convert('RGB')
                 buffer = BytesIO()
                 img.save(buffer, format='JPEG') # Convert to JPEG for consistency
                 img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-            elif file_extension == 'pdf':
-                raise Exception("PDF rendering in reports is disabled to optimize memory.")
-            elif file_extension in ['docx', 'xlsx']:
-                raise Exception(f"{file_extension.upper()} rendering in reports is disabled to optimize memory.")
             else:
-                 raise Exception(f"File type '{file_extension}' is not supported for rendering in reports.")
+                raise Exception(f"File type '{file_extension}' is not supported for rendering in reports.")
+
+            if pdf_bytes_for_conversion:
+                pdf_doc = fitz.open(stream=pdf_bytes_for_conversion, filetype="pdf")
+                if len(pdf_doc) > 0:
+                    page = pdf_doc.load_page(0)
+                    pix = page.get_pixmap(dpi=150)
+                    img_bytes = pix.tobytes("png")
+                    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 
         except Exception as e:
             print(f"Error processing attachment ID {getattr(anexo, 'id', 'N/A')} ({nome_arquivo}): {e}")

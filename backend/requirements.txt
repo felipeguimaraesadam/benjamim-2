@@ -25,10 +25,10 @@ urllib3==2.2.3
 pyjwt==2.10.1
 typing-extensions==4.12.2
 # Dependências pesadas removidas para otimizar memória:
-# WeasyPrint - biblioteca pesada para PDF
-# PyMuPDF - biblioteca pesada para manipulação de PDF
+WeasyPrint
+PyMuPDF
 # django-extensions - não essencial para produção
-# python-docx - biblioteca pesada para Word
-# openpyxl - biblioteca pesada para Excel
+python-docx
+openpyxl
 django-storages==1.14.4
 boto3==1.35.84

@@ -2921,6 +2921,9 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
                 )
             
             # Criar registro ArquivoObra apontando para o S3
+            import os
+            _, ext = os.path.splitext(arquivo.name)
+
             arquivo_obra = ArquivoObra.objects.create(
                 obra_id=obra_id,
                 arquivo=None,  # Não salvar arquivo localmente
@@ -2928,6 +2931,7 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
                 descricao=request.data.get('descricao', ''),
                 categoria=request.data.get('categoria', 'OUTROS'),
                 tamanho_arquivo=arquivo.size,
+                tipo_arquivo=ext.upper().lstrip('.'),
                 uploaded_by=request.user
             )
             
