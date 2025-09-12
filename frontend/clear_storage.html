@@ -141,7 +141,7 @@
             updateStatus('🔄 Testando conexão com o backend...', 'warning');
             
             try {
-                const response = await fetch('https://django-backend-e7od-4cjk.onrender.com/api/health-check/');
+                const response = await fetch('https://django-backend-e7od.onrender.com/api/health-check/');
                 const data = await response.json();
                 
                 if (response.ok) {
@@ -161,7 +161,7 @@
             updateStatus('🔄 Testando login...', 'warning');
             
             try {
-                const response = await fetch('https://django-backend-e7od-4cjk.onrender.com/api/token/', {
+                const response = await fetch('https://django-backend-e7od.onrender.com/api/token/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
