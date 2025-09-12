@@ -21,9 +21,9 @@ services:
       - key: DEBUG
         value: "False"
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://frontend-s7jt-4cjk.onrender.com"
+        value: "https://frontend-s7jt-4cjk.onrender.com,https://frontend-s7jt.onrender.com"
       - key: CSRF_TRUSTED_ORIGINS
-        value: "https://frontend-s7jt-4cjk.onrender.com"
+        value: "https://frontend-s7jt-4cjk.onrender.com,https://frontend-s7jt.onrender.com"
       - key: DJANGO_SUPERUSER_USERNAME
         value: admin
       - key: DJANGO_SUPERUSER_EMAIL
@@ -50,7 +50,7 @@ services:
     startCommand: "npx serve -s dist"
     envVars:
       - key: VITE_API_URL
-        value: "https://django-backend-e7od-4cjk.onrender.com"
+        value: "https://django-backend-e7od-4cjk.onrender.com"  # dev_main URL - alterar para https://django-backend-e7od.onrender.com para master
 
 # --- Configuração do Banco de Dados PostgreSQL ---
 databases:

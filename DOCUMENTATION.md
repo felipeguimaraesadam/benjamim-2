@@ -131,4 +131,3 @@ Para manter o projeto organizado e evitar duplicidade, siga as seguintes diretri
     - `create_distribution_package.bat`: Cria um pacote de distribuição completo na pasta `SGO_Distribution`, contendo o código-fonte do projeto e o executável pronto para ser compartilhado.
     - `run_migrations.bat`: Executa as migrações do banco de dados do Django.
     - `create_dev_superuser.bat`: Inicia o processo para criar um superusuário no ambiente de desenvolvimento.
-    - `populate_test_data.bat`: Executa um script Python para popular o banco de dados com dados de teste.
