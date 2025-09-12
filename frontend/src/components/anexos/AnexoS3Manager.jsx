@@ -255,10 +255,10 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
 
   // Função para abrir preview de imagem
   const handleImagePreview = (anexo) => {
-    if (isImageFile(anexo.filename)) {
+    if (isImageFile(anexo.nome_original)) {
       setPreviewImage({
-        url: `/api/anexos-s3/${anexo.anexo_id}/preview/`,
-        name: anexo.filename
+        url: anexo.download_url, // Use the direct download URL for preview
+        name: anexo.nome_original
       });
       setShowPreview(true);
     }
@@ -274,14 +274,18 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
   const getAttachmentInfo = (anexo) => {
     const typeMap = {
       'compra': 'Compra',
-      'obra': 'Obra', 
+      'obra': 'Obra',
       'despesa': 'Despesa',
       'geral': 'Geral'
     };
     
     const typeName = typeMap[anexo.anexo_type] || anexo.anexo_type || 'Não especificado';
-    const objectId = anexo.object_id || 'N/A';
+
+    if (anexo.related_object_name) {
+      return `${typeName}: ${anexo.related_object_name}`;
+    }
     
+    const objectId = anexo.object_id || 'N/A';
     return `${typeName} #${objectId}`;
   };
 
@@ -457,11 +461,11 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
-                    {isImageFile(anexo.filename) && anexo.download_url ? (
+                    {isImageFile(anexo.nome_original) && anexo.download_url ? (
                       <div className="relative">
                         <img
                           src={anexo.download_url}
-                          alt={anexo.filename}
+                          alt={anexo.nome_original}
                           className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                           onClick={() => handleImagePreview(anexo)}
                           onError={(e) => {
@@ -470,16 +474,16 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
                           }}
                         />
                         <div className="w-12 h-12 flex items-center justify-center" style={{display: 'none'}}>
-                          {getFileIcon(anexo.filename)}
+                          {getFileIcon(anexo.nome_original)}
                         </div>
                       </div>
                     ) : (
-                      getFileIcon(anexo.filename)
+                      getFileIcon(anexo.nome_original)
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {anexo.filename}
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={anexo.nome_original}>
+                      {anexo.nome_original}
                     </p>
                     <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                       <span>{formatFileSize(anexo.file_size)}</span>
@@ -506,7 +510,7 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-1">
-                  {isImageFile(anexo.filename) && (
+                  {isImageFile(anexo.nome_original) && (
                     <button
                       onClick={() => handleImagePreview(anexo)}
                       className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1"
@@ -516,7 +520,7 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
                     </button>
                   )}
                   <button
-                    onClick={() => handleDownload(anexo.anexo_id, anexo.filename)}
+                    onClick={() => handleDownload(anexo.anexo_id, anexo.nome_original)}
                     className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-1"
                     title="Download"
                   >

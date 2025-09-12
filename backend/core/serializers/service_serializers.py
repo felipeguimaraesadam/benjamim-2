@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from ..models import BackupLog, TaskHistory, AnexoS3, BranchManagement
+from ..models import BackupLog, TaskHistory, AnexoS3, BranchManagement, Obra
 
 
 class BackupLogSerializer(serializers.ModelSerializer):
@@ -132,13 +132,14 @@ class AnexoS3Serializer(serializers.ModelSerializer):
     uploaded_by_name = serializers.CharField(source='uploaded_by.get_full_name', read_only=True)
     file_size_mb = serializers.SerializerMethodField()
     download_url = serializers.SerializerMethodField()
+    related_object_name = serializers.SerializerMethodField()
 
     class Meta:
         model = AnexoS3
         fields = [
             'id', 'anexo_id', 'nome_original', 'nome_s3', 'bucket_name', 's3_key', 's3_url',
             'content_type', 'file_size', 'file_size_mb', 'file_hash',
-            'anexo_type', 'object_id', 'uploaded_at', 'uploaded_by',
+            'anexo_type', 'object_id', 'related_object_name', 'uploaded_at', 'uploaded_by',
             'uploaded_by_name', 'download_url', 'is_migrated', 'migration_date', 'metadata'
         ]
         read_only_fields = ['anexo_id', 'nome_s3', 'bucket_name', 's3_key', 's3_url', 'file_hash', 'uploaded_at', 'uploaded_by', 'is_migrated', 'migration_date']
@@ -147,6 +148,17 @@ class AnexoS3Serializer(serializers.ModelSerializer):
         """Retorna o tamanho do arquivo em MB."""
         if obj.file_size:
             return round(obj.file_size / (1024 * 1024), 2)
+        return None
+
+    def get_related_object_name(self, obj):
+        """Retorna o nome do objeto relacionado (ex: nome da obra)."""
+        if obj.anexo_type == 'obra' and obj.object_id:
+            try:
+                obra = Obra.objects.get(id=obj.object_id)
+                return obra.nome_obra
+            except Obra.DoesNotExist:
+                return f"Obra ID {obj.object_id} (não encontrada)"
+        # Este método pode ser expandido para outros tipos de anexo
         return None
     
     def get_download_url(self, obj):

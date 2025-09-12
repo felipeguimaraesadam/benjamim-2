@@ -7,7 +7,7 @@ from django.http import Http404
 from django.core.files.uploadedfile import UploadedFile
 import logging
 
-from ..models import BackupLog, TaskHistory, AnexoS3
+from ..models import BackupLog, TaskHistory, AnexoS3, ArquivoObra
 from ..serializers import BackupLogSerializer, TaskHistorySerializer
 from ..serializers.service_serializers import AnexoS3Serializer
 from ..services.backup_service import BackupService
@@ -457,6 +457,14 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.s3_service = S3Service()
+
+    def get_serializer_context(self):
+        """
+        Inject S3Service instance into serializer context.
+        """
+        context = super().get_serializer_context()
+        context['s3_service'] = self.s3_service
+        return context
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -477,6 +485,43 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
         
         return queryset
     
+    def destroy(self, request, *args, **kwargs):
+        """
+        Deleta um anexo do S3, o registro AnexoS3, e qualquer
+        registro relacionado (ex: ArquivoObra).
+        """
+        try:
+            anexo_s3 = self.get_object()
+            anexo_id = anexo_s3.anexo_id
+
+            # Deletar registros relacionados que apontam para este anexo
+            if anexo_s3.anexo_type == 'obra':
+                ArquivoObra.objects.filter(s3_anexo_id=anexo_id).delete()
+            # Adicionar lógica para outros tipos de anexo aqui (compra, despesa, etc.)
+
+            # Usar o s3_service para deletar o arquivo no S3 e o registro AnexoS3
+            result = self.s3_service.delete_file(anexo_id=anexo_id)
+
+            if result['success']:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                # Se a exclusão do S3 falhar, ainda retorna sucesso para o frontend,
+                # mas loga o erro, pois o registro do banco foi removido.
+                logger.error(f"Failed to delete S3 object for anexo_id {anexo_id}, but DB record was deleted. Error: {result.get('error')}")
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+        except Http404:
+            return Response({
+                'success': False,
+                'error': 'Anexo não encontrado'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error in AnexoS3ViewSet destroy: {str(e)}")
+            return Response({
+                'success': False,
+                'error': 'Erro interno do servidor'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def create(self, request, *args, **kwargs):
         """
         Cria um novo anexo S3 via upload de arquivo.
