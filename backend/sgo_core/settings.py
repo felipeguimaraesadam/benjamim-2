@@ -8,6 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 # Use a função config que você já tem do python-decouple
+# Configuração para dev_main - URLs corretas conforme CONTRIBUTING.md
 ALLOWED_HOSTS_CONFIG = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,django-backend-e7od-4cjk.onrender.com,django-backend-e7od.onrender.com,*.onrender.com')
 
 # Separa a string por vírgulas e remove espaços extras
@@ -166,10 +167,12 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 # Configuração dinâmica de CORS baseada em variáveis de ambiente
+# dev_main: frontend-s7jt-4cjk.onrender.com | master: frontend-s7jt.onrender.com
 CORS_ALLOWED_ORIGINS_CONFIG = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,https://frontend-s7jt-4cjk.onrender.com,https://frontend-s7jt.onrender.com')
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_CONFIG.split(',') if origin.strip()]
 
 # Adicionar CSRF_TRUSTED_ORIGINS baseado em variável de ambiente
+# dev_main: frontend-s7jt-4cjk.onrender.com | master: frontend-s7jt.onrender.com
 CSRF_TRUSTED_ORIGINS_CONFIG = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,https://frontend-s7jt-4cjk.onrender.com,https://frontend-s7jt.onrender.com')
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS_CONFIG.split(',') if origin.strip()]
 CORS_ALLOW_CREDENTIALS = True

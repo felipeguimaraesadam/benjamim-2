@@ -16,6 +16,9 @@ services:
         value: sgo-cliente-anexos-36
       - key: AWS_S3_REGION_NAME
         value: sa-east-1
+      # URLs por branch conforme CONTRIBUTING.md:
+      # dev_main: django-backend-e7od-4cjk.onrender.com, frontend-s7jt-4cjk.onrender.com
+      # master: django-backend-e7od.onrender.com, frontend-s7jt.onrender.com
       - key: ALLOWED_HOSTS
         value: "django-backend-e7od-4cjk.onrender.com,django-backend-e7od.onrender.com"
       - key: DEBUG
@@ -49,6 +52,9 @@ services:
     buildCommand: "npm install && npm run build"
     startCommand: "npx serve -s dist"
     envVars:
+      # CONFIGURAÇÃO ATUAL: dev_main (desenvolvimento/testes)
+      # dev_main: https://django-backend-e7od-4cjk.onrender.com
+      # master: https://django-backend-e7od.onrender.com
       - key: VITE_API_URL
         value: "https://django-backend-e7od-4cjk.onrender.com"  # dev_main URL - alterar para https://django-backend-e7od.onrender.com para master
 
