@@ -6,7 +6,7 @@ services:
     # Otimizações para reduzir uso de memória
     plan: starter  # Usar plano com mais memória se disponível
     buildCommand: "cd backend && ./build.sh"
-    startCommand: "cd backend && gunicorn sgo_core.wsgi --workers 1 --max-requests 1000 --timeout 120"
+    startCommand: "cd backend && gunicorn sgo_core.wsgi --workers 1 --max-requests 1000 --timeout 120 --preload"
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.5"
