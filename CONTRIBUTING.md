@@ -10,13 +10,19 @@
 - Branch dev_main será testada em deploy separado no Render
 - Apenas após testes completos na nuvem, fazer merge dev_main → master
 
-### 2. **Mindset Cloud-First**
+### 2. **Verificação Obrigatória do `render.yaml`**
+- **CRÍTICO**: Antes de qualquer merge para `master`, revise o `render.yaml`.
+- **Garanta que o `DATABASE_URL` aponta para o banco de produção (`sgo-postgres`)**.
+- **Garanta que o `VITE_API_URL` aponta para a API de produção (`https://django-backend-e7od.onrender.com/api`)**.
+- Um erro aqui pode conectar a aplicação de produção ao banco de dados de teste, causando perda de dados ou corrupção.
+
+### 3. **Mindset Cloud-First**
 - O sistema roda no Render, não na sua máquina
 - Configurações locais são apenas para desenvolvimento
 - Sempre pense: "Isso vai funcionar na nuvem?"
 - Nunca corrija o banco local achando que é o da nuvem
 
-### 3. **Workflow Obrigatório - NOVO SISTEMA**
+### 4. **Workflow Obrigatório - NOVO SISTEMA**
 ```bash
 # 1. Trabalhar sempre na branch dev_main
 git checkout dev_main
@@ -37,7 +43,7 @@ git merge dev_main
 git push origin master
 ```
 
-### 4. **🚨 POLÍTICA DE TESTES - APENAS NO DEPLOY DO RENDER**
+### 5. **🚨 POLÍTICA DE TESTES - APENAS NO DEPLOY DO RENDER**
 
 ⚠️ **REGRA ABSOLUTA: TESTES APENAS NO DEPLOY - NUNCA LOCALMENTE**
 

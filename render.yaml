@@ -50,7 +50,7 @@ services:
     startCommand: "npx serve -s dist"
     envVars:
       - key: VITE_API_URL
-        value: "https://django-backend-e7od-4cjk.onrender.com"  # dev_main URL - alterar para https://django-backend-e7od.onrender.com para master
+        value: "https://django-backend-e7od.onrender.com/api"
 
 # --- Configuração do Banco de Dados PostgreSQL ---
 databases:
