@@ -11,12 +11,12 @@ export default defineConfig({
         // URLs por branch:
         // dev_main: https://django-backend-e7od-4cjk.onrender.com
         // master: https://django-backend-e7od.onrender.com
-        target: 'https://django-backend-e7od.onrender.com',
+        target: 'https://django-backend-e7od-4cjk.onrender.com',
         changeOrigin: true,
         secure: true,
       },
       '/media': {
-        target: 'https://django-backend-e7od.onrender.com',
+        target: 'https://django-backend-e7od-4cjk.onrender.com',
         changeOrigin: true,
         secure: true,
       },
