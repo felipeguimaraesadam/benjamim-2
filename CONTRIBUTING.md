@@ -231,6 +231,214 @@ SECRET_KEY=[chave-secreta-producao]
 3. Confirmar comunicação frontend-backend
 4. Testar funcionalidades críticas
 
+### 🔧 TROUBLESHOOTING DE CONFIGURAÇÕES DO RENDER
+
+### 🚨 Problemas Críticos de Configuração
+
+#### 1. **Erro 404 na API (Problema Mais Comum)**
+
+**Sintoma**: Frontend não consegue acessar endpoints da API
+
+**Causa**: URL duplicada `/api/api/` em vez de `/api/`
+
+**Solução**:
+```bash
+# Verificar arquivo .env.production no frontend
+cat frontend/.env.production
+
+# ✅ CORRETO:
+VITE_API_URL=https://django-backend-e7od.onrender.com/api
+
+# ❌ ERRADO:
+VITE_API_URL=https://django-backend-e7od.onrender.com/api/
+# (barra extra no final causa /api/api/)
+```
+
+**Teste**:
+```bash
+# Deve funcionar:
+curl https://django-backend-e7od.onrender.com/api/token/
+
+# Não deve funcionar:
+curl https://django-backend-e7od.onrender.com/api/api/token/
+```
+
+#### 2. **Erro de CORS (Cross-Origin)**
+
+**Sintoma**: Console do navegador mostra "CORS policy" error
+
+**Causa**: Backend não aceita requests do frontend
+
+**Solução**:
+```python
+# Verificar backend/sgo_core/settings.py
+CORS_ALLOWED_ORIGINS = [
+    "https://frontend-s7jt.onrender.com",  # PRODUÇÃO
+    "https://frontend-s7jt-4cjk.onrender.com",  # DEV
+]
+
+# Também verificar:
+ALLOWED_HOSTS = [
+    'django-backend-e7od.onrender.com',
+    'django-backend-e7od-4cjk.onrender.com',
+    '*.onrender.com'
+]
+```
+
+**Teste CORS**:
+```bash
+curl -H "Origin: https://frontend-s7jt.onrender.com" \
+     -H "Access-Control-Request-Method: POST" \
+     -X OPTIONS \
+     https://django-backend-e7od.onrender.com/api/token/
+# Deve retornar headers Access-Control-Allow-*
+```
+
+#### 3. **Erro 500 no Backend**
+
+**Sintoma**: API retorna Internal Server Error
+
+**Diagnóstico**:
+1. Acesse logs no Render Dashboard
+2. Procure por:
+   - Database connection errors
+   - Missing environment variables
+   - Import errors
+   - ALLOWED_HOSTS errors
+
+**Soluções Comuns**:
+```bash
+# 1. Verificar variáveis de ambiente no Render
+# DATABASE_URL, DEBUG, ALLOWED_HOSTS, etc.
+
+# 2. Verificar se todas as dependências estão no requirements.txt
+pip freeze > requirements.txt
+
+# 3. Testar migrações
+# (No Render, via logs ou shell)
+python manage.py migrate --check
+```
+
+#### 4. **Frontend Não Carrega (Erro de Build)**
+
+**Sintoma**: Frontend mostra página de erro do Render
+
+**Diagnóstico**:
+1. Verificar logs de build no Render
+2. Procurar por:
+   - npm/yarn errors
+   - Missing dependencies
+   - Build command errors
+
+**Soluções**:
+```bash
+# 1. Verificar package.json
+# Confirmar se build command está correto
+"scripts": {
+  "build": "vite build",
+  "preview": "vite preview"
+}
+
+# 2. Verificar se .env.production existe
+ls frontend/.env.production
+
+# 3. Testar build localmente (apenas para debug)
+npm run build
+```
+
+### 🛠️ Comandos de Diagnóstico Avançado
+
+#### Verificação Completa do Sistema:
+
+```bash
+#!/bin/bash
+# Script de diagnóstico completo
+
+echo "=== DIAGNÓSTICO DO SISTEMA ==="
+
+# 1. Verificar serviços online
+echo "1. Verificando serviços..."
+curl -f -s https://django-backend-e7od.onrender.com/health/ && echo "✅ Backend OK" || echo "❌ Backend OFFLINE"
+curl -f -s https://frontend-s7jt.onrender.com && echo "✅ Frontend OK" || echo "❌ Frontend OFFLINE"
+
+# 2. Testar API endpoints
+echo "2. Testando endpoints..."
+curl -f -s https://django-backend-e7od.onrender.com/api/ && echo "✅ API OK" || echo "❌ API FALHOU"
+curl -f -s https://django-backend-e7od.onrender.com/api/token/ -X POST && echo "✅ Token endpoint OK" || echo "❌ Token endpoint FALHOU"
+
+# 3. Verificar CORS
+echo "3. Testando CORS..."
+CORS_RESPONSE=$(curl -s -H "Origin: https://frontend-s7jt.onrender.com" -I https://django-backend-e7od.onrender.com/api/)
+if echo "$CORS_RESPONSE" | grep -q "Access-Control-Allow-Origin"; then
+    echo "✅ CORS OK"
+else
+    echo "❌ CORS FALHOU"
+fi
+
+# 4. Verificar configurações locais
+echo "4. Verificando configurações locais..."
+if [ -f "frontend/.env.production" ]; then
+    echo "✅ .env.production existe"
+    grep VITE_API_URL frontend/.env.production
+else
+    echo "❌ .env.production NÃO ENCONTRADO"
+fi
+
+echo "=== FIM DO DIAGNÓSTICO ==="
+```
+
+### 📋 Checklist de Troubleshooting
+
+#### Quando algo não funciona:
+
+1. **Primeiro, sempre verificar**:
+   - [ ] Serviços estão online no Render Dashboard
+   - [ ] Logs não mostram erros críticos
+   - [ ] URLs estão corretas (sem `/api/api/`)
+   - [ ] Branch correta está sendo usada
+
+2. **Se login não funciona**:
+   - [ ] Endpoint `/api/token/` responde
+   - [ ] CORS configurado corretamente
+   - [ ] Frontend aponta para backend correto
+   - [ ] Credenciais de teste funcionam
+
+3. **Se deploy falha**:
+   - [ ] render.yaml está correto
+   - [ ] Variáveis de ambiente configuradas
+   - [ ] Dependencies atualizadas
+   - [ ] Build commands corretos
+
+### 🚨 Problemas de Emergência
+
+#### Se o sistema está completamente quebrado:
+
+1. **Reverter para última versão funcionando**:
+```bash
+git checkout master
+git reset --hard HEAD~1  # Voltar 1 commit
+git push --force-with-lease origin master
+```
+
+2. **Verificar status no Render**:
+   - Acesse https://dashboard.render.com
+   - Verifique se todos os serviços estão "Deployed"
+   - Revise logs para identificar o problema
+
+3. **Contato de emergência**:
+   - Documente o erro com screenshots
+   - Inclua logs relevantes
+   - Descreva o que foi alterado antes do problema
+
+### 📞 Quando Pedir Ajuda
+
+**Sempre inclua estas informações**:
+1. **Branch atual**: `git branch --show-current`
+2. **Último commit**: `git log --oneline -1`
+3. **Erro específico**: Screenshot ou texto completo
+4. **Logs do Render**: Copie os logs relevantes
+5. **O que foi alterado**: Descreva as mudanças recentes
+
 ### 🚨 Troubleshooting Comum
 
 #### Erro: DisallowedHost
@@ -297,7 +505,149 @@ CORS_ALLOWED_ORIGINS = [
 - **Django ALLOWED_HOSTS**: https://docs.djangoproject.com/en/stable/ref/settings/#allowed-hosts
 - **Django CORS**: https://github.com/adamchainz/django-cors-headers
 
-## 🛠️ Configuração de Desenvolvimento
+## 🔧 CONFIGURAÇÕES DO RENDER POR BRANCH - GUIA COMPLETO
+
+### 📍 URLs dos Serviços por Branch
+
+#### Branch `dev_main` (Desenvolvimento)
+- **Backend**: https://django-backend-e7od-4cjk.onrender.com
+- **Frontend**: https://frontend-s7jt-4cjk.onrender.com
+- **Banco**: sgo-postgres (compartilhado)
+- **API Base URL**: `https://django-backend-e7od-4cjk.onrender.com/api`
+
+#### Branch `master` (Produção)
+- **Backend**: https://django-backend-e7od.onrender.com
+- **Frontend**: https://frontend-s7jt.onrender.com
+- **Banco**: sgo-postgres (compartilhado)
+- **API Base URL**: `https://django-backend-e7od.onrender.com/api`
+
+### 🔐 Configuração de Variáveis de Ambiente no Render
+
+#### Como Configurar Variáveis no Dashboard do Render:
+
+1. **Acesse o Dashboard**: https://dashboard.render.com
+2. **Selecione o Serviço** (backend ou frontend)
+3. **Vá para "Environment"**
+4. **Adicione/Edite as variáveis necessárias**
+5. **Clique em "Save Changes"**
+6. **Aguarde o redeploy automático**
+
+#### Variáveis Críticas por Serviço:
+
+**Backend (Django):**
+```env
+# Produção (master)
+DATABASE_URL=postgresql://...
+DEBUG=False
+ALLOWED_HOSTS=django-backend-e7od.onrender.com,*.onrender.com
+CORS_ALLOWED_ORIGINS=https://frontend-s7jt.onrender.com
+CSRF_TRUSTED_ORIGINS=https://frontend-s7jt.onrender.com
+
+# Desenvolvimento (dev_main)
+DATABASE_URL=postgresql://...
+DEBUG=True
+ALLOWED_HOSTS=django-backend-e7od-4cjk.onrender.com,*.onrender.com
+CORS_ALLOWED_ORIGINS=https://frontend-s7jt-4cjk.onrender.com
+CSRF_TRUSTED_ORIGINS=https://frontend-s7jt-4cjk.onrender.com
+```
+
+**Frontend (React/Vite):**
+```env
+# Produção (master)
+VITE_API_URL=https://django-backend-e7od.onrender.com/api
+
+# Desenvolvimento (dev_main)
+VITE_API_URL=https://django-backend-e7od-4cjk.onrender.com/api
+```
+
+### 🔍 Como Verificar se as Configurações Estão Corretas
+
+#### 1. **Verificação Automática via Comandos**
+
+```bash
+# Verificar configuração do frontend
+curl -I https://frontend-s7jt.onrender.com
+# Deve retornar 200 OK
+
+# Verificar API do backend
+curl -I https://django-backend-e7od.onrender.com/api/
+# Deve retornar 200 OK
+
+# Testar endpoint de token
+curl -X POST https://django-backend-e7od.onrender.com/api/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"test"}'
+# Deve retornar resposta JSON (mesmo que credenciais inválidas)
+```
+
+#### 2. **Verificação Manual no Navegador**
+
+1. **Abra o frontend**: https://frontend-s7jt.onrender.com
+2. **Abra o Console do Navegador** (F12)
+3. **Tente fazer login**
+4. **Verifique se há erros de CORS**
+5. **Confirme que as requisições vão para a URL correta**
+
+#### 3. **Verificação de Logs no Render**
+
+1. Acesse https://dashboard.render.com
+2. Selecione o serviço
+3. Vá para "Logs"
+4. Procure por erros relacionados a:
+   - CORS
+   - ALLOWED_HOSTS
+   - Database connection
+   - 404 errors
+
+### 🚨 DIFERENÇAS CRÍTICAS ENTRE AMBIENTES
+
+#### Produção (master) vs Desenvolvimento (dev_main):
+
+| Aspecto | Produção | Desenvolvimento |
+|---------|----------|----------------|
+| **DEBUG** | `False` | `True` |
+| **CORS** | Restritivo | Mais permissivo |
+| **Logs** | Mínimos | Detalhados |
+| **Cache** | Ativado | Desativado |
+| **SSL** | Obrigatório | Obrigatório |
+| **Database** | Compartilhado | Compartilhado |
+
+### 🛠️ Comandos de Diagnóstico
+
+#### Para Identificar Problemas de Configuração:
+
+```bash
+# 1. Verificar se o serviço está online
+curl -f https://django-backend-e7od.onrender.com/health/ || echo "Backend offline"
+curl -f https://frontend-s7jt.onrender.com || echo "Frontend offline"
+
+# 2. Testar CORS
+curl -H "Origin: https://frontend-s7jt.onrender.com" \
+     -H "Access-Control-Request-Method: POST" \
+     -H "Access-Control-Request-Headers: X-Requested-With" \
+     -X OPTIONS \
+     https://django-backend-e7od.onrender.com/api/token/
+
+# 3. Verificar resposta da API
+curl -s https://django-backend-e7od.onrender.com/api/ | head -c 100
+```
+
+### 📋 Checklist de Configuração por Branch
+
+#### Ao Trabalhar na dev_main:
+- [ ] `VITE_API_URL` aponta para backend de dev
+- [ ] Backend aceita requests do frontend de dev
+- [ ] CORS configurado para URLs de dev
+- [ ] DEBUG=True no backend
+
+#### Ao Fazer Merge para master:
+- [ ] `VITE_API_URL` aponta para backend de produção
+- [ ] Backend aceita requests do frontend de produção
+- [ ] CORS configurado para URLs de produção
+- [ ] DEBUG=False no backend
+- [ ] Todas as variáveis de ambiente atualizadas
+
+### 🛠️ Configuração de Desenvolvimento
 
 ### Ambiente de Desenvolvimento
 - **Branch dev_main**: Deploy automático no Render para testes
@@ -309,6 +659,12 @@ CORS_ALLOWED_ORIGINS = [
 - **Desenvolvimento (dev_main)**: PostgreSQL no Render (ambiente de teste)
 - **Produção (master)**: PostgreSQL no Render (ambiente final)
 - **Local**: Apenas para desenvolvimento inicial (não é ambiente de teste)
+
+### 🔧 Configuração de Desenvolvimento Local (Apenas para Referência)
+
+⚠️ **IMPORTANTE**: Desenvolvimento local é PROIBIDO. Use apenas o Render.
+
+Esta seção é apenas para referência técnica:
 
 ## 📋 Sistema de Backup e Migração
 
@@ -349,10 +705,103 @@ CORS_ALLOWED_ORIGINS = [
 6. **Hardcode de configurações locais**
 7. **Ignorar erros de deploy**
 
-## ✅ Checklist Antes do Merge para Master
+## 🚨 CHECKLIST CRÍTICO DE MERGE PARA MASTER - À PROVA DE FALHAS
+
+⚠️ **ATENÇÃO: Este checklist é OBRIGATÓRIO e deve ser seguido rigorosamente para evitar acidentes em produção!**
+
+### 🔒 VERIFICAÇÕES DE SEGURANÇA OBRIGATÓRIAS
+
+#### 1. **Configurações de URL - CRÍTICO**
+- [ ] **Frontend `.env.production`**: Verificar se `VITE_API_URL` aponta para produção
+  ```env
+  # ✅ CORRETO para master:
+  VITE_API_URL=https://django-backend-e7od.onrender.com/api
+  
+  # ❌ ERRADO (dev_main):
+  VITE_API_URL=https://django-backend-e7od-4cjk.onrender.com/api
+  ```
+
+- [ ] **Backend `settings.py`**: Verificar configurações de produção
+  ```python
+  # ✅ ALLOWED_HOSTS deve incluir URL de produção:
+  ALLOWED_HOSTS = [
+      'django-backend-e7od.onrender.com',  # PRODUÇÃO
+      'django-backend-e7od-4cjk.onrender.com',  # DEV
+      '*.onrender.com'
+  ]
+  
+  # ✅ CORS_ALLOWED_ORIGINS deve incluir frontend de produção:
+  CORS_ALLOWED_ORIGINS = [
+      "https://frontend-s7jt.onrender.com",  # PRODUÇÃO
+      "https://frontend-s7jt-4cjk.onrender.com",  # DEV
+  ]
+  
+  # ✅ CSRF_TRUSTED_ORIGINS deve incluir ambos:
+  CSRF_TRUSTED_ORIGINS = [
+      "https://frontend-s7jt.onrender.com",  # PRODUÇÃO
+      "https://frontend-s7jt-4cjk.onrender.com",  # DEV
+  ]
+  ```
+
+#### 2. **Teste de Endpoints Críticos - OBRIGATÓRIO**
+- [ ] **Testar login na dev_main**: `https://frontend-s7jt-4cjk.onrender.com/login`
+- [ ] **Verificar API de token**: `https://django-backend-e7od-4cjk.onrender.com/api/token/`
+- [ ] **Confirmar CORS funcionando**: Sem erros no console do navegador
+- [ ] **Testar upload de arquivos**: Se aplicável
+- [ ] **Verificar conexão com banco**: Dados carregando corretamente
+
+#### 3. **Verificação do render.yaml - CRÍTICO**
+- [ ] **Confirmar configurações de produção no render.yaml**
+- [ ] **Verificar se DATABASE_URL aponta para banco correto**
+- [ ] **Confirmar variáveis de ambiente de produção**
+
+#### 4. **Comandos de Verificação Obrigatórios**
+
+Antes do merge, execute estes comandos para verificar configurações:
+
+```bash
+# 1. Verificar branch atual
+git branch --show-current
+# Deve mostrar: dev_main
+
+# 2. Verificar se há mudanças não commitadas
+git status
+# Deve mostrar: working tree clean
+
+# 3. Verificar últimos commits
+git log --oneline -5
+# Revisar se todos os commits estão corretos
+
+# 4. Verificar diferenças com master
+git diff master..dev_main --name-only
+# Revisar todos os arquivos que serão alterados
+```
+
+#### 5. **Verificação de Arquivos de Configuração**
+- [ ] **frontend/.env.production**: URLs corretas para produção
+- [ ] **backend/sgo_core/settings.py**: ALLOWED_HOSTS, CORS, CSRF corretos
+- [ ] **render.yaml**: Configurações de produção
+- [ ] **Sem arquivos de teste**: Verificar se não há arquivos .test, .debug, etc.
+
+### 🛡️ PROTEÇÃO DO BANCO DE DADOS
+
+#### Verificações de Segurança do Banco:
+- [ ] **Confirmar que DATABASE_URL no Render aponta para banco de produção**
+- [ ] **Verificar se não há scripts de reset/drop no código**
+- [ ] **Confirmar que migrações são seguras (não destrutivas)**
+- [ ] **Backup do banco antes do deploy** (se mudanças críticas)
+
+#### Como Verificar Configuração do Banco:
+1. Acesse o dashboard do Render
+2. Vá para o serviço de backend de produção
+3. Verifique a variável `DATABASE_URL`
+4. Confirme que aponta para o banco correto (não o de desenvolvimento)
+
+### 📋 CHECKLIST GERAL DE MERGE
 
 - [ ] Código commitado na branch dev_main
 - [ ] Deploy de desenvolvimento funcionando no Render
+- [ ] **TODAS as verificações de segurança acima concluídas**
 - [ ] Todas as funcionalidades testadas na nuvem
 - [ ] Sistema de backup testado
 - [ ] Sistema de anexos S3 funcionando
@@ -360,7 +809,170 @@ CORS_ALLOWED_ORIGINS = [
 - [ ] Frontend carregando sem erros
 - [ ] Banco de dados funcionando (PostgreSQL)
 - [ ] Logs de erro limpos no ambiente dev_main
+- [ ] **URLs de produção testadas e funcionando**
+- [ ] **Configurações de CORS validadas**
+- [ ] **Endpoints críticos testados**
 - [ ] Aprovação final para merge dev_main → master
+
+### 🚨 COMANDOS DE EMERGÊNCIA
+
+Se algo der errado após o merge:
+
+```bash
+# 1. Reverter merge imediatamente
+git checkout master
+git reset --hard HEAD~1
+git push --force-with-lease origin master
+
+# 2. Voltar para dev_main para correções
+git checkout dev_main
+
+# 3. Verificar logs do Render para identificar problema
+# Acesse: https://dashboard.render.com
+```
+
+### ⚠️ AVISOS CRÍTICOS
+
+1. **NUNCA faça merge sem completar TODAS as verificações acima**
+2. **SEMPRE teste os endpoints críticos antes do merge**
+3. **CONFIRME as URLs de produção antes de fazer push**
+4. **Em caso de dúvida, NÃO faça o merge - peça ajuda**
+5. **Mantenha backup do banco antes de mudanças críticas**
+
+## 📚 RESUMO EXECUTIVO - CONFIGURAÇÕES CRÍTICAS
+
+### 🎯 URLs Corretas por Ambiente
+
+| Ambiente | Frontend | Backend | API Base |
+|----------|----------|---------|----------|
+| **Produção (master)** | https://frontend-s7jt.onrender.com | https://django-backend-e7od.onrender.com | `/api` |
+| **Desenvolvimento (dev_main)** | https://frontend-s7jt-4cjk.onrender.com | https://django-backend-e7od-4cjk.onrender.com | `/api` |
+
+### 🔧 Configurações Essenciais
+
+#### Frontend (.env.production):
+```env
+# PRODUÇÃO:
+VITE_API_URL=https://django-backend-e7od.onrender.com/api
+
+# DESENVOLVIMENTO:
+VITE_API_URL=https://django-backend-e7od-4cjk.onrender.com/api
+```
+
+#### Backend (settings.py):
+```python
+# Sempre incluir AMBOS os ambientes:
+ALLOWED_HOSTS = [
+    'django-backend-e7od.onrender.com',      # PRODUÇÃO
+    'django-backend-e7od-4cjk.onrender.com', # DEV
+    '*.onrender.com'
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "https://frontend-s7jt.onrender.com",      # PRODUÇÃO
+    "https://frontend-s7jt-4cjk.onrender.com", # DEV
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://frontend-s7jt.onrender.com",      # PRODUÇÃO
+    "https://frontend-s7jt-4cjk.onrender.com", # DEV
+]
+```
+
+### ⚡ Verificação Rápida (30 segundos)
+
+```bash
+# 1. Verificar se serviços estão online
+curl -I https://django-backend-e7od.onrender.com/api/
+curl -I https://frontend-s7jt.onrender.com
+
+# 2. Testar endpoint crítico
+curl -X POST https://django-backend-e7od.onrender.com/api/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"test":"test"}'
+
+# 3. Verificar configuração local
+grep VITE_API_URL frontend/.env.production
+```
+
+### 🚨 Sinais de Alerta
+
+**❌ PARE IMEDIATAMENTE se encontrar**:
+- URLs com `/api/api/` (duplicação)
+- CORS errors no console do navegador
+- 404 errors em endpoints que deveriam funcionar
+- Backend retornando 500 errors
+- Frontend não carregando
+
+**✅ Tudo OK quando**:
+- Login funciona sem erros de CORS
+- API responde corretamente
+- Console do navegador limpo
+- Logs do Render sem erros críticos
+
+### 🎯 Exemplo Prático de Verificação Completa
+
+#### Cenário: Verificar se dev_main está pronta para merge
+
+```bash
+# 1. Confirmar branch
+git branch --show-current
+# Deve mostrar: dev_main
+
+# 2. Testar frontend de desenvolvimento
+open https://frontend-s7jt-4cjk.onrender.com
+# Deve carregar sem erros
+
+# 3. Testar login na dev_main
+# Ir para: https://frontend-s7jt-4cjk.onrender.com/login
+# Tentar fazer login
+# Console do navegador deve estar limpo
+
+# 4. Verificar configuração para produção
+cat frontend/.env.production
+# Deve mostrar: VITE_API_URL=https://django-backend-e7od.onrender.com/api
+
+# 5. Verificar backend settings
+grep -A 10 "ALLOWED_HOSTS" backend/sgo_core/settings.py
+# Deve incluir ambas as URLs (produção e dev)
+
+# 6. Testar API de produção
+curl https://django-backend-e7od.onrender.com/api/token/
+# Deve retornar resposta JSON
+
+# 7. Se tudo OK, pode fazer merge
+git checkout master
+git merge dev_main
+git push origin master
+```
+
+### 📋 Template de Checklist Rápido
+
+**Copie e cole este checklist antes de cada merge**:
+
+```
+## Checklist de Merge - [DATA]
+
+### Configurações:
+- [ ] frontend/.env.production aponta para produção
+- [ ] backend/settings.py inclui ambos os ambientes
+- [ ] Sem URLs duplicadas (/api/api/)
+
+### Testes:
+- [ ] Login funciona na dev_main
+- [ ] API responde corretamente
+- [ ] Console do navegador limpo
+- [ ] Logs do Render sem erros
+
+### Verificação Final:
+- [ ] Todos os arquivos commitados
+- [ ] Branch dev_main funcionando 100%
+- [ ] Configurações de produção validadas
+
+### Aprovação:
+- [ ] Merge aprovado por: [NOME]
+- [ ] Data/hora do merge: [DATA/HORA]
+```
 
 ## 🐛 Reportando Bugs
 
