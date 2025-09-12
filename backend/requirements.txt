@@ -30,5 +30,19 @@ PyMuPDF
 # django-extensions - não essencial para produção
 python-docx
 openpyxl
+# Sub-dependências para PDF/Office
+et-xmlfile
+lxml
+cffi
+cssselect2
+fonttools
+pydyf
+pyphen
+tinycss2
+tinyhtml5
+pycparser
+webencodings
+brotli
+zopfli
 django-storages==1.14.4
 boto3==1.35.84
