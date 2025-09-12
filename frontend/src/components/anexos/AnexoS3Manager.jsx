@@ -179,8 +179,8 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
 
     try {
       // Remover imediatamente da lista local para feedback visual rápido
-      const anexoToDelete = anexos.find(anexo => anexo.id === anexoId);
-      setAnexos(prevAnexos => prevAnexos.filter(anexo => anexo.id !== anexoId));
+      const anexoToDelete = anexos.find(anexo => anexo.anexo_id === anexoId);
+      setAnexos(prevAnexos => prevAnexos.filter(anexo => anexo.anexo_id !== anexoId));
       
       await api.deleteAnexoS3(anexoId);
       toast.success('Anexo excluído com sucesso!');
@@ -257,7 +257,7 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
   const handleImagePreview = (anexo) => {
     if (isImageFile(anexo.filename)) {
       setPreviewImage({
-        url: `/api/anexos-s3/${anexo.id}/preview/`,
+        url: `/api/anexos-s3/${anexo.anexo_id}/preview/`,
         name: anexo.filename
       });
       setShowPreview(true);
@@ -453,7 +453,7 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {anexos.map((anexo) => (
-            <div key={anexo.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div key={anexo.anexo_id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
@@ -516,14 +516,14 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
                     </button>
                   )}
                   <button
-                    onClick={() => handleDownload(anexo.id, anexo.filename)}
+                    onClick={() => handleDownload(anexo.anexo_id, anexo.filename)}
                     className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-1"
                     title="Download"
                   >
                     <FiDownload className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(anexo.id)}
+                    onClick={() => handleDelete(anexo.anexo_id)}
                     className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1"
                     title="Excluir"
                   >
