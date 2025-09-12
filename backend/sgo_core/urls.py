@@ -56,7 +56,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # Health check endpoints
     # path('api/health-check/', HealthCheckView.as_view(), name='health-check'),
-    path('api/health/', health_check, name='health'),
+    path('api/health-check/', health_check, name='health-check'),
     path('api/status/', system_status, name='system_status'),
     path('api/metrics/', system_metrics, name='system_metrics'),
     # Error handling endpoints

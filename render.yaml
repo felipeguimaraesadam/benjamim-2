@@ -6,7 +6,7 @@ services:
     # Otimizações para reduzir uso de memória
     plan: starter  # Usar plano com mais memória se disponível
     buildCommand: "cd backend && ./build.sh"
-    startCommand: "cd backend && gunicorn sgo_core.wsgi --workers 1 --max-requests 1000 --timeout 120"
+    startCommand: "cd backend && gunicorn sgo_core.wsgi --workers 1 --max-requests 1000 --timeout 120 --preload"
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.5"
@@ -33,7 +33,7 @@ services:
         value: idng3@hotmail.com
       - key: DATABASE_URL
         fromDatabase:
-          name: meu-banco-sgo
+          name: sgo-postgres
           property: connectionString
       - key: SECRET_KEY
         sync: false
@@ -56,7 +56,7 @@ services:
       # dev_main: https://django-backend-e7od-4cjk.onrender.com
       # master: https://django-backend-e7od.onrender.com
       - key: VITE_API_URL
-        value: "https://django-backend-e7od-4cjk.onrender.com"  # dev_main URL - alterar para https://django-backend-e7od.onrender.com para master
+        value: "https://django-backend-e7od-4cjk.onrender.com"
 
 # --- Configuração do Banco de Dados PostgreSQL ---
 databases:
