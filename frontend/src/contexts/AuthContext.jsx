@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
     });
 
     try {
-      console.log('🌐 [AUTH DEBUG] Fazendo requisição para /token/');
+      console.log('🌐 [AUTH DEBUG] Fazendo requisição para /api/token/');
       
       const requestData = {
         login: loginUsername,
@@ -132,13 +132,13 @@ export const AuthProvider = ({ children }) => {
       };
       
       console.log('📤 [AUTH DEBUG] Dados da requisição:', {
-        url: `${apiClient.defaults.baseURL}/token/`,
+        url: `${apiClient.defaults.baseURL}/api/token/`,
         method: 'POST',
         headers: apiClient.defaults.headers,
         dataKeys: Object.keys(requestData)
       });
 
-      const response = await apiClient.post('/token/', requestData);
+      const response = await apiClient.post('/api/token/', requestData);
       
       console.log('✅ [AUTH DEBUG] Resposta recebida:', {
         status: response.status,
