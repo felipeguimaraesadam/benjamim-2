@@ -196,6 +196,30 @@ CORS_ALLOW_HEADERS = [
 
 USE_S3 = os.environ.get('USE_S3') == 'TRUE'
 
+# ==============================================================================
+# CONFIGURAÇÕES DE UPLOAD DE ARQUIVOS
+# ==============================================================================
+# Tamanho máximo de arquivo: 100MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
+
+# Timeout para uploads (em segundos)
+FILE_UPLOAD_TIMEOUT = 300  # 5 minutos
+
+# Configurações específicas para S3
+if USE_S3:
+    # Timeout para operações S3 (em segundos)
+    AWS_S3_CONNECT_TIMEOUT = 60
+    AWS_S3_READ_TIMEOUT = 300  # 5 minutos para uploads grandes
+    
+    # Configurações de retry para S3
+    AWS_S3_MAX_POOL_CONNECTIONS = 50
+    AWS_S3_RETRIES = {
+        'max_attempts': 3,
+        'mode': 'adaptive'
+    }
+
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage" if USE_S3 else "django.core.files.storage.FileSystemStorage",

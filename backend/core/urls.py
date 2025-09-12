@@ -45,6 +45,8 @@ router.register(r'arquivos-obra', ArquivoObraViewSet)
 
 urlpatterns = [
     path('register/', CreateUsuarioView.as_view(), name='create-user'),
+    # URLs específicas devem vir ANTES do router para evitar conflitos
+    path('locacoes/semanal/', LocacaoSemanalView.as_view(), name='locacao-semanal'),
     path('', include(router.urls)),
     path('funcionarios/<int:pk>/details/', FuncionarioDetailView.as_view(), name='funcionario-detail'),
     path('equipes/<int:pk>/details/', EquipeDetailView.as_view(), name='equipe-detail'),
@@ -60,10 +62,9 @@ urlpatterns = [
     path('relatorios/pagamento-materiais/', RelatorioPagamentoMateriaisViewSet.as_view({'get': 'gerar_relatorio_pagamentos_materiais'}), name='relatorio-pagamento-materiais'),
     path('obras/<int:pk>/gerar-pdf/', GerarRelatorioPDFObraView.as_view(), name='gerar-pdf-obra'),
     path('relatorios/pagamento-locacoes/gerar-pdf/', GerarRelatorioPagamentoLocacoesPDFView.as_view(), name='gerar-pdf-pagamento-locacoes'),
-    path('locacoes/semanal/', LocacaoSemanalView.as_view(), name='locacao-semanal'),
     path('relatorios/recursos-mais-utilizados/', RecursosMaisUtilizadosSemanaView.as_view(), name='recursos-mais-utilizados-semana'),
     path('obras/<int:pk>/custos-por-material/', ObraCustosPorMaterialView.as_view(), name='obra-custos-por-material'),
-    path('obras/<int:pk>/custos-por-categoria-material/', ObraCustosPorCategoriaMaterialView.as_view(), name='obra-custos-por-categoria-material'),
+    path('obras/<int:pk>/gastos-por-categoria-material/', ObraCustosPorCategoriaMaterialView.as_view(), name='obra-gastos-por-categoria-material'),
     path('media-test/', media_test_view, name='media-test'),
     path('health/', health_check, name='health-check'),
     path('health/database/', database_status, name='database-status'),

@@ -2845,7 +2845,6 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
             
             if obra_id:
                 try:
-                    from .models import Obra
                     obra = Obra.objects.get(id=obra_id)
                     logger.error(f"✅ [ARQUIVO OBRA DEBUG] Obra encontrada: {obra.nome_obra} (ID: {obra.id})")
                 except Obra.DoesNotExist:
@@ -2874,7 +2873,7 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
                 )
             
             # Usar S3Service para upload
-            from .services.s3_service import S3Service
+            from ..services.s3_service import S3Service
             s3_service = S3Service()
             
             logger.error(f"🔍 [ARQUIVO OBRA DEBUG] Iniciando upload para S3...")
@@ -2905,7 +2904,6 @@ class ArquivoObraViewSet(viewsets.ModelViewSet):
                 )
             
             # Criar registro ArquivoObra apontando para o S3
-            from .models import ArquivoObra
             arquivo_obra = ArquivoObra.objects.create(
                 obra_id=obra_id,
                 arquivo=None,  # Não salvar arquivo localmente

@@ -444,6 +444,7 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
     serializer_class = AnexoS3Serializer
     permission_classes = [IsNivelAdmin | IsNivelGerente]
     parser_classes = [MultiPartParser, FormParser]
+    lookup_field = 'anexo_id'
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -574,7 +575,7 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['get'])
-    def download(self, request, pk=None):
+    def download(self, request, anexo_id=None):
         """
         Faz download direto de um arquivo do S3.
         """
@@ -611,7 +612,7 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['get'], permission_classes=[])
-    def preview(self, request, pk=None):
+    def preview(self, request, anexo_id=None):
         """
         Endpoint público para preview de imagens (sem autenticação).
         """
@@ -656,7 +657,7 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['get'])
-    def download_url(self, request, pk=None):
+    def download_url(self, request, anexo_id=None):
         """
         Obtém URL de download temporária para um anexo.
         """
@@ -665,7 +666,7 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
             expiration = int(request.query_params.get('expiration', 3600))  # 1 hora por padrão
             
             result = self.s3_service.generate_signed_url(
-                anexo_id=str(anexo.id),
+                anexo_id=str(anexo.anexo_id),
                 expiration=expiration
             )
             
@@ -690,14 +691,14 @@ class AnexoS3ViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['delete'])
-    def delete_file(self, request, pk=None):
+    def delete_file(self, request, anexo_id=None):
         """
         Remove um arquivo do S3 e do banco de dados.
         """
         try:
             anexo = self.get_object()
             
-            result = self.s3_service.delete_file(anexo_id=anexo.id)
+            result = self.s3_service.delete_file(anexo_id=anexo.anexo_id)
             
             if result['success']:
                 return Response(result, status=status.HTTP_200_OK)

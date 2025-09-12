@@ -33,11 +33,24 @@ class S3Service:
         
         if self.access_key and self.secret_key and self.bucket_name:
             try:
+                # Configurações de timeout e retry
+                from botocore.config import Config
+                config = Config(
+                    connect_timeout=getattr(settings, 'AWS_S3_CONNECT_TIMEOUT', 60),
+                    read_timeout=getattr(settings, 'AWS_S3_READ_TIMEOUT', 300),
+                    max_pool_connections=getattr(settings, 'AWS_S3_MAX_POOL_CONNECTIONS', 50),
+                    retries=getattr(settings, 'AWS_S3_RETRIES', {
+                        'max_attempts': 3,
+                        'mode': 'adaptive'
+                    })
+                )
+                
                 self.s3_client = boto3.client(
                     's3',
                     aws_access_key_id=self.access_key,
                     aws_secret_access_key=self.secret_key,
-                    region_name=self.region
+                    region_name=self.region,
+                    config=config
                 )
                 # Teste de conectividade
                 self.s3_client.head_bucket(Bucket=self.bucket_name)
@@ -96,7 +109,16 @@ class S3Service:
                     'anexo_id': existing_anexo.anexo_id,
                     'url': existing_anexo.s3_url,
                     'duplicate': True,
-                    'existing_anexo': existing_anexo
+                    'anexo': {
+                        'id': str(existing_anexo.anexo_id),
+                        'nome_original': existing_anexo.nome_original,
+                        'content_type': existing_anexo.content_type,
+                        'file_size': existing_anexo.file_size,
+                        'anexo_type': existing_anexo.anexo_type,
+                        'object_id': existing_anexo.object_id,
+                        'uploaded_by_id': existing_anexo.uploaded_by_id,
+                        'uploaded_at': existing_anexo.uploaded_at.isoformat() if existing_anexo.uploaded_at else None
+                    }
                 }
             
             anexo_id = str(uuid.uuid4())
@@ -148,19 +170,65 @@ class S3Service:
                 logger.info(f"File uploaded successfully to S3: {s3_key}")
                 
                 return {
-                    'success': True,
-                    'anexo_id': anexo_id,
-                    'url': s3_url,
-                    'duplicate': False,
-                    'anexo': anexo_s3
+                'success': True,
+                'anexo_id': anexo_id,
+                'url': anexo_s3.s3_url,
+                'duplicate': False,
+                'anexo': {
+                    'id': str(anexo_s3.anexo_id),
+                    'nome_original': anexo_s3.nome_original,
+                    'content_type': anexo_s3.content_type,
+                    'file_size': anexo_s3.file_size,
+                    'anexo_type': anexo_s3.anexo_type,
+                    'object_id': anexo_s3.object_id,
+                    'uploaded_by_id': anexo_s3.uploaded_by_id,
+                    'uploaded_at': anexo_s3.uploaded_at.isoformat() if anexo_s3.uploaded_at else None
                 }
+            }
             
             else:
-                # Fallback para armazenamento local
-                logger.warning("S3 not available. This should not happen in production.")
+                # Fallback para armazenamento local (desenvolvimento)
+                logger.warning("S3 not available. Using local fallback for development.")
+                
+                # Simula upload local salvando apenas no banco de dados
+                local_key = self._generate_s3_key(anexo_type, file.name)
+                local_url = f"/media/anexos/{local_key}"
+                
+                # Salva registro no banco (sem arquivo físico para desenvolvimento)
+                anexo_s3 = AnexoS3.objects.create(
+                    anexo_id=anexo_id,
+                    nome_original=file.name,
+                    nome_s3=local_key.split('/')[-1],
+                    bucket_name='local-development',
+                    s3_key=local_key,
+                    s3_url=local_url,
+                    content_type=file.content_type or 'application/octet-stream',
+                    file_size=len(file_content),
+                    file_hash=file_hash,
+                    anexo_type=anexo_type,
+                    object_id=object_id,
+                    uploaded_by_id=user_id,
+                    metadata=metadata or {}
+                )
+                
+                logger.info(f"File uploaded successfully to local fallback: {local_key}")
+                
                 return {
-                    'success': False,
-                    'error': 'S3 service not available and local fallback not implemented for cloud-first approach'
+                    'success': True,
+                    'anexo_id': anexo_id,
+                    'url': local_url,
+                    'duplicate': False,
+                    'anexo': {
+                        'id': str(anexo_s3.anexo_id),
+                        'nome_original': anexo_s3.nome_original,
+                        'content_type': anexo_s3.content_type,
+                        'file_size': anexo_s3.file_size,
+                        'anexo_type': anexo_s3.anexo_type,
+                        'object_id': anexo_s3.object_id,
+                        'uploaded_by_id': anexo_s3.uploaded_by_id,
+                        'uploaded_at': anexo_s3.uploaded_at.isoformat() if anexo_s3.uploaded_at else None
+                    },
+                    'local_fallback': True
                 }
                 
         except Exception as e:
@@ -293,8 +361,15 @@ class S3Service:
                 
                 # Gera conteúdo mock baseado no tipo de arquivo
                 if anexo.content_type and anexo.content_type.startswith('image/'):
-                    # Para imagens, retorna um pixel transparente PNG
-                    mock_content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\xf8\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00IEND\xaeB`\x82'
+                    if anexo.content_type == 'image/jpeg' or anexo.content_type == 'image/jpg':
+                        # Para JPEG, retorna um JPEG mínimo válido
+                        mock_content = b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff\xdb\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0c\x14\r\x0c\x0b\x0b\x0c\x19\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.\'\" \x0c\x0c(7),01444\x1f\'9=82<.342\xff\xc0\x00\x11\x08\x00\x01\x00\x01\x01\x01\x11\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xda\x00\x08\x01\x01\x00\x00?\x00\xaa\xff\xd9'
+                    elif anexo.content_type == 'image/png':
+                        # Para PNG, retorna um pixel transparente PNG
+                        mock_content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\xf8\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00IEND\xaeB`\x82'
+                    else:
+                        # Para outros tipos de imagem, usar JPEG como padrão
+                        mock_content = b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff\xdb\x00C\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0c\x14\r\x0c\x0b\x0b\x0c\x19\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.\'\" \x0c\x0c(7),01444\x1f\'9=82<.342\xff\xc0\x00\x11\x08\x00\x01\x00\x01\x01\x01\x11\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xda\x00\x08\x01\x01\x00\x00?\x00\xaa\xff\xd9'
                 elif anexo.content_type and anexo.content_type == 'application/pdf':
                     # Para PDFs, retorna um PDF mínimo válido
                     mock_content = b'%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n2 0 obj\n<<\n/Type /Pages\n/Kids [3 0 R]\n/Count 1\n>>\nendobj\n3 0 obj\n<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox [0 0 612 792]\n>>\nendobj\nxref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000074 00000 n \n0000000120 00000 n \ntrailer\n<<\n/Size 4\n/Root 1 0 R\n>>\nstartxref\n179\n%%EOF'

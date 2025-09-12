@@ -257,7 +257,7 @@ const AnexoS3Manager = ({ entityType, entityId, onAnexosChange }) => {
   const handleImagePreview = (anexo) => {
     if (isImageFile(anexo.filename)) {
       setPreviewImage({
-        url: anexo.download_url || `/api/anexos-s3/${anexo.id}/download`,
+        url: `/api/anexos-s3/${anexo.id}/preview/`,
         name: anexo.filename
       });
       setShowPreview(true);
