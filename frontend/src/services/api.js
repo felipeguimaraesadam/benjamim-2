@@ -1,7 +1,12 @@
 import axios from 'axios';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Garante que a URL base da API sempre termine com /api,
+// tornando o cliente resiliente a erros de configuração na variável de ambiente.
+let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+if (apiUrl && !apiUrl.endsWith('/api')) {
+  apiUrl = apiUrl.replace(/\/$/, '') + '/api';
+}
+const API_BASE_URL = apiUrl;
 
 // Utility function to check if user is authenticated
 export const isAuthenticated = () => {
